@@ -1,0 +1,19 @@
+{
+    "name": "@jobspoon/theme-bridge",
+    "version": "0.1.0",
+    "type": "module",
+    "main": "dist/index.js",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "files": [
+        "dist"
+    ],
+    "sideEffects": false,
+    "scripts": {
+        "build": "tsc -p tsconfig.json",
+        "dev": "tsc -w -p tsconfig.json"
+    },
+    "devDependencies": {
+        "typescript": "^5.4.0"
+    }
+}

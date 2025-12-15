@@ -1,0 +1,19 @@
+{
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "declaration": true,
+        "emitDeclarationOnly": true,
+        "noEmit": false,
+        "outDir": "dist/@mf-types",
+        "skipLibCheck": true,
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "types": [
+            "svelte"
+        ]
+    },
+    "include": [
+        "src/lib/index.ts",
+        "src/global.d.ts" // ⬅️ 방금 만든 파일
+    ]
+}

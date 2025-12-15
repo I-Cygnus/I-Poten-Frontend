@@ -1,0 +1,31 @@
+<!-- sveltekit-review-app/src/app.html -->
+<!doctype html>
+<html lang="ko" class="no-js">
+
+<head>
+	<meta charset="utf-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+	<!-- JS on/off 클래스 토글 -->
+	<script>
+		document.documentElement.classList.remove('no-js');
+		document.documentElement.classList.add('js');
+	</script>
+
+	<!-- ✅ 전역 파비콘 (static/ 기준) -->
+	<link rel="icon" href="%sveltekit.assets%/jobspoon-icon-cutout.svg" type="image/svg+xml" />
+	<!-- (선택) 레거시/사파리 대비 PNG·애플 터치 아이콘도 두면 더 안전
+  <link rel="icon" href="%sveltekit.assets%/favicon-32.png" sizes="32x32" />
+  <link rel="icon" href="%sveltekit.assets%/favicon-16.png" sizes="16x16" />
+  <link rel="apple-touch-icon" href="%sveltekit.assets%/apple-touch-icon.png" />
+  <meta name="theme-color" content="#0f1017" />
+  -->
+
+	%sveltekit.head%
+</head>
+
+<body data-sveltekit-preload-data="hover">
+	<div style="display: contents">%sveltekit.body%</div>
+</body>
+
+</html>

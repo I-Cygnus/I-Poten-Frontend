@@ -1,0 +1,1 @@
+const t="https://localhost:5174";export{t as P};
