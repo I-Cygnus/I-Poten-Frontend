@@ -573,7 +573,7 @@ const App: React.FC = () => {
             <NavLink to="/vue-ai-interview/ai-interview/landing" $active={isActive("/vue-ai-interview")}>
               AI 인터뷰
             </NavLink>
-            <NavLink to="/spoon-word" $active={isActive("/spoon-word")}>스푼워드</NavLink>
+            <NavLink to="/poten-word" $active={isActive("/poten-word")}>포텐워드</NavLink>
             <NavLink to="/mypage" $active={isActive("/mypage")}>MyPage</NavLink>
             {!isLoggedIn ? (
               <NavLink to="/vue-account/account/login" $active={isActive("/vue-account")}>
@@ -628,8 +628,8 @@ const App: React.FC = () => {
           AI 인터뷰
         </MobileNavLink>
 
-        <MobileNavLink to="/spoon-word" $active={isActive("/spoon-word")}>
-          스푼워드
+        <MobileNavLink to="/poten-word" $active={isActive("/poten-word")}>
+          포텐워드
         </MobileNavLink>
         <MobileNavLink to="/mypage" $active={isActive("/mypage")}>
           MyPage
