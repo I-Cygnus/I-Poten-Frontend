@@ -1,5 +1,5 @@
 import React from "react";
-import styled from "styled-components";
+import styled, { keyframes, css } from "styled-components";
 import { useLocation, useNavigate } from "react-router-dom";
 import http, { authHeader } from "../utils/http";
 import { NarrowLeft } from "../styles/layout";
@@ -23,26 +23,52 @@ const UI = {
     },
     gradient: {
         brand: "linear-gradient(135deg, #4F76F1 0%, #3E63E0 100%)",
-        quizCta: "linear-gradient(90deg, #3E82E8 0%, #2BC6A6 100%)"
+        quizCta: "linear-gradient(90deg, #3E82E8 0%, #2BC6A6 100%)",
     },
     radius: {
         xl: 16,
         lg: 12,
         md: 10,
         sm: 8,
-        pill: 999
+        pill: 999,
     },
     shadow: {
         card: "0 1px 0 rgba(0,0,0,0.02), 0 2px 6px rgba(0,0,0,0.05)",
-        bar:  "0 4px 14px rgba(0,0,0,0.06)",
+        bar: "0 4px 14px rgba(0,0,0,0.06)",
         menu: "0 6px 18px rgba(0,0,0,0.10)",
     },
     font: {
         h2: "26px",
         body: "15px",
-        tiny: "12px"
+        tiny: "12px",
     },
 };
+
+const riseIn = keyframes`
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+        filter: blur(2px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+        filter: blur(0);
+    }
+`;
+
+const stagger = (ms: number) => css`
+    opacity: 0;
+    animation: ${riseIn} 520ms cubic-bezier(.2,.8,.2,1) forwards;
+    animation-delay: ${ms}ms;
+
+    @media (prefers-reduced-motion: reduce) {
+        opacity: 1;
+        animation: none;
+        transform: none;
+        filter: none;
+    }
+`;
 
 /* ===== 레이아웃 ===== */
 const Screen = styled.div`
@@ -63,15 +89,36 @@ const LeftCol = styled.div`
 const RightCol = styled.aside`
     position: sticky;
     top: 64px;
+
+    /* 화면에 붙어있는 영역의 최대 높이 제한 */
+    max-height: calc(100vh - 64px);
+    overflow: auto;               /* 오른쪽 컬럼 내부에서만 스크롤 */
+    padding-bottom: 12px;         /* 하단 여유 */
+    overscroll-behavior: contain; /* 바닥 튕김 전파 방지 */
+
     align-self: start;
     display: grid;
-    grid-template-rows: max-content max-content max-content;
+    grid-template-rows: max-content max-content max-content max-content;
     gap: 12px;
-    overflow: visible;
+
     @media (max-width: 1024px) {
         position: static;
+        max-height: none;
+        overflow: visible;
+        padding-bottom: 0;
         grid-template-rows: none;
     }
+`;
+
+const BottomGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 18px;
+  margin-top: 16px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const SearchCard = styled.div`
@@ -87,7 +134,7 @@ const SearchCard = styled.div`
 
 const SearchLabel = styled.div`
     font-weight: 750;
-    letter-spacing: -.02em;
+    letter-spacing: -0.02em;
 `;
 
 const SearchInput = styled.input`
@@ -98,10 +145,11 @@ const SearchInput = styled.input`
     padding: 0 12px 0 36px;
     background: #fff url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='11' cy='11' r='7' stroke='%239aa0a6' stroke-width='2'/%3E%3Cpath d='M20 20l-3.2-3.2' stroke='%239aa0a6' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 10px 50%;
     font-size: 14px;
+    letter-spacing: -0.02em;
     &:focus {
         outline: none;
         border-color: ${UI.color.primaryStrong};
-        box-shadow: 0 0 0 3px rgba(62,99,224,.16);
+        box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.16);
     }
     &::placeholder {
         color: #9aa4b2;
@@ -146,29 +194,32 @@ const Chip = styled.button<{ $active?: boolean }>`
     font-weight: 750;
     letter-spacing: -0.01em;
     cursor: pointer;
-    transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .08s ease, filter .15s ease;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease,
+    transform 0.08s ease, filter 0.15s ease;
+
     /* GhostBtn 스타일 (비활성) */
     background: #f3f4f6;
     color: #374151;
     border: 1px solid ${UI.color.line};
+
     /* PrimaryBtn 스타일 (활성) */
-    ${({ $active }) => $active && `
+    ${({ $active }) =>
+            $active &&
+            `
     background: ${UI.color.primary};
     color: #fff;
     border: 1px solid ${UI.color.primary};
   `}
+
     &:hover {
-        ${({ $active }) => $active
-                ? `background: ${UI.color.primaryStrong};`
-                : `background: #e5e7eb;`
-        }
+        ${({ $active }) => ($active ? `background: ${UI.color.primaryStrong};` : `background: #e5e7eb;`)}
     }
     &:active {
         transform: translateY(1px);
     }
     &:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 3px rgba(79,118,241,.25);
+        box-shadow: 0 0 0 3px rgba(79, 118, 241, 0.25);
     }
     &[aria-pressed="true"] {
         background: ${UI.color.primary};
@@ -178,15 +229,6 @@ const Chip = styled.button<{ $active?: boolean }>`
 `;
 
 /* ===== 통계 카드 ===== */
-const StatGrid = styled.div`
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    @media (max-width: 720px) {
-        grid-template-columns: 1fr;
-    }
-`;
-
 const StatCard = styled.div`
     border: 1px solid ${UI.color.line};
     border-radius: ${UI.radius.lg}px;
@@ -197,24 +239,12 @@ const StatCard = styled.div`
     gap: 8px;
 `;
 
-const StatValue = styled.div`
-    font-size: 32px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
-`;
-
-const StatLabel = styled.div`
-    color: ${UI.color.muted};
-    font-weight: 750;
-    letter-spacing: -.002em;
-`;
-
-/* ===== 리스트 패널 (더 라운드 & 소프트) ===== */
+/* ===== 리스트 패널 ===== */
 const Panel = styled.div`
-    border: 1px solid rgba(14,18,28,.06);
+    border: 1px solid rgba(14, 18, 28, 0.06);
     border-radius: ${UI.radius.lg}px;
     background: #fff;
-    box-shadow: 0 6px 16px rgba(30,41,59,.05);
+    box-shadow: 0 6px 16px rgba(30, 41, 59, 0.05);
     overflow: hidden;
 `;
 
@@ -229,12 +259,14 @@ const Row = styled.div`
     align-items: center;
     gap: 16px;
     padding: 22px 20px;
-    &:not(:last-child){ box-shadow: inset 0 -1px #f1f5f9; }
-    transition: background .15s ease, transform .08s ease, box-shadow .15s ease;
-    &:hover{
+    &:not(:last-child) {
+        box-shadow: inset 0 -1px #f1f5f9;
+    }
+    transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+    &:hover {
         background: #fbfcff;
         transform: translateY(-1px);
-        box-shadow: inset 0 -1px #eef2f7, 0 1px 6px rgba(62,99,224,.05);
+        box-shadow: inset 0 -1px #eef2f7, 0 1px 6px rgba(62, 99, 224, 0.05);
     }
     @media (max-width: 860px) {
         grid-template-columns: 1fr;
@@ -250,8 +282,8 @@ const ActionBar = styled.div`
 `;
 
 const DonutWrap = styled.div`
-  display: grid;
-  place-items: center;
+    display: grid;
+    place-items: center;
 `;
 
 /* ===== 제목 스택 & 라이트 칩 ===== */
@@ -263,7 +295,7 @@ const TitleStack = styled.div`
 const QuizTitle = styled.div`
     font-size: 18px;
     font-weight: 750;
-    letter-spacing: -.02em;
+    letter-spacing: -0.02em;
     color: #0f172a;
 `;
 
@@ -273,11 +305,11 @@ const LightPill = styled.button`
     border-radius: ${UI.radius.pill}px;
     font-weight: 750;
     font-size: 13px;
-    letter-spacing: -.02em;
+    letter-spacing: -0.02em;
     color: ${UI.color.primaryStrong};
-    background: rgba(79,118,241,.10);
+    background: rgba(79, 118, 241, 0.1);
     &:hover {
-        background: rgba(79,118,241,.14);
+        background: rgba(79, 118, 241, 0.14);
     }
 `;
 
@@ -286,7 +318,7 @@ function Donut({
                    value,
                    total,
                    size = 64,
-                   stroke = 10
+                   stroke = 10,
                }: {
     value: number;
     total: number;
@@ -301,27 +333,14 @@ function Donut({
     const safeId = `donut_${raw.replace(/[:]/g, "_")}`;
 
     return (
-        <svg
-            width={size}
-            height={size}
-            viewBox={`0 0 ${size} ${size}`}
-            role="img"
-            aria-label={`진행률 ${pct}%`}
-        >
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`진행률 ${pct}%`}>
             <defs>
                 <linearGradient id={safeId} x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#34d399" />
                     <stop offset="100%" stopColor="#22c1b5" />
                 </linearGradient>
             </defs>
-            <circle
-                cx={size / 2}
-                cy={size / 2}
-                r={r}
-                stroke="#eef2f7"
-                strokeWidth={stroke}
-                fill="none"
-            />
+            <circle cx={size / 2} cy={size / 2} r={r} stroke="#eef2f7" strokeWidth={stroke} fill="none" />
             <circle
                 cx={size / 2}
                 cy={size / 2}
@@ -348,59 +367,7 @@ function Donut({
     );
 }
 
-const MetricGrid = styled.div`
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 10px;
-    @media (max-width: 720px) {
-        grid-template-columns: 1fr;
-    }
-`;
-
-const MetricCard = styled.div<{ $from: string; $to: string }>`
-    position: relative;
-    border-radius: ${UI.radius.lg}px;
-    padding: 12px 14px;
-    min-height: 100px;
-    background: radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,.9) 0%, rgba(255,255,255,.7) 45%, rgba(255,255,255,.6) 100%),
-    linear-gradient(135deg, ${({ $from }) => $from} 0%, ${({ $to }) => $to} 100%);
-    border: 1px solid rgba(14,18,28,.06);
-    box-shadow: 0 6px 22px rgba(30,41,59,.06);
-    overflow: hidden;
-`;
-
-const MetricHead = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-`;
-
-const MetricIcon = styled.div`
-   width: 28px;
-   height: 28px;
-   border-radius: ${UI.radius.sm}px;
-   background: rgba(255,255,255,.78);
-   display: grid;
-   place-items: center;
-   box-shadow: inset 0 1px 0 rgba(255,255,255,.65);
-   svg { width: 16px; height: 16px; }
-`;
-
-const MetricValue = styled.div`
-    font-size: 24px;
-    font-weight: 900;
-    letter-spacing: -.02em;
-    color: #0f172a;
-`;
-
-const MetricLabel = styled.div`
-    font-size: 12px;
-    color: #334155;
-    font-weight: 700;
-    opacity: .9;
-`;
-
-/* ===== KPI 카드 (pastel gradient + icon chip) ===== */
+/* ===== KPI 카드 ===== */
 const KPIGrid = styled.div`
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -412,93 +379,214 @@ const KPIGrid = styled.div`
 
 const KPICard = styled.div<{ $from: string; $to: string }>`
     position: relative;
+    isolation: isolate;
+    overflow: hidden;
+
     border-radius: ${UI.radius.lg}px;
     padding: 14px 16px;
     min-height: 86px;
+
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
     gap: 12px;
-    background: radial-gradient(120% 120% at 0% 0%, rgba(255,255,255,.92) 0%, rgba(255,255,255,.75) 45%, rgba(255,255,255,.6) 100%),
-    linear-gradient(135deg, ${({$from}) => $from} 0%, ${({$to}) => $to} 100%);
-    border: 1px solid rgba(79,118,241,.08);
-    box-shadow: 0 6px 22px rgba(30,41,59,.06);
 
-    .kpi-body {
-        display: grid;
-        gap: 6px;
+    background: #fff;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+
+    transition: transform 180ms cubic-bezier(.2,.8,.2,1),
+    box-shadow 180ms cubic-bezier(.2,.8,.2,1),
+    border-color 180ms ease,
+    filter 180ms ease;
+
+    /* (기존 before/after 유지) */
+    &::before {
+        content: "";
+        position: absolute;
+        inset: -2px;
+        z-index: 0;
+        pointer-events: none;
+
+        background:
+                linear-gradient(
+                        225deg,
+                        ${({ $to }) => $to} 0%,
+                        ${({ $from }) => $from} 26%,
+                        rgba(255,255,255,0) 58%,
+                        rgba(255,255,255,0) 100%
+                ),
+                linear-gradient(
+                        225deg,
+                        rgba(255,255,255,0.14) 0%,
+                        rgba(255,255,255,0.06) 22%,
+                        rgba(255,255,255,0) 52%
+                ),
+                radial-gradient(
+                        110% 90% at 110% 110%,
+                        ${({ $from }) => $from} 0%,
+                        rgba(255,255,255,0) 72%
+                );
+
+        opacity: 0.72;
+        transition: opacity 180ms ease, transform 180ms cubic-bezier(.2,.8,.2,1);
     }
-    .kpi-label {
-        font-size: 12px;
-        font-weight: 750;
-        letter-spacing: -.02em;
-        color: #334155;
-        opacity: .9;
+
+    &::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+
+        background: linear-gradient(
+                180deg,
+                rgba(255,255,255,0.18) 0%,
+                rgba(255,255,255,0.06) 36%,
+                rgba(255,255,255,0) 100%
+        );
+        transition: opacity 180ms ease;
     }
-    .kpi-value {
-        font-size: 36px;
-        font-weight: 900;
-        letter-spacing: -.02em;
-        color: #0f172a;
+
+    .kpi-body,
+    .kpi-icon {
+        position: relative;
+        z-index: 1;
     }
-    .kpi-sub {
-        font-size: 12px;
-        font-weight: 400;
-        color: ${UI.color.muted};
-    }
+
+    .kpi-body { display: grid; gap: 6px; }
+    .kpi-label { font-size: 12px; font-weight: 750; letter-spacing: -0.02em; color: #334155; opacity: 0.92; }
+    .kpi-value { font-size: 36px; font-weight: 900; letter-spacing: -0.02em; color: #0f172a; display: inline-flex; align-items: baseline; gap: 2px; }
+    .kpi-unit { font-size: 20px; font-weight: 750; letter-spacing: -0.02em; color: rgba(15, 23, 42, 0.72); transform: translateY(-2px); }
+    .kpi-sub { font-size: 12px; font-weight: 400; color: ${UI.color.muted}; letter-spacing: -0.02em; }
+
     .kpi-icon {
         width: 36px;
         height: 36px;
         border-radius: 12px;
         display: grid;
         place-items: center;
-        background: rgba(255,255,255,.78);
-        border: 1px solid rgba(255,255,255,.65);
-        box-shadow: inset 0 1px 0 rgba(255,255,255,.75);
+
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        box-shadow: 0 4px 10px rgba(15, 23, 42, 0.06);
+
+        transition: transform 180ms cubic-bezier(.2,.8,.2,1),
+        box-shadow 180ms ease,
+        background 180ms ease;
+
         svg {
             width: 18px;
             height: 18px;
+            transition: transform 180ms cubic-bezier(.2,.8,.2,1);
         }
+    }
+
+    &:hover {
+        transform: translateY(-3px);
+        border-color: rgba(15, 23, 42, 0.11);
+
+        box-shadow:
+                0 8px 22px rgba(15, 23, 42, 0.075),
+                0 1px 0 rgba(255,255,255,0.55) inset;
+
+        &::before { opacity: 0.80; transform: translateY(-1px); }
+        &::after { opacity: 0.92; }
+
+        .kpi-icon {
+            transform: translateY(-1px);
+
+            box-shadow: 0 8px 16px rgba(15, 23, 42, 0.075);
+
+            svg { transform: rotate(-6deg) scale(1.03); }
+        }
+    }
+
+    &:active {
+        transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.18), 0 10px 28px rgba(15, 23, 42, 0.10);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+        &::before, &::after { transition: none; }
+        .kpi-icon, .kpi-icon svg { transition: none; }
+        &:hover, &:active { transform: none; }
     }
 `;
 
-const Spark = styled.svg`
-    width: 100%;
-    height: 36px;
-`;
-
-function MiniTrend({
-                       points = "0,28 24,26 48,22 72,24 96,14 120,18 144,10"
-                   }: {
-    points?: string
-}) {
-    return (
-        <Spark viewBox="0 0 144 36" aria-hidden>
-            <polyline
-                fill="none"
-                stroke="rgba(62,99,224,.45)"
-                strokeWidth="2.5"
-                points={points}
-            />
-        </Spark>
-    );
-}
-
 const PaginationBar = styled.nav`
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    margin-top: 14px;
+    gap: 6px;
+    padding: 6px;
+`;
+
+const PagePill = styled.button<{ $active?: boolean }>`
+    height: 34px;
+    min-width: 34px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 0;
+
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+
+    color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
+    background: ${({ $active }) => ($active ? "#3E63E0" : "transparent")};
+
+    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+
+    &:hover {
+        background: ${({ $active }) => ($active ? "#3E63E0" : "rgba(255,255,255,0.85)")};
+        color: ${({ $active }) => ($active ? "#fff" : UI.color.text)};
+    }
+    &:active {
+        transform: translateY(1px);
+    }
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.22);
+    }
+`;
+
+const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
+  padding: 0 10px;
+  color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
+  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+
+  &:hover {
+    background: ${({ disabled }) => (disabled ? "transparent" : "rgba(255,255,255,0.85)")};
+    color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.color.text)};
+  }
+  &:active {
+    transform: ${({ disabled }) => (disabled ? "none" : "translateY(1px)")};
+  }
+`;
+
+const PaginationRow = styled.div`
+  width: 100%;
+  display: flex;
+  justify-content: center;
 `;
 
 function MiniAreaChart({
                            data = [1, 5, 3, 4, 2.8, 6.2, 4.8, 6.5],
                            labels,
-                           height = 96,
-                           pad = 10,
-                           stroke = UI.color.primaryStrong
-                       }: { data?: number[]; labels?: string[]; height?: number; pad?: number; stroke?: string }) {
+                           height = 150,
+                           valueUnit = "auto", // "auto" | "percent" | "count"
+                       }: {
+    data?: number[];
+    labels?: string[];
+    height?: number;
+    valueUnit?: "auto" | "percent" | "count";
+}) {
     const width = 320;
 
     const safeData = (() => {
@@ -506,138 +594,317 @@ function MiniAreaChart({
         if (data.length === 1) return [data[0], data[0]];
         return data;
     })();
-    const safeLabels = (() => {
-        if (!Array.isArray(labels)) return undefined;
-        if (labels.length === 0) return undefined;
-        if (labels.length === 1) return [labels[0], labels[0]];
-        return labels;
-    })();
 
-    // 상/하 여백을 따로 둬서 말풍선 여유 공간 확보
-    const padTop = pad + 22;      // ← 말풍선 높이만큼 상단 추가 여백
-    const padBottom = pad + 6;
+    const rawMin = Math.min(...safeData);
+    const rawMax = Math.max(...safeData);
 
-    const min = Math.min(...safeData);
-    const max = Math.max(...safeData);
-    const range = (max - min) || 1;
+    // % 성격이면 0~100
+    let yMin = rawMin;
+    let yMax = rawMax;
+    if (rawMax <= 100 && rawMin >= 0) {
+        yMin = 0;
+        yMax = 100;
+    }
+    const yRange = yMax - yMin || 1;
+
+    const padX = 14;
+    const padTop = 14;
+    const padBottom = 36;
+    const plotW = width - padX * 2;
+    const plotH = height - padTop - padBottom;
 
     const denom = Math.max(1, safeData.length - 1);
-    const x = (i: number) => pad + (i * (width - pad * 2)) / denom;
-    const y = (v: number) => {
-        const h = height - padTop - padBottom;
-        return padTop + h * (1 - (v - min) / range);
-    };
+    const x = (i: number) => padX + (i * plotW) / denom;
+    const y = (v: number) => padTop + plotH * (1 - (v - yMin) / yRange);
+    const yBase = padTop + plotH;
 
-    // Catmull-Rom → Bezier
+    // Catmull-Rom -> Bezier
     const toPath = () => {
-        const pts = safeData.map((v, i) => [x(i), y(v)]);
+        const pts = safeData.map((v, i) => [x(i), y(v)] as const);
         if (pts.length === 0) return "";
         let d = `M ${pts[0][0]} ${pts[0][1]}`;
         if (pts.length === 1) return d;
+
         for (let i = 0; i < pts.length - 1; i++) {
             const p0 = pts[i - 1] || pts[i];
             const p1 = pts[i];
             const p2 = pts[i + 1];
             const p3 = pts[i + 2] || p2;
+
             const cp1x = p1[0] + (p2[0] - p0[0]) / 6;
             const cp1y = p1[1] + (p2[1] - p0[1]) / 6;
             const cp2x = p2[0] - (p3[0] - p1[0]) / 6;
             const cp2y = p2[1] - (p3[1] - p1[1]) / 6;
+
             d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${p2[0]} ${p2[1]}`;
         }
         return d;
     };
 
-    // hover 포인트
+    const pathD = toPath();
+
+    const areaD = (() => {
+        const pts = safeData.map((v, i) => [x(i), y(v)] as const);
+        if (pts.length === 0) return "";
+        const firstX = pts[0][0];
+        const lastX = pts[pts.length - 1][0];
+        return `${pathD} L ${lastX} ${yBase} L ${firstX} ${yBase} Z`;
+    })();
+
     const [idx, setIdx] = React.useState<number | null>(null);
+    const handleLeave = () => setIdx(null);
+
+    // labels 안전 처리
+    const safeLabels =
+        Array.isArray(labels) && labels.length === safeData.length ? labels : undefined;
+
+    // tick 선택
+    const pickTickIdx = (n: number) => {
+        if (n <= 1) return [0];
+
+        // 7개 이하면 전부 표시 (최근 7일)
+        if (n <= 7) return Array.from({ length: n }, (_, i) => i);
+
+        // 8개 이상이면 기존처럼 적당히 줄이기
+        if (n <= 10) return [0, Math.floor((n - 1) / 2), n - 1];
+        return [0, Math.floor((n - 1) / 3), Math.floor(((n - 1) * 2) / 3), n - 1];
+    };
+
+    const tickIdx = pickTickIdx(safeData.length);
+
+    const fmtX = (s: string) => {
+        if (!s) return "";
+        // "YYYY-MM-DD" 또는 "MM-DD" 모두 대응
+        return s.replaceAll("-", "/");
+    };
+
+    // svg 실제 렌더 폭(px)
+    const svgRef = React.useRef<SVGSVGElement | null>(null);
+    const [wrapW, setWrapW] = React.useState<number>(width);
+
+    React.useLayoutEffect(() => {
+        const el = svgRef.current;
+        if (!el) return;
+
+        const update = () => {
+            const r = el.getBoundingClientRect();
+            setWrapW(r.width || width);
+        };
+
+        update();
+
+        if (typeof ResizeObserver === "undefined") {
+            window.addEventListener("resize", update);
+            return () => window.removeEventListener("resize", update);
+        }
+
+        const ro = new ResizeObserver(update);
+        ro.observe(el);
+        return () => ro.disconnect();
+    }, [width]);
+
+    // 마우스(px) -> viewBox 좌표 변환 후 nearest 계산
     const handleMove = (e: React.MouseEvent<SVGRectElement>) => {
-        const rect = (e.target as SVGRectElement).getBoundingClientRect();
+        const svg = svgRef.current;
+        if (!svg) return;
+
+        const rect = svg.getBoundingClientRect();
         const px = e.clientX - rect.left;
-        let nearest = 0, best = Infinity;
-        for (let i = 0; i < data.length; i++) {
-            const d = Math.abs(px - x(i));
-            if (d < best) { best = d; nearest = i; }
+        const ux = (px / rect.width) * width;
+
+        let nearest = 0;
+        let best = Infinity;
+        for (let i = 0; i < safeData.length; i++) {
+            const dist = Math.abs(ux - x(i));
+            if (dist < best) {
+                best = dist;
+                nearest = i;
+            }
         }
         setIdx(nearest);
     };
-    const handleLeave = () => setIdx(null);
 
-    const pathD = toPath();
-    const areaD = pathD
-        ? pathD + ` L ${x(safeData.length - 1)} ${height - padBottom} L ${x(0)} ${height - padBottom} Z`
-        : "";
+    const nearestTick = React.useMemo(() => {
+        if (idx === null) return null;
+        return tickIdx.reduce(
+            (bestK, curK) => (Math.abs(curK - idx) < Math.abs(bestK - idx) ? curK : bestK),
+            tickIdx[0]
+        );
+    }, [idx, tickIdx]);
 
-    // grid lines (padTop/Bottom 반영)
-    const gridRatios = [0.2, 0.5, 0.8];
-    const gridY = gridRatios.map(r => padTop + (height - padTop - padBottom) * r);
-
-    const i = Math.max(0, Math.min(idx ?? Math.floor(denom / 2), safeData.length - 1));
+    // 현재 포인트 계산
+    const i = Math.max(0, Math.min(idx ?? safeData.length - 1, safeData.length - 1));
     const cx = x(i);
     const cy = y(safeData[i]);
     const val = safeData[i];
-    const label = safeLabels?.[i];
+    const rounded = Number.isFinite(val) ? Math.round(val) : val;
 
-    // 위쪽에 가까우면 말풍선을 아래로 뒤집기
-    const flipDown = (cy - 28) < 0 || cy < padTop + 8;
+    const isPercent =
+        valueUnit === "percent" || (valueUnit === "auto" && rawMax <= 100 && rawMin >= 0);
+
+    // 0이면 그대로, 0이 아니면 % 붙이기
+    const tipText =
+        Number.isFinite(rounded) && isPercent && rounded !== 0
+            ? `${rounded}%`
+            : String(rounded);
+
+    const tipW = Math.max(44, 10 + tipText.length * 8);
+    const tipH = 24;
+
+    const TIP_EDGE_PAD = 6; // 툴팁과 차트 가장자리 간 최소 여백
+
+    const tipX = Math.max(
+        tipW / 2 + TIP_EDGE_PAD,
+        Math.min(cx, width - tipW / 2 - TIP_EDGE_PAD)
+    );
+    const tipY = Math.max(10, cy - 22);
+
+    const dense = safeData.length <= 7;
+    const EDGE_PAD = 10;
 
     return (
         <ChartWrap>
-            <svg viewBox={`0 0 ${width} ${height}`} width="100%" height={height} role="img" aria-label="성과 추세">
+            <svg
+                ref={svgRef}
+                viewBox={`0 0 ${width} ${height}`}
+                width="100%"
+                height={height}
+                role="img"
+                aria-label="성과 추세"
+                shapeRendering="geometricPrecision"
+            >
                 <defs>
-                    <linearGradient id="gLine" x1="0" y1="0" x2="0" y2="1">
+                    <linearGradient id="trendLine" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stopColor={UI.color.primaryStrong} />
-                        <stop offset="100%" stopColor={UI.color.primaryStrong} stopOpacity="0.75" />
+                        <stop offset="100%" stopColor={UI.color.primary} />
                     </linearGradient>
-                    <linearGradient id="gFill" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={UI.color.primary} stopOpacity="0.18" />
-                        <stop offset="100%" stopColor={UI.color.primaryStrong} stopOpacity="0.04" />
+
+                    <linearGradient id="trendFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={UI.color.primaryStrong} stopOpacity="0.18" />
+                        <stop offset="100%" stopColor={UI.color.primaryStrong} stopOpacity="0.02" />
                     </linearGradient>
-                    <filter id="soft" x="-20%" y="-50%" width="140%" height="200%">
-                        <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="b"/>
+
+                    <filter id="focusGlow" x="-30%" y="-30%" width="160%" height="160%">
+                        <feDropShadow dx="0" dy="0" stdDeviation="2.2" floodColor="#3E63E0" floodOpacity="0.28" />
+                        <feDropShadow dx="0" dy="6" stdDeviation="6" floodColor="#111827" floodOpacity="0.10" />
                     </filter>
                 </defs>
 
-                {gridY.map((gy, i) => (
-                    <line key={i} x1="0" x2={width} y1={gy} y2={gy} stroke="#e9eef7" strokeWidth="1" />
+                {[0.33, 0.66].map((r, gi) => (
+                    <line
+                        key={gi}
+                        x1={padX}
+                        x2={width - padX}
+                        y1={padTop + plotH * r}
+                        y2={padTop + plotH * r}
+                        stroke="rgba(17,24,39,0.06)"
+                        strokeWidth="1"
+                    />
                 ))}
 
-                <path d={areaD} fill="url(#gFill)" />
-                <path d={pathD} stroke="url(#gLine)" strokeWidth="2.5" fill="none" filter="url(#soft)" opacity=".55" />
-                <path d={pathD} stroke="url(#gLine)" strokeWidth="2.5" fill="none" />
+                <path d={areaD} fill="url(#trendFill)" />
 
-                {/* point + tooltip */}
-                <g>
-                    <circle cx={cx} cy={cy} r="4.5" fill="#fff" stroke={UI.color.primaryStrong} strokeWidth="2" />
-                    {flipDown ? (
-                        // 아래쪽 말풍선 (꼬리가 위를 향함)
-                        <g transform={`translate(${cx}, ${cy + 18})`}>
-                            <rect x={-12} y={-4} width="24" height="18" rx="6" fill="#fff" stroke="#e6eaf2" />
-                            <polygon points="-4,-4 0,-10 4,-4" fill="#fff" stroke="#e6eaf2" />
-                            <text x="0" y="9" textAnchor="middle" fontSize="12" fontWeight="750" fill={UI.color.text}>
-                                {val}
-                            </text>
-                            {label && (
-                                <text x="0" y="24" textAnchor="middle" fontSize="10" fill="#64748b">{label}</text>
-                            )}
-                        </g>
-                    ) : (
-                        // 위쪽 말풍선 (기존)
-                        <g transform={`translate(${cx}, ${cy - 18})`}>
-                            <rect x={-12} y={-16} width="24" height="18" rx="6" fill="#fff" stroke="#e6eaf2" />
-                            <polygon points="-4,2 0,8 4,2" fill="#fff" stroke="#e6eaf2" />
-                            <text x="0" y="-3" textAnchor="middle" fontSize="12" fontWeight="750" fill={UI.color.text}>
-                                {val}
-                            </text>
-                            {label && (
-                                <text x="0" y="-22" textAnchor="middle" fontSize="10" fill="#64748b">{label}</text>
-                            )}
-                        </g>
-                    )}
-                </g>
+                <path
+                    d={pathD}
+                    stroke="url(#trendLine)"
+                    strokeWidth="2.6"
+                    fill="none"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    filter="url(#softShadow)"
+                />
 
-                <rect x="0" y="0" width={width} height={height} fill="transparent"
-                      onMouseMove={handleMove} onMouseLeave={handleLeave} />
+                {idx !== null && (
+                    <>
+                        {/* 1) 툴팁까지 이어지는 세로 라인 (점 -> 툴팁 하단) */}
+                        <line
+                            x1={cx}
+                            x2={cx}
+                            y1={Math.min(cy + 6, tipY - tipH + 2)}
+                            y2={tipY - tipH + 2}
+                            stroke="rgba(62,99,224,0.55)"
+                            strokeWidth="1.6"
+                            strokeDasharray="0"
+                            strokeLinecap="round"
+                        />
+
+                        {/* 2) 점 -> x축까지 라인(기존 역할), 좀 더 선명한 점선 */}
+                        <line
+                            x1={cx}
+                            x2={cx}
+                            y1={cy + 6}
+                            y2={yBase}
+                            stroke="rgba(17,24,39,0.32)"
+                            strokeWidth="1.3"
+                            strokeDasharray="4 4"
+                            strokeLinecap="round"
+                        />
+                    </>
+                )}
+
+                {idx !== null && (
+                    <>
+                        {/* outer glow ring */}
+                        <circle
+                            cx={cx}
+                            cy={cy}
+                            r="7"
+                            fill="rgba(62,99,224,0.16)"
+                            filter="url(#focusGlow)"
+                        />
+                        {/* main point */}
+                        <circle
+                            cx={cx}
+                            cy={cy}
+                            r="5"
+                            fill="#ffffff"
+                            stroke={UI.color.primaryStrong}
+                            strokeWidth="2.4"
+                        />
+                    </>
+                )}
+
+                {idx !== null && (
+                    <g transform={`translate(${tipX}, ${tipY})`}>
+                        <rect x={-tipW / 2} y={-tipH} width={tipW} height={tipH} rx="8" fill="rgba(17,24,39,0.92)" />
+                        <text x="0" y={-8} textAnchor="middle" fontSize="12" fontWeight="800" fill="#fff">
+                            {tipText}
+                        </text>
+                    </g>
+                )}
+
+                <rect
+                    x="0"
+                    y="0"
+                    width={width}
+                    height={height}
+                    fill="transparent"
+                    onMouseMove={handleMove}
+                    onMouseLeave={handleLeave}
+                />
             </svg>
+
+            <XBadges>
+                {tickIdx.map((k, idxInTicks) => {
+                    const txt = fmtX(safeLabels?.[k] ?? "");
+                    const active = idx !== null && k === nearestTick;
+
+                    const rawX = (x(k) / width) * wrapW;
+
+                    const clampedX =
+                        idxInTicks === 0
+                            ? Math.max(rawX, EDGE_PAD)
+                            : idxInTicks === tickIdx.length - 1
+                                ? Math.min(rawX, wrapW - EDGE_PAD)
+                                : rawX;
+
+                    return (
+                        <XTick key={k} $x={clampedX} $active={active} $dense={dense}>
+                            {txt}
+                        </XTick>
+                    );
+                })}
+            </XBadges>
         </ChartWrap>
     );
 }
@@ -650,11 +917,11 @@ const PageBtn = styled.button<{ disabled?: boolean }>`
     border: 1px solid ${UI.color.line};
     background: #fff;
     font-weight: 750;
-    letter-spacing: -.01em;
-    color: ${p => p.disabled ? "#9aa4b2" : UI.color.text};
-    cursor: ${p => p.disabled ? "not-allowed" : "pointer"};
+    letter-spacing: -0.01em;
+    color: ${(p) => (p.disabled ? "#9aa4b2" : UI.color.text)};
+    cursor: ${(p) => (p.disabled ? "not-allowed" : "pointer")};
     &:hover {
-        background: ${p => p.disabled ? "#fff" : "#f7f9fc"};
+        background: ${(p) => (p.disabled ? "#fff" : "#f7f9fc")};
     }
 `;
 
@@ -669,7 +936,7 @@ const SegGroup = styled.div`
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid #e6eaf2;
-    box-shadow: 0 1px 0 rgba(0,0,0,.02);
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
 `;
 
 const Seg = styled.button`
@@ -677,14 +944,14 @@ const Seg = styled.button`
     padding: 0 14px;
     border: 0;
     font-weight: 750;
-    letter-spacing: -.02em;
+    letter-spacing: -0.02em;
     cursor: pointer;
 `;
 
 const SegGhost = styled(Seg)`
     background: #fff;
     color: #0f172a;
-    letter-spacing: -.02em;
+    letter-spacing: -0.02em;
     &:hover {
         background: #f7f9fc;
     }
@@ -692,10 +959,10 @@ const SegGhost = styled(Seg)`
 
 const SegPrimary = styled(Seg)`
     background: ${UI.color.primaryStrong};
-    letter-spacing: -.02em;
+    letter-spacing: -0.02em;
     color: #fff;
     &:hover {
-        filter: brightness(.96);
+        filter: brightness(0.96);
     }
 `;
 
@@ -703,15 +970,6 @@ const SegPrimary = styled(Seg)`
 const SideCard = styled(StatCard)`
     gap: 12px;
     min-height: 0;
-`;
-
-const SideScroll = styled.div`
-    display: grid;
-    grid-template-rows: max-content 1fr;
-    gap: 12px;
-    min-height: 0; /* 스크롤 동작 핵심 */
-    overflow: auto; /* 여기서 스크롤 */
-    padding-right: 2px; /* 스크롤바 여백 */
 `;
 
 /* ===== 최근 이력 Pager ===== */
@@ -722,7 +980,7 @@ const PagerBar = styled.div`
     gap: 8px;
     margin-top: 6px;
 `;
-const ArrowBtn = styled.button<{disabled?: boolean}>`
+const ArrowBtn = styled.button<{ disabled?: boolean }>`
     height: 30px;
     min-width: 30px;
     padding: 0 8px;
@@ -730,10 +988,12 @@ const ArrowBtn = styled.button<{disabled?: boolean}>`
     border: 1px solid ${UI.color.line};
     background: #fff;
     font-weight: 750;
-    letter-spacing: -.01em;
-    color: ${p => p.disabled ? "#9aa4b2" : UI.color.text};
-    cursor: ${p => p.disabled ? "not-allowed" : "pointer"};
-    &:hover { background: ${p => p.disabled ? "#fff" : "#f7f9fc"}; }
+    letter-spacing: -0.01em;
+    color: ${(p) => (p.disabled ? "#9aa4b2" : UI.color.text)};
+    cursor: ${(p) => (p.disabled ? "not-allowed" : "pointer")};
+    &:hover {
+        background: ${(p) => (p.disabled ? "#fff" : "#f7f9fc")};
+    }
 `;
 const PagerInfo = styled.span`
     color: ${UI.color.muted};
@@ -741,12 +1001,21 @@ const PagerInfo = styled.span`
     font-size: 12px;
 `;
 
+type Recent = {
+    when: string;
+    label: string;
+};
+
 function RecentPager({ recent, pageSize = 6 }: { recent: Recent[]; pageSize?: number }) {
     const [page, setPage] = React.useState(0);
     const totalPages = Math.max(1, Math.ceil((recent?.length || 0) / pageSize));
     const start = page * pageSize;
     const pageItems = recent.slice(start, start + pageSize);
-    React.useEffect(() => { if (page >= totalPages) setPage(Math.max(0, totalPages - 1)); }, [totalPages]);
+
+    React.useEffect(() => {
+        if (page >= totalPages) setPage(Math.max(0, totalPages - 1));
+    }, [totalPages]);
+
     return (
         <>
             <List>
@@ -760,11 +1029,21 @@ function RecentPager({ recent, pageSize = 6 }: { recent: Recent[]; pageSize?: nu
             </List>
             {recent.length > pageSize && (
                 <PagerBar>
-                    <ArrowBtn onClick={() => setPage(0)} disabled={page===0}>≪</ArrowBtn>
-                    <ArrowBtn onClick={() => setPage(p => Math.max(0, p-1))} disabled={page===0}>‹</ArrowBtn>
-                    <PagerInfo>{page+1} / {totalPages}</PagerInfo>
-                    <ArrowBtn onClick={() => setPage(p => Math.min(totalPages-1, p+1))} disabled={page>=totalPages-1}>›</ArrowBtn>
-                    <ArrowBtn onClick={() => setPage(totalPages-1)} disabled={page>=totalPages-1}>≫</ArrowBtn>
+                    <ArrowBtn onClick={() => setPage(0)} disabled={page === 0}>
+                        ≪
+                    </ArrowBtn>
+                    <ArrowBtn onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
+                        ‹
+                    </ArrowBtn>
+                    <PagerInfo>
+                        {page + 1} / {totalPages}
+                    </PagerInfo>
+                    <ArrowBtn onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
+                        ›
+                    </ArrowBtn>
+                    <ArrowBtn onClick={() => setPage(totalPages - 1)} disabled={page >= totalPages - 1}>
+                        ≫
+                    </ArrowBtn>
                 </PagerBar>
             )}
         </>
@@ -773,7 +1052,7 @@ function RecentPager({ recent, pageSize = 6 }: { recent: Recent[]; pageSize?: nu
 
 const SideTitle = styled.div`
     font-weight: 750;
-    letter-spacing: -.02em;
+    letter-spacing: -0.02em;
 `;
 
 const List = styled.ul`
@@ -793,7 +1072,6 @@ const Item = styled.li`
     font-size: 14px;
     color: ${UI.color.text};
 
-    /* 텍스트(왼쪽) */
     > span {
         line-height: 1.35;
         display: -webkit-box;
@@ -803,7 +1081,6 @@ const Item = styled.li`
         text-overflow: ellipsis;
     }
 
-    /* 날짜(오른쪽) */
     > small {
         color: ${UI.color.muted};
         white-space: nowrap;
@@ -813,9 +1090,13 @@ const Item = styled.li`
 `;
 
 const Quick = styled.button<{ $size?: "sm" | "md" }>`
-    /* CTA와 동일한 변수 */
-    --cta-h: 48px; --cta-px: 18px; --cta-fs: 16px; --cta-ic: 28px;
-    ${({ $size }) => $size === "sm" && `
+    --cta-h: 48px;
+    --cta-px: 18px;
+    --cta-fs: 16px;
+    --cta-ic: 28px;
+    ${({ $size }) =>
+            $size === "sm" &&
+            `
     --cta-h: 40px; --cta-px: 14px; --cta-fs: 14px; --cta-ic: 24px;
   `}
 
@@ -844,7 +1125,6 @@ const Quick = styled.button<{ $size?: "sm" | "md" }>`
     -webkit-tap-highlight-color: transparent;
     transition: transform 80ms ease;
 
-    /* 텍스트 말줄임 동일 처리 */
     & > strong {
         font-weight: 600;
         flex: 1 1 auto;
@@ -854,44 +1134,68 @@ const Quick = styled.button<{ $size?: "sm" | "md" }>`
         text-overflow: ellipsis;
     }
 
-    & > * { position: relative; z-index: 1; }
+    & > * {
+        position: relative;
+        z-index: 1;
+    }
 
-    /* hover 오버레이 */
     &::before {
         content: "";
-        position: absolute; inset: 0;
+        position: absolute;
+        inset: 0;
         background: #2c73e5;
         transform: scaleX(0);
         transform-origin: left center;
         transition: transform 260ms ease;
-        z-index: -1; pointer-events: none;
+        z-index: -1;
+        pointer-events: none;
     }
-    &:hover::before, &:focus-visible::before { transform: scaleX(1); }
+    &:hover::before,
+    &:focus-visible::before {
+        transform: scaleX(1);
+    }
 
-    &:active { transform: scale(0.98); }
-    &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.28); }
+    &:active {
+        transform: scale(0.98);
+    }
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(79, 118, 241, 0.28);
+    }
 
     @media (prefers-reduced-motion: reduce) {
-        &::before { transition: none; }
+        &::before {
+            transition: none;
+        }
     }
 `;
 
-/* CTA와 동일한 흰 원 아이콘 래퍼 */
 const QuickIcon = styled.span`
-  width: var(--cta-ic);
-  height: var(--cta-ic);
-  flex: 0 0 auto;
-  border-radius: 999px;
-  background: #ffffff;
-  display: inline-grid;
-  place-items: center;
+    width: var(--cta-ic);
+    height: var(--cta-ic);
+    flex: 0 0 auto;
+    border-radius: 999px;
+    background: #ffffff;
+    display: inline-grid;
+    place-items: center;
 
     color: ${UI.color?.primaryStrong ?? "#3E63E0"};
-    svg { width: 18px; height: 18px; }
-    svg *, svg path, svg polyline, svg line, svg circle {
+
+    svg {
+        width: 18px;
+        height: 18px;
+    }
+    svg *,
+    svg path,
+    svg polyline,
+    svg line,
+    svg circle {
         vector-effect: non-scaling-stroke;
-      }
-    svg path, svg polyline, svg line, svg circle {
+    }
+    svg path,
+    svg polyline,
+    svg line,
+    svg circle {
         stroke: currentColor;
         fill: none;
         stroke-width: 2;
@@ -902,15 +1206,118 @@ const QuickIcon = styled.span`
 
 const ChartWrap = styled.div`
     width: 100%;
-    height: 96px;
+    height: 150px;
     position: relative;
-    border-radius: ${UI.radius.md}px;
-    background:
-            radial-gradient(120% 120% at 0% 0%, rgba(62,99,224,.05) 0%, rgba(62,99,224,0) 60%),
-            linear-gradient(to bottom, #fff, #fbfcff);
-    border: 1px solid rgba(14,18,28,.06);
-    box-shadow: inset 0 1px 0 rgba(255,255,255,.6);
-    overflow: hidden;
+    border-radius: 14px;
+    background: transparent;
+    border: 0;
+    overflow: visible; /* 툴팁/글로우 잘릴 수 있어서 */
+`;
+
+const XBadges = styled.div`
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 10px;
+    height: 18px;
+    pointer-events: none;
+`;
+
+const XTick = styled.div<{ $active?: boolean; $x: number; $dense?: boolean }>`
+    position: absolute;
+    left: ${({ $x }) => $x}px;
+    transform: translateX(-50%);
+    bottom: 0px;
+
+    font-size: ${({ $dense }) => ($dense ? "10px" : "11px")};
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    padding: ${({ $dense }) => ($dense ? "2px 5px" : "2px 7px")};
+    border-radius: 999px;
+    white-space: nowrap;
+    line-height: 1;
+
+    color: ${({ $active }) => ($active ? UI.color.text : "rgba(17,24,39,0.70)")};
+    background: ${({ $active }) => ($active ? "rgba(17,24,39,0.08)" : "transparent")};
+`;
+
+const SpanRow = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+`;
+
+const SpanSelect = styled.select`
+    height: 34px;
+    padding: 0 34px 0 12px;
+    border-radius: 10px;
+    border: 1px solid #e6eaf2;
+    background: #fff url("data:image/svg+xml,...") no-repeat calc(100% - 10px) 50%;
+    appearance: none;
+    font-weight: 750;
+    letter-spacing: -0.01em;
+    color: ${UI.color.text};
+    cursor: pointer;
+
+    &:focus {
+        outline: none;
+        border-color: ${UI.color.primaryStrong};
+        box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.16);
+    }
+`;
+
+const SideHeader = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+`;
+
+const RangeTabs = styled.div.attrs({ role: "tablist" })`
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
+`;
+
+const RangeTab = styled.button<{ $active?: boolean }>`
+    height: 26px;
+    padding: 0 10px;
+    border-radius: 999px;
+    border: 0;
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 750;
+    letter-spacing: -0.02em;
+
+    color: ${({ $active }) => ($active ? "#0f172a" : "rgba(15,23,42,0.55)")};
+    background: ${({ $active }) => ($active ? "#ffffff" : "transparent")};
+    box-shadow: ${({ $active }) => ($active ? "0 1px 2px rgba(15,23,42,0.10)" : "none")};
+
+    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+
+    &:hover {
+        color: #0f172a;
+        background: ${({ $active }) => ($active ? "#ffffff" : "rgba(255,255,255,0.65)")};
+    }
+    &:active {
+        transform: translateY(1px);
+    }
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.16);
+    }
+`;
+
+const SpanSelectCompact = styled(SpanSelect)`
+    height: 30px;
+    padding: 0 30px 0 10px;
+    border-radius: 10px;
+    font-size: 13px;
 `;
 
 /* ===== 타입 ===== */
@@ -932,11 +1339,6 @@ type Summary = {
     retryRate: number;
 };
 
-type Recent = {
-    when: string;
-    label: string;
-};
-
 type TrendPoint = { date: string; value: number };
 type TrendResponse = { metric: "accuracy" | "sets" | "retryRate"; span: string; points: TrendPoint[] };
 
@@ -955,16 +1357,12 @@ function labelOf(p: PartType) {
 }
 
 /* ===== API 정규화 ===== */
-async function fetchTimeline(params: {
-    q?: string;
-    type?: PartType | "ALL";
-    page: number;
-    size: number;
-}) {
+async function fetchTimeline(params: { q?: string; type?: PartType | "ALL"; page: number; size: number }) {
     const { q, type, page, size } = params;
     const headers = { ...authHeader() };
     const p: any = { q, page, size };
     if (type && type !== "ALL") p.type = type;
+
     const { data } = await http.get("/me/quiz/timeline", { params: p, headers });
 
     const s: Summary = {
@@ -1003,8 +1401,9 @@ async function fetchTrend(params: { metric: "accuracy" | "sets" | "retryRate"; s
         params: { metric: params.metric, span: params.span ?? "30d" },
         headers,
     });
+
     const points: TrendPoint[] = Array.isArray(data?.points)
-        ? data.points.map(p => ({ date: String(p.date), value: Number(p.value ?? 0) }))
+        ? data.points.map((p) => ({ date: String(p.date), value: Number(p.value ?? 0) }))
         : [];
     return { ...data, points };
 }
@@ -1019,7 +1418,8 @@ async function fetchTotalSetsFallback(span = "365d") {
     const headers = { ...authHeader() };
     const { data } = await http.get("/me/quiz/metrics", {
         params: { metric: "sets", span },
-        headers, withCredentials: true
+        headers,
+        withCredentials: true,
     });
     const points = Array.isArray(data?.points) ? data.points : [];
     return points.reduce((sum, p) => sum + (Number.isFinite(+p.value) ? +p.value : 0), 0);
@@ -1030,6 +1430,30 @@ export default function QuizTimelinePage() {
     const nav = useNavigate();
     const location = useLocation();
 
+    const Reveal = styled.div<{ $d?: number }>`
+        ${({ $d = 0 }) => stagger($d)}
+    `;
+
+    const handleRetryAll = React.useCallback(
+        async (sessionId: number | string) => {
+            try {
+                const { data } = await http.post(`/me/quiz/sessions/${sessionId}/retry`, null, {
+                    headers: authHeader(),
+                    withCredentials: true,
+                });
+
+                const newSid = Number(data?.sessionId ?? data?.newSessionId ?? data?.id);
+                if (!Number.isFinite(newSid)) throw new Error("Invalid new sessionId");
+
+                nav(`/poten-word/quiz/play?sessionId=${newSid}`);
+            } catch (e) {
+                console.error("[retryAll] failed", e);
+                alert("재도전을 시작하지 못했어요. 잠시 후 다시 시도해주세요.");
+            }
+        },
+        [nav]
+    );
+
     React.useEffect(() => {
         const loggedIn = !!localStorage.getItem("isLoggedIn");
         if (!loggedIn) goToAccountLogin(location.pathname + location.search);
@@ -1038,12 +1462,9 @@ export default function QuizTimelinePage() {
     const [q, setQ] = React.useState("");
     const [type, setType] = React.useState<PartType | "ALL">("ALL");
     const [page, setPage] = React.useState(0);
-    const [perPage] = React.useState(10);
-    const [summary, setSummary] = React.useState<Summary>({
-        totalSets: 0,
-        accuracy: 0,
-        retryRate: 0
-    });
+    const [perPage] = React.useState(5);
+
+    const [summary, setSummary] = React.useState<Summary>({ totalSets: 0, accuracy: 0, retryRate: 0 });
     const [items, setItems] = React.useState<TimelineItem[]>([]);
     const [recent, setRecent] = React.useState<Recent[]>([]);
     const [total, setTotal] = React.useState(0);
@@ -1054,17 +1475,19 @@ export default function QuizTimelinePage() {
         (async () => {
             try {
                 const n = await fetchTotalSets();
-                if (!cancel) setSummary(s => ({ ...s, totalSets: n }));
+                if (!cancel) setSummary((s) => ({ ...s, totalSets: n }));
             } catch (e1) {
                 try {
                     const n = await fetchTotalSetsFallback("365d");
-                    if (!cancel) setSummary(s => ({ ...s, totalSets: n }));
+                    if (!cancel) setSummary((s) => ({ ...s, totalSets: n }));
                 } catch (e2) {
                     console.warn("[totalSets] both fetches failed", e1, e2);
                 }
             }
         })();
-        return () => { cancel = true; };
+        return () => {
+            cancel = true;
+        };
     }, []);
 
     React.useEffect(() => {
@@ -1075,12 +1498,15 @@ export default function QuizTimelinePage() {
             try {
                 const res = await fetchTimeline({ q: q.trim() || undefined, type, page, size: perPage });
                 if (cancel) return;
-                setSummary(s => ({ ...s, accuracy: res.summary.accuracy, retryRate: res.summary.retryRate }));
+                setSummary((s) => ({ ...s, accuracy: res.summary.accuracy, retryRate: res.summary.retryRate }));
                 setItems(res.items);
                 setRecent(res.recent);
                 setTotal(res.total);
             } catch (e) {
-                if (!cancel) { setItems([]); setTotal(0); }
+                if (!cancel) {
+                    setItems([]);
+                    setTotal(0);
+                }
                 console.warn("[timeline] fetch failed", e);
             } finally {
                 if (!cancel) setLoading(false);
@@ -1088,12 +1514,32 @@ export default function QuizTimelinePage() {
         };
 
         const t = setTimeout(run, 200);
-        return () => { cancel = true; clearTimeout(t); };
+        return () => {
+            cancel = true;
+            clearTimeout(t);
+        };
     }, [q, type, page, perPage]);
 
     const pages = Math.max(1, Math.ceil((total || 0) / perPage));
 
-    const [metric, setMetric] = React.useState<"accuracy" | "sets" | "retryRate">("accuracy");
+    const getPageWindow = (page: number, pages: number, windowSize = 5) => {
+        if (pages <= windowSize) return Array.from({ length: pages }, (_, i) => i);
+
+        let start = Math.max(0, page - Math.floor(windowSize / 2));
+        let end = start + windowSize - 1;
+
+        if (end > pages - 1) {
+            end = pages - 1;
+            start = end - (windowSize - 1);
+        }
+
+        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    };
+
+    const pageWindow = React.useMemo(() => getPageWindow(page, pages, 5), [page, pages]);
+
+    const [metric] = React.useState<"accuracy" | "sets" | "retryRate">("accuracy");
+    const [span, setSpan] = React.useState<"7d" | "30d">("7d");
     const [trend, setTrend] = React.useState<TrendPoint[]>([]);
     const [trendLoading, setTrendLoading] = React.useState(false);
 
@@ -1102,7 +1548,7 @@ export default function QuizTimelinePage() {
         const run = async () => {
             setTrendLoading(true);
             try {
-                const res = await fetchTrend({ metric, span: "30d" });
+                const res = await fetchTrend({ metric, span });
                 if (!cancel) setTrend(res.points);
             } catch (e) {
                 if (!cancel) setTrend([]);
@@ -1112,228 +1558,302 @@ export default function QuizTimelinePage() {
             }
         };
         run();
-        return () => { cancel = true; };
-    }, [metric]);
+        return () => {
+            cancel = true;
+        };
+    }, [metric, span]);
 
     return (
         <NarrowLeft style={{ padding: "8px 0 24px" }}>
             {/* 상단 */}
-            <Toolbar>
-                <TitleRow>
-                    <Title>나의 퀴즈 타임라인(Quiz Timeline)</Title>
-                </TitleRow>
-            </Toolbar>
+            <Reveal $d={0}>
+                <Toolbar>
+                    <TitleRow>
+                        <Title>나의 퀴즈 타임라인</Title>
+                    </TitleRow>
+                </Toolbar>
+            </Reveal>
 
             <Screen>
                 <LeftCol>
                     {/* 1) 통계 카드 */}
                     <KPIGrid>
-                        {/* 완료 세트 */}
-                        <KPICard $from="#D8E7FF" $to="#CFE0FF" style={{ borderColor: "rgba(62,99,224,.20)" }}>
-                            <div className="kpi-body">
-                                <div className="kpi-label">완료 세트</div>
-                                <div className="kpi-value">{summary.totalSets}</div>
-                                <div className="kpi-sub">누적 집계</div>
-                            </div>
-                            <div className="kpi-icon" aria-hidden>
-                                <svg viewBox="0 0 24 24" fill="none">
-                                    <path d="M4 12l4 4 12-12" stroke="#6F5DE6" strokeWidth="2" strokeLinecap="round" />
-                                </svg>
-                            </div>
-                        </KPICard>
+                        <Reveal $d={80}>
+                            {/* 완료 세트 */}
+                            <KPICard $from="#D8E7FF" $to="#CFE0FF" style={{ borderColor: "rgba(62,99,224,.20)" }}>
+                                <div className="kpi-body">
+                                    <div className="kpi-label">완료 세트</div>
+                                    <div className="kpi-value">
+                                        {summary.totalSets}
+                                        <span className="kpi-unit">개</span>
+                                    </div>
+                                    <div className="kpi-sub">누적 집계</div>
+                                </div>
+                                <div className="kpi-icon" aria-hidden>
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        {/* list lines */}
+                                        <path d="M10 6h10" stroke="#3E63E0" strokeWidth="2" strokeLinecap="round" />
+                                        <path d="M10 12h10" stroke="#3E63E0" strokeWidth="2" strokeLinecap="round" opacity="0.9" />
+                                        <path d="M10 18h10" stroke="#3E63E0" strokeWidth="2" strokeLinecap="round" opacity="0.8" />
+                                        {/* check */}
+                                        <path d="M4.5 12l2.2 2.2L9.8 9.2" stroke="#3E63E0" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
+                                    </svg>
+                                </div>
+                            </KPICard>
+                        </Reveal>
 
-                        {/* 정답률 */}
-                        <KPICard $from="#E8E3FF" $to="#E1DAFF" style={{ borderColor: "rgba(139,124,246,.24)" }}>
-                            <div className="kpi-body">
-                                <div className="kpi-label">정답률</div>
-                                <div className="kpi-value">{Math.round(summary.accuracy)}%</div>
-                                <div className="kpi-sub">전체 평균</div>
-                            </div>
-                            <div className="kpi-icon" aria-hidden>
-                                <svg viewBox="0 0 24 24" fill="none">
-                                    <path d="M4 12l4 4 12-12"
-                                          stroke="#6F5DE6" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
-                                </svg>
-                            </div>
-                        </KPICard>
+                        <Reveal $d={160}>
+                            {/* 정답률 */}
+                            <KPICard $from="#E8E3FF" $to="#E1DAFF" style={{ borderColor: "rgba(139,124,246,.24)" }}>
+                                <div className="kpi-body">
+                                    <div className="kpi-label">정답률</div>
+                                    <div className="kpi-value">
+                                        {Math.round(summary.accuracy)}
+                                        <span className="kpi-unit">%</span>
+                                    </div>
+                                    <div className="kpi-sub">전체 평균</div>
+                                </div>
 
-                        {/* 재도전율 */}
-                        <KPICard $from="#D8F0E7" $to="#E4F8EF" style={{ borderColor: "rgba(16,185,129,.22)" }}>
-                            <div className="kpi-body">
-                                <div className="kpi-label">재도전율</div>
-                                <div className="kpi-value">{Math.round(summary.retryRate)}%</div>
-                                <div className="kpi-sub">최근 세션 기준</div>
-                            </div>
-                            <div className="kpi-icon" aria-hidden>
-                                <svg viewBox="0 0 24 24" fill="none">
-                                    <path d="M12 5v6l4 2"
-                                          stroke="#0EA37E" strokeWidth="2.2" strokeLinecap="round" fill="none"/>
-                                </svg>
-                            </div>
-                        </KPICard>
+                                <div className="kpi-icon" aria-hidden>
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        {/* outer ring */}
+                                        <circle
+                                            cx="12"
+                                            cy="12"
+                                            r="8"
+                                            stroke="#6F5DE6"
+                                            strokeWidth="2.0"
+                                            opacity="0.9"
+                                        />
+                                        {/* middle ring */}
+                                        <circle
+                                            cx="12"
+                                            cy="12"
+                                            r="5"
+                                            stroke="#6F5DE6"
+                                            strokeWidth="2.2"
+                                            opacity="0.65"
+                                        />
+                                        {/* crosshair */}
+                                        <path
+                                            d="M12 4v3.2M12 16.8V20M4 12h3.2M16.8 12H20"
+                                            stroke="#6F5DE6"
+                                            strokeWidth="2.2"
+                                            strokeLinecap="round"
+                                            opacity="0.9"
+                                        />
+                                        {/* bullseye */}
+                                        <circle cx="12" cy="12" r="1.6" fill="#6F5DE6" />
+                                    </svg>
+                                </div>
+                            </KPICard>
+                        </Reveal>
+
+                        <Reveal $d={240}>
+                            {/* 재도전율 */}
+                            <KPICard $from="#D8F0E7" $to="#E4F8EF" style={{ borderColor: "rgba(16,185,129,.22)" }}>
+                                <div className="kpi-body">
+                                    <div className="kpi-label">재도전율</div>
+                                    <div className="kpi-value">
+                                        {Math.round(summary.retryRate)}
+                                        <span className="kpi-unit">%</span>
+                                    </div>
+                                    <div className="kpi-sub">최근 세션 기준</div>
+                                </div>
+                                <div className="kpi-icon" aria-hidden>
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                        <path d="M12 5v6l4 2" stroke="#0EA37E" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+                                    </svg>
+                                </div>
+                            </KPICard>
+                        </Reveal>
                     </KPIGrid>
 
                     {/* 2) 필터 */}
-                    <FilterBar>
-                        {[
-                            { key: "ALL", label: "전체" },
-                            { key: "CHOICE", label: "객관식" },
-                            { key: "OX", label: "OX" },
-                            { key: "INITIALS", label: "초성" },
-                        ].map((f: any) => (
-                            <Chip
-                                key={f.key}
-                                onClick={() => {
-                                    setType(f.key);
-                                    setPage(0);
-                                }}
-                                $active={type === f.key as any}
-                                aria-pressed={type === f.key as any}
-                                role="tab"
-                            >
-                                {f.label}
-                            </Chip>
-                        ))}
-                    </FilterBar>
+                    <Reveal $d={320}>
+                        <FilterBar>
+                            {[
+                                { key: "ALL", label: "전체" },
+                                { key: "CHOICE", label: "객관식" },
+                                { key: "OX", label: "OX" },
+                                { key: "INITIALS", label: "초성" },
+                            ].map((f: any) => (
+                                <Chip
+                                    key={f.key}
+                                    onClick={() => {
+                                        setType(f.key);
+                                        setPage(0);
+                                    }}
+                                    $active={type === (f.key as any)}
+                                    aria-pressed={type === (f.key as any)}
+                                    role="tab"
+                                >
+                                    {f.label}
+                                </Chip>
+                            ))}
+                        </FilterBar>
+                    </Reveal>
 
                     {/* 3) 타임라인 리스트 */}
-                    <TimelinePanel role="list" aria-label="퀴즈 타임라인 목록">
-                        {items.length === 0 && (
-                            <div style={{ padding: "28px", color: UI.color.muted }}>
-                                {loading ? "불러오는 중..." : "표시할 타임라인이 없어요."}
-                            </div>
-                        )}
-                        {items.map((it) => (
-                            <Row key={it.id} role="listitem">
-                                {/* 왼쪽: 제목 */}
-                                <TitleStack>
-                                    <QuizTitle>
-                                        [{it.category || labelOf(it.partType)}] {fmtDate(it.date)} {it.title}
-                                    </QuizTitle>
-                                    <div>
-                                        <LightPill onClick={() => nav("/quiz/today")}>
-                                            {it.category ? it.category : "오늘의 퀴즈"}
-                                        </LightPill>
-                                    </div>
-                                </TitleStack>
+                    <Reveal $d={400}>
+                        <TimelinePanel role="list" aria-label="퀴즈 타임라인 목록">
+                            {items.length === 0 && (
+                                <div style={{ padding: "28px", color: UI.color.muted }}>{loading ? "불러오는 중..." : "표시할 타임라인이 없어요."}</div>
+                            )}
+                            {items.map((it) => (
+                                <Row key={it.id} role="listitem">
+                                    {/* 왼쪽: 제목 */}
+                                    <TitleStack>
+                                        <QuizTitle>
+                                            [{it.category || labelOf(it.partType)}] {fmtDate(it.date)} {it.title}
+                                        </QuizTitle>
+                                        <div>
+                                            <LightPill onClick={() => nav("/quiz/today")}>{it.category ? it.category : "오늘의 퀴즈"}</LightPill>
+                                        </div>
+                                    </TitleStack>
 
-                                {/* 오른쪽: 도넛 + 버튼 */}
-                                <ActionBar>
-                                    <DonutWrap>
-                                        <Donut value={it.correct} total={it.total} />
-                                    </DonutWrap>
-                                    <SegGroup>
-                                        <SegGhost onClick={() => nav(`/quiz/result/${it.id}`)}>결과 보기</SegGhost>
-                                        <SegPrimary onClick={() => nav(`/quiz/retry/${it.id}`)}>재도전</SegPrimary>
-                                    </SegGroup>
-                                </ActionBar>
-                            </Row>
-                        ))}
-                    </TimelinePanel>
-
-                    {/* 페이징 */}
-                    {items.length > 0 && (
-                        <PaginationBar aria-label="타임라인 페이지 이동">
-                            <PageBtn
-                                onClick={() => setPage(0)}
-                                disabled={page === 0}
-                            >
-                                ≪
-                            </PageBtn>
-                            <PageBtn
-                                onClick={() => setPage(p => Math.max(0, p - 1))}
-                                disabled={page === 0}
-                            >
-                                ‹ 이전
-                            </PageBtn>
-                            <PageInfo>페이지 {page + 1} / {pages}</PageInfo>
-                            <PageBtn
-                                onClick={() => setPage(p => Math.min(pages - 1, p + 1))}
-                                disabled={page >= pages - 1}
-                            >
-                                다음 ›
-                            </PageBtn>
-                            <PageBtn
-                                onClick={() => setPage(pages - 1)}
-                                disabled={page >= pages - 1}
-                            >
-                                ≫
-                            </PageBtn>
-                        </PaginationBar>
-                    )}
+                                    {/* 오른쪽: 도넛 + 버튼 */}
+                                    <ActionBar>
+                                        <DonutWrap>
+                                            <Donut value={it.correct} total={it.total} />
+                                        </DonutWrap>
+                                        <SegGroup>
+                                            <SegGhost
+                                                onClick={() =>
+                                                    nav(`/poten-word/quiz/play/result/${it.id}`, {
+                                                        state: { backTo: location.pathname + location.search },
+                                                    })
+                                                }
+                                            >
+                                                결과 보기
+                                            </SegGhost>
+                                            <SegPrimary onClick={() => handleRetryAll(it.id)}>재도전</SegPrimary>
+                                        </SegGroup>
+                                    </ActionBar>
+                                </Row>
+                            ))}
+                        </TimelinePanel>
+                    </Reveal>
                 </LeftCol>
 
                 {/* 오른쪽 사이드 */}
                 <RightCol>
-                    {/* 검색 카드: 최근 이력 카드와 동일한 위치·폭 */}
-                    <SearchCard>
-                        <SearchLabel>세트/카테고리 검색</SearchLabel>
-                        <SearchInput
-                            placeholder="세트/카테고리 검색"
-                            value={q}
-                            onChange={(e) => {
-                                setQ(e.target.value);
-                                setPage(0);
-                            }}
-                        />
-                    </SearchCard>
-
-                    {/* 성과 대시보드: 자연 높이 유지 (왜곡 방지) */}
-                    <SideCard>
-                        <SideTitle>성과 대시보드</SideTitle>
-                        <div style={{ display: "flex", gap: 6, marginTop: 2, flexWrap: "wrap" }}>
-                            {[
-                                { k: "accuracy", label: "정답률(%)" },
-                                { k: "sets", label: "세트 수" },
-                                { k: "retryRate", label: "재도전율(%)" },
-                            ].map(btn => (
-                                <button
-                                    key={btn.k}
-                                    onClick={() => setMetric(btn.k as any)}
-                                    style={{
-                                        height: 30, padding: "0 10px", borderRadius: 8,
-                                        border: "1px solid #e6eaf2",
-                                        background: metric === btn.k ? UI.color.primaryStrong : "#fff",
-                                        color: metric === btn.k ? "#fff" : UI.color.text,
-                                        fontWeight: 750, letterSpacing: "-.01em", cursor: "pointer"
-                                    }}
-                                    aria-pressed={metric === btn.k}
-                                >
-                                    {btn.label}
-                                </button>
-                            ))}
-                        </div>
-                        <div style={{ marginTop: 8 }}>
-                            <MiniAreaChart
-                                data={(trend.length ? trend.map(p => p.value) : [])}
-                                labels={(trend.length ? trend.map(p => p.date.slice(5)) : [])}
+                    <Reveal $d={200}>
+                        <SearchCard>
+                            <SearchLabel>세트/카테고리 검색</SearchLabel>
+                            <SearchInput
+                                placeholder="찾고 싶은 퀴즈 이름을 입력하세요."
+                                value={q}
+                                onChange={(e) => {
+                                    setQ(e.target.value);
+                                    setPage(0);
+                                }}
                             />
-                        </div>
-                        <div style={{ color: UI.color.muted, fontSize: 13 }}>
-                            최근 30일 추이 {trendLoading ? "(불러오는 중…)" : ""}
-                        </div>
-                    </SideCard>
+                        </SearchCard>
+                    </Reveal>
 
-                    <SideCard>
-                        <SideTitle>빠른 재도전</SideTitle>
-                        <Quick onClick={() => nav("/quiz/quick-retry")} aria-label="오답만 다시 풀기">
-                            <strong>오답만 다시 풀기</strong>
-                            <QuickIcon aria-hidden>
-                                <svg viewBox="0 0 24 24" aria-hidden="true">
-                                    <path d="M20 12a8 8 0 1 1-2.34-5.66" />
-                                    <polyline points="20 4 20 10 14 10" />
-                                </svg>
-                            </QuickIcon>
-                        </Quick>
-                    </SideCard>
+                    <Reveal $d={280}>
+                        <SideCard>
+                            <SideHeader>
+                                <SideTitle>성과 대시보드</SideTitle>
+                                <RangeTabs aria-label="기간 선택">
+                                    {[
+                                        { key: "30d", label: "MONTH" },
+                                        { key: "7d", label: "WEEK" },
+                                    ].map((t) => (
+                                        <RangeTab
+                                            key={t.key}
+                                            role="tab"
+                                            aria-selected={span === (t.key as any)}
+                                            $active={span === (t.key as any)}
+                                            onClick={() => setSpan(t.key as any)}
+                                            type="button"
+                                        >
+                                            {t.label}
+                                        </RangeTab>
+                                    ))}
+                                </RangeTabs>
+                            </SideHeader>
 
-                    {/* 최근 이력: 버튼으로 넘기는 Pager */}
-                    <SideCard>
-                        <SideTitle>최근 이력</SideTitle>
-                        <RecentPager recent={recent} />
-                    </SideCard>
+                            <div style={{ marginTop: 8 }}>
+                                <MiniAreaChart
+                                    height={150}
+                                    data={trend.length ? trend.map((p) => p.value) : []}
+                                    labels={trend.length ? trend.map((p) => p.date.slice(5)) : []}
+                                    valueUnit="percent"
+                                />
+                            </div>
+
+                            <div style={{ color: UI.color.text, fontSize: 13, letterSpacing: -0.02 }}>
+                                최근 {span === "7d" ? "7일" : "30일"} 추이 {trendLoading ? "(불러오는 중…)" : ""}
+                            </div>
+                        </SideCard>
+                    </Reveal>
+
+                    <Reveal $d={360}>
+                        <SideCard>
+                            <SideTitle>빠른 재도전</SideTitle>
+                            <Quick onClick={() => nav("/quiz/quick-retry")} aria-label="오답만 다시 풀기">
+                                <strong>오답만 다시 풀기</strong>
+                                <QuickIcon aria-hidden>
+                                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                                        <path d="M20 12a8 8 0 1 1-2.34-5.66" />
+                                        <polyline points="20 4 20 10 14 10" />
+                                    </svg>
+                                </QuickIcon>
+                            </Quick>
+                        </SideCard>
+                    </Reveal>
+
+                    <Reveal $d={440}>
+                        <SideCard>
+                            <SideTitle>최근 이력</SideTitle>
+                            <RecentPager recent={recent} />
+                        </SideCard>
+                    </Reveal>
                 </RightCol>
             </Screen>
+            {/* 페이징 */}
+            {items.length > 0 && pages > 1 && (
+                <Reveal $d={480}>
+                    <BottomGrid>
+                        <PaginationRow>
+                            <PaginationBar aria-label="타임라인 페이지 이동">
+                                <PageNavBtn
+                                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                                    disabled={page === 0}
+                                    aria-label="이전 페이지"
+                                    type="button"
+                                >
+                                    ‹
+                                </PageNavBtn>
+
+                                {pageWindow.map((p) => (
+                                    <PagePill
+                                        key={p}
+                                        $active={p === page}
+                                        onClick={() => setPage(p)}
+                                        aria-current={p === page ? "page" : undefined}
+                                        aria-label={`${p + 1}페이지`}
+                                        type="button"
+                                    >
+                                        {p + 1}
+                                    </PagePill>
+                                ))}
+
+                                <PageNavBtn
+                                    onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}
+                                    disabled={page >= pages - 1}
+                                    aria-label="다음 페이지"
+                                    type="button"
+                                >
+                                    ›
+                                </PageNavBtn>
+                            </PaginationBar>
+                        </PaginationRow>
+                    </BottomGrid>
+                </Reveal>
+            )}
         </NarrowLeft>
     );
 }
