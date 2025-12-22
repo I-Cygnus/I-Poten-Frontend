@@ -17,7 +17,7 @@
       <!-- 컨테이너 전체 -->
       <div :style="loginBoxStyle" @mouseenter="Object.assign(loginBoxStyle, loginBoxHoverStyle)" @mouseleave="loginBoxStyle.boxShadow = '0 10px 30px rgba(31, 38, 135, 0.4)'">
         <div style="display: flex; justify-content: center; height: 100px; margin-bottom: 30px" @click="goHome">
-          <img :src="logoBlack" :style="{ width: 'auto', height: '100%' }" alt="Logo" />
+          <img :src="logoBlack" :style="{ width: 'auto', height: '100%', marginLeft:'30px', marginBottom: '60px' }" alt="Logo" />
         </div>
 
 
@@ -158,7 +158,7 @@ import '../../../assets/tailwind.css'
 
 // 이미지/리소스
 
-import logoBlack from "@/assets/images/logo/jobspoonLOGO_black.png";
+import logoBlack from "@/assets/images/logo/Logo2.png";
 import kakaoBtn from '@/assets/images/fixed/btn_login_kakao.png'
 import googleBtn from '@/assets/images/fixed/btn_login_google.png'
 import naverBtn from '@/assets/images/fixed/btn_login_naver.png'
@@ -193,7 +193,7 @@ const hoverAdmin = ref(false)
 // 로그인 박스 스타일
 const loginBoxStyle = {
   width: '400px',
-  height: '600px',
+  height: '650px',
   paddingTop: '2.5rem',
   display: 'flex',
   flexDirection: 'column',
@@ -252,6 +252,7 @@ const titleStyle = {
   fontSize: '32px',
   fontWeight: 'bold',
   marginBottom: '0.5rem',
+  marginTop: '1.5rem',
   color: '#1f2937',
 }
 
