@@ -33,6 +33,7 @@ import SearchPage from "./pages/SearchPage.tsx";
 import TermListPage from "./pages/TermListPage.tsx";
 import PotenWordLandingPage from "./pages/PotenWordLandingPage.tsx";
 import ChoiceQuizPage from "./pages/QuizChoicePage.tsx";
+import QuizReviewPage from "./pages/QuizReviewPage.tsx";
 
 // notes 전용 로그인 가드(필요하면 라우트에 연결해서 사용)
 function NotesGuard() {
@@ -289,7 +290,9 @@ export default function App() {
 
                   {/* 일반 세트 플레이 */}
                   <Route path="play" element={<QuizPlayPage />} />
-                  <Route path="play/result" element={<QuizPlayResultPage />} />
+                  <Route path="play/review" element={<Navigate to="../quiz" replace />} />
+                  <Route path="review/:sessionId" element={<QuizReviewPage />} />
+                  <Route path="play/result/:sessionId" element={<QuizReviewPage />} />
 
                   {/* 오늘의 퀴즈 묶음: /quiz/daily/... */}
                   <Route path="daily">
@@ -302,7 +305,6 @@ export default function App() {
                   {/* 세트/세션 결과 */}
                   <Route path="result" element={<Navigate to="timeline" replace />} />
                   <Route path="result/:sessionId" element={<QuizResultRoute />} />
-                  <Route path="play/result/:sessionId" element={<QuizPlayResultPage />} />
 
                   {/* 타임라인 대시보드 */}
                   <Route path="timeline" element={<QuizTimelinePage />} />

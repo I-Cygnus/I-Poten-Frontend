@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { NarrowLeft } from "../styles/layout";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import SoftBlobsBackground from "../components/SoftBlobsBackground";
 import http, { authHeader } from "../utils/http";
 
@@ -82,7 +82,17 @@ const QTitle = styled.h2`
     color: ${UI.text};
     letter-spacing: -0.02em;
     line-height: 1.45;
-    em { font-style: normal; color: ${UI.danger}; font-weight: 750; }
+    text-align: left;
+
+    em {
+        font-style: normal;
+        color: ${UI.danger};
+        font-weight: 750;
+        text-decoration: underline;
+        text-decoration-color: ${UI.danger};
+        text-underline-offset: 3px;     /* 밑줄과 글자 간격 */
+        text-decoration-thickness: 2px; /* 밑줄 두께 */
+    }
 `;
 const QLine = styled.div`
     display: grid;
@@ -150,12 +160,14 @@ const Badge = styled.span<{ $tone: "ok" | "bad" }>`
 type SessionItem = {
     questionId: number;
     questionText: string;
-    choices: { id: number; text: string; isAnswer?: boolean }[];
+    explanation?: string | null;
+    choices: { id: number; text: string; isAnswer?: boolean | null }[];
 };
 
 /* ====== 유틸 ====== */
-const emphasizeNot = (text: string) =>
-    text.replace(/(않는|아닌|NOT)/gi, (m) => `<em>${m}</em>`);
+function emphasizeNot(text: string) {
+    return text.replace(/(않는|아닌)/g, (m) => `<em>${m}</em>`);
+}
 
 const idKey = (v: any): string | null => {
     if (v == null || v === "") return null;
@@ -180,12 +192,31 @@ const pickKey = (...cands: any[]) => {
 export default function QuizPlayResultPage() {
     const nav = useNavigate();
     const loc = useLocation();
+    const { sessionId: sessionIdParam } = useParams();
 
-    // QuizPlayPage에서 넘겨준 state 기대: { sessionId, title, summary, items, answers }
     const st = (loc.state as any) ?? {};
-    const title: string = st.title ?? "포텐퀴즈";
-    const sessionId: number | undefined = st.sessionId;
-    const items: SessionItem[] = st.items ?? [];
+    const backTo: string | undefined = st.backTo;
+
+    const sessionId: number | undefined = (() => {
+        const fromState = st.sessionId;
+        const fromParam = sessionIdParam;
+        const fromQs = new URLSearchParams(loc.search).get("sessionId");
+        const cand = [fromState, fromParam, fromQs].find(
+            (v) => v != null && String(v).trim() !== ""
+        );
+        const n = Number(cand);
+        return Number.isFinite(n) ? n : undefined;
+    })();
+
+    const [serverItems, setServerItems] = React.useState<SessionItem[] | null>(null);
+    const [serverTitle, setServerTitle] = React.useState<string | null>(null);
+
+    const title: string = st.title ?? serverTitle ?? "포텐퀴즈";
+    const items: SessionItem[] =
+        (Array.isArray(st.items) && st.items.length > 0)
+            ? st.items
+            : (serverItems ?? []);
+
     const answers: any[] = st.answers ?? [];
     const [summary, setSummary] = React.useState<any>(st.summary ?? null);
     const [reviewDetails, setReviewDetails] = React.useState<any[] | null>(null);
@@ -225,8 +256,8 @@ export default function QuizPlayResultPage() {
                 const res = await http.get(`/me/quiz/sessions/${sessionId}/review`, {
                     headers: { ...authHeader() }, withCredentials: true,
                 });
-                const reviewData = res?.data?.details ?? res?.data ?? [];
-                setReviewDetails(reviewData);
+                const reviewItems = res?.data?.items ?? res?.data?.details ?? [];
+                setReviewDetails(reviewItems);
             } catch {
                 // 리뷰 없으면 기존 데이터로만 렌더
             }
@@ -246,6 +277,126 @@ export default function QuizPlayResultPage() {
         ])
     );
 
+    function normalizeItems(payload: any): SessionItem[] {
+        const pickArr = (...xs: any[]) => xs.find(Array.isArray) as any[] | undefined;
+
+        const raw =
+            pickArr(
+                payload?.items,
+                payload?.questions,
+                payload?.quizQuestions,
+                payload?.sessionItems,
+                payload?.data?.items,
+                payload?.data?.questions,
+                payload?.data?.quizQuestions
+            ) ?? [];
+
+        const rawIsAnswer = c?.isAnswer ?? c?.answer ?? c?.correct;
+        const isAnswer = (rawIsAnswer === null || rawIsAnswer === undefined)
+            ? null
+            : Boolean(rawIsAnswer);
+
+        const out: SessionItem[] = [];
+
+        for (const x of raw) {
+            const q = x?.question ?? x?.quizQuestion ?? x;
+
+            const qid = Number(q?.questionId ?? q?.quizQuestionId ?? q?.id ?? x?.questionId ?? x?.quizQuestionId ?? x?.id);
+            if (!Number.isFinite(qid)) continue;
+
+            const qtext =
+                String(
+                    q?.questionText ??
+                    q?.text ??
+                    q?.title ??
+                    x?.questionText ??
+                    x?.text ??
+                    ""
+                ) || "(문항 텍스트 없음)";
+
+            const qExpl =
+                q?.explanation ??
+                q?.questionExplanation ??
+                x?.explanation ??
+                null;
+
+            const choicesRaw =
+                (Array.isArray(q?.choices) && q.choices) ||
+                (Array.isArray(q?.options) && q.options) ||
+                (Array.isArray(q?.quizChoices) && q.quizChoices) ||
+                (Array.isArray(x?.choices) && x.choices) ||
+                [];
+
+            const choices = (choicesRaw ?? [])
+                .map((c: any) => {
+                    const rawIsAnswer = c?.isAnswer ?? c?.answer ?? c?.correct;
+                    const isAnswer =
+                        rawIsAnswer === null || rawIsAnswer === undefined ? null : Boolean(rawIsAnswer);
+
+                    return {
+                        id: Number(c?.id ?? c?.choiceId ?? c?.quizChoiceId ?? c?.cid ?? c?.value),
+                        text: String(c?.text ?? c?.choiceText ?? c?.label ?? c?.content ?? ""),
+                        isAnswer,
+                    };
+                })
+                .filter((c: any) => Number.isFinite(c.id) && c.text);
+
+            out.push({ questionId: qid, questionText: qtext, explanation: qExpl, choices });
+        }
+
+        return out;
+    }
+
+    React.useEffect(() => {
+        let cancel = false;
+        if (!sessionId) return;
+
+        // state로 받은 items가 이미 있으면 굳이 안 불러도 됨
+        if (Array.isArray(st.items) && st.items.length > 0) return;
+
+        (async () => {
+            try {
+                // 1) 세션 상세(가능하면 questions+choices 포함)
+                const a = await http.get(`/me/quiz/sessions/${sessionId}`, {
+                    headers: { ...authHeader() },
+                    withCredentials: true,
+                });
+                const dataA = (a as any)?.data ?? a;
+
+                // 2) 리뷰 상세(혹시 여기에 문항/보기 들어오는 서버도 있어서 같이 시도)
+                let dataB: any = null;
+                try {
+                    const b = await http.get(`/me/quiz/sessions/${sessionId}/review`, {
+                        headers: { ...authHeader() },
+                        withCredentials: true,
+                    });
+                    dataB = (b as any)?.data ?? b;
+                } catch {
+                    // review 없으면 그냥 넘어감
+                }
+
+                if (cancel) return;
+
+                const t =
+                    dataA?.title ?? dataA?.setTitle ?? dataA?.quizSetTitle ??
+                    dataB?.title ?? dataB?.setTitle ?? dataB?.quizSetTitle;
+
+                if (t) setServerTitle(String(t));
+
+                const itemsA = normalizeItems(dataA);
+                const itemsB = normalizeItems(dataB);
+
+                const merged = (itemsA.length ? itemsA : itemsB);
+                if (merged.length) setServerItems(merged);
+            } catch {
+                // noop
+            }
+        })();
+
+        return () => { cancel = true; };
+    }, [sessionId]);
+
+
     // answers fallback (선택한 보기)
     const fallbackPickedMap = new Map<string, string>(
         (answers ?? []).map((a: any) => [
@@ -255,8 +406,13 @@ export default function QuizPlayResultPage() {
     );
 
     const prefix = loc.pathname.startsWith("/poten-word/") ? "/poten-word" : "";
+    const quizHome = `${prefix}/quiz`;
+    const quizPlay = `${quizHome}/play`;
 
-    const handleClose = () => nav(`${prefix}/poten-quiz`, { replace: true });
+    const handleClose = () => {
+        if (backTo) return nav(backTo, { replace: true });
+        return nav(quizHome, { replace: true });
+    };
 
     const handleRetryWrong = async () => {
         if (!sessionId || retrying) return;
@@ -275,7 +431,7 @@ export default function QuizPlayResultPage() {
 
             // 재도전은 같은 플레이 경로(목록 화면)로 돌려보내고 state로 sessionId 전달하거나
             // 네비게이션 단에서 sessionId 쿼리/상태 처리하도록 사용 중인 UX에 맞춰 수정 가능
-            nav(`${prefix}/poten-quiz`, {
+            nav(quizPlay, {
                 state: { sessionId: newSessionId, title, source: "retry" },
                 replace: true,
             });
@@ -372,6 +528,18 @@ export default function QuizPlayResultPage() {
                                                         );
                                                     })}
                                                 </Options>
+                                                {q.explanation && (
+                                                    <div style={{
+                                                        marginTop: 12,
+                                                        padding: 14,
+                                                        border: `1px solid ${UI.line}`,
+                                                        borderRadius: 14,
+                                                        background: "#fff"
+                                                    }}>
+                                                        <div style={{ fontWeight: 800, marginBottom: 6, color: UI.text }}>해설</div>
+                                                        <div style={{ lineHeight: 1.6, color: UI.sub }}>{q.explanation}</div>
+                                                    </div>
+                                                )}
                                             </li>
                                         );
                                     })}

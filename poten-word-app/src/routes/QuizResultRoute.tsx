@@ -1,5 +1,5 @@
 import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import QuizResultPage from "../pages/QuizResultPage";
 import { getSessionReport, getSessionSummary } from "../api/quiz";
 import { retryWrongOnly } from "../api/quizChoice";
@@ -18,6 +18,7 @@ export default function QuizResultRoute() {
     const nav = useNavigate();
     const location = useLocation();
     const { state } = location as { state?: ResultState };
+    const { sessionId: sessionIdParam } = useParams();
 
     const stored = React.useMemo<(OX | null)[] | null>(() => {
         try {
@@ -30,12 +31,13 @@ export default function QuizResultRoute() {
 
     const sessionId = React.useMemo(() => {
         const fromState = state?.sessionId;
+        const fromParam = sessionIdParam;
         const fromQs = new URLSearchParams(location.search).get("sessionId");
         const fromLs = localStorage.getItem(LS_KEY_LAST_SESSION);
-        const cand = [fromState, fromQs, fromLs].find((v) => v != null && String(v).trim() !== "");
+        const cand = [fromParam, fromState, fromQs, fromLs].find((v) => v != null && String(v).trim() !== "");
         const n = Number(cand);
         return Number.isFinite(n) ? n : undefined;
-    }, [state?.sessionId, location.search]);
+    }, [sessionIdParam, state?.sessionId, location.search]);
 
     const [serverProgress, setServerProgress] = React.useState<OX[] | null>(null);
 

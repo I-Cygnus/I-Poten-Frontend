@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useMemo} from "react";
 import styled from "styled-components";
 import { NarrowLeft } from "../styles/layout";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -78,7 +78,16 @@ const QTitle = styled.h2`
     letter-spacing: -0.02em;
     line-height: 1.45;
     text-align: left;
-    em { font-style: normal; color: ${UI.danger}; font-weight: 750; }
+
+    em {
+        font-style: normal;
+        color: ${UI.danger};
+        font-weight: 750;
+        text-decoration: underline;
+        text-decoration-color: ${UI.danger};
+        text-underline-offset: 3px;     /* 밑줄과 글자 간격 */
+        text-decoration-thickness: 2px; /* 밑줄 두께 */
+    }
 `;
 
 const DescBox = styled.div`
@@ -384,17 +393,18 @@ type SessionItem = {
 };
 
 /* ====== 경로 유틸 ====== */
-const RESULT_PATH_RE = /(\/poten-word)?\/(poten-quiz|quiz)\/result$/;
-const BASE_PATH_CAPTURE_RE = /(\/poten-word)?\/(poten-quiz|quiz)/;
+const RESULT_PATH_RE = /(\/poten-word)?\/(poten-quiz|quiz)\/(play\/review|review)$/;
+const BASE_PATH_CAPTURE_RE = /(\/poten-word)?\/(poten-quiz|quiz)/i;
 
 function getQuizBasePath(pathname: string): string {
     const m = pathname.match(BASE_PATH_CAPTURE_RE);
-    return m ? m[0].replace(/\/$/, "") : "/quiz";
+    const base = m ? m[0].replace(/\/$/, "") : "/poten-word/quiz";
+    return base.replace(/\/poten-quiz\b/i, "/quiz");
 }
 
 /* 강조(‘않는’) 하이라이트 */
 function emphasizeNot(text: string) {
-    return text.replace(/(않는|않다|아닌|NOT)/gi, (m) => `<em>${m}</em>`);
+    return text.replace(/(않는)(?!\s*다)|(아닌)/g, (m) => `<em>${m}</em>`);
 }
 
 function escapeHtml(s: string) {
@@ -428,8 +438,7 @@ function splitHintAndDesc(text?: string) {
     return { titleHtml: emphasizeNot(esc), descHtml: "" };
 }
 
-const isInitialsQ = (q: SessionItem) =>
-    (q.questionType?.toUpperCase?.() === "INITIALS") || ((q.choices?.length ?? 0) === 0);
+const isInitialsQ = (q: SessionItem) => q.questionType === "INITIALS";
 
 /* ===================== ResultView ===================== */
 function ResultView({ title, summary, items, answers, sessionId, onClose }: any) {
@@ -465,8 +474,8 @@ function ResultView({ title, summary, items, answers, sessionId, onClose }: any)
                     headers: { ...authHeader() },
                     withCredentials: true,
                 });
-                const reviewData = res?.data?.details ?? res?.data ?? [];
-                setReviewDetails(reviewData);
+                const reviewItems = res?.data?.items ?? [];
+                setReviewDetails(reviewItems);
             } catch {
                 // 리뷰 데이터가 없어도 기존 로직으로 표시
             }
@@ -490,7 +499,7 @@ function ResultView({ title, summary, items, answers, sessionId, onClose }: any)
     const fallbackPickedMap = new Map<string, string>(
         (answers ?? []).map((a: any) => [
             String(a.quizQuestionId ?? a.questionId ?? a.qid ?? a.id),
-            String(a.selectedChoiceId ?? a.choiceId ?? a.cid ?? a.value),
+            String(a.quizChoiceId ?? a.selectedChoiceId ?? a.choiceId ?? a.cid ?? a.value),
         ])
     );
 
@@ -546,7 +555,7 @@ function ResultView({ title, summary, items, answers, sessionId, onClose }: any)
             }
 
             const base = getQuizBasePath(loc.pathname);
-            nav(`${base}`, {
+            nav(`${base}/play?sessionId=${newSessionId}`, {
                 state: { sessionId: newSessionId, title: title ?? "포텐퀴즈", source: "retry" },
                 replace: true,
             });
@@ -647,32 +656,29 @@ function ResultView({ title, summary, items, answers, sessionId, onClose }: any)
                                 })()}
                                 {isInitials ? (
                                     <TextResult $tone={isPickedWrong ? "bad" : "ok"}>
+                                        <div><strong>내 답:</strong> {userText.trim() || "미입력"}</div>
+                                        <div><strong>정답:</strong> {expectedText.trim() || "-"}</div>
                                     </TextResult>
                                 ) : (
                                     <Options role="radiogroup" aria-label={`문항 ${q.questionId} 정답 선택`}>
                                         {q.choices.map((o) => {
-                                            const on = sameId(selectedByQ[q.questionId], o.id);
+                                            const oid = String(o.id);
+                                            const isPicked  = pickedKey != null && oid === String(pickedKey);
+                                            const isCorrect = correctKey != null && oid === String(correctKey);
+
+                                            const tone =
+                                                isCorrect ? "ok"
+                                                    : (isPicked && !isCorrect) ? "bad"
+                                                        : "normal";
+
                                             return (
-                                                <Opt
-                                                    key={String(o.id)}
-                                                    $on={on}
-                                                    role="radio"
-                                                    aria-checked={on}
-                                                    tabIndex={0}
-                                                    onClick={() =>
-                                                        setSelectedByQ(prev => ({ ...prev, [q.questionId]: o.id }))
-                                                    }
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === "Enter" || e.key === " ") {
-                                                            e.preventDefault();
-                                                            setSelectedByQ(prev => ({ ...prev, [q.questionId]: o.id }));
-                                                        }
-                                                    }}
-                                                >
-                                                    <Bullet aria-hidden $on={on}>
-                                                        {on ? <CheckIcon /> : <Hollow />}
+                                                <Opt key={oid} $tone={tone} tabIndex={-1}>
+                                                    <Bullet aria-hidden $tone={tone}>
+                                                        {tone === "ok" ? <CheckIcon/> : <Hollow/>}
                                                     </Bullet>
                                                     <OptLabel>{o.text}</OptLabel>
+                                                    {isCorrect && <Badge $tone="ok">정답</Badge>}
+                                                    {isPicked && !isCorrect && <Badge $tone="bad">내 선택</Badge>}
                                                 </Opt>
                                             );
                                         })}
@@ -685,7 +691,15 @@ function ResultView({ title, summary, items, answers, sessionId, onClose }: any)
             </ResultList>
 
             <Footer>
-                <Ghost type="button" onClick={() => onClose?.() ?? nav(base)}>닫기</Ghost>
+                <Ghost
+                    type="button"
+                    onClick={() => {
+                        if (onClose) onClose();
+                        else nav(base);
+                    }}
+                >
+                    닫기
+                </Ghost>
                 {(() => {
                     const wrongCount = Math.max(0, Number(summary.total) - Number(summary.correct));
                     return(
@@ -709,6 +723,15 @@ export default function QuizPlayPage() {
     const nav = useNavigate();
     const loc = useLocation();
     const payload = (loc.state ?? {}) as PlayState;
+
+    const sp = useMemo(() => new URLSearchParams(loc.search), [loc.search]);
+    const sessionId =
+        payload.sessionId ??
+        (() => {
+            const v = sp.get("sessionId");
+            const n = v ? Number(v) : NaN;
+            return Number.isFinite(n) ? n : undefined;
+        })();
 
     const [items, setItems] = React.useState<SessionItem[]>([]);
     const [selectedByQ, setSelectedByQ] =
@@ -738,15 +761,14 @@ export default function QuizPlayPage() {
         if (isResultRoute) return;
 
         let aborted = false;
-        const sid = payload.sessionId;
 
         const load = async () => {
             setLoading(true);
             setErr(null);
             try {
-                if (!sid) { setErr("세션 ID가 없습니다."); return; }
-                const res = await http.get(`/me/quiz/sessions/${sid}/items`, {
-                    params: { offset: 0, limit: 200, includeAnswers: true },
+                if (!sessionId) { setErr("세션 ID가 없습니다."); return; }
+                const res = await http.get(`/me/quiz/sessions/${sessionId}/items`, {
+                    params: { offset: 0, limit: 200, includeAnswers: false },
                     headers: { ...authHeader() },
                     withCredentials: true,
                 });
@@ -791,7 +813,7 @@ export default function QuizPlayPage() {
 
         load();
         return () => { aborted = true; };
-    }, [isResultRoute, payload.sessionId, payload.title]);
+    }, [isResultRoute, sessionId]);
 
     const normalizeText = (s?: string) => (s ?? "").trim();
 
@@ -842,7 +864,7 @@ export default function QuizPlayPage() {
     async function submit() {
         if (inFlightRef.current) return;
 
-        const sid = payload.sessionId;
+        const sid = sessionId;
         if (!sid) { alert("세션 ID가 없습니다."); return; }
 
         // 미응답 방지(버튼 disabled와 중복 방어)
@@ -871,6 +893,7 @@ export default function QuizPlayPage() {
 
             // 서버로 보낼 answers 생성 (초성=텍스트 / 선택형=selectedChoiceId)
             const builtAnswers = items.map((q) => {
+                // 1) INITIALS(주관식): selectedChoiceId 같은 거 쓰면 안 됨
                 if (isInitialsQ(q)) {
                     const text = normalizeText(textByQ[q.questionId]);
                     return stripNullish({
@@ -879,20 +902,21 @@ export default function QuizPlayPage() {
                     });
                 }
 
-                // 선택형: 존재 검증 + 안전 숫자 변환(가능하면) 후 전송
+                // 2) 선택형
                 const raw = selectedByQ[q.questionId];
-                const num = Number(raw);
-                const selectedChoiceId =
-                    Number.isFinite(num) && String(num) === String(raw) ? num : String(raw);
 
-                // 혹시라도 보기 목록에 매칭 안 되면 클라이언트에서 차단
-                if (!(q.choices ?? []).some(ch => sameId(ch.id, raw))) {
+                // 보기 리스트에 실제 존재하는지 확인
+                if (!(q.choices ?? []).some((ch) => sameId(ch.id, raw))) {
                     throw new Error(`유효하지 않은 선택값(q=${q.questionId}): ${raw}`);
                 }
 
+                const n = Number(raw);
+                const choiceId =
+                    Number.isFinite(n) && String(n) === String(raw) ? n : String(raw);
+
                 return stripNullish({
                     quizQuestionId: Number(q.questionId),
-                    selectedChoiceId, // 숫자면 number, 아니면 문자열(백엔드가 Long이면 "123"은 자동 파싱됨)
+                    selectedChoiceId: choiceId,
                 });
             });
 
@@ -908,18 +932,20 @@ export default function QuizPlayPage() {
             const base = getQuizBasePath(loc.pathname) || "/quiz";
 
             // 결과 페이지로 이동(상태로 summary/answers/items 전달)
-            nav(`${base}/play/result`, {
-                state: {
-                    sessionId: sid,
-                    title: payload.title ?? "포텐퀴즈",
-                    summary,
-                    items,
-                    answers: builtAnswers,
-                },
+            nav(`${base}/review/${sid}`, {
+                state: { title: payload.title ?? "포텐퀴즈" },
                 replace: true,
             });
         } catch (e: any) {
-            const msg = e?.response?.data?.message ?? e?.message ?? "제출 중 오류";
+            console.log("STATUS:", e?.response?.status);
+            console.log("DATA:", e?.response?.data);
+            console.log("HEADERS:", e?.response?.headers);
+            const msg =
+                e?.response?.data?.message ??
+                e?.response?.data?.error ??
+                JSON.stringify(e?.response?.data) ??
+                e?.message ??
+                "제출 중 오류";
             alert(msg);
         } finally {
             inFlightRef.current = false;
@@ -1021,7 +1047,7 @@ export default function QuizPlayPage() {
                                 ))}
 
                                 <Footer>
-                                    <Ghost onClick={() => nav(-1)}>취소</Ghost>
+                                    <Ghost onClick={() => nav(getQuizBasePath(loc.pathname))}>취소</Ghost>
                                     <Primary
                                         type="button"
                                         onClick={submit}
