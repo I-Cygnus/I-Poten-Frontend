@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate, useLocation } from "react-router-dom";
-import http, { authHeader } from "../utils/http";
 import quiz1 from "../assets/hero/quiz-1.png";
 import quiz2 from "../assets/hero/quiz-2.png";
 import quiz3 from "../assets/hero/quiz-3.png";
@@ -9,6 +8,9 @@ import act1 from "../assets/quiz/quiz-actionbar-1.png";
 import act2 from "../assets/quiz/quiz-actionbar-2.png";
 import act3 from "../assets/quiz/quiz-actionbar-3.png";
 import act4 from "../assets/quiz/quiz-actionbar-4.png";
+import { getTopicFilter } from "../constants/topicFilter";
+import { startQuizUnified } from "../api/quiz";
+import SystemMessageModal, { SystemMessage } from "../components/SystemMessageModal";
 
 /* ====== UI 토큰 ====== */
 const UI = {
@@ -92,9 +94,9 @@ export default function QuizHomePage() {
         const base = "/poten-word/quiz";
 
         const routeMap: Record<string, string> = {
-            today:    `${base}/today`,
-            initials: `${base}/initials`,
-            ox:       `${base}/ox`,
+            today:    `${base}/daily`,            // 또는 `${base}/daily/choice`
+            initials: `${base}/daily/initials`,
+            ox:       `${base}/daily/ox`,
         };
 
         nav(routeMap[id] ?? `${base}/play`, { state: loc.state });
@@ -186,6 +188,68 @@ export default function QuizHomePage() {
 
     // ===== Job Quiz Setup state =====
     const [setupOpen, setSetupOpen] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    // ===== System Message =====
+    const [sysOpen, setSysOpen] = useState(false);
+    const [sysMsg, setSysMsg] = useState<SystemMessage | null>(null);
+
+    const openSys = (m: SystemMessage) => {
+        setSysMsg(m);
+        setSysOpen(true);
+    };
+    const closeSys = () => {
+        setSysOpen(false);
+        setSysMsg(null);
+    };
+
+    const getApiError = (err: any) => {
+        const status = err?.response?.status ?? null;
+        const data = err?.response?.data ?? null;
+        const message =
+            data?.message ??
+            data?.error ??
+            data?.detail ??
+            data?.reason ??
+            err?.message ??
+            "요청 처리 중 오류가 발생했습니다.";
+        return { status, data, message };
+    };
+
+    const toTypeLabel = (t: QType) =>
+        ({ mix: "유형 섞기", choice: "객관식", ox: "OX", initials: "초성" } as const)[t];
+
+    const toLevelLabel = (l: QLevel) =>
+        ({ mix: "혼합", easy: "쉬움", medium: "보통", hard: "어려움" } as const)[l];
+
+    const looksLikeNotEnoughQuestions = (status: number | null, message: string) => {
+        // 백엔드가 제대로 내려주면 404/409/422 같은 걸로 분기 가능
+        if (status === 404 || status === 409 || status === 422) return true;
+
+        // 지금은 500이라도 “부족” 케이스면 사용자 안내로 떨어뜨리기
+        const m = (message || "").toLowerCase();
+        if (status === 500 && (m.includes("not enough") || m.includes("insufficient") || m.includes("부족") || m.includes("no quiz"))) {
+            return true;
+        }
+
+        // 500 + 메시지 애매할 때도 “지금 조건으로 구성 불가”로 안내하는 쪽이 UX 상 안전
+        if (status === 500) return true;
+
+        return false;
+    };
+
+    const buildNotEnoughBullets = () => {
+        const bullets: React.ReactNode[] = [];
+
+        if (qCount >= 20) bullets.push(<>문항 수를 <strong>15문항</strong> 또는 <strong>10문항</strong>으로 줄여 다시 시도해 보세요.</>);
+        else if (qCount >= 15) bullets.push(<>문항 수를 <strong>10문항</strong>으로 줄이면 성공 확률이 올라가요.</>);
+        else bullets.push(<>현재 조건으로는 문항을 구성하기 어려워요. 설정을 조금만 바꿔보세요.</>);
+
+        if (qLevel === "hard") bullets.push(<>난이도를 <strong>보통</strong> 또는 <strong>혼합</strong>으로 바꾸면 더 잘 매칭돼요.</>);
+        if (qType !== "mix") bullets.push(<>문제 유형을 <strong>유형 섞기</strong>로 바꾸면 가능한 문제가 늘어날 수 있어요.</>);
+
+        return bullets;
+    };
 
     type QType = "mix" | "choice" | "ox" | "initials";
     type QLevel = "mix" | "easy" | "medium" | "hard";
@@ -198,21 +262,100 @@ export default function QuizHomePage() {
 
     const toServerType = (t: QType) =>
         ({ mix: "MIX", choice: "CHOICE", ox: "OX", initials: "INITIALS" } as const)[t];
+
     const toServerLevel = (l: QLevel) =>
         ({ mix: "MIX", easy: "EASY", medium: "MEDIUM", hard: "HARD" } as const)[l];
 
-    const onConfirmStart = () => {
-       if (!topic) { alert("먼저 퀴즈를 선택해 주세요."); return; }
-       const base = "/poten-word/quiz";
-       nav(`${base}/play`, {
-             state: {
-               source: "topic",
-                   topicKey: topic.id,
-                   count: qCount,
-                   type: toServerType(qType),
-                   level: toServerLevel(qLevel),
-                 },
-       });
+    const onConfirmStart = async () => {
+        if (loading) return;
+        if (!topic) return;
+
+        const scope = getTopicFilter(topic.id);
+        if (!scope) return;
+
+        setLoading(true);
+        try {
+            const payloadBase = {
+                count: qCount,
+                type: toServerType(qType),
+                level: toServerLevel(qLevel),
+                seedMode: "AUTO",
+                fixedSeed: null,
+            };
+
+            const started = await startQuizUnified({
+                source: "term_category",
+                termCategoryId: scope.termCategoryId,
+                labelKeys: Array.from(scope.labelKeys ?? []),
+                count: qCount,
+                type: toServerType(qType),
+                level: toServerLevel(qLevel),
+                seedMode: "AUTO",
+                fixedSeed: null,
+            } as any);
+
+            console.log("[QuizHomePage] started =", started);
+
+            setSetupOpen(false);
+
+            const sessionId = Number((started as any)?.sessionId);
+            if (!Number.isFinite(sessionId)) {
+                throw new Error("sessionId가 응답에 없습니다. startQuizUnified 리턴 구조 확인 필요");
+            }
+
+            // playPath 우선(없으면 기존 경로로)
+            const playPath =
+                String((started as any)?.playPath ?? "").trim() || "/poten-word/quiz/play";
+
+            nav(playPath, {
+                replace: true,
+                state: {
+                    sessionId,
+                    quizSetId: (started as any)?.quizSetId,
+                    questionIds: (started as any)?.questionIds ?? [],
+                    items: (started as any)?.items ?? [],
+                    title: `${topic.label} 퀴즈`,
+                    source: scope.source,
+                },
+            });
+        } catch (e) {
+            console.error(e);
+            const { status, message } = getApiError(e);
+
+            if (status === 401 || status === 403) {
+                openSys({
+                    tone: "warning",
+                    title: "로그인이 필요해요",
+                    description: "세션이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요.",
+                });
+                return;
+            }
+
+            if (looksLikeNotEnoughQuestions(status, message)) {
+                openSys({
+                    tone: "warning",
+                    title: "요청한 조건에 맞는 문제가 부족해요",
+                    description: (
+                        <>
+                            {topic?.label ?? "선택한 카테고리"} · {qCount}문항 · {toTypeLabel(qType)} ·{" "}
+                            {toLevelLabel(qLevel)}
+                        </>
+                    ),
+                    bullets: buildNotEnoughBullets(),
+                    size: "wide",
+                });
+                return;
+            }
+
+            openSys({
+                tone: "error",
+                title: "퀴즈를 시작할 수 없어요",
+                description: "잠시 후 다시 시도해 주세요.",
+                bullets: [<>네트워크 상태를 확인해 주세요.</>, <>같은 문제가 반복되면 관리자에게 문의해 주세요.</>],
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
 
@@ -397,7 +540,7 @@ export default function QuizHomePage() {
                                 <Section>
                                     <h4>문항 수</h4>
                                     <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
-                                        {[5,10,15,20,30].map(n => (
+                                        {[5,10,15,20].map(n => (
                                             <CountChip key={n} $on={qCount===n} onClick={()=>setQCount(n)}>
                                                 {n}문항
                                             </CountChip>
@@ -430,12 +573,15 @@ export default function QuizHomePage() {
 
                         <SheetFooter>
                             <Ghost onClick={()=>setSetupOpen(false)}>취소</Ghost>
-                            <Primary onClick={onConfirmStart}>시작하기</Primary>
+                            <Primary type="button" onClick={onConfirmStart} disabled={loading}>
+                                시작하기
+                            </Primary>
                         </SheetFooter>
                     </Sheet>
                 </Scrim>
             )}
             <Spacer />
+            <SystemMessageModal open={sysOpen} message={sysMsg} onClose={closeSys} />
         </PageWrap>
     );
 }

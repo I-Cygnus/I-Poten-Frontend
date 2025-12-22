@@ -41,6 +41,17 @@ function normalizeReportPayload(payload: any) {
     return null;
 }
 
+// null/undefined/빈배열 제거용 (필요하면 범용으로)
+function compact2<T extends Record<string, any>>(obj: T): Partial<T> {
+    return Object.fromEntries(
+        Object.entries(obj).filter(([, v]) => {
+            if (v === undefined || v === null) return false;
+            if (Array.isArray(v) && v.length === 0) return false;
+            return true;
+        })
+    ) as Partial<T>;
+}
+
 /** 서버에 /result 류가 없으면 아예 호출 안 함(= 로그 0) */
 export async function getSessionReport(id: number) {
     // 1) 제출된 세션만 결과 조회 시도
@@ -74,55 +85,165 @@ export async function getSessionReport(id: number) {
 /** 내부 POST 헬퍼 */
 async function tryPost(url: string, body: any) {
     // baseURL이 이미 /api 이므로 '/api/...'로 줘도 인터셉터가 정리합니다.
-    return http.post(url, body, { validateStatus: () => true });
+    return http.post(url, body, {
+        validateStatus: () => true,
+        withCredentials: true,
+    });
+}
+
+type QType = "mix" | "choice" | "ox" | "initials";
+type QLevel = "MIX" | "EASY" | "MEDIUM" | "HARD";
+type SeedMode = "AUTO" | "DAILY" | "FIXED";
+
+function normalizeType(v: any): "MIX" | "CHOICE" | "OX" | "INITIALS" | undefined {
+    const s = String(v ?? "").trim();
+    if (!s) return undefined;
+    const u = s.toUpperCase();
+    if (u === "MIX" || u === "CHOICE" || u === "OX" || u === "INITIALS") return u;
+    return undefined;
+}
+
+function normalizeLevel(v: any): "MIX" | "EASY" | "MEDIUM" | "HARD" | undefined {
+    const s = String(v ?? "").trim();
+    if (!s) return undefined;
+    const u = s.toUpperCase();
+    if (u === "MIX" || u === "EASY" || u === "MEDIUM" || u === "HARD") return u;
+    return undefined;
+}
+
+// undefined 값은 JSON.stringify에서 빠지니까 “키 자체가 제거”되는 효과
+function compact<T extends Record<string, any>>(obj: T): Partial<T> {
+    return Object.fromEntries(
+        Object.entries(obj).filter(([, v]) => v !== undefined)
+    ) as Partial<T>;
 }
 
 export type StartQuizSessionUnifiedPayload =
-    | { source: "set"; setId: number; seedMode?: "AUTO" | "DAILY" | "FIXED"; fixedSeed?: number | null }
-    | { source: "wordbook"; wordbookId: number; count: number; type: "mix" | "choice" | "ox" | "initials"; level: "mix" | "easy" | "medium" | "hard"; seedMode?: "AUTO" | "DAILY" | "FIXED"; fixedSeed?: number | null }
-    | { source: "category"; categoryId: number; count: number; type: "mix" | "choice" | "ox" | "initials"; level: "mix" | "easy" | "medium" | "hard"; seedMode?: "AUTO" | "DAILY" | "FIXED"; fixedSeed?: number | null }
-    | { source: "DAILY"; setId: number; type: "CHOICE" | "OX" | "INITIALS"; role?: string; date?: string; seedMode?: "AUTO" | "DAILY" | "FIXED"; fixedSeed?: number | null };
+    | {
+    source: "set";
+    quizSetId?: number;
+    setId?: number;
+    count?: number;
+    type?: QType;
+    level?: QLevel;
+    seedMode?: SeedMode;
+    fixedSeed?: number | null;
+}
+    | {
+    source: "wordbook";
+    wordbookId: number;
+    count: number;
+    type: QType;
+    level: QLevel;
+    seedMode?: SeedMode;
+    fixedSeed?: number | null;
+}
+    | {
+    source: "term_category" | "category";
+    categoryId?: number;
+    termCategoryId?: number;
+    count: number;
+    type: QType;
+    level: QLevel;
+    seedMode?: SeedMode;
+    fixedSeed?: number | null;
+    labelKeys?: string[];
+};
 
 export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) {
-    // baseURL=/api 이므로 첫 호출만으로 충분(두 번째 '/api/..' 폴백은 동일 호출이라 실효 없음)
-    const res = await tryPost(`/me/quiz/sessions/start`, payload);
+    const body = (() => {
+        // 1) term_category / category
+        if (payload.source === "category" || payload.source === "term_category") {
+            const categoryIdRaw = (payload as any).categoryId ?? (payload as any).termCategoryId;
+            const termCategoryId = Number(categoryIdRaw);
+            const count = Number((payload as any).count);
+
+            const typeRaw = (payload as any).type ?? "mix";
+            const levelRaw = (payload as any).level ?? "MIX";
+
+            const typeNorm = normalizeType(typeRaw) ?? "MIX";
+            const levelNorm = normalizeLevel(levelRaw) ?? "MIX";
+
+            const seedMode = (payload as any).seedMode ?? "AUTO";
+            const fixedSeed = seedMode === "FIXED" ? ((payload as any).fixedSeed ?? null) : undefined;
+
+            const labelKeys = Array.isArray((payload as any).labelKeys) ? (payload as any).labelKeys : [];
+
+            return compact({
+                source: "term_category",
+                termCategoryId,
+                count,
+                type: typeNorm.toLowerCase(),
+                level: levelNorm,
+                seedMode,
+                fixedSeed,
+                ...(labelKeys.length ? { labelKeys } : {}),
+            });
+        }
+
+        // 2) wordbook
+        if (payload.source === "wordbook") {
+            const typeNorm = normalizeType(payload.type);
+            const levelNorm = normalizeLevel(payload.level);
+
+            return compact({
+                source: "wordbook",
+                wordbookId: payload.wordbookId,
+                count: payload.count,
+                type: typeNorm ? typeNorm.toLowerCase() : undefined,
+                level: levelNorm,
+                seedMode: payload.seedMode ?? "AUTO",
+                ...(payload.seedMode === "FIXED" ? { fixedSeed: payload.fixedSeed ?? null } : {}),
+            });
+        }
+
+        // 3) set
+        const quizSetId = (payload as any).quizSetId ?? (payload as any).setId;
+
+        const typeNorm = normalizeType((payload as any).type);
+        const levelNorm = normalizeLevel((payload as any).level);
+
+        return compact({
+            source: "set",
+            quizSetId,
+            seedMode: (payload as any).seedMode ?? "AUTO",
+            ...(payload.seedMode === "FIXED" ? { fixedSeed: (payload as any).fixedSeed ?? null } : {}),
+            ...(payload.count ? { count: payload.count } : {}),
+            type: typeNorm ? typeNorm.toLowerCase() : undefined,
+            level: levelNorm,
+        });
+    })();
+
+    const res = await tryPost(`/me/quiz/sessions/start`, body);
 
     if (res.status < 200 || res.status >= 300) {
+        console.error("[startQuizUnified] failed:", { status: res.status, data: res.data, sentBody: body });
         const msg = (res.data && (res.data.message || res.data.error)) || `HTTP ${res.status}`;
-        const err: any = new Error(msg);
-        err.response = { status: res.status, data: res.data };
-        throw err;
-    }
-    return (res.data?.data ?? res.data) as {
-        sessionId: number;
-        quizSetId?: number;
-        questionIds?: number[];
-    };
-}
-
-/** 틀린 문제만 다시 풀기: 라우트 기대 형태에 맞춰 반환 */
-export async function retryWrongOnly(oldSessionId: number) {
-    const res = await tryPost(`/me/quiz/sessions/${oldSessionId}/retry-wrong`, {});
-    if (res.status < 200 || res.status >= 300) {
-        const msg = (res.data && (res.data.message || res.data.error)) || `HTTP ${res.status}`;
-        const err: any = new Error(msg);
-        err.response = { status: res.status, data: res.data };
-        throw err;
+        throw new Error(msg);
     }
 
     const d = res.data?.data ?? res.data;
-    const newSessionId = Number(d?.sessionId ?? d?.id);
-    if (!Number.isFinite(newSessionId)) throw new Error("Invalid newSessionId");
+    const sessionId = Number(d?.sessionId ?? d?.id);
+    if (!Number.isFinite(sessionId)) throw new Error("Invalid sessionId");
 
-    // 라우트(QuizResultRoute)에서 기대하는 필드 맞춤
     return {
-        newSessionId,
-        questionType: d?.questionType ?? d?.question_type ?? null,
-        playPath: (d?.playPath ?? "").trim() || "",
+        sessionId,
+        quizSetId: Number(d?.quizSetId ?? 0) || undefined,
+        questionIds: Array.isArray(d?.questionIds) ? d.questionIds : [],
+        items: Array.isArray(d?.items) ? d.items : [],
+        playPath: String(d?.playPath ?? "").trim() || `/poten-word/quiz/play`,
     };
 }
 
 /** 편의 */
-export function startDailySetSession(setId: number, type: "OX" | "CHOICE" | "INITIALS", opts?: { role?: string; date?: string }) {
-    return startQuizUnified({ source: "DAILY", setId, type, role: opts?.role, date: opts?.date, seedMode: "DAILY" });
+export function startDailySetSession(
+    setId: number,
+    type: "OX" | "CHOICE" | "INITIALS",
+) {
+    return startQuizUnified({
+        source: "set",
+        setId,
+        type: type.toLowerCase() as any,
+        seedMode: "DAILY",
+    });
 }

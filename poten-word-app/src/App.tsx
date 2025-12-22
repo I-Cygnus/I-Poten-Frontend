@@ -4,7 +4,7 @@ import {
   Route,
   useLocation,
   Outlet,
-  useSearchParams,
+  useSearchParams, Navigate,
 } from "react-router-dom";
 
 import PotenWordLayout from "./layouts/PotenWordLayout.tsx";
@@ -32,6 +32,7 @@ import InitialsQuizPage from "./pages/InitialsQuizPage";
 import SearchPage from "./pages/SearchPage.tsx";
 import TermListPage from "./pages/TermListPage.tsx";
 import PotenWordLandingPage from "./pages/PotenWordLandingPage.tsx";
+import ChoiceQuizPage from "./pages/QuizChoicePage.tsx";
 
 // notes 전용 로그인 가드(필요하면 라우트에 연결해서 사용)
 function NotesGuard() {
@@ -299,7 +300,9 @@ export default function App() {
                   </Route>
 
                   {/* 세트/세션 결과 */}
-                  <Route path="result" element={<QuizResultRoute />} />
+                  <Route path="result" element={<Navigate to="timeline" replace />} />
+                  <Route path="result/:sessionId" element={<QuizResultRoute />} />
+                  <Route path="play/result/:sessionId" element={<QuizPlayResultPage />} />
 
                   {/* 타임라인 대시보드 */}
                   <Route path="timeline" element={<QuizTimelinePage />} />
