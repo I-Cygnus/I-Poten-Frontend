@@ -7,7 +7,6 @@
     "vue-account-app",
     "vue-ai-interview-app",
     "sveltekit-review-app",
-    "studyroom-app",
     "packages/*",
     "mypage-app",
     "poten-word-app"

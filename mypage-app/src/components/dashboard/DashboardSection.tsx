@@ -208,11 +208,11 @@ export default function DashboardSection() {
                     <ChartLegend>
                         <LegendItem>
                             <LegendDot $color="#5B8DEF" />
-                            <LegendLabel>Primary Portfolio</LegendLabel>
+                            <LegendLabel>점수</LegendLabel>
                         </LegendItem>
                         <LegendItem>
                             <LegendDot $color="#00D4FF" />
-                            <LegendLabel>Secondary Portfolio</LegendLabel>
+                            <LegendLabel>평균 기대 점수</LegendLabel>
                         </LegendItem>
                     </ChartLegend>
                 </PortfolioCard>

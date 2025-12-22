@@ -6,7 +6,7 @@ import springAxiosInst from "./utility/AxiosInst.ts";
 import {logoutRequest, tokenVerification} from "./utility/AccountApi.ts";
 
 // 로고 이미지
-import logoBlack from "./assets/jobspoonLOGO_black2.png";
+import logoBlack from "./assets/Logo2.png";
 
 // 모바일 메뉴 오버레이
 const MobileMenuOverlay = styled.div<{ $isOpen: boolean }>`
@@ -122,12 +122,12 @@ const HamburgerLine = styled.span<{ $isOpen: boolean }>`
   }
 `;
 
-const Header = styled.header<{ $scrolled?: boolean }>`
+const Header = styled.header<{ $scrolled?: boolean; $hidden?: boolean }>`
   position: sticky;
   top: 0;
   z-index: 1000;
   width: 100%;
-  height: 72px;
+  height: ${({ $hidden }) => ($hidden ? "0px" : "72px")};
   background: ${({ $scrolled }) => 
     $scrolled 
       ? "rgba(255, 255, 255, 0.95)" 
@@ -146,7 +146,123 @@ const Header = styled.header<{ $scrolled?: boolean }>`
       ? "0 2px 16px rgba(0, 0, 0, 0.04)" 
       : "none"
   };
-  transition: all 0.3s ease;
+  transition: height 0.28s ease, opacity 0.28s ease, transform 0.28s ease, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+  opacity: ${({ $hidden }) => ($hidden ? 0 : 1)};
+  transform: ${({ $hidden }) => ($hidden ? "translateY(-100%)" : "translateY(0)")};
+  pointer-events: ${({ $hidden }) => ($hidden ? "none" : "auto")};
+`;
+
+const BottomBarWrap = styled.div<{ $visible: boolean }>`
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  z-index: 1100;
+  display: flex;
+  justify-content: center;
+  pointer-events: ${({ $visible }) => ($visible ? "auto" : "none")};
+  opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+  transform: ${({ $visible }) => ($visible ? "translateY(0)" : "translateY(16px)")};
+  transition: opacity 0.28s ease, transform 0.28s ease;
+  padding: 0 16px;
+`;
+
+const BottomBar = styled.div`
+  width: min(980px, 100%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.86);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.10);
+`;
+
+const BottomHome = styled(Link)`
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.10);
+  text-decoration: none;
+  flex: 0 0 auto;
+`;
+
+const BottomHomeLogo = styled.img`
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+  display: block;
+`;
+
+const BottomNav = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: auto;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+`;
+
+const BottomNavLink = styled(Link)<{ $active?: boolean }>`
+  text-decoration: none;
+  color: ${({ $active }) => ($active ? "#111827" : "#64748b")};
+  font-size: 13px;
+  font-weight: ${({ $active }) => ($active ? 800 : 700)};
+  padding: 10px 14px;
+  border-radius: 999px;
+  background: ${({ $active }) =>
+    $active ? "rgba(255, 255, 255, 0.96)" : "transparent"};
+  box-shadow: ${({ $active }) =>
+    $active ? "0 10px 26px rgba(0, 0, 0, 0.10)" : "none"};
+  white-space: nowrap;
+  transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    color: #111827;
+    background: ${({ $active }) => ($active ? "rgba(255, 255, 255, 0.96)" : "rgba(0, 0, 0, 0.04)")};
+    transform: translateY(-1px);
+  }
+`;
+
+const BottomAuthLink = styled(Link)`
+  flex: 0 0 auto;
+  text-decoration: none;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 800;
+  background: #0b1220;
+  color: #ffffff;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+  white-space: nowrap;
+`;
+
+const BottomAuthButton = styled.button`
+  flex: 0 0 auto;
+  appearance: none;
+  border: 0;
+  border-radius: 999px;
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 800;
+  background: #0b1220;
+  color: #ffffff;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.18);
+  cursor: pointer;
+  white-space: nowrap;
 `;
 
 const Inner = styled.div`
@@ -180,11 +296,12 @@ const Brand = styled(Link)`
 `;
 
 const LogoImg = styled.img`
-  width: clamp(70px, 6.458333vw, 200px);
-  height: clamp(40px, 3.680556vw, 100px);
-  //margin-top: 20px;
-  //width: 200px;
-  //height: 150px;
+  //width: clamp(70px, 6.458333vw, 300px);
+  //height: clamp(40px, 3.680556vw, 200px);
+  //margin-top: 15px;
+  width: 90px;
+  //height: 130px;
+  height: auto;
   object-fit: contain;
   display: block;
 `;
@@ -269,6 +386,7 @@ const App: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isServiceNavMode, setIsServiceNavMode] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -280,6 +398,72 @@ const App: React.FC = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (location.pathname !== "/") {
+      setIsServiceNavMode(false);
+      return;
+    }
+
+    let cancelled = false;
+    let attempts = 0;
+    let rafId = 0;
+    let target: Element | null = null;
+
+    const NAV_HEIGHT = 72;
+
+    const updateMode = () => {
+      if (cancelled || !target) return;
+      const rect = target.getBoundingClientRect();
+      const shouldUseBottomBar = rect.top <= NAV_HEIGHT + 1;
+
+      setIsServiceNavMode(prev => {
+        if (prev === shouldUseBottomBar) return prev;
+        return shouldUseBottomBar;
+      });
+
+      if (shouldUseBottomBar) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        rafId = 0;
+        updateMode();
+      });
+    };
+
+    const tryAttach = () => {
+      if (cancelled) return;
+
+      target = document.querySelector(
+        "[data-service-title], [data-service-section], [data-service-grid]"
+      ) as Element | null;
+
+      if (!target) {
+        attempts += 1;
+        if (attempts < 30) {
+          window.setTimeout(tryAttach, 250);
+        }
+        return;
+      }
+
+      updateMode();
+      window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onScroll);
+    };
+
+    tryAttach();
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (rafId) window.cancelAnimationFrame(rafId);
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
 
@@ -379,7 +563,7 @@ const App: React.FC = () => {
 
   return (
     <>
-      <Header $scrolled={isScrolled}>
+      <Header $scrolled={isScrolled} $hidden={isServiceNavMode}>
         <Inner>
           <Brand to="/" aria-label="JobSpoon 홈">
             <LogoImg src={logoBlack} alt="JobSpoon" />
@@ -407,6 +591,35 @@ const App: React.FC = () => {
           </HamburgerButton>
         </Inner>
       </Header>
+
+      <BottomBarWrap $visible={isServiceNavMode}>
+        <BottomBar>
+          <BottomHome to="/" aria-label="JobSpoon 홈">
+            <BottomHomeLogo src={logoBlack} alt="" />
+          </BottomHome>
+
+          <BottomNav>
+            <BottomNavLink
+              to="/vue-ai-interview/ai-interview/landing"
+              $active={isActive("/vue-ai-interview")}
+            >
+              AI 인터뷰
+            </BottomNavLink>
+            <BottomNavLink to="/spoon-word" $active={isActive("/spoon-word")}>
+              스푼워드
+            </BottomNavLink>
+            <BottomNavLink to="/mypage" $active={isActive("/mypage")}>
+              MyPage
+            </BottomNavLink>
+          </BottomNav>
+
+          {!isLoggedIn ? (
+            <BottomAuthLink to="/vue-account/account/login">로그인</BottomAuthLink>
+          ) : (
+            <BottomAuthButton onClick={handleLogout}>로그아웃</BottomAuthButton>
+          )}
+        </BottomBar>
+      </BottomBarWrap>
 
       <MobileMenuOverlay $isOpen={isMobileMenuOpen} onClick={closeMobileMenu} />
       <MobileMenu $isOpen={isMobileMenuOpen}>
