@@ -1,17 +1,15 @@
 <template>
   <v-app>
-    <v-main>
-      <router-view/>
-    </v-main>
+    <router-view />
   </v-app>
 </template>
 
-<script lang="ts">
-import { defineComponent } from "vue";
+<script setup lang="ts">
+import { provide } from "vue";
 
-import '@mdi/font/css/materialdesignicons.css'
-import 'vuetify/dist/vuetify.min.css'
-import 'vuetify/styles'
+const props = defineProps<{ eventBus?: any }>();
 
-  export default defineComponent({});
+if (props.eventBus) {
+  provide("eventBus", props.eventBus);
+}
 </script>

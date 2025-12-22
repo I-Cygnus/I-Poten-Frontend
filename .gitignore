@@ -12,6 +12,18 @@
 .idea/**/dictionaries
 .idea/**/shelf
 
+
+**/public/_app/
+**/build/
+**/dist/
+**/.svelte-kit/
+**/node_modules/
+**/.vite/
+**/.nx/
+**/*.br
+**/*.map
+
+
 # AWS User-specific
 .idea/**/aws.xml
 
