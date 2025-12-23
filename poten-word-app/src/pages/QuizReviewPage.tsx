@@ -505,6 +505,9 @@ export default function QuizReviewPage() {
                                         return it.myChoiceId === it.answerChoiceId;
                                     })();
 
+                                const myBadgeTone: "ok" | "bad" | "mine" =
+                                    myCorrect === true ? "ok" : myCorrect === false ? "bad" : "mine";
+
                                 // 보기 정렬(OX는 O/X 순)
                                 const baseChoices = Array.isArray(it.choices) ? it.choices : [];
                                 const choices = it.questionType === "OX" ? sortOxChoices(baseChoices) : baseChoices;
@@ -523,21 +526,38 @@ export default function QuizReviewPage() {
                                         {isInitials ? (
                                             <>
                                                 <Options>
-                                                    <Opt $tone={myCorrect === true ? "ok" : myCorrect === false ? "bad" : "normal"}>
-                                                        <Bullet $tone={myCorrect === true ? "ok" : myCorrect === false ? "bad" : "normal"}>
-                                                            {myCorrect === true ? <CheckIcon /> : myCorrect === false ? <CrossS /> : <Hollow />}
-                                                        </Bullet>
-                                                        <OptLabel>내 답: {normalizeAnswerText(it.mySubmittedText)}</OptLabel>
-                                                        <Badge $tone="mine">내 답</Badge>
-                                                    </Opt>
+                                                    {/* 정답이면: "내 답" 한 줄만 + 오른쪽은 정답 칩만 */}
+                                                    {myCorrect === true ? (
+                                                        <Opt $tone="ok">
+                                                            <Bullet $tone="ok">
+                                                                <CheckIcon />
+                                                            </Bullet>
 
-                                                    <Opt $tone="ok">
-                                                        <Bullet $tone="ok">
-                                                            <CheckIcon />
-                                                        </Bullet>
-                                                        <OptLabel>정답: {normalizeAnswerText(it.expectedText)}</OptLabel>
-                                                        <Badge $tone="ok">정답</Badge>
-                                                    </Opt>
+                                                            <OptLabel>내 답: {normalizeAnswerText(it.mySubmittedText)}</OptLabel>
+
+                                                            {/* 오른쪽엔 정답 칩만 */}
+                                                            <Badge $tone="ok">정답</Badge>
+                                                        </Opt>
+                                                    ) : (
+                                                        <>
+                                                            {/* 오답이면: 기존처럼 내 답 + 정답 둘 다 */}
+                                                            <Opt $tone={myCorrect === false ? "bad" : "normal"}>
+                                                                <Bullet $tone={myCorrect === false ? "bad" : "normal"}>
+                                                                    {myCorrect === false ? <CrossS /> : <Hollow />}
+                                                                </Bullet>
+                                                                <OptLabel>내 답: {normalizeAnswerText(it.mySubmittedText)}</OptLabel>
+                                                                <Badge $tone={myBadgeTone}>내 답</Badge>
+                                                            </Opt>
+
+                                                            <Opt $tone="ok">
+                                                                <Bullet $tone="ok">
+                                                                    <CheckIcon />
+                                                                </Bullet>
+                                                                <OptLabel>정답: {normalizeAnswerText(it.expectedText)}</OptLabel>
+                                                                <Badge $tone="ok">정답</Badge>
+                                                            </Opt>
+                                                        </>
+                                                    )}
                                                 </Options>
 
                                                 {it.explanation && (
