@@ -362,6 +362,39 @@ const TextResult = styled.div<{ $tone: "ok" | "bad" }>`
     margin-right: auto;
 `;
 
+/* ====== INITIALS 힌트 타일 ====== */
+const HintTiles = styled.div`
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 2px;
+  margin-bottom: 10px;
+`;
+
+const HintTile = styled.span`
+  min-width: 44px;
+  height: 44px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  border: 1.5px solid #cfe0ff;
+  background: #f5f9ff;
+  color: #4766e6;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.02em;
+  box-shadow: 0 10px 24px rgba(62,99,224,.06);
+`;
+
+// 공백용(간격만)
+const HintGap = styled.span`
+  width: 12px;
+  height: 44px;
+`;
+
 /* 결과 리스트: 기본 번호 숨김 (겹침 방지) */
 const ResultList = styled.ol`
     list-style: none;
@@ -390,6 +423,7 @@ type SessionItem = {
     questionType?: QuestionType;
     answerText?: string;
     choices: { id: string | number; text: string; isAnswer?: boolean }[];
+    initialsHint?: string;
 };
 
 /* ====== 경로 유틸 ====== */
@@ -436,6 +470,56 @@ function splitHintAndDesc(text?: string) {
     }
     // 기본: 전부 제목으로
     return { titleHtml: emphasizeNot(esc), descHtml: "" };
+}
+
+/* ====== INITIALS 힌트 유틸 ====== */
+
+// 한글 음절 -> 초성
+const CHO = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"] as const;
+function toChosungChar(ch: string) {
+    const code = ch.charCodeAt(0);
+    // 가(0xAC00) ~ 힣(0xD7A3)
+    if (code < 0xac00 || code > 0xd7a3) return ch;
+    const idx = Math.floor((code - 0xac00) / 588);
+    return CHO[idx] ?? ch;
+}
+
+// "엄격 모드" -> ["ㅇ","ㄱ"," ","ㅁ","ㄷ"] 같은 느낌으로 분해
+function toChosungTiles(answer: string) {
+    const raw = String(answer ?? "");
+    // 공백은 유지, 그 외는 초성/원문
+    return Array.from(raw).map((ch) => {
+        if (/\s/.test(ch)) return " ";          // 공백 타일(연출용)
+        return toChosungChar(ch);
+    });
+}
+
+// questionText에서 "초성 힌트:" 부분만 뽑기 (네가 이미 splitHintAndDesc에서 사용 중)
+function extractHintTextFromQuestionText(questionText?: string) {
+    const s = String(questionText ?? "");
+    const m = s.match(/초성\s*힌트\s*:\s*([\s\S]*?)(?:\s*설명\s*:|$)/i);
+    return (m?.[1] ?? "").trim();
+}
+
+/**
+ * INITIALS 힌트 결정 우선순위
+ * 1) questionText에 명시된 "초성 힌트: ..."
+ * 2) (혹시 내려오면) q.answerText에서 초성 생성
+ */
+function getInitialsTiles(q: SessionItem) {
+    // 0) API의 initialsHint 우선 사용
+    const apiHint = String(q.initialsHint ?? "").trim();
+    if (apiHint) return Array.from(apiHint); // "ㅂㄷㄱ ㅊㄹ" 그대로 타일화 (공백 포함)
+
+    // 1) questionText에 박아둔 힌트 파싱
+    const hint = extractHintTextFromQuestionText(q.questionText);
+    if (hint) return Array.from(hint);
+
+    // 2) 정답에서 초성 생성(서버가 내려줄 때만)
+    const ans = String(q.answerText ?? "").trim();
+    if (ans) return toChosungTiles(ans);
+
+    return [];
 }
 
 const isInitialsQ = (q: SessionItem) => q.questionType === "INITIALS";
@@ -796,6 +880,7 @@ export default function QuizPlayPage() {
                                 ),
                             };
                         }),
+                        initialsHint: String(row.initialsHint ?? ""),
                     };
                 });
                 if (!aborted) {
@@ -990,29 +1075,49 @@ export default function QuizPlayPage() {
 
                                         {/* 2행: (초성) 정답 입력칸  → 설명 바로 아래, 2열 시작선에 정렬 */}
                                         {isInitialsQ(q) ? (
-                                            <TextAnswerWrap $tone="none">
-                                                <input
-                                                    type="text"
-                                                    inputMode="text"
-                                                    placeholder="정답을 입력하세요."
-                                                    value={textByQ[q.questionId] ?? ""}
-                                                    onChange={(e) =>
-                                                        setTextByQ((prev) => ({ ...prev, [q.questionId]: e.target.value }))
-                                                    }
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === "Enter") {
-                                                            const unansweredNext = items.find(
-                                                                (it, i) =>
-                                                                    i > idx &&
-                                                                    (isInitialsQ(it)
-                                                                        ? !(normalizeText(textByQ[it.questionId]).length > 0)
-                                                                        : selectedByQ[it.questionId] == null)
-                                                            );
-                                                            if (!unansweredNext && unanswered.length === 0) submit();
+                                            <>
+                                                {/* ✅ 초성 힌트 타일 */}
+                                                {(() => {
+                                                    const tiles = getInitialsTiles(q);
+                                                    return tiles.length > 0 ? (
+                                                        <HintTiles aria-label="초성 힌트">
+                                                            {tiles.map((ch, i) =>
+                                                                ch === " " ? (
+                                                                    <HintGap key={`gap-${i}`} aria-hidden />
+                                                                ) : (
+                                                                    <HintTile key={`t-${i}`} aria-label={ch}>
+                                                                        {ch}
+                                                                    </HintTile>
+                                                                )
+                                                            )}
+                                                        </HintTiles>
+                                                    ) : null;
+                                                })()}
+
+                                                <TextAnswerWrap $tone="none">
+                                                    <input
+                                                        type="text"
+                                                        inputMode="text"
+                                                        placeholder="정답을 입력하세요."
+                                                        value={textByQ[q.questionId] ?? ""}
+                                                        onChange={(e) =>
+                                                            setTextByQ((prev) => ({ ...prev, [q.questionId]: e.target.value }))
                                                         }
-                                                    }}
-                                                />
-                                            </TextAnswerWrap>
+                                                        onKeyDown={(e) => {
+                                                            if (e.key === "Enter") {
+                                                                const unansweredNext = items.find(
+                                                                    (it, i) =>
+                                                                        i > idx &&
+                                                                        (isInitialsQ(it)
+                                                                            ? !(normalizeText(textByQ[it.questionId]).length > 0)
+                                                                            : selectedByQ[it.questionId] == null)
+                                                                );
+                                                                if (!unansweredNext && unanswered.length === 0) submit();
+                                                            }
+                                                        }}
+                                                    />
+                                                </TextAnswerWrap>
+                                            </>
                                         ) : (
                                             <Options role="radiogroup" aria-label={`문항 ${q.questionId} 정답 선택`}>
                                                 {q.choices.map((o) => {
