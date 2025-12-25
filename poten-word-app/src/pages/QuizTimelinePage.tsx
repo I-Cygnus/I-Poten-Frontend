@@ -111,14 +111,14 @@ const RightCol = styled.aside`
 `;
 
 const BottomGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 18px;
-  margin-top: 16px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 18px;
+    margin-top: 16px;
 
-  @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-  }
+    @media (max-width: 1024px) {
+        grid-template-columns: 1fr;
+    }
 `;
 
 const SearchCard = styled.div`
@@ -301,16 +301,72 @@ const QuizTitle = styled.div`
 
 const LightPill = styled.button`
     border: 0;
-    padding: 8px 12px;
+    height: 30px;
+    padding: 0 12px;
+    display: inline-flex;
+    align-items: center;
+    line-height: 1;
     border-radius: ${UI.radius.pill}px;
+
     font-weight: 750;
     font-size: 13px;
     letter-spacing: -0.02em;
     color: ${UI.color.primaryStrong};
     background: rgba(79, 118, 241, 0.1);
-    &:hover {
-        background: rgba(79, 118, 241, 0.14);
-    }
+
+    &:hover { background: rgba(79, 118, 241, 0.14); }
+`;
+
+const RetryBadge = styled.span`
+  height: 30px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  border-radius: ${UI.radius.pill}px;
+
+  font-weight: 750;
+  font-size: 13px;
+  letter-spacing: -0.02em;
+
+  color: #25c4b1;
+  background: #e9fcf8;
+`;
+
+const WrongOnlyBadge = styled.span`
+  height: 30px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  line-height: 1;
+  border-radius: ${UI.radius.pill}px;
+
+  font-weight: 750;
+  font-size: 13px;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+
+  color: #675CF6;
+  background: #efeefe;
+`;
+
+const MetaText = styled.span`
+    color: ${UI.color.muted};
+    font-size: 12px;
+    font-weight: 400;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    line-height: 1;
+
+    position: relative;
+    top: 1px;
+`;
+
+const PillRow = styled.div`
+    display: inline-flex;
+    align-items: center;   /* baseline -> center */
+    gap: 8px;
+    flex-wrap: wrap;
 `;
 
 /* ===== 도넛 ===== */
@@ -338,6 +394,9 @@ function Donut({
                 <linearGradient id={safeId} x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor="#34d399" />
                     <stop offset="100%" stopColor="#22c1b5" />
+                    <filter id="softShadow" x="-25%" y="-25%" width="150%" height="150%">
+                        <feDropShadow dx="0" dy="6" stdDeviation="6" floodColor="#111827" floodOpacity="0.08" />
+                    </filter>
                 </linearGradient>
             </defs>
             <circle cx={size / 2} cy={size / 2} r={r} stroke="#eef2f7" strokeWidth={stroke} fill="none" />
@@ -557,23 +616,23 @@ const PagePill = styled.button<{ $active?: boolean }>`
 `;
 
 const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
-  padding: 0 10px;
-  color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
-  cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+    padding: 0 10px;
+    color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
+    cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
 
-  &:hover {
-    background: ${({ disabled }) => (disabled ? "transparent" : "rgba(255,255,255,0.85)")};
-    color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.color.text)};
-  }
-  &:active {
-    transform: ${({ disabled }) => (disabled ? "none" : "translateY(1px)")};
-  }
+    &:hover {
+        background: ${({ disabled }) => (disabled ? "transparent" : "rgba(255,255,255,0.85)")};
+        color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.color.text)};
+    }
+    &:active {
+        transform: ${({ disabled }) => (disabled ? "none" : "translateY(1px)")};
+    }
 `;
 
 const PaginationRow = styled.div`
-  width: 100%;
-  display: flex;
-  justify-content: center;
+    width: 100%;
+    display: flex;
+    justify-content: center;
 `;
 
 function MiniAreaChart({
@@ -1313,24 +1372,36 @@ const RangeTab = styled.button<{ $active?: boolean }>`
     }
 `;
 
-const SpanSelectCompact = styled(SpanSelect)`
-    height: 30px;
-    padding: 0 30px 0 10px;
-    border-radius: 10px;
-    font-size: 13px;
-`;
+const Reveal = styled.div<{ $d?: number }>`
+        ${({ $d = 0 }) => stagger($d)}
+    `;
+
 
 /* ===== 타입 ===== */
-type PartType = "CHOICE" | "OX" | "INITIALS";
+type PartType = "CHOICE" | "OX" | "INITIALS" | "MIX";
+type RetryKind = "RETRY_ALL" | "WRONG_ONLY";
 
 type TimelineItem = {
     id: number | string;
+
+    /** 현재 세션의 타이틀(재도전 커스텀 문구 포함 가능) */
     title: string;
+
+    /** 원본(root) 세션 타이틀 */
+    originTitle?: string | null;
+
     partType: PartType;
     date: string;
     correct: number;
     total: number;
+
     category?: string | null;
+
+    isRetry?: boolean;
+    sessionMode?: "FULL" | "WRONG_ONLY" | string | null;
+    parentSessionId?: number | null;
+
+    retryKind?: RetryKind | null;
 };
 
 type Summary = {
@@ -1353,7 +1424,10 @@ function fmtDate(iso: string) {
 }
 
 function labelOf(p: PartType) {
-    return p === "CHOICE" ? "객관식" : p === "OX" ? "OX" : "초성";
+    return p === "CHOICE" ? "객관식"
+        : p === "OX" ? "OX"
+            : p === "INITIALS" ? "초성"
+                : "혼합";
 }
 
 /* ===== API 정규화 ===== */
@@ -1365,6 +1439,8 @@ async function fetchTimeline(params: { q?: string; type?: PartType | "ALL"; page
 
     const { data } = await http.get("/me/quiz/timeline", { params: p, headers });
 
+    console.log("[timeline item sample]", data?.items?.[0]);
+
     const s: Summary = {
         totalSets: Number(data?.summary?.totalSets ?? 0),
         accuracy: Number(data?.summary?.accuracy ?? 0),
@@ -1372,15 +1448,42 @@ async function fetchTimeline(params: { q?: string; type?: PartType | "ALL"; page
     };
 
     const items: TimelineItem[] = Array.isArray(data?.items)
-        ? data.items.map((x: any) => ({
-            id: x.id ?? x.sessionId ?? `${x.date}-${x.title}`,
-            title: x.title ?? x.setTitle ?? "제목없음",
-            partType: (x.partType ?? x.type ?? "CHOICE") as PartType,
-            date: x.date ?? x.playedAt ?? new Date().toISOString(),
-            correct: Number(x.correct ?? x.solved ?? 0),
-            total: Number(x.total ?? x.totalQuestions ?? 0),
-            category: x.category ?? x.categoryName ?? null,
-        }))
+        ? data.items.map((x: any) => {
+            const title = String(x.title ?? "제목없음");
+            const originTitle =
+                x.originTitle == null ? null : String(x.originTitle);
+
+            // 백엔드가 내려준 값 우선 사용
+            const retryKindRaw = x.retryKind == null ? null : String(x.retryKind).toUpperCase();
+            const retryKind =
+                retryKindRaw === "RETRY_ALL" || retryKindRaw === "WRONG_ONLY"
+                    ? (retryKindRaw as "RETRY_ALL" | "WRONG_ONLY")
+                    : null;
+
+            const isRetry = x.isRetry != null ? Boolean(x.isRetry) : retryKind != null;
+
+            const rawMode = x.sessionMode == null ? "" : String(x.sessionMode);
+            const mode = rawMode.trim().replace(/[\s-]+/g, "_").toUpperCase();
+
+            return {
+                id: x.id ?? x.sessionId ?? `${x.date}-${originTitle ?? title}`,
+
+                title,
+                originTitle,
+
+                partType: (x.partType ?? x.type ?? "CHOICE") as PartType,
+                date: x.date ?? x.playedAt ?? new Date().toISOString(),
+                correct: Number(x.correct ?? 0),
+                total: Number(x.total ?? 0),
+                category: x.category ?? x.categoryName ?? null,
+
+                isRetry,
+                sessionMode: mode || null,
+                parentSessionId: x.parentSessionId ?? null,
+
+                retryKind,
+            };
+        })
         : [];
 
     const recent: Recent[] = Array.isArray(data?.recent)
@@ -1430,9 +1533,7 @@ export default function QuizTimelinePage() {
     const nav = useNavigate();
     const location = useLocation();
 
-    const Reveal = styled.div<{ $d?: number }>`
-        ${({ $d = 0 }) => stagger($d)}
-    `;
+
 
     const handleRetryAll = React.useCallback(
         async (sessionId: number | string) => {
@@ -1453,6 +1554,24 @@ export default function QuizTimelinePage() {
         },
         [nav]
     );
+
+    const handleRetryWrongOnly = React.useCallback(async (sessionId: number | string) => {
+        try {
+            const { data } = await http.post(
+                `/me/quiz/sessions/${sessionId}/retry-wrong-only`, // ← 백엔드 엔드포인트에 맞게
+                null,
+                { headers: authHeader(), withCredentials: true }
+            );
+
+            const newSid = Number(data?.sessionId ?? data?.newSessionId ?? data?.id);
+            if (!Number.isFinite(newSid)) throw new Error("Invalid new sessionId");
+
+            nav(`/poten-word/quiz/play?sessionId=${newSid}`);
+        } catch (e) {
+            console.error("[retryWrongOnly] failed", e);
+            alert("오답 재도전을 시작하지 못했어요. 잠시 후 다시 시도해주세요.");
+        }
+    }, [nav]);
 
     React.useEffect(() => {
         const loggedIn = !!localStorage.getItem("isLoggedIn");
@@ -1677,6 +1796,7 @@ export default function QuizTimelinePage() {
                                 { key: "CHOICE", label: "객관식" },
                                 { key: "OX", label: "OX" },
                                 { key: "INITIALS", label: "초성" },
+                                { key: "MIX", label: "혼합" },
                             ].map((f: any) => (
                                 <Chip
                                     key={f.key}
@@ -1704,12 +1824,17 @@ export default function QuizTimelinePage() {
                                 <Row key={it.id} role="listitem">
                                     {/* 왼쪽: 제목 */}
                                     <TitleStack>
-                                        <QuizTitle>
-                                            [{it.category || labelOf(it.partType)}] {fmtDate(it.date)} {it.title}
-                                        </QuizTitle>
-                                        <div>
-                                            <LightPill onClick={() => nav("/quiz/today")}>{it.category ? it.category : "오늘의 퀴즈"}</LightPill>
-                                        </div>
+                                        <QuizTitle>{it.title}</QuizTitle>
+                                        <PillRow>
+                                            <LightPill onClick={() => nav("/quiz/today")}>
+                                                {it.category ? it.category : "오늘의 퀴즈"}
+                                            </LightPill>
+
+                                            {it.retryKind === "RETRY_ALL" && <RetryBadge>재도전</RetryBadge>}
+                                            {it.retryKind === "WRONG_ONLY" && <WrongOnlyBadge>틀린 문제만</WrongOnlyBadge>}
+
+                                            <MetaText>{fmtDate(it.date)}</MetaText>
+                                        </PillRow>
                                     </TitleStack>
 
                                     {/* 오른쪽: 도넛 + 버튼 */}
