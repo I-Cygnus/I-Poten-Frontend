@@ -221,6 +221,16 @@ const Footer = styled.div`
   gap: 10px;
 `;
 
+const Primary = styled.button`
+    height: 35px; padding: 0 18px; border-radius: 5px; font-weight: 700; letter-spacing: -0.02em;
+    background: ${UI.primary}; border: 1px solid ${UI.primary}; color: #fff; cursor: pointer;
+    transition: filter .15s, transform .08s;
+    &:hover { filter: brightness(0.96); }
+    &:active { transform: translateY(1px); }
+    &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.25); }
+    &:disabled { opacity: .7; cursor: not-allowed; }
+`;
+
 const Ghost = styled.button`
   height: 35px;
   padding: 0 16px;
@@ -362,6 +372,8 @@ export default function QuizReviewPage() {
     const [data, setData] = React.useState<ReviewResponse | null>(null);
     const [loading, setLoading] = React.useState(true);
 
+    const [retrying, setRetrying] = React.useState(false);
+
     React.useEffect(() => {
         let cancel = false;
         (async () => {
@@ -387,6 +399,35 @@ export default function QuizReviewPage() {
 
     const prefix = window.location.pathname.startsWith("/poten-word/") ? "/poten-word" : "";
     const quizHome = `${prefix}/quiz`;
+    const quizPlay = `${quizHome}/play`;
+
+    const handleRetryWrong = async () => {
+        if (!sessionId || retrying) return;
+        setRetrying(true);
+        try {
+            const res = await http.post(
+                `/me/quiz/sessions/${sessionId}/retry-wrong`,
+                {},
+                { headers: { ...authHeader() }, withCredentials: true }
+            );
+            const payload = (res && (res as any).data) ? (res as any).data : res;
+
+            const newSessionId = Number(
+                payload?.newSessionId ?? payload?.sessionId ?? payload?.id ?? payload?.session?.id
+            );
+            if (!Number.isFinite(newSessionId)) throw new Error("세션 생성 실패");
+
+            nav(quizPlay, {
+                state: { sessionId: newSessionId, source: "retry-wrong" },
+                replace: true,
+            });
+        } catch (e: any) {
+            const msg = e?.response?.data?.message ?? e?.message ?? "오답 세션 생성 중 오류";
+            alert(msg);
+        } finally {
+            setRetrying(false);
+        }
+    };
 
     if (loading) {
         return (
@@ -612,7 +653,14 @@ export default function QuizReviewPage() {
 
                         <Footer>
                             <Ghost onClick={() => nav(quizHome, { replace: true })}>닫기</Ghost>
+
+                            {wrong > 0 && !!sessionId && (
+                                <Primary type="button" onClick={handleRetryWrong} disabled={retrying}>
+                                    {retrying ? "다시 시작 중..." : "틀린 문제 다시 풀기"}
+                                </Primary>
+                            )}
                         </Footer>
+
                     </Card>
                 </NarrowLeft>
             </Screen>
