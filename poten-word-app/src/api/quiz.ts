@@ -128,6 +128,8 @@ export type StartQuizSessionUnifiedPayload =
     level?: QLevel;
     seedMode?: SeedMode;
     fixedSeed?: number | null;
+    title?: string;
+    customTitle?: string;
 }
     | {
     source: "wordbook";
@@ -137,6 +139,8 @@ export type StartQuizSessionUnifiedPayload =
     level: QLevel;
     seedMode?: SeedMode;
     fixedSeed?: number | null;
+    title?: string;
+    customTitle?: string;
 }
     | {
     source: "term_category" | "category";
@@ -148,10 +152,15 @@ export type StartQuizSessionUnifiedPayload =
     seedMode?: SeedMode;
     fixedSeed?: number | null;
     labelKeys?: string[];
+    title?: string;
+    customTitle?: string;
 };
 
 export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) {
     const body = (() => {
+        const rawTitle = (payload as any).customTitle ?? (payload as any).title;
+        const customTitle = String(rawTitle ?? "").trim() || undefined;
+
         // 1) term_category / category
         if (payload.source === "category" || payload.source === "term_category") {
             const categoryIdRaw = (payload as any).categoryId ?? (payload as any).termCategoryId;
@@ -178,6 +187,7 @@ export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) 
                 seedMode,
                 fixedSeed,
                 ...(labelKeys.length ? { labelKeys } : {}),
+                ...(customTitle ? { customTitle, title: customTitle } : {}),
             });
         }
 
@@ -194,6 +204,7 @@ export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) 
                 level: levelNorm,
                 seedMode: payload.seedMode ?? "AUTO",
                 ...(payload.seedMode === "FIXED" ? { fixedSeed: payload.fixedSeed ?? null } : {}),
+                ...(customTitle ? { customTitle, title: customTitle } : {}),
             });
         }
 
@@ -211,6 +222,7 @@ export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) 
             ...(payload.count ? { count: payload.count } : {}),
             type: typeNorm ? typeNorm.toLowerCase() : undefined,
             level: levelNorm,
+            ...(customTitle ? { customTitle, title: customTitle } : {}),
         });
     })();
 
@@ -218,8 +230,13 @@ export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) 
 
     if (res.status < 200 || res.status >= 300) {
         console.error("[startQuizUnified] failed:", { status: res.status, data: res.data, sentBody: body });
+
         const msg = (res.data && (res.data.message || res.data.error)) || `HTTP ${res.status}`;
-        throw new Error(msg);
+
+        const e: any = new Error(msg);
+        e.response = { status: res.status, data: res.data };
+        e.sentBody = body;
+        throw e;
     }
 
     const d = res.data?.data ?? res.data;

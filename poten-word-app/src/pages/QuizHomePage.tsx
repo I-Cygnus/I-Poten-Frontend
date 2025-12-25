@@ -106,7 +106,7 @@ export default function QuizHomePage() {
     const [auto, setAuto] = useState(true);
     const [progress, setProgress] = useState(0); // 0~1
 
-// 자동 진행 + 프로그레스 업데이트
+    // 자동 진행 + 프로그레스 업데이트
     useEffect(() => {
         if (!auto) return;                       // 정지 상태면 멈춤
         let raf: number;
@@ -223,18 +223,12 @@ export default function QuizHomePage() {
         ({ mix: "혼합", easy: "쉬움", medium: "보통", hard: "어려움" } as const)[l];
 
     const looksLikeNotEnoughQuestions = (status: number | null, message: string) => {
-        // 백엔드가 제대로 내려주면 404/409/422 같은 걸로 분기 가능
-        if (status === 404 || status === 409 || status === 422) return true;
+        if (status === 400 || status === 404 || status === 409 || status === 422) return true;
 
-        // 지금은 500이라도 “부족” 케이스면 사용자 안내로 떨어뜨리기
         const m = (message || "").toLowerCase();
-        if (status === 500 && (m.includes("not enough") || m.includes("insufficient") || m.includes("부족") || m.includes("no quiz"))) {
-            return true;
-        }
+        if (m.includes("조건에 맞는 문항") || m.includes("문항이 없습니다") || m.includes("not enough")) return true;
 
-        // 500 + 메시지 애매할 때도 “지금 조건으로 구성 불가”로 안내하는 쪽이 UX 상 안전
         if (status === 500) return true;
-
         return false;
     };
 
@@ -266,6 +260,12 @@ export default function QuizHomePage() {
     const toServerLevel = (l: QLevel) =>
         ({ mix: "MIX", easy: "EASY", medium: "MEDIUM", hard: "HARD" } as const)[l];
 
+    function normalizeTitle(t: any): string | undefined {
+        const s = String(t ?? "").trim();
+        if (!s) return undefined;
+        return s.length > 40 ? s.slice(0, 40) : s;
+    }
+
     const onConfirmStart = async () => {
         if (loading) return;
         if (!topic) return;
@@ -273,18 +273,15 @@ export default function QuizHomePage() {
         const scope = getTopicFilter(topic.id);
         if (!scope) return;
 
+        const builtTitle = `${topic.label} · ${qCount}문항 · ${toTypeLabel(qType)} · ${toLevelLabel(qLevel)}`;
+        const inputTitle = normalizeTitle(sessionTitle);
+        const finalTitle = inputTitle ?? builtTitle;
+
         setLoading(true);
         try {
-            const payloadBase = {
-                count: qCount,
-                type: toServerType(qType),
-                level: toServerLevel(qLevel),
-                seedMode: "AUTO",
-                fixedSeed: null,
-            };
-
             const started = await startQuizUnified({
                 source: "term_category",
+                title: finalTitle,
                 termCategoryId: scope.termCategoryId,
                 labelKeys: Array.from(scope.labelKeys ?? []),
                 count: qCount,
@@ -294,18 +291,12 @@ export default function QuizHomePage() {
                 fixedSeed: null,
             } as any);
 
-            console.log("[QuizHomePage] started =", started);
-
             setSetupOpen(false);
 
             const sessionId = Number((started as any)?.sessionId);
-            if (!Number.isFinite(sessionId)) {
-                throw new Error("sessionId가 응답에 없습니다. startQuizUnified 리턴 구조 확인 필요");
-            }
+            if (!Number.isFinite(sessionId)) throw new Error("sessionId가 응답에 없습니다.");
 
-            // playPath 우선(없으면 기존 경로로)
-            const playPath =
-                String((started as any)?.playPath ?? "").trim() || "/poten-word/quiz/play";
+            const playPath = String((started as any)?.playPath ?? "").trim() || "/poten-word/quiz/play";
 
             nav(playPath, {
                 replace: true,
@@ -314,50 +305,45 @@ export default function QuizHomePage() {
                     quizSetId: (started as any)?.quizSetId,
                     questionIds: (started as any)?.questionIds ?? [],
                     items: (started as any)?.items ?? [],
-                    title: `${topic.label} 퀴즈`,
+                    title: (started as any)?.title ?? finalTitle,
                     source: scope.source,
                 },
             });
-        } catch (e) {
-            console.error(e);
-            const { status, message } = getApiError(e);
-
-            if (status === 401 || status === 403) {
-                openSys({
-                    tone: "warning",
-                    title: "로그인이 필요해요",
-                    description: "세션이 만료되었거나 권한이 없습니다. 다시 로그인해 주세요.",
-                });
-                return;
-            }
+        } catch (err: any) {
+            const { status, message } = getApiError(err);
 
             if (looksLikeNotEnoughQuestions(status, message)) {
                 openSys({
-                    tone: "warning",
-                    title: "요청한 조건에 맞는 문제가 부족해요",
-                    description: (
-                        <>
-                            {topic?.label ?? "선택한 카테고리"} · {qCount}문항 · {toTypeLabel(qType)} ·{" "}
-                            {toLevelLabel(qLevel)}
-                        </>
-                    ),
+                    title: "조건에 맞는 문항이 없습니다",
+                    message: "현재 선택한 조건으로는 퀴즈를 만들 수 없어요. 설정을 바꿔서 다시 시도해 주세요.",
                     bullets: buildNotEnoughBullets(),
-                    size: "wide",
-                });
+                } as any);
                 return;
             }
 
             openSys({
-                tone: "error",
-                title: "퀴즈를 시작할 수 없어요",
-                description: "잠시 후 다시 시도해 주세요.",
-                bullets: [<>네트워크 상태를 확인해 주세요.</>, <>같은 문제가 반복되면 관리자에게 문의해 주세요.</>],
-            });
+                title: "퀴즈 시작 실패",
+                message,
+            } as any);
         } finally {
             setLoading(false);
         }
     };
 
+    const [sessionTitle, setSessionTitle] = useState("");
+    const [titleTouched, setTitleTouched] = useState(false);
+
+    const defaultSessionTitle = useMemo(() => {
+        if (!topic) return "포텐퀴즈";
+        return `${topic.label} · ${qCount}문항 · ${toTypeLabel(qType)} · ${toLevelLabel(qLevel)}`;
+    }, [topic, qCount, qType, qLevel]);
+
+    // 모달 열렸을 때 / 토픽 바뀌었을 때 기본값 세팅 (단, 사용자가 이미 수정했다면 덮어쓰지 않음)
+    useEffect(() => {
+        if (!setupOpen) return;
+        if (titleTouched) return;
+        setSessionTitle(defaultSessionTitle);
+    }, [setupOpen, defaultSessionTitle, titleTouched]);
 
     return (
         <PageWrap>
@@ -474,7 +460,12 @@ export default function QuizHomePage() {
                                     <JobCard
                                         key={it.id}
                                         $tone={group.tone}
-                                        onClick={() => { setTopic({ ...it, groupId: group.id }); setSetupOpen(true); }}
+                                        onClick={() => {
+                                            setTopic({ ...it, groupId: group.id });
+                                            setTitleTouched(false);
+                                            setSessionTitle(""); // 비워두면 placeholder/defaultSessionTitle이 보임
+                                            setSetupOpen(true);
+                                        }}
                                         aria-label={`${it.label} 퀴즈 시작`}
                                     >
                                         <TagPill $tone={group.tone}>{group.tag}</TagPill>
@@ -536,6 +527,23 @@ export default function QuizHomePage() {
 
 
                             <SheetBody>
+                                {/* 세션 제목 */}
+                                <Section>
+                                    <h4>퀴즈 제목</h4>
+                                    <TitleInputRow>
+                                        <TitleInput
+                                            value={sessionTitle}
+                                            onChange={(e) => {
+                                                setSessionTitle(e.target.value);
+                                                setTitleTouched(true);
+                                            }}
+                                            placeholder={defaultSessionTitle}
+                                            maxLength={40}
+                                        />
+                                        <TitleCounter>{(sessionTitle?.length ?? 0)}/40</TitleCounter>
+                                    </TitleInputRow>
+                                    <HintText>퀴즈 제목을 입력하세요.</HintText>
+                                </Section>
                                 {/* 문항 수 */}
                                 <Section>
                                     <h4>문항 수</h4>
@@ -1303,4 +1311,42 @@ const Primary = styled.button`
   height: 35px; padding: 0 18px; border-radius: 6px; font-weight: 700; letter-spacing: -0.02em;
   background: ${UI.primaryBlue}; border: 1px solid ${UI.primaryBlue}; color: #fff;
   cursor: pointer; &:hover { filter: brightness(0.96); }
+`;
+const TitleInputRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const TitleInput = styled.input`
+  flex: 1 1 auto;
+  height: 38px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  outline: none;
+
+  &:focus {
+    border-color: rgba(67,105,229,.55);
+    box-shadow: 0 0 0 3px rgba(79,118,241,.18);
+  }
+`;
+
+const TitleCounter = styled.span`
+  flex: 0 0 auto;
+  font-size: 12px;
+  color: #6b7280;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+`;
+
+const HintText = styled.p`
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #6b7280;
 `;
