@@ -6,8 +6,8 @@ export type TopicFilter = {
 
 export const TOPIC_FILTERS = {
     js:    { source: "term_category", termCategoryId: 12 },
-    react: { source: "term_category", termCategoryId: 12, labelKeys: ["react"] },
-    vue:   { source: "term_category", termCategoryId: 12, labelKeys: ["vue"] },
+    react: { source: "term_category", termCategoryId: 14, labelKeys: ["react"] },
+    vue:   { source: "term_category", termCategoryId: 14, labelKeys: ["vue"] },
     html:  { source: "term_category", termCategoryId: 11 },
     a11y:  { source: "term_category", termCategoryId: 16 },
     ts:    { source: "term_category", termCategoryId: 97 },
