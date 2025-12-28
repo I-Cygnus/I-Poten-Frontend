@@ -1,9 +1,9 @@
 import React from "react";
 import styled from "styled-components";
 import { useParams, useNavigate } from "react-router-dom";
-import { NarrowLeft } from "../styles/layout";
-import SoftBlobsBackground from "../components/SoftBlobsBackground";
-import http, { authHeader } from "../utils/http";
+import { NarrowLeft } from "../../styles/layout.ts";
+import SoftBlobsBackground from "../../components/quiz/SoftBlobsBackground.tsx";
+import http, { authHeader } from "../../utils/http.ts";
 
 /* ====== 색/토큰 ====== */
 const UI = {

@@ -14,8 +14,8 @@ import { fetchUserFolders, patchReorderFolders } from "./api/wordbook";
 import WordbookPage from "./pages/WordbookPage.tsx";
 import FavoriteTermsPage from "./pages/FavoriteTermsPage";
 
-import QuizHomePage from "./pages/QuizHomePage";
-import QuizPlayPage from "./pages/QuizPlayPage";
+import QuizHomePage from "./pages/quiz/QuizHomePage.tsx";
+import QuizPlayPage from "./pages/quiz/QuizPlayPage.tsx";
 import PotenNoteHomePage from "./pages/PotenNoteHomePage";
 import { PotenDialogProvider } from "./components/PotenDialog";
 
@@ -25,15 +25,15 @@ import { GlobalFonts } from "./styles/GlobalFonts";
 import QuizResultRoute from "./routes/QuizResultRoute";
 import QuizTodayChoicePage from "./pages/QuizTodayChoicePage";
 import QuizTodayOXPage from "./pages/QuizTodayOXPage";
-import QuizPlayResultPage from "./pages/QuizPlayResultPage";
+import QuizPlayResultPage from "./pages/quiz/QuizPlayResultPage.tsx";
 import BookLandingPage from "./pages/BookLandingPage";
-import QuizTimelinePage from "./pages/QuizTimelinePage.tsx";
+import QuizTimelinePage from "./pages/quiz/QuizTimelinePage.tsx";
 import InitialsQuizPage from "./pages/InitialsQuizPage";
 import SearchPage from "./pages/SearchPage.tsx";
 import TermListPage from "./pages/TermListPage.tsx";
 import PotenWordLandingPage from "./pages/PotenWordLandingPage.tsx";
 import ChoiceQuizPage from "./pages/QuizChoicePage.tsx";
-import QuizReviewPage from "./pages/QuizReviewPage.tsx";
+import QuizReviewPage from "./pages/quiz/QuizReviewPage.tsx";
 
 // notes 전용 로그인 가드(필요하면 라우트에 연결해서 사용)
 function NotesGuard() {
@@ -284,7 +284,7 @@ export default function App() {
                 <Route path="notes" element={<PotenNoteHomePage />} />
                 <Route path="search" element={<SearchPage />} />
 
-                {/* 퀴즈 경로: /quiz/daily/... 구조 */}
+                {/* 퀴즈 경로 */}
                 <Route path="quiz">
                   <Route index element={<QuizHomePage />} />
 
@@ -293,14 +293,6 @@ export default function App() {
                   <Route path="play/review" element={<Navigate to="../quiz" replace />} />
                   <Route path="review/:sessionId" element={<QuizReviewPage />} />
                   <Route path="play/result/:sessionId" element={<QuizReviewPage />} />
-
-                  {/* 오늘의 퀴즈 묶음: /quiz/daily/... */}
-                  <Route path="daily">
-                    <Route index element={<QuizTodayChoicePage />} />
-                    <Route path="choice" element={<QuizTodayChoicePage />} />
-                    <Route path="ox" element={<QuizTodayOXPage />} />
-                    <Route path="initials" element={<InitialsQuizPage />} />
-                  </Route>
 
                   {/* 세트/세션 결과 */}
                   <Route path="result" element={<Navigate to="timeline" replace />} />
