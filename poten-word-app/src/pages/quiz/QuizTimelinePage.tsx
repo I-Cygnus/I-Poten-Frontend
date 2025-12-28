@@ -1641,21 +1641,47 @@ export default function QuizTimelinePage() {
 
     const pages = Math.max(1, Math.ceil((total || 0) / perPage));
 
-    const getPageWindow = (page: number, pages: number, windowSize = 5) => {
-        if (pages <= windowSize) return Array.from({ length: pages }, (_, i) => i);
+    const WINDOW_SIZE = 5;
+    const [pageWindowStart, setPageWindowStart] = React.useState(0);
 
-        let start = Math.max(0, page - Math.floor(windowSize / 2));
-        let end = start + windowSize - 1;
+    const clampWindowStart = React.useCallback(
+        (start: number) => {
+            const maxStart = Math.max(0, pages - WINDOW_SIZE);
+            return Math.max(0, Math.min(start, maxStart));
+        },
+        [pages]
+    );
 
-        if (end > pages - 1) {
-            end = pages - 1;
-            start = end - (windowSize - 1);
-        }
+    React.useEffect(() => {
+        setPage((p) => Math.min(Math.max(0, p), pages - 1));
+        setPageWindowStart((s) => clampWindowStart(s));
+    }, [pages, clampWindowStart]);
 
+    const pageWindow = React.useMemo(() => {
+        const start = clampWindowStart(pageWindowStart);
+        const end = Math.min(pages - 1, start + WINDOW_SIZE - 1);
         return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-    };
+    }, [pageWindowStart, pages, clampWindowStart]);
 
-    const pageWindow = React.useMemo(() => getPageWindow(page, pages, 5), [page, pages]);
+    const goPrev = React.useCallback(() => {
+        setPageWindowStart((ws) => {
+            const start = clampWindowStart(ws);
+            const prevStart = clampWindowStart(start - WINDOW_SIZE);
+
+            setPage(prevStart);
+            return prevStart;
+        });
+    }, [clampWindowStart]);
+
+    const goNext = React.useCallback(() => {
+        setPageWindowStart((ws) => {
+            const start = clampWindowStart(ws);
+            const nextStart = clampWindowStart(start + WINDOW_SIZE);
+
+            setPage(nextStart);
+            return nextStart;
+        });
+    }, [clampWindowStart]);
 
     const [metric] = React.useState<"accuracy" | "sets" | "retryRate">("accuracy");
     const [span, setSpan] = React.useState<"7d" | "30d">("7d");
@@ -1803,6 +1829,7 @@ export default function QuizTimelinePage() {
                                     onClick={() => {
                                         setType(f.key);
                                         setPage(0);
+                                        setPageWindowStart(0);
                                     }}
                                     $active={type === (f.key as any)}
                                     aria-pressed={type === (f.key as any)}
@@ -1872,6 +1899,7 @@ export default function QuizTimelinePage() {
                                 onChange={(e) => {
                                     setQ(e.target.value);
                                     setPage(0);
+                                    setPageWindowStart(0);
                                 }}
                             />
                         </SearchCard>
@@ -1945,7 +1973,7 @@ export default function QuizTimelinePage() {
                         <PaginationRow>
                             <PaginationBar aria-label="타임라인 페이지 이동">
                                 <PageNavBtn
-                                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                                    onClick={goPrev}
                                     disabled={page === 0}
                                     aria-label="이전 페이지"
                                     type="button"
@@ -1967,7 +1995,7 @@ export default function QuizTimelinePage() {
                                 ))}
 
                                 <PageNavBtn
-                                    onClick={() => setPage((p) => Math.min(pages - 1, p + 1))}
+                                    onClick={goNext}
                                     disabled={page >= pages - 1}
                                     aria-label="다음 페이지"
                                     type="button"
