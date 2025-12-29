@@ -413,6 +413,7 @@ type PlayState = {
     sessionId?: number;
     title?: string;
     source?: "wordbook" | "category" | "selected" | "retry";
+    from?: string;
 };
 
 type QuestionType = "CHOICE" | "OX" | "INITIALS";
@@ -639,8 +640,8 @@ function ResultView({ title, summary, items, answers, sessionId, onClose }: any)
             }
 
             const base = getQuizBasePath(loc.pathname);
-            nav(`${base}/play?sessionId=${newSessionId}`, {
-                state: { sessionId: newSessionId, title: title ?? "포텐퀴즈", source: "retry" },
+            nav(`${base}/review/${sid}`, {
+                state: { title: payload.title ?? "포텐퀴즈", from },
                 replace: true,
             });
         } catch (e: any) {
@@ -808,6 +809,32 @@ export default function QuizPlayPage() {
     const loc = useLocation();
     const payload = (loc.state ?? {}) as PlayState;
 
+    // from (이전 페이지) 받기
+    type NavState = { from?: string };
+    const from = (loc.state as NavState | null)?.from;
+
+    const base = getQuizBasePath(loc.pathname);
+
+    // 취소/닫기 공용 핸들러
+    const handleCancel = React.useCallback(() => {
+        // 1) from이 있으면 그곳으로 (가장 정확)
+        if (from) {
+            nav(from, { replace: true });
+            return;
+        }
+
+        // 2) 히스토리 뒤로 갈 수 있으면 뒤로
+        const idx = (window.history.state?.idx ?? 0) as number;
+        if (idx > 0) {
+            nav(-1);
+            return;
+        }
+
+        // 3) fallback
+        nav(base, { replace: true });
+    }, [nav, from, base]);
+
+
     const sp = useMemo(() => new URLSearchParams(loc.search), [loc.search]);
     const sessionId =
         payload.sessionId ??
@@ -937,7 +964,7 @@ export default function QuizPlayPage() {
                                 items={st.items}
                                 answers={st.answers}
                                 sessionId={st.sessionId}
-                                onClose={() => nav(base)}
+                                onClose={handleCancel}
                             />
                         </Card>
                     </NarrowLeft>
@@ -1152,7 +1179,7 @@ export default function QuizPlayPage() {
                                 ))}
 
                                 <Footer>
-                                    <Ghost onClick={() => nav(getQuizBasePath(loc.pathname))}>취소</Ghost>
+                                    <Ghost type="button" onClick={handleCancel}>취소</Ghost>
                                     <Primary
                                         type="button"
                                         onClick={submit}
