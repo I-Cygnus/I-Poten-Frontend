@@ -1,11 +1,11 @@
 import React from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import SearchBar from "../components/SearchBar";
-import ExploreFilterBar, { FilterSelection } from "../components/ExploreFilterBar";
-import PotenWordHeroBanner from "../components/PotenWordHeroBanner";
-import PotenNoteHeroBanner from "../components/PotenNoteHeroBanner";
-import PotenBookHeroBanner from "../components/PotenBookHeroBanner";
+import SearchBar from "../components/word/SearchBar.tsx";
+import ExploreFilterBar, { FilterSelection } from "../components/word/ExploreFilterBar.tsx";
+import PotenWordHeroBanner from "../components/word/PotenWordHeroBanner.tsx";
+import PotenNoteHeroBanner from "../components/note/PotenNoteHeroBanner.tsx";
+import PotenBookHeroBanner from "../components/book/PotenBookHeroBanner.tsx";
 import { NarrowLeft } from "../styles/layout";
 import icon1 from "../assets/hero/icon-1.png";
 import icon2 from "../assets/hero/icon-2.png";

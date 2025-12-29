@@ -4,34 +4,30 @@ import {
   Route,
   useLocation,
   Outlet,
-  useSearchParams,
+  useSearchParams, Navigate,
 } from "react-router-dom";
 
 import PotenWordLayout from "./layouts/PotenWordLayout.tsx";
-import PotenNoteModal from "./components/PotenNoteModal";
+import PotenNoteModal from "./components/note/PotenNoteModal.tsx";
 import http from "./utils/http";
 import { fetchUserFolders, patchReorderFolders } from "./api/wordbook";
-import WordbookPage from "./pages/WordbookPage.tsx";
-import FavoriteTermsPage from "./pages/FavoriteTermsPage";
+import WordbookPage from "./pages/note/WordbookPage.tsx";
 
-import QuizHomePage from "./pages/QuizHomePage";
-import QuizPlayPage from "./pages/QuizPlayPage";
-import PotenNoteHomePage from "./pages/PotenNoteHomePage";
-import { PotenDialogProvider } from "./components/PotenDialog";
+import QuizHomePage from "./pages/quiz/QuizHomePage.tsx";
+import QuizPlayPage from "./pages/quiz/regular/QuizPlayPage.tsx";
+import PotenNoteHomePage from "./pages/note/PotenNoteHomePage.tsx";
+import { PotenDialogProvider } from "./components/common/PotenDialog.tsx";
 
 import { PageContainerFlushTop } from "./styles/layout";
 import { goToAccountLogin } from "./utils/auth";
 import { GlobalFonts } from "./styles/GlobalFonts";
 import QuizResultRoute from "./routes/QuizResultRoute";
-import QuizTodayChoicePage from "./pages/QuizTodayChoicePage";
-import QuizTodayOXPage from "./pages/QuizTodayOXPage";
-import QuizPlayResultPage from "./pages/QuizPlayResultPage";
-import BookLandingPage from "./pages/BookLandingPage";
-import QuizTimelinePage from "./pages/QuizTimelinePage.tsx";
-import InitialsQuizPage from "./pages/InitialsQuizPage";
-import SearchPage from "./pages/SearchPage.tsx";
-import TermListPage from "./pages/TermListPage.tsx";
-import PotenWordLandingPage from "./pages/PotenWordLandingPage.tsx";
+import BookLandingPage from "./pages/book/BookLandingPage.tsx";
+import QuizTimelinePage from "./pages/quiz/QuizTimelinePage.tsx";
+import SearchPage from "./pages/word/SearchPage.tsx";
+import TermListPage from "./pages/word/TermListPage.tsx";
+import PotenWordLandingPage from "./pages/word/PotenWordLandingPage.tsx";
+import QuizReviewPage from "./pages/quiz/regular/QuizReviewPage.tsx";
 
 // notes 전용 로그인 가드(필요하면 라우트에 연결해서 사용)
 function NotesGuard() {
@@ -282,24 +278,19 @@ export default function App() {
                 <Route path="notes" element={<PotenNoteHomePage />} />
                 <Route path="search" element={<SearchPage />} />
 
-                {/* 퀴즈 경로: /quiz/daily/... 구조 */}
+                {/* 퀴즈 경로 */}
                 <Route path="quiz">
                   <Route index element={<QuizHomePage />} />
 
                   {/* 일반 세트 플레이 */}
                   <Route path="play" element={<QuizPlayPage />} />
-                  <Route path="play/result" element={<QuizPlayResultPage />} />
-
-                  {/* 오늘의 퀴즈 묶음: /quiz/daily/... */}
-                  <Route path="daily">
-                    <Route index element={<QuizTodayChoicePage />} />
-                    <Route path="choice" element={<QuizTodayChoicePage />} />
-                    <Route path="ox" element={<QuizTodayOXPage />} />
-                    <Route path="initials" element={<InitialsQuizPage />} />
-                  </Route>
+                  <Route path="play/review" element={<Navigate to="../quiz" replace />} />
+                  <Route path="review/:sessionId" element={<QuizReviewPage />} />
+                  <Route path="play/result/:sessionId" element={<QuizReviewPage />} />
 
                   {/* 세트/세션 결과 */}
-                  <Route path="result" element={<QuizResultRoute />} />
+                  <Route path="result" element={<Navigate to="timeline" replace />} />
+                  <Route path="result/:sessionId" element={<QuizResultRoute />} />
 
                   {/* 타임라인 대시보드 */}
                   <Route path="timeline" element={<QuizTimelinePage />} />

@@ -1,6 +1,6 @@
 import React from "react";
-import { useLocation, useNavigate } from "react-router-dom";
-import QuizResultPage from "../pages/QuizResultPage";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
+import DailyQuizResultPage from "../pages/quiz/daily/DailyQuizResultPage.tsx";
 import { getSessionReport, getSessionSummary } from "../api/quiz";
 import { retryWrongOnly } from "../api/quizChoice";
 
@@ -18,6 +18,7 @@ export default function QuizResultRoute() {
     const nav = useNavigate();
     const location = useLocation();
     const { state } = location as { state?: ResultState };
+    const { sessionId: sessionIdParam } = useParams();
 
     const stored = React.useMemo<(OX | null)[] | null>(() => {
         try {
@@ -30,14 +31,18 @@ export default function QuizResultRoute() {
 
     const sessionId = React.useMemo(() => {
         const fromState = state?.sessionId;
+        const fromParam = sessionIdParam;
         const fromQs = new URLSearchParams(location.search).get("sessionId");
         const fromLs = localStorage.getItem(LS_KEY_LAST_SESSION);
-        const cand = [fromState, fromQs, fromLs].find((v) => v != null && String(v).trim() !== "");
+        const cand = [fromParam, fromState, fromQs, fromLs].find((v) => v != null && String(v).trim() !== "");
         const n = Number(cand);
         return Number.isFinite(n) ? n : undefined;
-    }, [state?.sessionId, location.search]);
+    }, [sessionIdParam, state?.sessionId, location.search]);
 
     const [serverProgress, setServerProgress] = React.useState<OX[] | null>(null);
+
+    const nz = (v: any) => String(v ?? "").trim();
+    const norm = (s: any) => nz(s).replace(/\s+/g, "").toLowerCase();
 
     React.useEffect(() => {
         let aborted = false;
@@ -50,7 +55,20 @@ export default function QuizResultRoute() {
 
                 const rep = await getSessionReport(sessionId);
                 if (aborted || !rep?.details) return;
-                const arr: OX[] = rep.details.map((d: any) => (d?.correct ? "O" : "X"));
+
+                const arr: OX[] = rep.details.map((d: any) => {
+                    const submitted = norm(d?.submittedText ?? d?.submitted_text);
+                    const correct   = norm(d?.correctText ?? d?.correct_text);
+
+                    // 텍스트가 둘 다 있으면 "공백 무시" 비교를 우선
+                    if (submitted && correct) return submitted === correct ? "O" : "X";
+
+                    // 텍스트가 없으면 서버 boolean 사용
+                    if (typeof d?.correct === "boolean") return d.correct ? "O" : "X";
+
+                    return "X";
+                });
+
                 setServerProgress(arr);
             } catch {
             }
@@ -95,7 +113,7 @@ export default function QuizResultRoute() {
     }
 
     return (
-        <QuizResultPage
+        <DailyQuizResultPage
             progress={progress}
             sessionId={sessionId}
             title="결과 보기"
