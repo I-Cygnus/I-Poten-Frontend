@@ -141,7 +141,7 @@ const IconWrap = styled.div`
 
 const BigO = styled.span`
     --ring: clamp(16px, 2.2vw, 22px);
-    width: clamp(116px, 11vw, 196px);
+    width: clamp(92px, 9.1vw, 160px);
     aspect-ratio: 1;
     border-radius: 999px;
     position: relative;
