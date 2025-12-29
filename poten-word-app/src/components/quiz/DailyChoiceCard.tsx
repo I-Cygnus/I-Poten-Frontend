@@ -265,7 +265,7 @@ const RightCol = styled.div`
 `;
 const Emblem = styled.img`
   --emblem-size: clamp(110px, 15vw, 210px);
-  --emblem-nudge-x: clamp(28px, 1.6vw, 84px);
+  --emblem-nudge-x: clamp(12px, 1.2vw, 30px);
   position: absolute;
   right: 0;
   bottom: calc(100% + clamp(6px, 1vw, 12px));
