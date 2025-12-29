@@ -1,5 +1,5 @@
 import React from "react";
-import PotenNoteModal from "../../components/PotenNoteModal";
+import PotenNoteModal from "../../components/note/PotenNoteModal.tsx";
 import { fetchUserFolders, patchReorderFolders } from "../../api/folders";
 import { renameUserFolder, deleteUserFolder, deleteUserFoldersBulk } from "../../api/folder";
 import http, { authHeader } from "../../utils/http";

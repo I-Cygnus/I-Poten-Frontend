@@ -10,7 +10,7 @@ import act3 from "../../assets/quiz/quiz-actionbar-3.png";
 import act4 from "../../assets/quiz/quiz-actionbar-4.png";
 import { getTopicFilter } from "../../constants/topicFilter.ts";
 import { startQuizUnified } from "../../api/quiz.ts";
-import SystemMessageModal, { SystemMessage } from "../../components/SystemMessageModal.tsx";
+import SystemMessageModal, { SystemMessage } from "../../components/common/SystemMessageModal.tsx";
 import DailyQuizModal from "../../components/quiz/DailyQuizModal.tsx";
 import { startGeneralDaily, DailyStartResponse, DailyStartSession } from "../../api/dailyQuiz.ts";
 import DailyChoiceModalPlay from "./daily/DailyChoiceModalPlay.tsx";
