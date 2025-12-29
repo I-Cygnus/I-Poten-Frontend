@@ -171,6 +171,34 @@ export default function QuizHomePage() {
         return () => cancelAnimationFrame(raf);
     }, [auto, idx, goNext]);
 
+    useEffect(() => {
+        const els = Array.from(document.querySelectorAll('[data-jobcard="1"]')) as HTMLElement[];
+        if (!els.length) return;
+
+        if (typeof IntersectionObserver === "undefined") {
+            els.forEach(el => (el.dataset.in = "1"));
+            return;
+        }
+
+        const io = new IntersectionObserver(
+            (entries) => {
+                for (const e of entries) {
+                    if (e.isIntersecting) {
+                        (e.target as HTMLElement).dataset.in = "1";
+                        io.unobserve(e.target);
+                    }
+                }
+            },
+            {
+                threshold: 0.15,
+                rootMargin: "0px 0px -10% 0px",
+            }
+        );
+
+        els.forEach(el => io.observe(el));
+        return () => io.disconnect();
+    }, []);
+
     const jobGroups = [
         {
             id: "fe",
@@ -192,9 +220,9 @@ export default function QuizHomePage() {
             tag: "Backend",
             tone: "green",
             items: [
-                { id: "sql",   label: "SQL·데이터베이스 설계", to: "/quiz/sql" },
+                { id: "sql",   label: "SQL·데이터베이스", to: "/quiz/sql" },
                 { id: "rest",  label: "HTTP·REST API 설계",    to: "/quiz/rest" },
-                { id: "spring",label: "Java·Spring Boot 핵심",  to: "/quiz/spring" },
+                { id: "spring",label: "Java·Spring Boot",  to: "/quiz/spring" },
                 { id: "devops",label: "DevOps·클라우드",        to: "/quiz/devops" },
                 { id: "redis", label: "캐싱·스케일링(Redis)",   to: "/quiz/redis" },
                 { id: "sec",   label: "보안·인증",              to: "/quiz/security" },
@@ -395,7 +423,7 @@ export default function QuizHomePage() {
         <PageWrap>
             <HeroWrap style={{
                 ['--content-nudge' as any]: '20px',
-                ['--hero-gap' as any]: '28px',
+                ['--hero-gap' as any]: '10px',
             }}
                       role="region"
                       aria-label="포텐퀴즈 배너"
@@ -452,28 +480,59 @@ export default function QuizHomePage() {
                 <ArrowButton aria-label="다음" onClick={goNext} $side="right">
                     <ArrowSvg viewBox="0 0 24 24"><polyline points="9 4 17 12 9 20" /></ArrowSvg>
                 </ArrowButton>
+                {/*<MiniPager role="region" aria-label="슬라이드 컨트롤">*/}
+                {/*    <IndicatorRow role="tablist" aria-label="슬라이드 선택">*/}
+                {/*        {slides.map((s, i) => (*/}
+                {/*            <IndicatorBtn*/}
+                {/*                key={s.id}*/}
+                {/*                type="button"*/}
+                {/*                $active={i === idx}*/}
+                {/*                style={i === idx ? ({ ["--p" as any]: progress } as any) : undefined}*/}
+                {/*                onClick={() => {*/}
+                {/*                    setProgress(0);*/}
+                {/*                    setIdx(i);*/}
+                {/*                }}*/}
+                {/*                aria-label={`${i + 1}번째 슬라이드로 이동`}*/}
+                {/*                aria-current={i === idx ? "true" : undefined}*/}
+                {/*            >*/}
+                {/*                <span className="shape" />*/}
+                {/*            </IndicatorBtn>*/}
+                {/*        ))}*/}
+                {/*    </IndicatorRow>*/}
+
+                {/*    <MiniToggle*/}
+                {/*        type="button"*/}
+                {/*        onClick={() => setAuto(a => !a)}*/}
+                {/*        aria-label={auto ? "일시정지" : "재생"}*/}
+                {/*        aria-pressed={!auto}*/}
+                {/*    >*/}
+                {/*        <MiniIcon $mode={auto ? "pause" : "play"} aria-hidden />*/}
+                {/*    </MiniToggle>*/}
+                {/*</MiniPager>*/}
             </HeroWrap>
-            <ProgressShell
-                role="region"
-                aria-label="슬라이드 진행 상태"
-            >
-                <Bar aria-hidden="true">
-                    <Fill style={{ ['--p' as any]: progress }} />
-                </Bar>
 
-                <Counter>
-                    <strong>{String(idx + 1).padStart(2, '0')}</strong>
-                    <span>&nbsp;/&nbsp;{String(len).padStart(2, '0')}</span>
-                </Counter>
+            {/*<ProgressShell*/}
+            {/*    role="region"*/}
+            {/*    aria-label="슬라이드 진행 상태"*/}
+            {/*>*/}
+            {/*    <Bar aria-hidden="true">*/}
+            {/*        <Fill style={{ ['--p' as any]: progress }} />*/}
+            {/*    </Bar>*/}
 
-                <Controls>
-                    <CtrlBtn onClick={goPrev} aria-label="이전 슬라이드">←</CtrlBtn>
-                    <CtrlBtn onClick={() => setAuto(a => !a)} aria-label={auto ? '일시정지' : '재생'}>
-                        {auto ? 'Ⅱ' : '▶'}
-                    </CtrlBtn>
-                    <CtrlBtn onClick={goNext} aria-label="다음 슬라이드">→</CtrlBtn>
-                </Controls>
-            </ProgressShell>
+            {/*    <Counter>*/}
+            {/*        <strong>{String(idx + 1).padStart(2, '0')}</strong>*/}
+            {/*        <span>&nbsp;/&nbsp;{String(len).padStart(2, '0')}</span>*/}
+            {/*    </Counter>*/}
+
+            {/*    <Controls>*/}
+            {/*        <CtrlBtn onClick={goPrev} aria-label="이전 슬라이드">←</CtrlBtn>*/}
+            {/*        <CtrlBtn onClick={() => setAuto(a => !a)} aria-label={auto ? '일시정지' : '재생'}>*/}
+            {/*            {auto ? 'Ⅱ' : '▶'}*/}
+            {/*        </CtrlBtn>*/}
+            {/*        <CtrlBtn onClick={goNext} aria-label="다음 슬라이드">→</CtrlBtn>*/}
+            {/*    </Controls>*/}
+            {/*</ProgressShell>*/}
+
             <DailyQuizModal
                 open={dailyOpen}
                 title={session?.title ?? "오늘의 퀴즈"}
@@ -574,20 +633,21 @@ export default function QuizHomePage() {
                         <JobGroup key={group.id}>
                             <JobGroupTitle>{group.title}</JobGroupTitle>
                             <JobsGrid>
-                                {group.items.map(it => (
+                                {group.items.map((it, i) => (
                                     <JobCard
                                         key={it.id}
                                         $tone={group.tone}
+                                        data-jobcard="1"
+                                        style={{ ['--reveal-delay' as any]: `${(i % 3) * 70}ms` }}  // 0ms, 70ms, 140ms 반복
                                         onClick={() => {
                                             setTopic({ ...it, groupId: group.id });
                                             setTitleTouched(false);
-                                            setSessionTitle(""); // 비워두면 placeholder/defaultSessionTitle이 보임
+                                            setSessionTitle("");
                                             setSetupOpen(true);
                                         }}
                                         aria-label={`${it.label} 퀴즈 시작`}
                                     >
                                         <TagPill $tone={group.tone}>{group.tag}</TagPill>
-
                                         <CardRow>
                                             <CardTitle>{it.label}</CardTitle>
                                             <StartPill $tone={group.tone} aria-hidden>시작</StartPill>
@@ -716,13 +776,15 @@ const HeroWrap = styled.section`
 
     margin-bottom: var(--hero-gap, 16px);
 
-    /* 화살표 안전 영역 + 왼쪽으로 더 붙이고 싶을 때 쓰는 누지 값 */
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
     --arrow-safe: 50px;
     --content-nudge: 0px;
 
     @media (max-width: 640px) {
         --arrow-safe: 48px;
-        /* --content-nudge: 8px; */
     }
 `;
 
@@ -1004,7 +1066,7 @@ const QuickActions = styled.section`
   --hero-max: 1240px;
   max-width: var(--hero-max);
   width: 100%;
-  margin: 18px auto 0;
+  margin: 12px auto 0;
 `;
 
 const Divider = styled.div`
@@ -1021,6 +1083,126 @@ const Divider = styled.div`
     width: 92px; height: 2px;
     background: #111827;   /* 왼쪽 진한 부분(스크린샷 느낌) */
   }
+`;
+
+const MiniPager = styled.div`
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 6px;
+    user-select: none;
+    margin-bottom: -36px;
+`;
+
+const IndicatorRow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const IndicatorBtn = styled.button<{ $active?: boolean }>`
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 999px;
+
+  /* “대시(활성)” vs “도트(비활성)” */
+  width: ${({ $active }) => ($active ? "26px" : "8px")};
+  height: 8px;
+  display: grid;
+  place-items: center;
+
+  .shape{
+    width: 100%;
+    height: 100%;
+    border-radius: 999px;
+    background: ${({ $active }) => ($active ? "#e5e7eb" : "#9ca3af")};
+    position: relative;
+    overflow: hidden;
+  }
+
+  ${({ $active }) =>
+    $active &&
+    `
+    .shape::after{
+      content:"";
+      position:absolute;
+      inset:0;
+      background:#111827;
+      transform-origin:left center;
+      transform: scaleX(var(--p, 0));
+      transition: transform 120ms linear;
+      will-change: transform;
+    }
+  `}
+
+  &:hover .shape{
+    background: ${({ $active }) => ($active ? "#e5e7eb" : "#6b7280")};
+  }
+
+  &:focus-visible{
+    outline: 2px solid rgba(79,118,241,.35);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    ${({ $active }) => $active && `.shape::after{ transition: none; }`}
+  }
+`;
+
+const MiniToggle = styled.button`
+  appearance: none;
+  border: 0;
+  background: transparent;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+
+  &:hover { background: #f3f4f6; }
+  &:focus-visible {
+    outline: 2px solid rgba(79,118,241,.35);
+    outline-offset: 2px;
+  }
+`;
+
+const MiniIcon = styled.span<{ $mode: "pause" | "play" }>`
+  position: relative;
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+
+  ${({ $mode }) =>
+    $mode === "pause"
+        ? `
+    &::before,&::after{
+      content:"";
+      position:absolute;
+      top:1px; bottom:1px;
+      width:3px;
+      border-radius:2px;
+      background:#111827;
+    }
+    &::before{ left:3px; }
+    &::after{ right:3px; }
+  `
+        : `
+    &::before{
+      content:"";
+      position:absolute;
+      left:4px; top:2px;
+      width:0; height:0;
+      border-top:5px solid transparent;
+      border-bottom:5px solid transparent;
+      border-left:8px solid #111827;
+    }
+  `}
 `;
 
 /* 동그란 아이콘 컨테이너 */
@@ -1194,6 +1376,26 @@ const JobCard = styled.button<{ $tone: ToneKey }>`
     box-shadow: 0 3px 10px ${p => tones[p.$tone].shadow};
     transition: transform 160ms cubic-bezier(.22,.61,.36,1), box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease;
 
+    /* ✅ 스크롤 등장 전 상태 */
+    opacity: 0;
+    transform: translateY(10px);
+    will-change: opacity, transform;
+
+    /* ✅ 등장 트리거(IntersectionObserver가 data-in="1" 세팅) */
+    &[data-in="1"]{
+        opacity: 1;
+        transform: translateY(0);
+        transition:
+                opacity 360ms ease,
+                transform 360ms cubic-bezier(.22,.61,.36,1),
+                box-shadow 160ms ease,
+                border-color 160ms ease,
+                background-color 160ms ease;
+
+        /* 행(3개) 안에서 살짝 순차 등장 */
+        transition-delay: var(--reveal-delay, 0ms);
+    }
+
     @media (hover:hover) and (pointer:fine) {
         &:hover {
             transform: translateY(-2px);
@@ -1202,6 +1404,12 @@ const JobCard = styled.button<{ $tone: ToneKey }>`
     }
     &:active { transform: translateY(-1px) scale(.995); }
     &:focus-visible { outline: 3px solid rgba(79,118,241,.35); outline-offset: 2px; }
+
+    @media (prefers-reduced-motion: reduce) {
+        opacity: 1;
+        transform: none;
+        transition: none;
+    }
 `;
 
 const TagPill = styled.span<{ $tone: ToneKey }>`
@@ -1252,6 +1460,14 @@ const CardTitle = styled.h3`
 
     flex: 1 1 auto;
     min-width: 0;
+
+    word-break: keep-all;
+    overflow-wrap: normal;
+
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
 `;
 
 const MoreRow = styled.div`
