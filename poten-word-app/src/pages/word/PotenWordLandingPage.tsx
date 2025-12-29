@@ -133,9 +133,13 @@ async function attachJobRecommendationToFolder(
 type FeatureRowInViewProps = {
     children: React.ReactNode;
     cardOnLeft?: boolean;
+    shiftX?: number;
 };
-
-const FeatureRowInView: React.FC<FeatureRowInViewProps> = ({ children, cardOnLeft }) => {
+const FeatureRowInView: React.FC<FeatureRowInViewProps> = ({
+                                                               children,
+                                                               cardOnLeft,
+                                                               shiftX = 0,
+                                                           }) => {
     const ref = useRef<HTMLDivElement | null>(null);
     const [visible, setVisible] = useState(false);
 
@@ -150,9 +154,7 @@ const FeatureRowInView: React.FC<FeatureRowInViewProps> = ({ children, cardOnLef
 
         const observer = new IntersectionObserver(
             (entries) => {
-                entries.forEach((entry) => {
-                    setVisible(entry.isIntersecting);
-                });
+                entries.forEach((entry) => setVisible(entry.isIntersecting));
             },
             { threshold: 0.3 }
         );
@@ -162,7 +164,12 @@ const FeatureRowInView: React.FC<FeatureRowInViewProps> = ({ children, cardOnLef
     }, []);
 
     return (
-        <FeatureRow ref={ref} $cardOnLeft={cardOnLeft} $visible={visible}>
+        <FeatureRow
+            ref={ref}
+            $cardOnLeft={cardOnLeft}
+            $visible={visible}
+            $shiftX={shiftX}
+        >
             {children}
         </FeatureRow>
     );
@@ -473,6 +480,8 @@ export default function PotenWordLandingPage() {
         [selectedJob, saving, navigate]
     );
 
+    const ROW_SHIFT = 24;
+
     return (
         <>
             <SoftBg />
@@ -519,7 +528,7 @@ export default function PotenWordLandingPage() {
                 {/* ===== 아래 설명 섹션 ===== */}
                 <MoreSection aria-label="포텐워드 상세 설명">
                     {/* Row 1: 포텐워드 (왼쪽 라벨, 오른쪽 이미지+텍스트) */}
-                    <FeatureRowInView>
+                    <FeatureRowInView shiftX={-ROW_SHIFT}>
                         <LabelBlock>
                             <LabelPill>포텐워드</LabelPill>
                             <LabelTitle>기술면접 개념 아카이브</LabelTitle>
@@ -554,7 +563,7 @@ export default function PotenWordLandingPage() {
                     </FeatureRowInView>
 
                     {/* Row 2: 포텐노트 (왼쪽 이미지+텍스트, 오른쪽 라벨) */}
-                    <FeatureRowInView cardOnLeft>
+                    <FeatureRowInView cardOnLeft shiftX={ROW_SHIFT}>
                         <DetailCard>
                             <MediaWrapper>
                                 <MediaVideo
@@ -593,7 +602,7 @@ export default function PotenWordLandingPage() {
                     </FeatureRowInView>
 
                     {/* Row 3: 포텐퀴즈 (왼쪽 라벨, 오른쪽 이미지+텍스트) */}
-                    <FeatureRowInView>
+                    <FeatureRowInView shiftX={-ROW_SHIFT}>
                         <LabelBlock>
                             <LabelPill>포텐퀴즈</LabelPill>
                             <LabelTitle>실전처럼 푸는 직무별 개념 퀴즈</LabelTitle>
@@ -984,18 +993,29 @@ const MoreSection = styled.section`
     gap: 96px;
 `;
 
-const FeatureRow = styled.div<{ $cardOnLeft?: boolean; $visible?: boolean }>`
+const FeatureRow = styled.div<{
+    $cardOnLeft?: boolean;
+    $visible?: boolean;
+    $shiftX?: number;
+}>`
+    --shift-x: 0px;
+
+    /* 데스크탑에서만 좌우 시프트 적용 (모바일은 0) */
+    @media (min-width: 961px) {
+        --shift-x: ${({ $shiftX = 0 }) => `${$shiftX}px`};
+    }
+
     display: grid;
     grid-template-columns: ${({ $cardOnLeft }) =>
-            $cardOnLeft
-                    ? "minmax(0, 1.6fr) minmax(0, 1fr)"  /* 카드 왼쪽 */
-                    : "minmax(0, 1fr) minmax(0, 1.6fr)"}; /* 카드 오른쪽 */
+            $cardOnLeft ? "minmax(0, 1.6fr) minmax(0, 1fr)" : "minmax(0, 1fr) minmax(0, 1.6fr)"};
     gap: 40px;
     align-items: center;
 
     opacity: ${({ $visible }) => ($visible ? 1 : 0)};
     transform: ${({ $visible }) =>
-            $visible ? "translateY(0px) scale(1)" : "translateY(20px) scale(0.98)"};
+            $visible
+                    ? "translate3d(var(--shift-x), 0px, 0) scale(1)"
+                    : "translate3d(var(--shift-x), 20px, 0) scale(0.98)"};
     transition: opacity 0.6s ease, transform 0.6s cubic-bezier(.16,1,.3,1);
 
     @media (max-width: 960px) {
