@@ -88,13 +88,23 @@ export default function QuizHomePage() {
 
     const openDaily = useCallback(async (kind: DailyKind) => {
         console.log("[daily] openDaily called", kind, "inFlight=", dailyInFlightRef.current);
-        console.log("[daily] typeof startGeneralDaily =", typeof startGeneralDaily);
         if (dailyInFlightRef.current) return;
         dailyInFlightRef.current = true;
 
         setDailyLoading(true);
         try {
-            const res = await startGeneralDaily();
+            // RESUME로 먼저 시도 (어제 세션 있으면 carryOver=true로 옴)
+            const res = await startGeneralDaily("RESUME");
+
+            if (res?.carryOver) {
+                // 여기서 바로 플레이 모달 열지 말고, 선택 모달 띄우기
+                setDailyPendingKind(kind);
+                setDailyResumeCandidate(res);
+                setDailyCarryOpen(true);
+                return;
+            }
+
+            // 오늘 세션이면 바로 열기
             setDailyData(res);
             setDailyKind(kind);
             setDailyOpen(true);
@@ -106,6 +116,39 @@ export default function QuizHomePage() {
             setDailyLoading(false);
         }
     }, []);
+
+    const closeDailyCarry = () => {
+        setDailyCarryOpen(false);
+        setDailyResumeCandidate(null);
+    };
+
+    const onPickResume = () => {
+        if (!dailyResumeCandidate) return;
+        setDailyData(dailyResumeCandidate);
+        setDailyKind(dailyPendingKind);
+        setDailyOpen(true);
+        closeDailyCarry();
+    };
+
+    const onPickToday = async () => {
+        if (dailyInFlightRef.current) return;
+        dailyInFlightRef.current = true;
+
+        setDailyLoading(true);
+        try {
+            const res = await startGeneralDaily("TODAY"); // 강제로 오늘 세션 생성
+            setDailyData(res);
+            setDailyKind(dailyPendingKind);
+            setDailyOpen(true);
+            closeDailyCarry();
+        } catch (e: any) {
+            const { message } = getApiError(e);
+            openSys({ title: "오늘의 퀴즈 시작 실패", message } as any);
+        } finally {
+            dailyInFlightRef.current = false;
+            setDailyLoading(false);
+        }
+    };
 
     type OX = "O" | "X";
     const [resultOpen, setResultOpen] = useState(false);
@@ -533,6 +576,35 @@ export default function QuizHomePage() {
             {/*    </Controls>*/}
             {/*</ProgressShell>*/}
 
+            {dailyCarryOpen && dailyResumeCandidate && (
+                <CarryScrim
+                    role="dialog"
+                    aria-modal="true"
+                    onClick={(e) => { if (e.target === e.currentTarget) closeDailyCarry(); }}
+                >
+                    <CarrySheet onClick={(e) => e.stopPropagation()}>
+                        <CarryHeader>
+                            <h3>이전 퀴즈가 남아 있어요</h3>
+                            <p>
+                                <strong>{dailyResumeCandidate.activeYmd}</strong> 퀴즈를 이어서 풀까요,
+                                아니면 <strong>{dailyResumeCandidate.todayYmd}</strong> 퀴즈를 새로 시작할까요?
+                            </p>
+                        </CarryHeader>
+
+                        <CarryFooter>
+                            <CarryGhost onClick={closeDailyCarry} disabled={dailyLoading}>닫기</CarryGhost>
+                            <CarryBtnRow>
+                                <CarryOutline onClick={onPickResume} disabled={dailyLoading}>
+                                    이어하기
+                                </CarryOutline>
+                                <CarryPrimary onClick={onPickToday} disabled={dailyLoading}>
+                                    오늘 새로 시작
+                                </CarryPrimary>
+                            </CarryBtnRow>
+                        </CarryFooter>
+                    </CarrySheet>
+                </CarryScrim>
+            )}
             <DailyQuizModal
                 open={dailyOpen}
                 title={session?.title ?? "오늘의 퀴즈"}
@@ -1376,12 +1448,10 @@ const JobCard = styled.button<{ $tone: ToneKey }>`
     box-shadow: 0 3px 10px ${p => tones[p.$tone].shadow};
     transition: transform 160ms cubic-bezier(.22,.61,.36,1), box-shadow 160ms ease, border-color 160ms ease, background-color 160ms ease;
 
-    /* ✅ 스크롤 등장 전 상태 */
     opacity: 0;
     transform: translateY(10px);
     will-change: opacity, transform;
 
-    /* ✅ 등장 트리거(IntersectionObserver가 data-in="1" 세팅) */
     &[data-in="1"]{
         opacity: 1;
         transform: translateY(0);
@@ -1666,4 +1736,96 @@ const HintText = styled.p`
   margin: 8px 0 0;
   font-size: 12px;
   color: #6b7280;
+`;
+
+const CarryScrim = styled.div`
+  position: fixed; inset: 0;
+  z-index: 1200;
+  background: rgba(15,23,42,.45);
+  backdrop-filter: saturate(120%) blur(2px);
+`;
+
+const CarrySheet = styled.div`
+  position: fixed; z-index: 1201;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(520px, calc(100% - 32px));
+  background: #fff;
+  border: 1px solid ${UI.panelLineSoft};
+  border-radius: 18px;
+  box-shadow: 0 30px 80px rgba(0,0,0,.18);
+  overflow: hidden;
+`;
+
+const CarryHeader = styled.div`
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid ${UI.panelLineSoft};
+
+  h3{
+    margin: 0 0 8px;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+    color: ${UI.text};
+    font-weight: 800;
+  }
+  p{
+    margin: 0;
+    color: ${UI.sub};
+    font-size: 14px;
+    line-height: 1.5;
+    strong{ color: ${UI.text}; font-weight: 800; }
+  }
+`;
+
+const CarryFooter = styled.div`
+  padding: 14px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const CarryBtnRow = styled.div`
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+`;
+
+const CarryGhost = styled.button`
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: ${UI.sub};
+  font-weight: 700;
+  cursor: pointer;
+  &:hover{ background: #f9fafb; }
+  &:disabled{ opacity: .6; cursor: not-allowed; }
+`;
+
+const CarryOutline = styled.button`
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid ${UI.primaryBlue};
+  background: #fff;
+  color: ${UI.primaryBlue};
+  font-weight: 800;
+  cursor: pointer;
+  &:hover{ background: #eef2ff; }
+  &:disabled{ opacity: .6; cursor: not-allowed; }
+`;
+
+const CarryPrimary = styled.button`
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid ${UI.primaryBlue};
+  background: ${UI.primaryBlue};
+  color: #fff;
+  font-weight: 800;
+  cursor: pointer;
+  &:hover{ filter: brightness(0.96); }
+  &:disabled{ opacity: .6; cursor: not-allowed; }
 `;
