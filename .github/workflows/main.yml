@@ -64,7 +64,7 @@ jobs:
   deploy:
     needs: build
     name: Deploy
-    runs-on: [ self-hosted, i-poten-frontend ]
+    runs-on: [ self-hosted, i-poten-front ]
     steps:
       - name: Deploy to production
         run: |
