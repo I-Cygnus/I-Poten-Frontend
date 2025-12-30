@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import http, { authHeader } from "../../utils/http.ts";
 import { NarrowLeft } from "../../styles/layout.ts";
 import { goToAccountLogin } from "../../utils/auth.ts";
+import SystemMessageModal from "../../components/common/SystemMessageModal";
 
 /* ===== UI tokens ===== */
 const UI = {
@@ -13,6 +14,7 @@ const UI = {
         muted: "#6b7280",
         line: "#e5e7eb",
         primary: "#4F76F1",
+        primaryBlue: "#4369e5",
         primaryStrong: "#3E63E0",
         indigo50: "#eef2ff",
         indigo200: "#c7d2fe",
@@ -1263,6 +1265,202 @@ const QuickIcon = styled.span`
     }
 `;
 
+/* ===== Quick Retry Modal ===== */
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(15, 23, 42, 0.45);
+  display: grid;
+  place-items: center;
+  padding: 18px;
+`;
+
+const ModalCard = styled.div`
+  width: min(520px, 100%);
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 18px 60px rgba(15, 23, 42, 0.18);
+  overflow: hidden;
+  animation: ${riseIn} 220ms ease-out;
+`;
+
+const ModalHead = styled.div`
+  padding: 16px 18px 10px;
+  border-bottom: 1px solid ${UI.color.line};
+`;
+
+const ModalTitle = styled.div`
+  font-size: 18px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: ${UI.color.text};
+`;
+
+const ModalDesc = styled.div`
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  letter-spacing: -0.02em;
+  color: ${UI.color.muted};
+`;
+
+const ModalBody = styled.div`
+  padding: 14px 18px 16px;
+  display: grid;
+  gap: 12px;
+`;
+
+const OptionGrid = styled.div`
+  display: grid;
+  gap: 10px;
+`;
+
+const OptionBtn = styled.button<{ $active?: boolean }>`
+  width: 100%;
+  text-align: left;
+  border-radius: 14px;
+  border: 1px solid ${({ $active }) => ($active ? "rgba(62,99,224,0.35)" : UI.color.line)};
+  background: ${({ $active }) => ($active ? "rgba(79,118,241,0.10)" : "#fff")};
+  padding: 14px 14px;
+  cursor: pointer;
+
+  display: grid;
+  gap: 4px;
+
+  transition: transform 80ms ease, background 150ms ease, border-color 150ms ease;
+
+  &:hover {
+    background: ${({ $active }) => ($active ? "rgba(79,118,241,0.13)" : "#f7f9fc")};
+  }
+  &:active {
+    transform: translateY(1px);
+  }
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.16);
+  }
+`;
+
+const OptionTop = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+`;
+
+const OptionLabel = styled.div`
+    font-weight: 750;
+    font-size: 14.5px;
+    letter-spacing: -0.02em;
+    color: ${UI.color.text};
+`;
+
+const OptionSub = styled.div`
+  font-size: 12px;
+  letter-spacing: -0.02em;
+  color: ${UI.color.muted};
+`;
+
+const CheckDot = styled.span<{ $on?: boolean }>`
+    width: 18px;
+    height: 18px;
+    box-sizing: border-box;
+    flex: 0 0 18px;
+    line-height: 0;
+
+    border-radius: 999px;
+    border: 2px solid ${({ $on }) => ($on ? UI.color.primaryStrong : "rgba(15,23,42,0.25)")};
+
+    display: grid;
+    place-items: center;
+
+    &::after {
+        content: "";
+        display: block;
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        background: ${({ $on }) => ($on ? UI.color.primaryStrong : "transparent")};
+    }
+`;
+
+const ModalFoot = styled.div`
+    padding: 12px 18px 16px;
+    border-top: 1px solid ${UI.color.line};
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+`;
+
+/** 공통 베이스 */
+const ModalBtnBase = styled.button`
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 12px;
+
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    transition:
+            transform 80ms ease,
+            background 150ms ease,
+            border-color 150ms ease,
+            color 150ms ease,
+            box-shadow 150ms ease,
+            filter 150ms ease;
+
+    &:active {
+        transform: translateY(1px);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.16);
+    }
+
+    &:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+        transform: none;
+        filter: none;
+    }
+`;
+
+/** Ghost */
+const ModalGhost = styled(ModalBtnBase)`
+    height: 35px;
+    padding: 0 16px;
+    border-radius: 6px;
+    font-weight: 700;
+
+    background: #fff;
+    color: ${UI.color.primaryBlue};
+    border: 1px solid ${UI.color.primaryBlue};
+
+    &:hover { background: ${UI.color.indigo50}; }
+`;
+
+const ModalPrimary = styled(ModalBtnBase)`
+    height: 35px;
+    padding: 0 18px;
+    border-radius: 6px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+
+    background: ${UI.color.primaryBlue};
+    border: 1px solid ${UI.color.primaryBlue};
+    color: #fff;
+
+    &:hover { filter: brightness(0.96); }
+`;
+
 const ChartWrap = styled.div`
     width: 100%;
     height: 150px;
@@ -1298,32 +1496,6 @@ const XTick = styled.div<{ $active?: boolean; $x: number; $dense?: boolean }>`
 
     color: ${({ $active }) => ($active ? UI.color.text : "rgba(17,24,39,0.70)")};
     background: ${({ $active }) => ($active ? "rgba(17,24,39,0.08)" : "transparent")};
-`;
-
-const SpanRow = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 8px;
-`;
-
-const SpanSelect = styled.select`
-    height: 34px;
-    padding: 0 34px 0 12px;
-    border-radius: 10px;
-    border: 1px solid #e6eaf2;
-    background: #fff url("data:image/svg+xml,...") no-repeat calc(100% - 10px) 50%;
-    appearance: none;
-    font-weight: 750;
-    letter-spacing: -0.01em;
-    color: ${UI.color.text};
-    cursor: pointer;
-
-    &:focus {
-        outline: none;
-        border-color: ${UI.color.primaryStrong};
-        box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.16);
-    }
 `;
 
 const SideHeader = styled.div`
@@ -1380,6 +1552,7 @@ const Reveal = styled.div<{ $d?: number }>`
 /* ===== 타입 ===== */
 type PartType = "CHOICE" | "OX" | "INITIALS" | "MIX";
 type RetryKind = "RETRY_ALL" | "WRONG_ONLY";
+type QuickDays = 7 | 30;
 
 type TimelineItem = {
     id: number | string;
@@ -1533,7 +1706,56 @@ export default function QuizTimelinePage() {
     const nav = useNavigate();
     const location = useLocation();
 
+    const [sysOpen, setSysOpen] = React.useState(false);
+    const [sysMsg, setSysMsg] = React.useState<SystemMessage | null>(null);
 
+    const openSys = React.useCallback((m: SystemMessage) => {
+        setSysMsg(m);
+        setSysOpen(true);
+    }, []);
+
+    const closeSys = React.useCallback(() => {
+        setSysOpen(false);
+        setSysMsg(null);
+    }, []);
+
+    const [quickModalOpen, setQuickModalOpen] = React.useState(false);
+    const [quickDays, setQuickDays] = React.useState<QuickDays>(7);
+    const [quickRetryLoading, setQuickRetryLoading] = React.useState(false);
+    const quickStartBtnRef = React.useRef<HTMLButtonElement | null>(null);
+
+    const openQuickModal = React.useCallback(() => {
+        setQuickDays(7);
+        setQuickModalOpen(true);
+    }, []);
+
+    const closeQuickModal = React.useCallback(() => {
+        if (quickRetryLoading) return; // 로딩 중엔 닫힘 방지(원하면 제거)
+        setQuickModalOpen(false);
+    }, [quickRetryLoading]);
+
+    React.useEffect(() => {
+        if (!quickModalOpen) return;
+
+        // 스크롤 잠금
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        // ESC 닫기
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") closeQuickModal();
+        };
+        window.addEventListener("keydown", onKey);
+
+        // 기본 포커스
+        const t = window.setTimeout(() => quickStartBtnRef.current?.focus(), 0);
+
+        return () => {
+            window.clearTimeout(t);
+            document.body.style.overflow = prev;
+            window.removeEventListener("keydown", onKey);
+        };
+    }, [quickModalOpen, closeQuickModal]);
 
     const handleRetryAll = React.useCallback(
         async (sessionId: number | string) => {
@@ -1549,10 +1771,82 @@ export default function QuizTimelinePage() {
                 nav(`/poten-word/quiz/play?sessionId=${newSid}`);
             } catch (e) {
                 console.error("[retryAll] failed", e);
-                alert("재도전을 시작하지 못했어요. 잠시 후 다시 시도해주세요.");
+                openSys({
+                    tone: "error",
+                    title: "재도전을 시작하지 못했어요",
+                    description: "잠시 후 다시 시도해주세요.",
+                });
             }
         },
-        [nav]
+        [nav, openSys]
+    );
+
+    const quickRetryInFlight = React.useRef(false);
+
+    const handleQuickRetry = React.useCallback(
+        async (days: QuickDays) => {
+            if (quickRetryInFlight.current) return;
+            quickRetryInFlight.current = true;
+            setQuickRetryLoading(true);
+
+            try {
+                const { data } = await http.post(
+                    "/me/quiz/sessions/quick-retry",
+                    null,
+                    {
+                        // 백엔드에서 days(7/30) 받게 할 때 가장 흔한 방식
+                        params: { days },
+                        headers: authHeader(),
+                        withCredentials: true,
+                    }
+                );
+
+                const newSid = Number(data?.sessionId ?? data?.id ?? data?.newSessionId);
+                if (!Number.isFinite(newSid)) throw new Error("Invalid sessionId");
+
+                setQuickModalOpen(false);
+                nav(`/poten-word/quiz/play?sessionId=${newSid}`);
+            } catch (e: any) {
+                console.error("[quickRetry] failed", e);
+
+                const status = e?.response?.status;
+                const msg = e?.response?.data?.message;
+
+                if (status === 401) {
+                    goToAccountLogin(location.pathname + location.search);
+                    return;
+                }
+
+                if (status === 409) {
+                    // 1) 빠른 재도전 모달 먼저 닫기(로딩 중이어도 강제)
+                    setQuickModalOpen(false);
+
+                    // 2) 시스템 메시지 모달 띄우기
+                    openSys({
+                        tone: "info",
+                        title: "오답이 없어요",
+                        description: (
+                            <>
+                                선택한 기간 <b>{days}일</b> 내에 오답이 없어서
+                                빠른 재도전 세트를 만들 수 없어요.
+                            </>
+                        ),
+                        bullets: [
+                            <>기간을 <b>30일</b>로 늘려서 다시 시도해보세요.</>,
+                            <>오답이 생기면 여기서 바로 “오답만 재도전”이 가능해요.</>,
+                        ],
+                    });
+
+                    return;
+                }
+
+                alert("빠른 재도전을 시작하지 못했어요. 잠시 후 다시 시도해주세요.");
+            } finally {
+                setQuickRetryLoading(false);
+                quickRetryInFlight.current = false;
+            }
+        },
+        [nav, location.pathname, location.search]
     );
 
     const handleRetryWrongOnly = React.useCallback(async (sessionId: number | string) => {
@@ -1569,9 +1863,13 @@ export default function QuizTimelinePage() {
             nav(`/poten-word/quiz/play?sessionId=${newSid}`);
         } catch (e) {
             console.error("[retryWrongOnly] failed", e);
-            alert("오답 재도전을 시작하지 못했어요. 잠시 후 다시 시도해주세요.");
+            openSys({
+                tone: "error",
+                title: "오답 재도전을 시작하지 못했어요",
+                description: "잠시 후 다시 시도해주세요.",
+            });
         }
-    }, [nav]);
+    }, [nav, openSys]);
 
     React.useEffect(() => {
         const loggedIn = !!localStorage.getItem("isLoggedIn");
@@ -1946,14 +2244,8 @@ export default function QuizTimelinePage() {
                     <Reveal $d={360}>
                         <SideCard>
                             <SideTitle>빠른 재도전</SideTitle>
-                            <Quick onClick={() => nav("/quiz/quick-retry")} aria-label="오답만 다시 풀기">
-                                <strong>오답만 다시 풀기</strong>
-                                <QuickIcon aria-hidden>
-                                    <svg viewBox="0 0 24 24" aria-hidden="true">
-                                        <path d="M20 12a8 8 0 1 1-2.34-5.66" />
-                                        <polyline points="20 4 20 10 14 10" />
-                                    </svg>
-                                </QuickIcon>
+                            <Quick onClick={openQuickModal} aria-label="최근 N일 이내 오답만 다시 풀기">
+                                <strong>최근 N일 이내 오답만 다시 풀기</strong>
                             </Quick>
                         </SideCard>
                     </Reveal>
@@ -2007,6 +2299,72 @@ export default function QuizTimelinePage() {
                     </BottomGrid>
                 </Reveal>
             )}
+            {quickModalOpen && (
+                <ModalOverlay
+                    role="presentation"
+                    onMouseDown={(e) => {
+                        // 오버레이 클릭(바깥) 닫기
+                        if (e.target === e.currentTarget) closeQuickModal();
+                    }}
+                >
+                    <ModalCard role="dialog" aria-modal="true" aria-label="최근 오답 기간 선택">
+                        <ModalHead>
+                            <ModalTitle>최근 오답 범위 선택</ModalTitle>
+                            <ModalDesc>선택한 기간 내에서 틀린 문제만 모아 새로운 퀴즈를 생성해요.</ModalDesc>
+                        </ModalHead>
+
+                        <ModalBody>
+                            <OptionGrid>
+                                <OptionBtn
+                                    type="button"
+                                    $active={quickDays === 7}
+                                    aria-pressed={quickDays === 7}
+                                    onClick={() => setQuickDays(7)}
+                                >
+                                    <OptionTop>
+                                        <OptionLabel>최근 7일</OptionLabel>
+                                        <CheckDot $on={quickDays === 7} aria-hidden />
+                                    </OptionTop>
+                                    <OptionSub>최근 1주일 동안의 오답만 모아서 재도전</OptionSub>
+                                </OptionBtn>
+
+                                <OptionBtn
+                                    type="button"
+                                    $active={quickDays === 30}
+                                    aria-pressed={quickDays === 30}
+                                    onClick={() => setQuickDays(30)}
+                                >
+                                    <OptionTop>
+                                        <OptionLabel>최근 30일</OptionLabel>
+                                        <CheckDot $on={quickDays === 30} aria-hidden />
+                                    </OptionTop>
+                                    <OptionSub>최근 1달 동안의 오답만 모아서 재도전</OptionSub>
+                                </OptionBtn>
+                            </OptionGrid>
+                        </ModalBody>
+
+                        <ModalFoot>
+                            <ModalGhost
+                                type="button"
+                                onClick={closeQuickModal}
+                                disabled={quickRetryLoading}
+                            >
+                                취소
+                            </ModalGhost>
+
+                            <ModalPrimary
+                                ref={quickStartBtnRef}
+                                type="button"
+                                onClick={() => handleQuickRetry(quickDays)}
+                                disabled={quickRetryLoading}
+                            >
+                                {quickRetryLoading ? "생성 중..." : "시작하기"}
+                            </ModalPrimary>
+                        </ModalFoot>
+                    </ModalCard>
+                </ModalOverlay>
+            )}
+            <SystemMessageModal open={sysOpen} message={sysMsg} onClose={closeSys} />
         </NarrowLeft>
     );
 }

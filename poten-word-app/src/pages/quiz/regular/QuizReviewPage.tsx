@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { NarrowLeft } from "../../../styles/layout.ts";
 import SoftBlobsBackground from "../../../components/quiz/SoftBlobsBackground.tsx";
 import http, { authHeader } from "../../../utils/http.ts";
@@ -367,6 +367,7 @@ function sortOxChoices(choices: ReviewChoice[]) {
 
 export default function QuizReviewPage() {
     const nav = useNavigate();
+    const location = useLocation();
     const { sessionId } = useParams();
 
     const [data, setData] = React.useState<ReviewResponse | null>(null);
@@ -400,6 +401,28 @@ export default function QuizReviewPage() {
     const prefix = window.location.pathname.startsWith("/poten-word/") ? "/poten-word" : "";
     const quizHome = `${prefix}/quiz`;
     const quizPlay = `${quizHome}/play`;
+
+    // "이전 페이지"로 닫기 (없으면 quizHome)
+    type NavState = { from?: string };
+    const from = (location.state as NavState | null)?.from;
+
+    const handleClose = React.useCallback(() => {
+        // 다른 페이지에서 state로 from을 넘겨준 경우(가장 확실)
+        if (from) {
+            nav(from, { replace: true });
+            return;
+        }
+
+        // 히스토리 스택에 이전이 있으면 뒤로
+        const idx = (window.history.state?.idx ?? 0) as number;
+        if (idx > 0) {
+            nav(-1);
+            return;
+        }
+
+        // 직접 진입 등 뒤로갈 곳이 없으면 홈으로
+        nav(quizHome, { replace: true });
+    }, [nav, from, quizHome]);
 
     const handleRetryWrong = async () => {
         if (!sessionId || retrying) return;
@@ -455,12 +478,7 @@ export default function QuizReviewPage() {
                                 결과를 찾을 수 없어요.
                             </div>
                             <Footer>
-                                <IconButton
-                                    type="button"
-                                    onClick={() => nav(quizHome, { replace: true })}
-                                    aria-label="닫기"
-                                    title="닫기"
-                                >
+                                <IconButton type="button" onClick={handleClose} aria-label="닫기" title="닫기">
                                     <XIcon />
                                 </IconButton>
                             </Footer>
@@ -489,7 +507,7 @@ export default function QuizReviewPage() {
                                 제출 완료된 세션만 리뷰할 수 있어요.
                             </div>
                             <Footer>
-                                <Ghost onClick={() => nav(quizHome, { replace: true })}>닫기</Ghost>
+                                <Ghost onClick={handleClose}>닫기</Ghost>
                             </Footer>
                         </Card>
                     </NarrowLeft>
@@ -520,12 +538,7 @@ export default function QuizReviewPage() {
                                 </Meta>
                             </div>
 
-                            <IconButton
-                                type="button"
-                                onClick={() => nav(quizHome, { replace: true })}
-                                aria-label="닫기"
-                                title="닫기"
-                            >
+                            <IconButton type="button" onClick={handleClose} aria-label="닫기" title="닫기">
                                 <XIcon />
                             </IconButton>
                         </Header>
@@ -652,7 +665,7 @@ export default function QuizReviewPage() {
                         </ResultList>
 
                         <Footer>
-                            <Ghost onClick={() => nav(quizHome, { replace: true })}>닫기</Ghost>
+                            <Ghost onClick={handleClose}>닫기</Ghost>
 
                             {wrong > 0 && !!sessionId && (
                                 <Primary type="button" onClick={handleRetryWrong} disabled={retrying}>
