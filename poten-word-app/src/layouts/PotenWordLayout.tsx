@@ -1,16 +1,18 @@
 import React from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import SearchBar from "../components/SearchBar";
-import ExploreFilterBar, { FilterSelection } from "../components/ExploreFilterBar";
-import PotenWordHeroBanner from "../components/PotenWordHeroBanner";
-import PotenNoteHeroBanner from "../components/PotenNoteHeroBanner";
-import PotenBookHeroBanner from "../components/PotenBookHeroBanner";
+import SearchBar from "../components/word/SearchBar.tsx";
+import ExploreFilterBar, { FilterSelection } from "../components/word/ExploreFilterBar.tsx";
+import PotenWordHeroBanner from "../components/word/PotenWordHeroBanner.tsx";
+import PotenNoteHeroBanner from "../components/note/PotenNoteHeroBanner.tsx";
+import PotenBookHeroBanner from "../components/book/PotenBookHeroBanner.tsx";
+import PotenQuizHeroBanner from "../components/quiz/PotenQuizHeroBanner.tsx";
 import { NarrowLeft } from "../styles/layout";
 import icon1 from "../assets/hero/icon-1.png";
 import icon2 from "../assets/hero/icon-2.png";
 import icon3 from "../assets/hero/icon-3.png";
 import icon4 from "../assets/hero/icon-4.png";
+import icon5 from "../assets/hero/icon-5.png";
 import book1 from "../assets/hero/book-1.png";
 
 const UI = {
@@ -130,6 +132,10 @@ export default function PotenWordLayout() {
     // 퀴즈 영역에서는 글로벌 히어로 숨김
     const hideGlobalHero = under("/poten-word/quiz");
 
+    // QuizTimelinePage 라우트 판별 추가
+    const isQuizTimelineRoute = /^\/poten-word\/quiz\/timeline(\/|$)/.test(loc.pathname);
+    const showQuizHero = isQuizTimelineRoute;
+
     // OX·초성·오늘의 등 “퀴즈 모드” 화면에서는 사이드 숨김 (퀴즈 전용 와이드)
     const isQuizModePage = /^\/poten-word\/quiz\/daily(\/|$)/.test(loc.pathname);
 
@@ -225,7 +231,7 @@ export default function PotenWordLayout() {
             window.removeEventListener("resize", apply);
             ro?.disconnect();
         };
-    }, [showWordHero, showNoteHero, showBookHero, loc.pathname]);
+    }, [showWordHero, showNoteHero, showBookHero, showQuizHero, loc.pathname]);
 
     const [selection, setSelection] = React.useState<FilterSelection>(null);
     React.useEffect(() => {
@@ -312,19 +318,39 @@ export default function PotenWordLayout() {
                         }}
                     />
                 )}
+
+                {/* QuizTimelinePage일 때만 QuizHero 노출 (hideGlobalHero 상관없이) */}
+                {showQuizHero && (
+                    <PotenQuizHeroBanner
+                        align="left"
+                        narrow
+                        offsetLeft={HERO_NAV_TEXT_OFFSET}
+                        // 아이콘은 필요하면 교체/추가
+                        floatingIcons={[icon5]}
+                        iconProps={{
+                            width: "360px",
+                            height: "240px",
+                            top: "72px",
+                            rightOffset: -140,
+                            maxIconWidthPercent: 100,
+                            positions: [{ left: 30, top: 22 }],
+                            scales: [0.65],
+                            withShadow: false,
+                        }}
+                    />
+                )}
             </div>
 
             {/* 히어로 아래 레이아웃 */}
             <Shell
                 ref={shellRef}
                 data-testid="potenword-shell"
-                // 메인 랜딩이랑 퀴즈 모드 둘 다 사이드 제거
                 $noSide={isQuizModePage || isLanding}
                 $quizWide={isQuizModePage}
                 style={{
                     ["--side-top" as any]: "calc(var(--poten-header-h, 0px) + 20px)",
                     ["--side-mt" as any]:
-                        showWordHero || showNoteHero || showBookHero ? "12px" : "0px",
+                        showWordHero || showNoteHero || showBookHero || showQuizHero ? "12px" : "0px",
                 }}
             >
                 {/* 메인 랜딩(/poten-word) 에서는 사이드바 렌더 X */}
