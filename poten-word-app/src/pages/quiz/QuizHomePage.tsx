@@ -78,6 +78,10 @@ export default function QuizHomePage() {
     const [dailyKind, setDailyKind] = useState<DailyKind>("CHOICE");
     const [dailyData, setDailyData] = useState<DailyStartResponse | null>(null);
     const [dailyLoading, setDailyLoading] = useState(false);
+    const [dailyCarryOpen, setDailyCarryOpen] = useState(false);
+    const [dailyPendingKind, setDailyPendingKind] = useState<DailyKind>("CHOICE");
+    const [dailyResumeCandidate, setDailyResumeCandidate] =
+        useState<DailyStartResponse | null>(null);
 
     const pickSession = (kind: DailyKind): DailyStartSession | null => {
         const s = (dailyData?.sessions ?? []).find(x => String(x.questionType).toUpperCase() === kind);
