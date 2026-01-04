@@ -33,18 +33,6 @@
           :to="{ name: 'AdminStudyRoomReport' }"
           link
       />
-      <v-list-item
-          prepend-icon="mdi-aws"
-          title="Aws 비용 관리"
-          :to="{ name: 'AdminAwsCostExplorer' }"
-          link
-      />
-      <v-list-item
-          prepend-icon="mdi-robot-confused"
-          title="OpenAi 비용 관리"
-          :to="{ name: 'AdminOpenAiCostView' }"
-          link
-      />
     </v-list>
 
     <template #append>
