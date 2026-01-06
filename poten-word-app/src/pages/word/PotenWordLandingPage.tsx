@@ -681,25 +681,20 @@ export default function PotenWordLandingPage() {
                         setSelectedJob(null);
                     }}
                     onSave={handleSaveJobToNotebook}
-                    onCreate={async (name) => {
-                        // 폴더 생성
-                        const { data: wb } = await http.post("/me/folders", {
-                            wordbookName: name,
-                        });
 
+                    onCreate={async (name) => {
+                        // 1) 폴더 생성만
+                        const { data: wb } = await http.post("/me/folders", { wordbookName: name });
                         const newId = String(wb.id);
 
-                        // 2생성된 폴더에 직무 추천 단어 저장
-                        await attachJobRecommendationToFolder(
-                            newId,
-                            selectedJob!.key
-                        );
-
-                        // UI 갱신
+                        // 2) UI 갱신
                         const newName = wb.wordbookName ?? name;
                         setNotebooks((prev) => [{ id: newId, name: newName }, ...prev]);
 
-                        return newId;
+                        // 3) 여기서 attach 호출하지 않음
+                        // (저장은 사용자가 "저장하기" 누를 때 onSave에서만)
+
+                        return newId; // 모달이 이 값을 받아서 "선택" 처리할 수 있게
                     }}
                     onReorder={async (orderedIds) => {
                         try {

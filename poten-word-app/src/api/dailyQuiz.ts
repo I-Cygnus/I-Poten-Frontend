@@ -27,16 +27,24 @@ export type DailyStartSession = {
     items?: StartedItem[] | null;
 };
 
+export type DailyStartMode = "RESUME" | "TODAY";
+
 export type DailyStartResponse = {
-    ymd: string;        // 백엔드는 LocalDate라 문자열로 옴
-    issueType: string;  // "GENERAL"
-    seedMode: string;   // "DAILY -> FIXED" 등
+    todayYmd: string;     // 서버 기준 오늘(KST)
+    activeYmd: string;    // 실제로 내려준 데일리(어제일 수도)
+    carryOver: boolean;   // todayYmd != activeYmd
+    issueType: string;
+    seedMode: string;
     sessions: DailyStartSession[];
 };
 
-export async function startGeneralDaily(): Promise<DailyStartResponse> {
-    const { data } = await http.post("/api/me/quiz/daily/general/start", null, {
-        withCredentials: true,
-    });
+export async function startGeneralDaily(
+    mode: DailyStartMode = "RESUME"
+): Promise<DailyStartResponse> {
+    const { data } = await http.post(
+        `/api/me/quiz/daily/general/start?mode=${mode}`,
+        null,
+        { withCredentials: true }
+    );
     return data;
 }
