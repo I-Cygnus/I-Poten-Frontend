@@ -28,6 +28,7 @@ import SearchPage from "./pages/word/SearchPage.tsx";
 import TermListPage from "./pages/word/TermListPage.tsx";
 import PotenWordLandingPage from "./pages/word/PotenWordLandingPage.tsx";
 import QuizReviewPage from "./pages/quiz/regular/QuizReviewPage.tsx";
+import QuizWrongNotePage from "./pages/quiz/QuizWrongNotePage.tsx";
 
 // notes 전용 로그인 가드(필요하면 라우트에 연결해서 사용)
 function NotesGuard() {
@@ -294,6 +295,10 @@ export default function App() {
 
                   {/* 타임라인 대시보드 */}
                   <Route path="timeline" element={<QuizTimelinePage />} />
+
+                  {/* 오답노트: 퀴즈 하위로 이동 */}
+                  <Route path="wrong-notes" element={<QuizWrongNotePage />} />
+
                 </Route>
 
                 <Route path="book" element={<BookLandingPage />} />

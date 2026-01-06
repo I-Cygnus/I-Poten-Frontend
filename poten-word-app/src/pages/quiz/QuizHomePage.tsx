@@ -163,7 +163,7 @@ export default function QuizHomePage() {
         () => [
             { id: "a1", label: "내 포텐노트",        icon: act1, to: "/poten-word/notes" },
             { id: "a2", label: "내 퀴즈 타임라인",  icon: act2, to: "/poten-word/quiz/timeline" },
-            { id: "a3", label: "오답노트 바로 가기", icon: act3, to: "/poten-word/notes/wrong" },
+            { id: "a3", label: "오답노트 바로 가기", icon: act3, to: "/poten-word/quiz/wrong-notes" },
             { id: "a4", label: "명예의 전당",        icon: act4, to: "/poten-word/hall" },
         ],
         []
@@ -276,17 +276,17 @@ export default function QuizHomePage() {
             ],
         },
         {
-            id: "fs",
-            title: "풀스택 개발자 추천 퀴즈",
-            tag: "Full-Stack",
+            id: "dsa",
+            title: "자료구조·알고리즘 추천 퀴즈",
+            tag: "DSA",
             tone: "purple",
             items: [
-                { id: "rag",   label: "LLM·RAG·파인튜닝",   to: "/quiz/rag" },
-                { id: "exp",   label: "모델 평가·실험 설계", to: "/quiz/eval" },
-                { id: "mlops", label: "MLOps·프로덕션 운영", to: "/quiz/mlops" },
-                { id: "de",    label: "데이터 엔지니어링",   to: "/quiz/data-eng" },
-                { id: "perf",  label: "성능 최적화·가속",    to: "/quiz/perf" },
-                { id: "gov",   label: "책임 있는 AI·거버넌스",to: "/quiz/ai-gov" },
+                { id: "dsa-complexity", label: "시간 복잡도·Big-O",         to: "/quiz/dsa-complexity" },
+                { id: "dsa-sorting",     label: "정렬·탐색",                 to: "/quiz/dsa-sorting" },
+                { id: "dsa-hash",        label: "해시·셋",                   to: "/quiz/dsa-hash" },
+                { id: "dsa-stack-queue", label: "스택·큐·힙",                to: "/quiz/dsa-stack-queue" },
+                { id: "dsa-graph",       label: "그래프·BFS·DFS",            to: "/quiz/dsa-graph" },
+                { id: "dsa-dp-greedy",   label: "DP·그리디·투 포인터",       to: "/quiz/dsa-dp-greedy" },
             ],
         },
         {
