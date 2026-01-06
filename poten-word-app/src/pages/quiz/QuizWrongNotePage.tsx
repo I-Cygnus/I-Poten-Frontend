@@ -59,6 +59,7 @@ type WrongNoteCache = {
     sort: SortKey;
 
     page: number;
+    pageWindowStart: number;
     size: number;
     total: number;
     hasMore: boolean;
@@ -347,14 +348,16 @@ export default function QuizWrongNotePage() {
     const [applied, setApplied] = useState<Filters>(DEFAULT_FILTERS);
 
     const appliedRef = useRef<Filters>(DEFAULT_FILTERS);
-    useEffect(() => {
-        appliedRef.current = applied;
-    }, [applied]);
+    useEffect(() => { appliedRef.current = applied; }, [applied]);
 
     const [page, setPage] = useState(0);
-    const [size] = useState(20);
+    const size = 20;
     const [total, setTotal] = useState(0);
-    const [hasMore, setHasMore] = useState(true);
+    const [hasMore, setHasMore] = useState(false);
+
+    const pages = Math.max(1, Math.ceil((total || 0) / size));
+    const WINDOW_SIZE = 5;
+    const [pageWindowStart, setPageWindowStart] = useState(0);
 
     const [expanded, setExpanded] = useState<Record<number, boolean>>({});
     const [sysOpen, setSysOpen] = useState(false);
@@ -364,15 +367,15 @@ export default function QuizWrongNotePage() {
     const [loading, setLoading] = useState(false);
     const inFlightRef = useRef(false);
 
-    const openSys = (m: SystemMessage) => {
+    const openSys = useCallback((m: SystemMessage) => {
         setSysMsg(m);
         setSysOpen(true);
-    };
+    }, []);
 
-    const closeSys = () => {
+    const closeSys = useCallback(() => {
         setSysOpen(false);
         setSysMsg(null);
-    };
+    }, []);
 
     const getApiError = (err: any) => {
         const status = err?.response?.status ?? null;
@@ -386,6 +389,100 @@ export default function QuizWrongNotePage() {
             "요청 처리 중 오류가 발생했습니다.";
         return { status, data, message };
     };
+
+    const clampWindowStart = useCallback(
+        (start: number) => {
+            const maxStart = Math.max(0, pages - WINDOW_SIZE);
+            return Math.max(0, Math.min(start, maxStart));
+        },
+        [pages]
+    );
+
+    const pageWindow = useMemo(() => {
+        const start = clampWindowStart(pageWindowStart);
+        const end = Math.min(pages - 1, start + WINDOW_SIZE - 1);
+        return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+    }, [pageWindowStart, pages, clampWindowStart]);
+
+    const fetchPage = useCallback(
+        async (targetPage: number, filters?: Filters) => {
+            if (inFlightRef.current) return;
+            inFlightRef.current = true;
+            setLoading(true);
+
+            const f = filters ?? appliedRef.current;
+
+            try {
+                const res = await apiFetchWrongNotes({
+                    page: targetPage,
+                    size,
+                    type: f.type === "ALL" ? undefined : f.type,
+                    difficulty: f.difficulty === "ALL" ? undefined : f.difficulty,
+                    unresolvedOnly: f.unresolvedOnly,
+                    q: f.q,
+                    sort: f.sort,
+                    includeAnswers: true,
+                });
+
+                setItems(res.items);
+                setPage(res.page);
+                setTotal(res.total);
+                setHasMore(res.hasMore);
+                setExpanded({});
+            } catch (e: any) {
+                const { message } = getApiError(e);
+                openSys({ title: "오답노트 불러오기 실패", message } as any);
+            } finally {
+                inFlightRef.current = false;
+                setLoading(false);
+            }
+        },
+        [size, openSys]
+    );
+
+    const movePage = useCallback(
+        (nextPage: number) => {
+            const next = Math.max(0, Math.min(nextPage, pages - 1));
+            setPage(next);
+
+            setPageWindowStart((ws) => {
+                const start = clampWindowStart(ws);
+                if (next < start) return clampWindowStart(next);
+                if (next > start + WINDOW_SIZE - 1) return clampWindowStart(next - WINDOW_SIZE + 1);
+                return start;
+            });
+
+            window.scrollTo(0, 0);
+            fetchPage(next);
+        },
+        [pages, clampWindowStart, fetchPage]
+    );
+
+    const jumpWindow = useCallback(
+        (dir: -1 | 1) => {
+            const targetStart = clampWindowStart(pageWindowStart + dir * WINDOW_SIZE);
+            if (targetStart === clampWindowStart(pageWindowStart)) return;
+            setPageWindowStart(targetStart);
+            setPage(targetStart);
+            window.scrollTo(0, 0);
+            fetchPage(targetStart);
+        },
+        [pageWindowStart, clampWindowStart, fetchPage]
+    );
+
+    const canPrevWindow = pageWindowStart > 0;
+    const canNextWindow = pageWindowStart + WINDOW_SIZE < pages;
+
+    const goPrevWindow = useCallback(() => jumpWindow(-1), [jumpWindow]);
+    const goNextWindow = useCallback(() => jumpWindow(1), [jumpWindow]);
+
+    const goPrev = useCallback(() => movePage(page - 1), [movePage, page]);
+    const goNext = useCallback(() => movePage(page + 1), [movePage, page]);
+
+    useEffect(() => {
+        if (page > pages - 1) movePage(pages - 1);
+        setPageWindowStart((s) => clampWindowStart(s));
+    }, [pages, page, clampWindowStart, movePage]);
 
     // selected 타입/사용 키를 reviewId로 변경
     const [selected, setSelected] = useState<Record<number, boolean>>({});
@@ -436,39 +533,6 @@ export default function QuizWrongNotePage() {
         setSelected(next);
     };
 
-    const fetchFirst = useCallback(async (filters?: Filters) => {
-        if (inFlightRef.current) return;
-        inFlightRef.current = true;
-        setLoading(true);
-
-        const f = filters ?? appliedRef.current;
-
-        try {
-            const res = await apiFetchWrongNotes({
-                page: 0,
-                size,
-                type: f.type === "ALL" ? undefined : f.type,
-                difficulty: f.difficulty === "ALL" ? undefined : f.difficulty,
-                unresolvedOnly: f.unresolvedOnly,
-                q: f.q,
-                sort: f.sort,
-                includeAnswers: true,
-            });
-
-            setItems(res.items);
-            setPage(res.page);
-            setTotal(res.total);
-            setHasMore(res.hasMore);
-            setSelected({});
-        } catch (e: any) {
-            const { message } = getApiError(e);
-            openSys({ title: "오답노트 불러오기 실패", message } as any);
-        } finally {
-            inFlightRef.current = false;
-            setLoading(false);
-        }
-    }, [size]);
-
     const onSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if ((e as any).nativeEvent?.isComposing) return;
         if (e.key === "Enter") {
@@ -476,41 +540,6 @@ export default function QuizWrongNotePage() {
             applyAndSearch();
         }
     };
-
-    const fetchMore = useCallback(async () => {
-        if (!hasMore || loading) return;
-        if (inFlightRef.current) return;
-
-        inFlightRef.current = true;
-        setLoading(true);
-
-        const f = appliedRef.current;
-
-        try {
-            const nextPage = page + 1;
-            const res = await apiFetchWrongNotes({
-                page: nextPage,
-                size,
-                type: f.type === "ALL" ? undefined : f.type,
-                difficulty: f.difficulty === "ALL" ? undefined : f.difficulty,
-                unresolvedOnly: f.unresolvedOnly,
-                q: f.q,
-                sort: f.sort,
-                includeAnswers: true,
-            });
-
-            setItems((prev) => [...prev, ...res.items]);
-            setPage(res.page);
-            setTotal(res.total);
-            setHasMore(res.hasMore);
-        } catch (e: any) {
-            const { message } = getApiError(e);
-            openSys({ title: "추가 로딩 실패", message } as any);
-        } finally {
-            inFlightRef.current = false;
-            setLoading(false);
-        }
-    }, [hasMore, loading, page, size]);
 
     const toggleExpand = (reviewId: number) => {
         setExpanded((p) => ({ ...p, [reviewId]: !p[reviewId] }));
@@ -576,6 +605,7 @@ export default function QuizWrongNotePage() {
             sort: applied.sort,
 
             page,
+            pageWindowStart,
             size,
             total,
             hasMore,
@@ -585,7 +615,7 @@ export default function QuizWrongNotePage() {
             expanded,
         };
         writeCache(cacheKey, data);
-    }, [cacheKey, applied, page, size, total, hasMore, items, selected, expanded]);
+    }, [cacheKey, applied, page, pageWindowStart, size, total, hasMore, items, selected, expanded]);
 
     // 언마운트(다른 페이지로 이동) 시 저장
     useEffect(() => {
@@ -625,6 +655,7 @@ export default function QuizWrongNotePage() {
 
         setItems(cached.items || []);
         setPage(cached.page || 0);
+        setPageWindowStart(cached.pageWindowStart ?? 0);
         setTotal(cached.total || 0);
         setHasMore(Boolean(cached.hasMore));
         setSelected(cached.selected || {});
@@ -637,17 +668,26 @@ export default function QuizWrongNotePage() {
 
     useEffect(() => {
         if (restoredRef.current && restoredHasItemsRef.current) return;
-        fetchFirst();
-    }, [fetchFirst]);
+        fetchPage(0, appliedRef.current);
+    }, [fetchPage]);
 
-    const applyAndSearch = useCallback((next?: Filters) => {
-        const f = next ?? draft;
-        appliedRef.current = f;
-        setApplied(f);
-        setExpanded({});
-        setSelected({});
-        fetchFirst(f);
-    }, [draft, fetchFirst]);
+    const applyAndSearch = useCallback(
+        (next?: Filters) => {
+            const f = next ?? draft;
+            appliedRef.current = f;
+            setApplied(f);
+
+            setSelected({});
+            setExpanded({});
+
+            setPageWindowStart(0);
+            setPage(0);
+
+            window.scrollTo(0, 0);
+            fetchPage(0, f);
+        },
+        [draft, fetchPage]
+    );
 
     return (
         <Wrap>
@@ -738,9 +778,9 @@ export default function QuizWrongNotePage() {
                         </CheckAll>
 
                         <BulkInfo>
-                            선택 <strong>{checkedReviewIds.length}</strong>개 · 현재 표시{" "}
-                            <strong>{displayedItems.length}</strong>개 · 전체 로드{" "}
-                            <strong>{items.length}</strong>개
+                            선택 <strong>{checkedReviewIds.length}</strong>개 · 현재 페이지{" "}
+                            <strong>{displayedItems.length}</strong>개 · 전체{" "}
+                            <strong>{total}</strong>개
                         </BulkInfo>
                     </BulkLeft>
 
@@ -753,13 +793,6 @@ export default function QuizWrongNotePage() {
             </Panel>
 
             <List>
-                {items.length === 0 && !loading && (
-                    <Empty>
-                        <h3>오답이 아직 없어요</h3>
-                        <p>퀴즈를 풀고 틀린 문제는 여기에서 모아볼 수 있어요.</p>
-                    </Empty>
-                )}
-
                 {displayedItems.map((it) => {
                     const isOpen = Boolean(expanded[it.reviewId]);
                     const checked = Boolean(selected[it.reviewId]);
@@ -937,17 +970,46 @@ export default function QuizWrongNotePage() {
                     </Empty>
                 )}
 
-                <MoreRow>
-                    {hasMore ? (
-                        <MoreBtn onClick={fetchMore} disabled={loading}>
-                            {loading ? "불러오는 중..." : "더 보기"}
-                        </MoreBtn>
-                    ) : items.length ? (
-                        <EndText>마지막 오답까지 모두 불러왔어요.</EndText>
-                    ) : null}
-                </MoreRow>
             </List>
 
+            {items.length > 0 && pages > 1 && (
+                <BottomGrid>
+                    <PaginationRow>
+                        <PaginationBar aria-label="오답노트 페이지 이동">
+                            <PageNavBtn
+                                onClick={goPrevWindow}
+                                disabled={!canPrevWindow}
+                                aria-label="이전 페이지 묶음"
+                                type="button"
+                            >
+                                ‹
+                            </PageNavBtn>
+
+                            {pageWindow.map((p) => (
+                                <PagePill
+                                    key={p}
+                                    $active={p === page}
+                                    onClick={() => movePage(p)}
+                                    aria-current={p === page ? "page" : undefined}
+                                    aria-label={`${p + 1}페이지`}
+                                    type="button"
+                                >
+                                    {p + 1}
+                                </PagePill>
+                            ))}
+
+                            <PageNavBtn
+                                onClick={goNextWindow}
+                                disabled={!canNextWindow}
+                                aria-label="다음 페이지 묶음"
+                                type="button"
+                            >
+                                ›
+                            </PageNavBtn>
+                        </PaginationBar>
+                    </PaginationRow>
+                </BottomGrid>
+            )}
             <SystemMessageModal open={sysOpen} message={sysMsg} onClose={closeSys} />
         </Wrap>
     );
@@ -955,198 +1017,198 @@ export default function QuizWrongNotePage() {
 
 /* ====== Styles ====== */
 const Wrap = styled.div`
-  width: 100%;
-  min-height: 100%;
-  padding: 0 20px 40px;
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  --hero-max: 1240px;
-  max-width: var(--hero-max);
-  margin: 0 auto;
+    width: 100%;
+    min-height: 100%;
+    padding: 0 20px 40px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    --hero-max: 1240px;
+    max-width: var(--hero-max);
+    margin: 0 auto;
 `;
 
 const TopBar = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 14px;
 `;
 
 const BackBtn = styled.button`
-  appearance: none;
-  border: 1px solid ${UI.panelLineSoft};
-  background: #fff;
-  color: ${UI.text};
-  border-radius: 12px;
-  height: 40px;
-  padding: 0 12px;
-  cursor: pointer;
-  font-weight: 800;
-  &:hover {
-    background: #f9fafb;
-  }
-  &:focus-visible {
-    outline: 3px solid rgba(67, 105, 229, 0.25);
-    outline-offset: 2px;
-  }
+    appearance: none;
+    border: 1px solid ${UI.panelLineSoft};
+    background: #fff;
+    color: ${UI.text};
+    border-radius: 12px;
+    height: 40px;
+    padding: 0 12px;
+    cursor: pointer;
+    font-weight: 800;
+    &:hover {
+        background: #f9fafb;
+    }
+    &:focus-visible {
+        outline: 3px solid rgba(67, 105, 229, 0.25);
+        outline-offset: 2px;
+    }
 `;
 
 const TopTitle = styled.div`
-  h1 {
-    margin: 0;
-    font-size: 22px;
-    letter-spacing: -0.02em;
-    color: ${UI.text};
-  }
-  p {
-    margin: 4px 0 0;
-    font-size: 13px;
-    color: ${UI.sub};
-    letter-spacing: -0.02em;
-  }
+    h1 {
+        margin: 0;
+        font-size: 22px;
+        letter-spacing: -0.02em;
+        color: ${UI.text};
+    }
+    p {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: ${UI.sub};
+        letter-spacing: -0.02em;
+    }
 `;
 
 const Panel = styled.section`
-  background: ${UI.panelBgSoft};
-  border: 1px solid ${UI.panelLineSoft};
-  border-radius: ${UI.radiusXXL};
-  box-shadow: ${UI.shadowSoft};
-  padding: 14px 14px 12px;
+    background: ${UI.panelBgSoft};
+    border: 1px solid ${UI.panelLineSoft};
+    border-radius: ${UI.radiusXXL};
+    box-shadow: ${UI.shadowSoft};
+    padding: 14px 14px 12px;
 `;
 
 const FilterRow = styled.div`
-  display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 12px;
-  @media (max-width: 920px) {
-    grid-template-columns: 1fr;
-  }
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: 12px;
+    @media (max-width: 920px) {
+        grid-template-columns: 1fr;
+    }
 `;
 
 const SearchBox = styled.div`
-  display: flex;
-  gap: 10px;
+    display: flex;
+    gap: 10px;
 `;
 
 const SearchInput = styled.input`
-  flex: 1 1 auto;
-  height: 42px;
-  border-radius: 14px;
-  border: 1px solid ${UI.chipLine};
-  background: #fff;
-  padding: 0 12px;
-  color: ${UI.text};
-  letter-spacing: -0.02em;
-  outline: none;
-  &:focus {
-    border-color: rgba(67, 105, 229, 0.55);
-    box-shadow: 0 0 0 3px rgba(67, 105, 229, 0.16);
-  }
+    flex: 1 1 auto;
+    height: 42px;
+    border-radius: 14px;
+    border: 1px solid ${UI.chipLine};
+    background: #fff;
+    padding: 0 12px;
+    color: ${UI.text};
+    letter-spacing: -0.02em;
+    outline: none;
+    &:focus {
+        border-color: rgba(67, 105, 229, 0.55);
+        box-shadow: 0 0 0 3px rgba(67, 105, 229, 0.16);
+    }
 `;
 
 const SearchBtn = styled.button`
-  flex: 0 0 auto;
-  height: 42px;
-  padding: 0 14px;
-  border-radius: 14px;
-  border: 1px solid ${UI.primaryBlue};
-  background: ${UI.primaryBlue};
-  color: #fff;
-  font-weight: 800;
-  cursor: pointer;
-  letter-spacing: -0.02em;
-  &:hover {
-    filter: brightness(0.97);
-  }
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+    flex: 0 0 auto;
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 14px;
+    border: 1px solid ${UI.primaryBlue};
+    background: ${UI.primaryBlue};
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.02em;
+    &:hover {
+        filter: brightness(0.97);
+    }
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
 `;
 
 const Filters = styled.div`
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  @media (max-width: 920px) {
-    justify-content: flex-start;
-  }
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    @media (max-width: 920px) {
+        justify-content: flex-start;
+    }
 `;
 
 const Select = styled.select`
-  height: 42px;
-  border-radius: 14px;
-  border: 1px solid ${UI.chipLine};
-  background: #fff;
-  padding: 0 12px;
-  color: ${UI.text};
-  letter-spacing: -0.02em;
-  outline: none;
-  &:focus {
-  border-color: rgba(67, 105, 229, 0.55);
-  box-shadow: 0 0 0 3px rgba(67, 105, 229, 0.16);
-  }
+    height: 42px;
+    border-radius: 14px;
+    border: 1px solid ${UI.chipLine};
+    background: #fff;
+    padding: 0 12px;
+    color: ${UI.text};
+    letter-spacing: -0.02em;
+    outline: none;
+    &:focus {
+        border-color: rgba(67, 105, 229, 0.55);
+        box-shadow: 0 0 0 3px rgba(67, 105, 229, 0.16);
+    }
 `;
 
 const ToggleBtn = styled.button<{ $on?: boolean }>`
-  height: 42px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid ${({ $on }) => ($on ? UI.chipOnLine : UI.chipLine)};
-  background: ${({ $on }) => ($on ? UI.chipOnBg : "#fff")};
-  color: ${({ $on }) => ($on ? UI.primaryBlue : UI.text)};
-  font-weight: 800;
-  cursor: pointer;
-  letter-spacing: -0.02em;
-  &:hover {
-    background: ${({ $on }) => ($on ? UI.chipOnBg : "#f9fafb")};
-  }
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid ${({ $on }) => ($on ? UI.chipOnLine : UI.chipLine)};
+    background: ${({ $on }) => ($on ? UI.chipOnBg : "#fff")};
+    color: ${({ $on }) => ($on ? UI.primaryBlue : UI.text)};
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.02em;
+    &:hover {
+        background: ${({ $on }) => ($on ? UI.chipOnBg : "#f9fafb")};
+    }
 `;
 
 const ToggleSlot = styled.div`
-  position: relative;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
+    position: relative;
+    width: 28px;
+    height: 28px;
+    flex: 0 0 28px;
 `;
 
 const GhostBtn = styled.button`
-  height: 42px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid ${UI.chipLine};
-  background: #fff;
-  color: ${UI.sub};
-  font-weight: 800;
-  cursor: pointer;
-  &:hover {
-    background: #f9fafb;
-    color: ${UI.text};
-  }
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid ${UI.chipLine};
+    background: #fff;
+    color: ${UI.sub};
+    font-weight: 800;
+    cursor: pointer;
+    &:hover {
+        background: #f9fafb;
+        color: ${UI.text};
+    }
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
 `;
 
 const BulkRow = styled.div`
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed rgba(15, 23, 42, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px dashed rgba(15, 23, 42, 0.12);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    flex-wrap: wrap;
 `;
 
 const BulkLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 `;
 
 const CheckAll = styled.div`
@@ -1160,81 +1222,81 @@ const CheckAll = styled.div`
 `;
 
 const BulkInfo = styled.div`
-  color: ${UI.sub};
-  font-size: 13px;
-  letter-spacing: -0.02em;
-  strong {
-    color: ${UI.text};
-    font-weight: 800;
-  }
+    color: ${UI.sub};
+    font-size: 13px;
+    letter-spacing: -0.02em;
+    strong {
+        color: ${UI.text};
+        font-weight: 800;
+    }
 `;
 
 const BulkRight = styled.div`
-  display: flex;
-  gap: 10px;
+    display: flex;
+    gap: 10px;
 `;
 
 const PrimaryBtn = styled.button`
-  height: 40px;
-  padding: 0 14px;
-  border-radius: 12px;
-  border: 1px solid ${UI.primaryBlue};
-  background: ${UI.primaryBlue};
-  color: #fff;
-  font-weight: 800;
-  cursor: pointer;
-  letter-spacing: -0.02em;
-  &:hover {
-    filter: brightness(0.97);
-  }
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid ${UI.primaryBlue};
+    background: ${UI.primaryBlue};
+    color: #fff;
+    font-weight: 800;
+    cursor: pointer;
+    letter-spacing: -0.02em;
+    &:hover {
+        filter: brightness(0.97);
+    }
+    &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
 `;
 
 const List = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 `;
 
 const Card = styled.article`
-  background: #fff;
-  border: 1px solid ${UI.panelLineSoft};
-  border-radius: 18px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-  padding: 14px 14px 12px;
+    background: #fff;
+    border: 1px solid ${UI.panelLineSoft};
+    border-radius: 18px;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+    padding: 14px 14px 12px;
 `;
 
 const CardHead = styled.div`
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
 `;
 
 const Left = styled.div`
-  display: flex;
-  gap: 10px;
-  align-items: flex-start;
-  input {
-    margin-top: 4px;
-    width: 16px;
-    height: 16px;
-  }
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    input {
+        margin-top: 4px;
+        width: 16px;
+        height: 16px;
+    }
 `;
 
 const Meta = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 `;
 
 const Badges = styled.div`
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
 `;
 
 const Badge = styled.span<{
@@ -1282,66 +1344,66 @@ const Badge = styled.span<{
 `;
 
 const MetaLine = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: ${UI.sub};
-  font-size: 12px;
-  letter-spacing: -0.02em;
-  span {
-    max-width: 380px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: ${UI.sub};
+    font-size: 12px;
+    letter-spacing: -0.02em;
+    span {
+        max-width: 380px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 `;
 
 const MetaTopRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 `;
 
 const TopMeta = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
 
-  color: ${UI.sub};
-  font-size: 12px;
-  letter-spacing: -0.02em;
+    color: ${UI.sub};
+    font-size: 12px;
+    letter-spacing: -0.02em;
 
-  /* flex 안에서 ellipsis 먹게 */
-  min-width: 0;
+    /* flex 안에서 ellipsis 먹게 */
+    min-width: 0;
 
-  span {
-    max-width: 380px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+    span {
+        max-width: 380px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 
-  /* 모바일에서는 아예 다음 줄로 내려가도 보기 좋게 */
-  @media (max-width: 520px) {
-    flex-basis: 100%;
-  }
+    /* 모바일에서는 아예 다음 줄로 내려가도 보기 좋게 */
+    @media (max-width: 520px) {
+        flex-basis: 100%;
+    }
 `;
 
 const Dot = styled.span`
-  width: 4px;
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.25);
-  display: inline-block;
+    width: 4px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.25);
+    display: inline-block;
 `;
 
 const Right = styled.div`
-  display: inline-flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
+    display: inline-flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 `;
 
 const MiniBtn = styled.button<{ $tone: "ok" | "pending" | "normal" }>`
@@ -1470,57 +1532,57 @@ const IconToggleBtn = styled.button<{ $active?: boolean }>`
 `;
 
 const Prompt = styled.h3`
-  margin: 10px 0 0;
-  font-size: 16px;
-  line-height: 1.45;
-  letter-spacing: -0.02em;
-  color: ${UI.text};
-  display: -webkit-box;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+    margin: 10px 0 0;
+    font-size: 16px;
+    line-height: 1.45;
+    letter-spacing: -0.02em;
+    color: ${UI.text};
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 `;
 
 const Detail = styled.div`
-  margin-top: 12px;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
-  padding-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+    margin-top: 12px;
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    padding-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 `;
 
 const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  @media (max-width: 920px) {
-    grid-template-columns: 1fr;
-  }
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    @media (max-width: 920px) {
+        grid-template-columns: 1fr;
+    }
 `;
 
 const Box = styled.div`
-  border: 1px solid #e5e7eb;
-  background: #fbfbfd;
-  border-radius: 14px;
-  padding: 10px 10px 9px;
+    border: 1px solid #e5e7eb;
+    background: #fbfbfd;
+    border-radius: 14px;
+    padding: 10px 10px 9px;
 `;
 
 const BoxTitle = styled.div`
-  font-size: 12px;
-  color: ${UI.sub};
-  font-weight: 750;
-  letter-spacing: -0.02em;
+    font-size: 12px;
+    color: ${UI.sub};
+    font-weight: 750;
+    letter-spacing: -0.02em;
 `;
 
 const BoxValue = styled.div<{ $accent?: boolean }>`
-  margin-top: 6px;
-  font-size: 14px;
-  color: ${({ $accent }) => ($accent ? UI.primaryBlue : UI.text)};
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  white-space: pre-wrap;
-  word-break: break-word;
+    margin-top: 6px;
+    font-size: 14px;
+    color: ${({ $accent }) => ($accent ? UI.primaryBlue : UI.text)};
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    white-space: pre-wrap;
+    word-break: break-word;
 `;
 
 const LinkBtn = styled.button`
@@ -1542,17 +1604,17 @@ const LinkBtn = styled.button`
 const Choices = styled.div``;
 
 const ChoicesTitle = styled.div`
-  font-size: 12px;
-  color: ${UI.sub};
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin-bottom: 8px;
+    font-size: 12px;
+    color: ${UI.sub};
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
 `;
 
 const ChoicesList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 `;
 
 const ChoiceItem = styled.div<{ $correct?: boolean; $mine?: boolean }>`
@@ -1611,71 +1673,138 @@ const ChoiceItem = styled.div<{ $correct?: boolean; $mine?: boolean }>`
 const Explain = styled.div``;
 
 const ExplainTitle = styled.div`
-  font-size: 12px;
-  color: ${UI.sub};
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin-bottom: 8px;
+    font-size: 12px;
+    color: ${UI.sub};
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
 `;
 
 const ExplainBody = styled.p<{ $muted?: boolean }>`
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.6;
-  letter-spacing: -0.02em;
-  color: ${({ $muted }) => ($muted ? UI.sub : UI.text)};
-  white-space: pre-wrap;
-  word-break: break-word;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    letter-spacing: -0.02em;
+    color: ${({ $muted }) => ($muted ? UI.sub : UI.text)};
+    white-space: pre-wrap;
+    word-break: break-word;
 `;
 
 const MoreRow = styled.div`
-  display: flex;
-  justify-content: center;
-  margin-top: 8px;
+    display: flex;
+    justify-content: center;
+    margin-top: 8px;
 `;
 
 const MoreBtn = styled.button`
-  appearance: none;
-  border: 1px solid ${UI.panelLineSoft};
-  background: #fff;
-  height: 44px;
-  padding: 0 18px;
-  border-radius: 14px;
-  cursor: pointer;
-  font-weight: 800;
-  color: ${UI.text};
-  &:hover {
-    background: #f9fafb;
-  }
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+    appearance: none;
+    border: 1px solid ${UI.panelLineSoft};
+    background: #fff;
+    height: 44px;
+    padding: 0 18px;
+    border-radius: 14px;
+    cursor: pointer;
+    font-weight: 800;
+    color: ${UI.text};
+    &:hover {
+        background: #f9fafb;
+    }
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
 `;
 
 const EndText = styled.div`
-  color: ${UI.sub};
-  font-size: 13px;
-  letter-spacing: -0.02em;
+    color: ${UI.sub};
+    font-size: 13px;
+    letter-spacing: -0.02em;
 `;
 
 const Empty = styled.div`
-  background: #fff;
-  border: 1px dashed rgba(15, 23, 42, 0.18);
-  border-radius: 18px;
-  padding: 26px 18px;
-  text-align: center;
-  h3 {
-    margin: 0;
-    font-size: 16px;
-    color: ${UI.text};
-    letter-spacing: -0.02em;
+    background: #fff;
+    border: 1px dashed rgba(15, 23, 42, 0.18);
+    border-radius: 18px;
+    padding: 26px 18px;
+    text-align: center;
+    h3 {
+        margin: 0;
+        font-size: 16px;
+        color: ${UI.text};
+        letter-spacing: -0.02em;
+        font-weight: 800;
+    }
+    p {
+        margin: 8px 0 0;
+        font-size: 13px;
+        color: ${UI.sub};
+        letter-spacing: -0.02em;
+    }
+`;
+
+const PaginationRow = styled.div`
+    display: flex;
+    justify-content: center;
+    padding-top: 6px;
+
+    width: fit-content;
+    margin: 0 auto;
+`;
+
+const PaginationBar = styled.nav`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px;
+`;
+
+const PagePill = styled.button<{ $active?: boolean }>`
+    height: 34px;
+    min-width: 34px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 0;
+
     font-weight: 800;
-  }
-  p {
-    margin: 8px 0 0;
-    font-size: 13px;
-    color: ${UI.sub};
     letter-spacing: -0.02em;
-  }
+    cursor: pointer;
+
+    color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
+    background: ${({ $active }) => ($active ? UI.primaryBlue : "transparent")};
+
+    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+
+    &:hover {
+        background: ${({ $active }) => ($active ? UI.primaryBlue : "rgba(255,255,255,0.85)")};
+        color: ${({ $active }) => ($active ? "#fff" : UI.text)};
+    }
+    &:active {
+        transform: translateY(1px);
+    }
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(67, 105, 229, 0.22);
+    }
+`;
+
+const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
+    padding: 0 10px;
+    color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
+    cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+
+    &:hover {
+        background: ${({ disabled }) => (disabled ? "transparent" : "rgba(255,255,255,0.85)")};
+        color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.text)};
+    }
+    &:active {
+        transform: ${({ disabled }) => (disabled ? "none" : "translateY(1px)")};
+    }
+`;
+
+const BottomGrid = styled.div`
+    width: 100%;
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
 `;
