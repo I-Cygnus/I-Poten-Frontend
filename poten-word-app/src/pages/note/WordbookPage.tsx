@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { useParams, useNavigate, useLocation, useSearchParams, useNavigationType } from "react-router-dom";
 import http, { authHeader } from "../../utils/http.ts";
 import PotenNoteModal from "../../components/note/PotenNoteModal.tsx";
+import { SelectToggleChip } from "../../components/common/SelectToggleChip";
 import { fetchUserFolders, patchReorderFolders } from "../../api/wordbook.ts";
 import TermCard from "../../components/word/TermCard.tsx";
 import { setMemorization, fetchMemorizationStatuses } from "../../api/memorization.ts";
@@ -2848,17 +2849,15 @@ export default function WordbookPage() {
                                         transitionDelay: `${delayMs}ms`,
                                     }}
                                 >
-                                    <SelectToggle
-                                        $on={isChecked}
-                                        aria-label={isChecked ? "선택 해제" : "선택"}
+                                    <SelectToggleChip
+                                        checked={isChecked}
+                                        ariaLabel={isChecked ? "선택 해제" : "선택"}
                                         title={isChecked ? "선택 해제" : "선택"}
                                         onClick={(e) => {
                                             e.stopPropagation();
                                             onToggleItem(it.uwtId);
                                         }}
-                                    >
-                                        {isChecked ? <CheckIcon /> : <Hollow />}
-                                    </SelectToggle>
+                                    />
 
                                     <StatusBtn
                                         $done={done}

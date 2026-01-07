@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useCallback} from "react";
 import styled from "styled-components";
 import { useSearchParams, useNavigationType, useNavigate } from "react-router-dom";
 import http from "../../utils/http.ts";
@@ -489,7 +489,7 @@ export default function SearchPage() {
             return next;
         });
     };
-    const clearAllSelected = () => setSelectedIds(new Set());
+    const clearAllSelected = useCallback(() => setSelectedIds(new Set()), []);
 
     // 액션바 표시 토글 (닫기)
     const [showTray, setShowTray] = React.useState(true);

@@ -129,12 +129,20 @@ export default function PotenWordLayout() {
     const under = (base: string) =>
         loc.pathname === base || loc.pathname.startsWith(base + "/");
 
+    // Hall 라우트 판별 추가
+    const isQuizHallRoute = /^\/poten-word\/quiz\/hall(\/|$)/.test(loc.pathname);
+
     // 퀴즈 영역에서는 글로벌 히어로 숨김
     const hideGlobalHero = under("/poten-word/quiz");
 
     // QuizTimelinePage 라우트 판별 추가
     const isQuizTimelineRoute = /^\/poten-word\/quiz\/timeline(\/|$)/.test(loc.pathname);
-    const showQuizHero = isQuizTimelineRoute;
+
+    // 오답노트 라우트도 판별 추가
+    const isQuizWrongNotesRoute = /^\/poten-word\/quiz\/wrong-notes(\/|$)/.test(loc.pathname);
+
+    // timeline / wrong-notes / hall 에서 QuizHero 노출
+    const showQuizHero = isQuizTimelineRoute || isQuizWrongNotesRoute || isQuizHallRoute;
 
     // OX·초성·오늘의 등 “퀴즈 모드” 화면에서는 사이드 숨김 (퀴즈 전용 와이드)
     const isQuizModePage = /^\/poten-word\/quiz\/daily(\/|$)/.test(loc.pathname);
@@ -319,7 +327,7 @@ export default function PotenWordLayout() {
                     />
                 )}
 
-                {/* QuizTimelinePage일 때만 QuizHero 노출 (hideGlobalHero 상관없이) */}
+                {/* QuizTimeline / WrongNotes 일 때 QuizHero 노출 */}
                 {showQuizHero && (
                     <PotenQuizHeroBanner
                         align="left"
