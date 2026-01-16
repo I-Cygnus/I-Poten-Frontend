@@ -275,7 +275,7 @@ export default function App() {
                 <Route index element={<PotenWordLandingPage />} />
 
                 {/* /poten-word/terms → 용어 리스트 */}
-                <Route path="terms" element={<TermListPage />} />
+                <Route path="terms" element={<SearchPage />} />
 
                 <Route path="notes" element={<PotenNoteHomePage />} />
                 <Route path="search" element={<SearchPage />} />

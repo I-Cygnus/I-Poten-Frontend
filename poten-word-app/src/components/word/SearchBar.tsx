@@ -11,7 +11,8 @@ type Props = {
 
 /** 탐색 캡슐 톤(#4F76F1 → #3E63E0)에 맞춘 토큰 */
 const TOKENS = {
-    radius: 12,
+    radius: 999,
+    radiusMobile: 18,
     padX: 20,
     padY: 16,
     btnPadX: 16,
