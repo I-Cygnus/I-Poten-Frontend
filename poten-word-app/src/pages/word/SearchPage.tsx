@@ -180,6 +180,38 @@ async function attachTermsBulk(wordbookId: string, termIds: number[]) {
     );
 }
 
+type TrendingItem = {
+    termId: number;
+    title: string;
+    searchCount: number;
+    lastSearchedAt?: string;
+};
+
+type TrendingResponse = {
+    range: string;
+    limit: number;
+    items: TrendingItem[];
+};
+
+async function fetchTrendingTerms(params: { range?: string; limit?: number }) {
+    const range = params.range ?? "7d";
+    const limit = params.limit ?? 10;
+
+    const urls = ["/terms/trending", "/api/terms/trending"];
+    let lastErr: any;
+
+    for (const u of urls) {
+        try {
+            const res = await http.get<TrendingResponse>(u, { params: { range, limit } });
+            return res.data;
+        } catch (e: any) {
+            lastErr = e;
+            if (e?.response?.status !== 404) throw e;
+        }
+    }
+    throw lastErr;
+}
+
 const TOKENS = {
     color: {
         text: "#374151",
@@ -773,7 +805,7 @@ export function NewArrivalsMarquee({
     return (
         <NewArrivalsWrap>
             <NewArrivalsTitleRow>
-                <NewArrivalsTitle>새로 도착한 포텐워드</NewArrivalsTitle>
+                <NewArrivalsTitle>새로 도착한 <span className="highlight">포텐워드</span></NewArrivalsTitle>
                 <NewArrivalsBadge aria-hidden="true">✉️</NewArrivalsBadge>
             </NewArrivalsTitleRow>
 
@@ -951,8 +983,13 @@ export default function SearchPage() {
         sp.set("page", "0");
         sp.set("size", String(size || 20));
 
+        sp.delete("initial");
+        sp.delete("alpha");
+        sp.delete("symbol");
+        sp.delete("tag");
+
         navigate({ search: `?${sp.toString()}` });
-    }, [navigate, searchKeyword, size, params]);
+    }, [searchKeyword, params, size, navigate]);
 
     /** 검색 결과 상태 */
     const [results, setResults] = useState<Term[]>([]);
@@ -1452,6 +1489,42 @@ export default function SearchPage() {
         resultsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, [navType, hasFilter, q, tag, initial, alpha, symbol, catPath]);
 
+    const [trending, setTrending] = useState<TrendingItem[]>([]);
+    const [trendingLoading, setTrendingLoading] = useState(false);
+    const [trendingError, setTrendingError] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (hasFilter) return; // landing에서만
+        let alive = true;
+
+        (async () => {
+            try {
+                setTrendingLoading(true);
+                setTrendingError(null);
+
+                const data = await fetchTrendingTerms({ range: "7d", limit: 10 });
+                if (!alive) return;
+
+                setTrending((data?.items ?? []).slice(0, 10));
+            } catch (e: any) {
+                if (!alive) return;
+                const msg =
+                    e?.response?.data?.message ||
+                    e?.message ||
+                    "트렌딩 용어를 불러오지 못했어요.";
+
+                setTrendingError(msg);
+                setTrending([]);
+            } finally {
+                if (alive) setTrendingLoading(false);
+            }
+        })();
+
+        return () => {
+            alive = false;
+        };
+    }, [hasFilter]);
+
     return (
         <>
             <SoftBg />
@@ -1661,18 +1734,72 @@ export default function SearchPage() {
             </WhiteStage>
             {/* 필터/검색 없을 때: 새로 도착한 포텐워드 */}
             {!hasFilter && (
-                <NewArrivalsMarquee
-                    items={NEW_ARRIVALS_SAMPLE}
-                    speedPxPerSec={60}
-                    onClickItem={(item) => {
-                        // 카드 클릭 시 즉시 검색으로 진입하고 싶으면 이거 유지
-                        const sp = new URLSearchParams(params);
-                        sp.set("q", item.title);
-                        sp.set("page", "0");
-                        sp.set("size", String(size || 20));
-                        navigate({ search: `?${sp.toString()}` });
-                    }}
-                />
+                <>
+                    <NewArrivalsMarquee
+                        items={NEW_ARRIVALS_SAMPLE}
+                        speedPxPerSec={60}
+                        onClickItem={(item) => {
+                            const sp = new URLSearchParams(params);
+                            sp.set("q", item.title);
+                            sp.set("page", "0");
+                            sp.set("size", String(size || 20));
+
+                            sp.delete("initial");
+                            sp.delete("alpha");
+                            sp.delete("symbol");
+                            sp.delete("tag");
+
+                            navigate({ search: `?${sp.toString()}` });
+                        }}
+                    />
+
+                    <TrendingWrap>
+                        <TrendingInner>
+                            <TrendingHead>
+                                <div>
+                                    <TrendingTitle>
+                                        이번 주 I-Poten 회원들이 가장 많이 찾아본 <span className="highlight">포텐워드</span> TOP 10
+                                    </TrendingTitle>
+                                </div>
+                            </TrendingHead>
+
+                            {trendingLoading && <TrendingState>불러오는 중...</TrendingState>}
+                            {trendingError && <TrendingState $error>{trendingError}</TrendingState>}
+
+                            {!trendingLoading && !trendingError && trending.length > 0 && (
+                                <TrendingRankList>
+                                    {trending.map((it, idx) => (
+                                        <TrendingRowBtn
+                                            key={`${it.termId}-${idx}`}
+                                            type="button"
+                                            onClick={() => {
+                                                const sp = new URLSearchParams(params);
+                                                sp.set("q", it.title);
+                                                sp.set("page", "0");
+                                                sp.set("size", String(size || 20));
+                                                sp.delete("initial");
+                                                sp.delete("alpha");
+                                                sp.delete("symbol");
+                                                sp.delete("tag");
+                                                navigate({ search: `?${sp.toString()}` });
+                                            }}
+                                            title={`${idx + 1}위 ${it.title}`}
+                                        >
+                                            <TrendingRowContent>
+                                                <RankPill $rank={idx + 1}>{idx + 1}위</RankPill>
+                                                <RowTitle>{it.title}</RowTitle>
+                                            </TrendingRowContent>
+                                        </TrendingRowBtn>
+                                    ))}
+                                </TrendingRankList>
+                            )}
+
+                            {!trendingLoading && !trendingError && trending.length === 0 && (
+                                <TrendingState>이번 주 트렌딩 데이터가 아직 없어요.</TrendingState>
+                            )}
+                        </TrendingInner>
+                    </TrendingWrap>
+                </>
             )}
         </>
     );
@@ -1985,6 +2112,15 @@ const NewArrivalsWrap = styled.section`
     overflow-x: hidden;
 `;
 
+const highlightText = css`
+  .highlight {
+    background: linear-gradient(90deg, #3a83f3, #11b884);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+  }
+`;
+
 const NewArrivalsTitleRow = styled.div`
     display: flex;
     align-items: center;
@@ -1999,6 +2135,7 @@ const NewArrivalsTitle = styled.h3`
     font-weight: 750;
     letter-spacing: -0.02em;
     color: #0f172a;
+    ${highlightText}
 `;
 
 const NewArrivalsBadge = styled.span`
@@ -2229,4 +2366,177 @@ const ArrivalModalPrimary = styled.button`
   font-weight: 750;
   letter-spacing: -0.02em;
   cursor: pointer;
+`;
+
+const TrendingWrap = styled.section`
+    width: 100vw;
+    left: 50%;
+    margin-left: -50vw;
+    position: relative;
+
+    padding: 96px 0 72px;
+
+    @media (max-width: 640px) {
+        padding: 72px 0 64px;
+    }
+`;
+
+const TrendingInner = styled.div`
+  width: 100%;
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 20px;
+`;
+
+const TrendingHead = styled.div`
+    display: flex;
+    justify-content: center;
+    text-align: center;
+
+    margin: 10px 0 30px;
+
+    @media (max-width: 640px) {
+        margin: 6px 0 22px;
+    }
+`;
+
+const TrendingTitle = styled.h2`
+  margin: 0;
+  font-size: 34px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: #0f172a;
+
+  @media (max-width: 640px) {
+    font-size: 22px;
+  }
+  ${highlightText}
+`;
+
+const TrendingState = styled.div<{ $error?: boolean }>`
+  color: ${({ $error }) => ($error ? "#dc2626" : "#6b7280")};
+  font-size: 14px;
+  text-align: center;
+  padding: 12px 0;
+`;
+
+const TrendingRankList = styled.div`
+    width: 100%;
+    max-width: 720px;
+    margin: 0 auto;
+    margin-top: 48px;
+    position: relative;
+
+    border-top: 0;
+
+    &::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+
+        width: min(560px, 92%);
+        height: 1px;
+        background: rgba(15, 23, 42, 0.12);
+    }
+`;
+
+const TrendingRowBtn = styled.button`
+    width: 100%;
+    border: 0;
+    background: transparent;
+    padding: 16px 10px;
+    cursor: pointer;
+
+    display: flex;
+    justify-content: center;
+
+    position: relative;
+
+    &::before {
+        content: "";
+        position: absolute;
+        left: 50%;
+        top: 0;
+        bottom: 0;
+        transform: translateX(-50%);
+        width: min(560px, 92%);
+        background: transparent;
+        border-radius: 0;
+        transition: background 140ms ease;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    &:hover::before {
+        background: rgba(15, 23, 42, 0.03);
+    }
+
+    &::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: 0;
+        transform: translateX(-50%);
+        width: min(560px, 92%);
+        height: 1px;
+        background: rgba(15, 23, 42, 0.12);
+        z-index: 1;
+    }
+`;
+
+const TrendingRowContent = styled.div`
+    width: min(560px, 92%);
+    display: flex;
+    align-items: center;
+    gap: 18px;
+
+    position: relative;
+    z-index: 2;
+
+    padding-left: 12px;
+    padding-right: 0;
+`;
+
+const RankPill = styled.span<{ $rank: number }>`
+    min-width: 56px;
+    height: 30px;
+    padding: 0 12px;
+    border-radius: 999px;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    font-size: 13px;
+    font-weight: 750;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: #fff;
+
+    background: ${({ $rank }) => {
+        const top3 = "linear-gradient(135deg, #4F76F1 0%, #16b981 100%)";
+        if ($rank <= 3) return top3;
+        return "#0b0b0b";
+    }};
+`;
+
+const RowTitle = styled.div`
+    font-size: 20px;
+    font-weight: 560;
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    color: #0f172a;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    @media (max-width: 640px) {
+        font-size: 17px;
+        font-weight: 520;
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+    }
 `;
