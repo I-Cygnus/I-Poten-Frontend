@@ -143,6 +143,8 @@ export default function PotenWordLayout() {
     // 퀴즈 영역에서는 글로벌 히어로 숨김
     const hideGlobalHero = under("/poten-word/quiz");
 
+    const isQuizLandingRoute = /^\/poten-word\/quiz\/?$/.test(loc.pathname);
+
     // QuizTimelinePage 라우트 판별 추가
     const isQuizTimelineRoute = /^\/poten-word\/quiz\/timeline(\/|$)/.test(loc.pathname);
 
@@ -363,7 +365,7 @@ export default function PotenWordLayout() {
             <Shell
                 ref={shellRef}
                 data-testid="potenword-shell"
-                $noSide={isQuizModePage || isLanding || isSearchLikeRoute}
+                $noSide={isQuizModePage || isLanding || isSearchLikeRoute || isQuizLandingRoute}
                 $quizWide={isQuizModePage}
                 $flushBottom={isSearchLikeRoute}
                 style={{
@@ -373,7 +375,7 @@ export default function PotenWordLayout() {
                 }}
             >
                 {/* 메인 랜딩(/poten-word) 에서는 사이드바 렌더 X */}
-                {!isQuizModePage && !isLanding && !isSearchLikeRoute && (
+                {!isQuizModePage && !isLanding && !isSearchLikeRoute && !isQuizLandingRoute && (
                     <Side aria-label="포텐워드 네비게이션">
                         <TitleLink
                             to="/poten-word/terms"
