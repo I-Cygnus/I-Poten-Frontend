@@ -1027,6 +1027,10 @@ const Wrap = styled.div`
     --hero-max: 1240px;
     max-width: var(--hero-max);
     margin: 0 auto;
+
+    color: ${UI.text};
+    letter-spacing: -0.015em;          /* 기본은 살짝만 */
+    font-variant-numeric: tabular-nums; /* 날짜/페이지 정렬감 */
 `;
 
 const TopBar = styled.div`
@@ -1059,14 +1063,18 @@ const TopTitle = styled.div`
     h1 {
         margin: 0;
         font-size: 22px;
-        letter-spacing: -0.02em;
+        font-weight: 900;
+        letter-spacing: -0.03em;
+        line-height: 1.15;
         color: ${UI.text};
     }
     p {
         margin: 4px 0 0;
         font-size: 13px;
+        font-weight: 650;
         color: ${UI.sub};
-        letter-spacing: -0.02em;
+        letter-spacing: -0.012em;
+        line-height: 1.35;
     }
 `;
 
@@ -1100,8 +1108,18 @@ const SearchInput = styled.input`
     background: #fff;
     padding: 0 12px;
     color: ${UI.text};
-    letter-spacing: -0.02em;
     outline: none;
+
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+
+    &::placeholder {
+        color: rgba(107,114,128,0.85);
+        font-weight: 600;
+        letter-spacing: -0.01em;
+    }
+
     &:focus {
         border-color: rgba(67, 105, 229, 0.55);
         box-shadow: 0 0 0 3px rgba(67, 105, 229, 0.16);
@@ -1145,8 +1163,12 @@ const Select = styled.select`
     background: #fff;
     padding: 0 12px;
     color: ${UI.text};
-    letter-spacing: -0.02em;
     outline: none;
+
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+
     &:focus {
         border-color: rgba(67, 105, 229, 0.55);
         box-shadow: 0 0 0 3px rgba(67, 105, 229, 0.16);
@@ -1267,6 +1289,9 @@ const Card = styled.article`
     border-radius: 18px;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
     padding: 14px 14px 12px;
+
+    font-size: 14px;
+    line-height: 1.45;
 `;
 
 const CardHead = styled.div`
@@ -1299,17 +1324,16 @@ const Badges = styled.div`
     flex-wrap: wrap;
 `;
 
-const Badge = styled.span<{
-    $tone: "wrong" | "type" | "diff" | "ok" | "pending";
-}>`
-    height: 26px;
+const Badge = styled.span<{ $tone: "wrong" | "type" | "diff" | "ok" | "pending" }>`
+    height: 24px;          /* 26 → 24 */
     padding: 0 10px;
     border-radius: 999px;
     display: inline-flex;
     align-items: center;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: -0.02em;
+
+    font-size: 11.5px;     /* 12 → 11.5 */
+    font-weight: 850;
+    letter-spacing: -0.015em;
 
     ${({ $tone }) => {
         if ($tone === "wrong")
@@ -1371,11 +1395,11 @@ const TopMeta = styled.div`
     gap: 8px;
     flex-wrap: wrap;
 
-    color: ${UI.sub};
+    color: rgba(107,114,128,0.92);
     font-size: 12px;
-    letter-spacing: -0.02em;
+    font-weight: 650;        /* ✅ 추가 */
+    letter-spacing: -0.01em; /* ✅ 완화 */
 
-    /* flex 안에서 ellipsis 먹게 */
     min-width: 0;
 
     span {
@@ -1385,7 +1409,6 @@ const TopMeta = styled.div`
         white-space: nowrap;
     }
 
-    /* 모바일에서는 아예 다음 줄로 내려가도 보기 좋게 */
     @media (max-width: 520px) {
         flex-basis: 100%;
     }
@@ -1533,10 +1556,12 @@ const IconToggleBtn = styled.button<{ $active?: boolean }>`
 
 const Prompt = styled.h3`
     margin: 10px 0 0;
-    font-size: 16px;
-    line-height: 1.45;
-    letter-spacing: -0.02em;
+    font-size: 15px;
+    line-height: 1.55;
+    letter-spacing: -0.012em;   /* -0.018 → -0.012 (덜 뭉침) */
+    font-weight: 720;           /* 850 → 720 (핵심) */
     color: ${UI.text};
+
     display: -webkit-box;
     -webkit-line-clamp: 3;
     -webkit-box-orient: vertical;
@@ -1579,8 +1604,8 @@ const BoxValue = styled.div<{ $accent?: boolean }>`
     margin-top: 6px;
     font-size: 14px;
     color: ${({ $accent }) => ($accent ? UI.primaryBlue : UI.text)};
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: -0.012em;
     white-space: pre-wrap;
     word-break: break-word;
 `;
@@ -1589,15 +1614,21 @@ const LinkBtn = styled.button`
     appearance: none;
     border: 0;
     background: transparent;
-    color: ${UI.text};
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    cursor: pointer;
     padding: 0;
     text-align: left;
+    cursor: pointer;
+    color: ${UI.text};
+    font-weight: 650;           /* 800 → 650 */
+    letter-spacing: -0.01em;
+    line-height: 1.35;
+
+    text-decoration: underline;
+    text-decoration-color: rgba(67,105,229,0.35);
+    text-underline-offset: 3px;
 
     &:hover {
-        text-decoration: underline;
+        text-decoration-color: rgba(67,105,229,0.65);
+        filter: brightness(0.98);
     }
 `;
 
@@ -1624,7 +1655,7 @@ const ChoiceItem = styled.div<{ $correct?: boolean; $mine?: boolean }>`
     display: grid;
     grid-template-columns: 32px 1fr auto;
     gap: 10px;
-    align-items: start;
+    align-items: center;
 
     background: ${({ $correct, $mine }) =>
             $correct
@@ -1640,15 +1671,8 @@ const ChoiceItem = styled.div<{ $correct?: boolean; $mine?: boolean }>`
                             ? "rgba(239, 68, 68, 0.22)"
                             : "#e5e7eb"};
 
-    .k {
-        font-weight: 800;
-        color: ${UI.text};
-    }
-    .t {
-        color: ${UI.text};
-        letter-spacing: -0.02em;
-        line-height: 1.4;
-    }
+    .k { font-weight: 850; font-size: 13px; }
+    .t { font-size: 16px; line-height: 1.55; letter-spacing: -0.02em; font-weight: 650; }
 
     .tag {
         font-size: 12px;
@@ -1683,9 +1707,9 @@ const ExplainTitle = styled.div`
 const ExplainBody = styled.p<{ $muted?: boolean }>`
     margin: 0;
     font-size: 14px;
-    line-height: 1.6;
-    letter-spacing: -0.02em;
-    color: ${({ $muted }) => ($muted ? UI.sub : UI.text)};
+    line-height: 1.7;         /* 1.6 → 1.7 */
+    letter-spacing: -0.012em; /* -0.02 → -0.012 (장문 피로 감소) */
+    color: ${({ $muted }) => ($muted ? "rgba(107,114,128,0.92)" : UI.text)};
     white-space: pre-wrap;
     word-break: break-word;
 `;

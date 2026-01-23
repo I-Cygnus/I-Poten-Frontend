@@ -13,6 +13,7 @@ import http from "./utils/http";
 import { fetchUserFolders, patchReorderFolders } from "./api/wordbook";
 import WordbookPage from "./pages/note/WordbookPage.tsx";
 
+import QuizLandingPage from "./pages/quiz/QuizLandingPage.tsx";
 import QuizHomePage from "./pages/quiz/QuizHomePage.tsx";
 import QuizPlayPage from "./pages/quiz/regular/QuizPlayPage.tsx";
 import PotenNoteHomePage from "./pages/note/PotenNoteHomePage.tsx";
@@ -275,14 +276,18 @@ export default function App() {
                 <Route index element={<PotenWordLandingPage />} />
 
                 {/* /poten-word/terms → 용어 리스트 */}
-                <Route path="terms" element={<TermListPage />} />
+                <Route path="terms" element={<SearchPage />} />
 
                 <Route path="notes" element={<PotenNoteHomePage />} />
                 <Route path="search" element={<SearchPage />} />
 
                 {/* 퀴즈 경로 */}
                 <Route path="quiz">
-                  <Route index element={<QuizHomePage />} />
+                  {/* /poten-word/quiz → 랜딩 */}
+                  <Route index element={<QuizLandingPage />} />
+
+                  {/* /poten-word/quiz/home → 기존 홈 */}
+                  <Route path="home" element={<QuizHomePage />} />
 
                   {/* 일반 세트 플레이 */}
                   <Route path="play" element={<QuizPlayPage />} />

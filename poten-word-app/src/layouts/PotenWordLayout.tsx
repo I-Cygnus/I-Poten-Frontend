@@ -2,7 +2,7 @@ import React from "react";
 import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import SearchBar from "../components/word/SearchBar.tsx";
-import ExploreFilterBar, { FilterSelection } from "../components/word/ExploreFilterBar.tsx";
+import ExploreStageTabs from "../components/word/ExploreStageTabs";
 import PotenWordHeroBanner from "../components/word/PotenWordHeroBanner.tsx";
 import PotenNoteHeroBanner from "../components/note/PotenNoteHeroBanner.tsx";
 import PotenBookHeroBanner from "../components/book/PotenBookHeroBanner.tsx";
@@ -14,6 +14,7 @@ import icon3 from "../assets/hero/icon-3.png";
 import icon4 from "../assets/hero/icon-4.png";
 import icon5 from "../assets/hero/icon-5.png";
 import book1 from "../assets/hero/book-1.png";
+import {FilterSelection} from "../components/word/ExploreFilterBar.tsx";
 
 const UI = {
     line: "#e5e7eb",
@@ -26,7 +27,7 @@ const UI = {
 
 const HERO_NAV_TEXT_OFFSET = 26;
 
-const Shell = styled.div<{ $noSide?: boolean; $quizWide?: boolean }>`
+const Shell = styled.div<{ $noSide?: boolean; $quizWide?: boolean; $flushBottom?: boolean }>`
     --container-max: ${({ $quizWide }) => ($quizWide ? "1440px" : "1280px")};
     --main-max: ${({ $quizWide }) => ($quizWide ? "1180px" : "980px")};
     --gutter: clamp(16px, 3.5vw, 28px);
@@ -36,11 +37,12 @@ const Shell = styled.div<{ $noSide?: boolean; $quizWide?: boolean }>`
     max-width: calc(var(--container-max) + var(--gutter) * 2);
     margin-inline: auto;
     padding-inline: var(--gutter);
-    padding-bottom: 40px;
+
+    padding-bottom: ${({ $flushBottom }) => ($flushBottom ? "0px" : "40px")};
 
     display: grid;
     gap: var(--gap);
-    grid-template-columns: ${p =>
+    grid-template-columns: ${(p) =>
             p.$noSide ? "1fr" : "minmax(180px, var(--side-w)) minmax(0, 1fr)"};
     align-items: start;
 
@@ -112,6 +114,12 @@ const ItemLink = styled(NavLink)`
     }
 `;
 
+const SearchStack = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
 const Main = styled.main`
     min-width: 0;
     width: 100%;
@@ -135,6 +143,8 @@ export default function PotenWordLayout() {
     // 퀴즈 영역에서는 글로벌 히어로 숨김
     const hideGlobalHero = under("/poten-word/quiz");
 
+    const isQuizLandingRoute = /^\/poten-word\/quiz\/?$/.test(loc.pathname);
+
     // QuizTimelinePage 라우트 판별 추가
     const isQuizTimelineRoute = /^\/poten-word\/quiz\/timeline(\/|$)/.test(loc.pathname);
 
@@ -153,16 +163,21 @@ export default function PotenWordLayout() {
     const isNotesRoute = under("/poten-word/notes");
     const isFolderRoute = under("/poten-word/folders");
     const isBookRoute = under("/poten-word/book") || loc.pathname === "/book";
+    const isTermsRoute = /^\/poten-word\/terms(\/|$)/.test(loc.pathname);
+    const isSearchRoute = /^\/poten-word\/search(\/|$)/.test(loc.pathname);
+    const isSearchLikeRoute = isSearchRoute || isTermsRoute;
 
     // 노출 플래그
     const showNoteHero = !hideGlobalHero && (isNotesRoute || isFolderRoute);
     const showBookHero = !hideGlobalHero && isBookRoute;
-    const showWordHero = !hideGlobalHero && !isLanding && !showNoteHero && !isBookRoute;
+    const showWordHero =
+        !hideGlobalHero && !isLanding && !isSearchLikeRoute && !showNoteHero && !isBookRoute;
 
     // 메인 랜딩에서는 검색/필터 숨김
     const showSearchBars =
         !hideGlobalHero &&
         !isLanding &&
+        !isSearchLikeRoute &&
         !(isNotesRoute || isFolderRoute || isBookRoute);
 
     // ── 검색/필터 상태 동기화 ──
@@ -272,18 +287,15 @@ export default function PotenWordLayout() {
                         align="left"
                         narrow
                         offsetLeft={HERO_NAV_TEXT_OFFSET}
-                        floatingIcons={[icon1, icon2, icon3]}
+                        floatingIcons={[icon1]}
                         iconProps={{
                             width: "360px",
                             height: "240px",
-                            top: "28px",
-                            rightOffset: -100,
-                            positions: [
-                                { left: 20, top: 30 },
-                                { left: 66, top: 30 },
-                                { left: 45, top: 55 },
-                            ],
-                            maxIconWidthPercent: 38,
+                            top: "70px",
+                            rightOffset: -150,
+                            maxIconWidthPercent: 100,
+                            positions: [{ left: 30, top: 22 }],
+                            scales: [1.00],
                             withShadow: false,
                         }}
                     />
@@ -353,8 +365,9 @@ export default function PotenWordLayout() {
             <Shell
                 ref={shellRef}
                 data-testid="potenword-shell"
-                $noSide={isQuizModePage || isLanding}
+                $noSide={isQuizModePage || isLanding || isSearchLikeRoute || isQuizLandingRoute}
                 $quizWide={isQuizModePage}
+                $flushBottom={isSearchLikeRoute}
                 style={{
                     ["--side-top" as any]: "calc(var(--poten-header-h, 0px) + 20px)",
                     ["--side-mt" as any]:
@@ -362,7 +375,7 @@ export default function PotenWordLayout() {
                 }}
             >
                 {/* 메인 랜딩(/poten-word) 에서는 사이드바 렌더 X */}
-                {!isQuizModePage && !isLanding && (
+                {!isQuizModePage && !isLanding && !isSearchLikeRoute && !isQuizLandingRoute && (
                     <Side aria-label="포텐워드 네비게이션">
                         <TitleLink
                             to="/poten-word/terms"
@@ -389,18 +402,15 @@ export default function PotenWordLayout() {
 
                 <Main ref={mainRef}>
                     {showSearchBars && (
-                        <>
-                            <NarrowLeft style={{ marginTop: "var(--side-mt, 0px)" }}>
+                        <SearchStack style={{ marginTop: "var(--side-mt, 0px)" }}>
+                            <NarrowLeft>
                                 <SearchBar value={q} onChange={setQ} onSearch={handleSearch} />
                             </NarrowLeft>
 
                             <NarrowLeft>
-                                <ExploreFilterBar
-                                    value={selection}
-                                    onChange={handleFilterChange}
-                                />
+                                <ExploreStageTabs defaultCollapsed={false} />
                             </NarrowLeft>
-                        </>
+                        </SearchStack>
                     )}
                     <Outlet />
                 </Main>

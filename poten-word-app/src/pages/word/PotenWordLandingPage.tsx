@@ -1,12 +1,11 @@
 import React, { useEffect, useRef, useState, useCallback } from "react";
 import styled, { keyframes, css } from "styled-components";
 import { useNavigate } from "react-router-dom";
-import ExploreStageTabs from "../../components/word/ExploreStageTabs";
+
 import PotenNoteModal from "../../components/note/PotenNoteModal.tsx";
 import http from "../../utils/http.ts";
 import { fetchUserFolders, patchReorderFolders } from "../../api/wordbook.ts";
 import { deleteUserFolder, deleteUserFoldersBulk, renameUserFolder } from "../../api/folder.ts";
-import potenWordMark from "../../assets/hero/potenword-mark.png";
 
 const fadeUp = keyframes`
     0% {
@@ -487,18 +486,252 @@ export default function PotenWordLandingPage() {
         <>
             <SoftBg />
             <Wrapper>
-                {/* 워터마크: WhiteStage 윗부분(Wrapper 하단)에 깔림 */}
-                <HeroWatermark aria-hidden="true">
-                    <HeroWatermarkImg src={potenWordMark} alt="" />
-                </HeroWatermark>
+                <TopSection>
+                    <SubTitle>
+                        기술 면접 IT 개념 정리 + 내 단어장 + 직무별 퀴즈까지 한 번에
+                    </SubTitle>
+                    <Title>
+                        <span className="highlight">포텐워드</span>와 함께 시작하세요
+                    </Title>
+                </TopSection>
+
+                {/* 상단 3카드 */}
+                <Cards>
+                    <Card onClick={() => navigate("/poten-word/terms")}>
+                        <CardIcon><IconWord /></CardIcon>
+                        <CardTitle>포텐워드</CardTitle>
+                        <CardDesc>
+                            실제 기술면접에서 자주 나오는 개념만 모아 정리한 IT 용어 사전
+                        </CardDesc>
+                        <CardFooter>PotenWord</CardFooter>
+                    </Card>
+
+                    <Card onClick={() => navigate("/poten-word/notes")}>
+                        <CardIcon><IconNote /></CardIcon>
+                        <CardTitle>포텐노트</CardTitle>
+                        <CardDesc>
+                            마음에 걸리는 개념은 내 단어장에 넣고, 단어 뜻 가리기로 계속 반복
+                        </CardDesc>
+                        <CardFooter>PotenNote</CardFooter>
+                    </Card>
+
+                    <Card onClick={() => navigate("/poten-word/quiz")}>
+                        <CardIcon><IconQuiz /></CardIcon>
+                        <CardTitle>포텐퀴즈</CardTitle>
+                        <CardDesc>
+                            직무, 난이도, 카테고리를 선택해 기술면접 전 빠르게 개념 확인
+                        </CardDesc>
+                        <CardFooter>PotenQuiz</CardFooter>
+                    </Card>
+                </Cards>
+
+                {/* ===== 아래 설명 섹션 ===== */}
+                <MoreSection aria-label="포텐워드 상세 설명">
+                    {/* Row 1: 포텐워드 (왼쪽 라벨, 오른쪽 이미지+텍스트) */}
+                    <FeatureRowInView shiftX={-ROW_SHIFT}>
+                        <LabelBlock>
+                            <LabelPill>포텐워드</LabelPill>
+                            <LabelTitle>기술면접 개념 아카이브</LabelTitle>
+                            <Dots>
+                                <DotRow>
+                                    <Dot />
+                                    <DotText>실제 기술면접에서 자주 나오는 개념만 모아 정리한 IT 용어 사전</DotText>
+                                </DotRow>
+                                <DotRow>
+                                    <Dot />
+                                    <DotText>면접 질문 포인트, 유사 개념까지 함께 정리</DotText>
+                                </DotRow>
+                                <DotRow>
+                                    <Dot />
+                                    <DotText>나만의 단어장에 바로 저장해서 복습까지 연결</DotText>
+                                </DotRow>
+                            </Dots>
+                        </LabelBlock>
+                        <DetailContent>
+                            <DetailCard>
+                                <MediaWrapper>
+                                    <MediaVideo
+                                        src={WORD_VIDEO_URL}
+                                        autoPlay
+                                        loop
+                                        muted
+                                        playsInline
+                                    />
+                                </MediaWrapper>
+                            </DetailCard>
+                        </DetailContent>
+                    </FeatureRowInView>
+
+                    {/* Row 2: 포텐노트 (왼쪽 이미지+텍스트, 오른쪽 라벨) */}
+                    <FeatureRowInView cardOnLeft shiftX={ROW_SHIFT}>
+                        <DetailCard>
+                            <MediaWrapper>
+                                <MediaVideo
+                                    src={NOTE_VIDEO_URL}
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                />
+                            </MediaWrapper>
+                        </DetailCard>
+                        <LabelBlock>
+                            <LabelPill>포텐노트</LabelPill>
+                            <LabelTitle>내 학습 속도에 맞춘 나만의 단어장</LabelTitle>
+                            <Dots $align="left">
+                                <DotRow>
+                                    <Dot />
+                                    <DotText>
+                                        헷갈리는 개념은 포텐노트에 담아두고, ‘단어 · 뜻 가리기’ 모드로 반복 학습
+                                    </DotText>
+                                </DotRow>
+                                <DotRow>
+                                    <Dot />
+                                    <DotText>
+                                        외우지 못한 단어만 다시 복습하면서 효율적으로 학습 가능
+                                    </DotText>
+                                </DotRow>
+                                <DotRow>
+                                    <Dot />
+                                    <DotText>
+                                        폴더를 나눠서 관리하고, 진행률을 보면서 어느 정도 준비됐는지 한눈에 확인
+                                    </DotText>
+                                </DotRow>
+                            </Dots>
+                        </LabelBlock>
+                    </FeatureRowInView>
+
+                    {/* Row 3: 포텐퀴즈 (왼쪽 라벨, 오른쪽 이미지+텍스트) */}
+                    <FeatureRowInView shiftX={-ROW_SHIFT}>
+                        <LabelBlock>
+                            <LabelPill>포텐퀴즈</LabelPill>
+                            <LabelTitle>실전처럼 푸는 직무별 개념 퀴즈</LabelTitle>
+                            <Dots>
+                                <DotRow>
+                                    <Dot />
+                                    <DotText>
+                                        직무 · 난이도 · 카테고리를 선택해서 오늘 공부한 개념을 바로 퀴즈로 확인
+                                    </DotText>
+                                </DotRow>
+                                <DotRow>
+                                    <Dot />
+                                    <DotText>
+                                        객관식, OX, 초성퀴즈 등 다양한 퀴즈 유형 선택 가능
+                                    </DotText>
+                                </DotRow>
+                                <DotRow>
+                                    <Dot />
+                                    <DotText>
+                                        틀린 문제만 다시 풀기, 일일 추천 세트 등으로 면접 직전까지 감각 유지
+                                    </DotText>
+                                </DotRow>
+                            </Dots>
+                        </LabelBlock>
+                        <DetailCard>
+                            <MediaWrapper>
+                                <MediaVideo
+                                    src={WORD_VIDEO_URL}
+                                    autoPlay
+                                    loop
+                                    muted
+                                    playsInline
+                                />
+                            </MediaWrapper>
+                        </DetailCard>
+                    </FeatureRowInView>
+                </MoreSection>
+
+                <TopSection>
+                    <SubTitle>
+                        지금 어느 직무를 준비 중이신가요?
+                    </SubTitle>
+                    <Title>
+                        직무별 추천 <span className="highlight">포텐워드</span>를 나만의 <span className="highlight">포텐노트</span>에 빠르게 저장해 보세요
+                    </Title>
+                </TopSection>
+
+                <JobSection>
+                    <JobGridInView>
+                        {JOB_GROUPS.map((job) => (
+                            <JobCard
+                                key={job.key}
+                            >
+                                <JobCardHeader>
+                                    <JobTitle>{job.title}</JobTitle>
+                                    <JobPlusCircle
+                                        type="button"
+                                        onClick={(e) => handleJobPlusClick(e, job)}
+                                        aria-label={`${job.title} 직무 추천 포텐워드를 내 포텐노트에 저장`}
+                                    >
+                                        <span>+</span>
+                                    </JobPlusCircle>
+                                </JobCardHeader>
+                                <JobDesc>{job.desc}</JobDesc>
+                            </JobCard>
+                        ))}
+                    </JobGridInView>
+                </JobSection>
+
+                {/* 직무별 내 포텐노트 저장 모달 */}
+                <PotenNoteModal
+                    open={noteModalOpen}
+                    notebooks={notebooks}
+                    onClose={() => {
+                        setNoteModalOpen(false);
+                        setSelectedJob(null);
+                    }}
+                    onSave={handleSaveJobToNotebook}
+
+                    onCreate={async (name) => {
+                        // 1) 폴더 생성만
+                        const { data: wb } = await http.post("/me/folders", { wordbookName: name });
+                        const newId = String(wb.id);
+
+                        // 2) UI 갱신
+                        const newName = wb.wordbookName ?? name;
+                        setNotebooks((prev) => [{ id: newId, name: newName }, ...prev]);
+
+                        // 3) 여기서 attach 호출하지 않음
+                        // (저장은 사용자가 "저장하기" 누를 때 onSave에서만)
+
+                        return newId; // 모달이 이 값을 받아서 "선택" 처리할 수 있게
+                    }}
+                    onReorder={async (orderedIds) => {
+                        try {
+                            await patchReorderFolders(orderedIds);
+                            const refreshed = await fetchUserFolders();
+                            setNotebooks(refreshed);
+                        } catch (e) {
+                            console.warn("[folders reorder] 실패", e);
+                        }
+                    }}
+                    onGoToFolder={() => {
+                        setNoteModalOpen(false);
+                    }}
+                    onRename={async (wordbookId, newName) => {
+                        await renameUserFolder(wordbookId, newName);
+                        setNotebooks(prev =>
+                            prev.map(n => n.id === wordbookId ? ({ ...n, name: newName }) : n)
+                        );
+                    }}
+                    onRequestDelete={async (fid) => {
+                        await deleteUserFolder(fid, "purge");
+                        setNotebooks(await fetchUserFolders());
+                    }}
+                    onRequestBulkDelete={async (ids) => {
+                        await deleteUserFoldersBulk(ids, "purge");
+                        setNotebooks(await fetchUserFolders());
+                    }}
+                    onRefresh={async () => await fetchUserFolders()}
+                />
+
                 {/* 통합 검색 & 탐색 영역 */}
                 <SearchSectionInView onVisible={() => setStartTypingPlaceholder(true)}>
                     <SearchHeader>
-                        <BrandTitle>포텐워드</BrandTitle>
-
                         <SearchTitle align="center">궁금한 IT 용어를 바로 검색해 보세요.</SearchTitle>
                         <SearchDesc align="center">
-                            모르는 용어를 만날 때마다 포텐워드에서 바로 검색해 보세요. 개념, 중요성, 실무 혹은 면접에서의 포인트까지
+                            모르는 용어를 만날 때마다 포텐워드에서 바로 검색해 보세요.
+                            개념, 중요성, 실무 혹은 면접에서의 포인트까지
                             연결해서 정리해 드립니다.
                         </SearchDesc>
                     </SearchHeader>
@@ -529,98 +762,6 @@ export default function PotenWordLandingPage() {
                             <IconSearch />
                         </SearchButton>
                     </SearchBarForm>
-                </SearchSectionInView>
-            </Wrapper>
-
-            <WhiteStage>
-                <WhiteStageInner>
-                    <ExploreStageTabs />
-                </WhiteStageInner>
-            </WhiteStage>
-
-                    <TopSection>
-                        <SubTitle>
-                            지금 어느 직무를 준비 중이신가요?
-                        </SubTitle>
-                        <Title>
-                            직무별 추천 <span className="highlight">포텐워드</span>를 나만의 <span className="highlight">포텐노트</span>에 빠르게 저장해 보세요
-                        </Title>
-                    </TopSection>
-
-                    <JobSection>
-                        <JobGridInView>
-                            {JOB_GROUPS.map((job) => (
-                                <JobCard
-                                    key={job.key}
-                                >
-                                    <JobCardHeader>
-                                        <JobTitle>{job.title}</JobTitle>
-                                        <JobPlusCircle
-                                            type="button"
-                                            onClick={(e) => handleJobPlusClick(e, job)}
-                                            aria-label={`${job.title} 직무 추천 포텐워드를 내 포텐노트에 저장`}
-                                        >
-                                            <span>+</span>
-                                        </JobPlusCircle>
-                                    </JobCardHeader>
-                                    <JobDesc>{job.desc}</JobDesc>
-                                </JobCard>
-                            ))}
-                        </JobGridInView>
-                    </JobSection>
-
-                    {/* 직무별 내 포텐노트 저장 모달 */}
-                    <PotenNoteModal
-                        open={noteModalOpen}
-                        notebooks={notebooks}
-                        onClose={() => {
-                            setNoteModalOpen(false);
-                            setSelectedJob(null);
-                        }}
-                        onSave={handleSaveJobToNotebook}
-
-                        onCreate={async (name) => {
-                            // 1) 폴더 생성만
-                            const { data: wb } = await http.post("/me/folders", { wordbookName: name });
-                            const newId = String(wb.id);
-
-                            // 2) UI 갱신
-                            const newName = wb.wordbookName ?? name;
-                            setNotebooks((prev) => [{ id: newId, name: newName }, ...prev]);
-
-                            // 3) 여기서 attach 호출하지 않음
-                            // (저장은 사용자가 "저장하기" 누를 때 onSave에서만)
-
-                            return newId; // 모달이 이 값을 받아서 "선택" 처리할 수 있게
-                        }}
-                        onReorder={async (orderedIds) => {
-                            try {
-                                await patchReorderFolders(orderedIds);
-                                const refreshed = await fetchUserFolders();
-                                setNotebooks(refreshed);
-                            } catch (e) {
-                                console.warn("[folders reorder] 실패", e);
-                            }
-                        }}
-                        onGoToFolder={() => {
-                            setNoteModalOpen(false);
-                        }}
-                        onRename={async (wordbookId, newName) => {
-                            await renameUserFolder(wordbookId, newName);
-                            setNotebooks(prev =>
-                                prev.map(n => n.id === wordbookId ? ({ ...n, name: newName }) : n)
-                            );
-                        }}
-                        onRequestDelete={async (fid) => {
-                            await deleteUserFolder(fid, "purge");
-                            setNotebooks(await fetchUserFolders());
-                        }}
-                        onRequestBulkDelete={async (ids) => {
-                            await deleteUserFoldersBulk(ids, "purge");
-                            setNotebooks(await fetchUserFolders());
-                        }}
-                        onRefresh={async () => await fetchUserFolders()}
-                    />
 
                     {/*<PopularRow>*/}
                     {/*    <PopularHeader>요즘 면접에서 자주 나오는 용어</PopularHeader>*/}
@@ -636,6 +777,8 @@ export default function PotenWordLandingPage() {
                     {/*        ))}*/}
                     {/*    </PopularList>*/}
                     {/*</PopularRow>*/}
+                </SearchSectionInView>
+            </Wrapper>
         </>
     );
 }
@@ -707,7 +850,6 @@ const SubTitle = styled.div`
     color: #111827;
     margin-bottom: 5px;
     letter-spacing: -0.02em;
-    margin-top: 56px;
 
     opacity: 0;
     animation: ${fadeUp} 0.5s ease forwards;
@@ -860,15 +1002,15 @@ const FeatureRow = styled.div<{
 
     display: grid;
     grid-template-columns: ${({ $cardOnLeft }) =>
-            $cardOnLeft ? "minmax(0, 1.6fr) minmax(0, 1fr)" : "minmax(0, 1fr) minmax(0, 1.6fr)"};
+    $cardOnLeft ? "minmax(0, 1.6fr) minmax(0, 1fr)" : "minmax(0, 1fr) minmax(0, 1.6fr)"};
     gap: 40px;
     align-items: center;
 
     opacity: ${({ $visible }) => ($visible ? 1 : 0)};
     transform: ${({ $visible }) =>
-            $visible
-                    ? "translate3d(var(--shift-x), 0px, 0) scale(1)"
-                    : "translate3d(var(--shift-x), 20px, 0) scale(0.98)"};
+    $visible
+        ? "translate3d(var(--shift-x), 0px, 0) scale(1)"
+        : "translate3d(var(--shift-x), 20px, 0) scale(0.98)"};
     transition: opacity 0.6s ease, transform 0.6s cubic-bezier(.16,1,.3,1);
 
     @media (max-width: 960px) {
@@ -994,7 +1136,7 @@ const JobCard = styled.div<{ $visible?: boolean; $row?: number }>`
     /* 인뷰 등장 애니메이션 (줄 단위 딜레이) */
     opacity: ${({ $visible }) => ($visible ? 1 : 0)};
     transform: ${({ $visible }) =>
-            $visible ? "translateY(0px)" : "translateY(18px)"};
+    $visible ? "translateY(0px)" : "translateY(18px)"};
     transition:
             opacity 0.55s ease,
             transform 0.55s cubic-bezier(.16,1,.3,1),
@@ -1002,7 +1144,7 @@ const JobCard = styled.div<{ $visible?: boolean; $row?: number }>`
             border-color 0.25s ease,
             background 0.25s ease;
     transition-delay: ${({ $visible, $row }) =>
-            $visible ? `${0.08 * (($row ?? 0))}s` : "0s"};
+    $visible ? `${0.08 * (($row ?? 0))}s` : "0s"};
 
     &:hover {
         transform: translateY(-4px);
@@ -1068,8 +1210,6 @@ const JobDesc = styled.p`
 `;
 
 const SearchSection = styled.section<{ $visible?: boolean }>`
-    position: relative;
-    z-index: 2;
     width: 100%;
     max-width: 1100px;
     margin-top: 60px;
@@ -1082,8 +1222,8 @@ const SearchSection = styled.section<{ $visible?: boolean }>`
     }
 
     ${({ $visible }) =>
-            $visible &&
-            css`
+    $visible &&
+    css`
             & > * {
                 opacity: 1;
                 transform: translateY(0);
@@ -1103,14 +1243,6 @@ const SearchSection = styled.section<{ $visible?: boolean }>`
                 transition-delay: 0.24s;
             }
         `}
-`;
-
-const BrandTitle = styled.h1`
-  margin: 0 0 6px;
-  font-size: clamp(44px, 6vw, 68px);
-  font-weight: 700;
-  color: #0f172a;
-  letter-spacing: -0.02em;
 `;
 
 const SearchHeader = styled.div`
@@ -1217,51 +1349,6 @@ const TagChip = styled.button`
     }
 `;
 
-const HeroWatermark = styled.div`
-    position: absolute;
-    left: 50%;
-    bottom: 6px;
-    transform: translateX(-50%);
-    z-index: 1;
-    pointer-events: none;
-    user-select: none;
-
-    width: min(1400px, 92vw);
-    display: flex;
-    justify-content: center;
-
-    @media (max-width: 640px) {
-        bottom: 0px;
-    }
-`;
-
-const HeroWatermarkImg = styled.img`
-    width: 100%;
-    height: auto;
-    opacity: 0.36;
-    filter:
-            saturate(1.20)
-            contrast(1.12)
-            brightness(0.98)
-            drop-shadow(0 14px 28px rgba(15, 23, 42, 0.10));
-
-    mix-blend-mode: normal;
-    -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 100%);
-    mask-image: linear-gradient(180deg, transparent 0%, #000 14%, #000 100%);
-
-    @media (max-width: 640px) {
-        opacity: 0.16;
-        filter:
-                saturate(1.15)
-                contrast(1.10)
-                brightness(0.99)
-                drop-shadow(0 10px 22px rgba(15, 23, 42, 0.08));
-
-        -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 100%);
-        mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 100%);
-    }
-`;
-
 const PopularRow = styled.div`
     margin-top: 26px;
     margin-bottom: 18px;
@@ -1285,65 +1372,4 @@ const PopularList = styled.div`
     flex-wrap: wrap;
     gap: 10px;
     letter-spacing: -.02em;
-`;
-const WhiteStage = styled.section`
-    position: relative;
-    isolation: isolate;
-
-    width: 100vw;
-    left: 50%;
-    margin-left: -50vw;
-    background: transparent;
-
-    padding: 84px 0 110px;
-    margin-top: -18px;
-
-    overflow-x: clip;
-    --vFade: clamp(22px, 4vw, 56px);
-
-    &::before {
-        content: "";
-        position: absolute;
-        inset: 0;
-        z-index: 0;
-        pointer-events: none;
-
-        background: #ffffff;
-        border-top: 1px solid rgba(15, 23, 42, 0.06);
-        box-shadow: 0 -18px 60px rgba(15, 23, 42, 0.06);
-
-        -webkit-mask-image: linear-gradient(
-                180deg,
-                transparent 0,
-                #000 var(--vFade),
-                #000 calc(100% - var(--vFade)),
-                transparent 100%
-        );
-        mask-image: linear-gradient(
-                180deg,
-                transparent 0,
-                #000 var(--vFade),
-                #000 calc(100% - var(--vFade)),
-                transparent 100%
-        );
-        -webkit-mask-repeat: no-repeat;
-        mask-repeat: no-repeat;
-        -webkit-mask-size: 100% 100%;
-        mask-size: 100% 100%;
-    }
-
-    @media (max-width: 640px) {
-        padding: 56px 0 80px;
-        margin-top: -12px;
-        --vFade: 28px;
-    }
-`;
-
-const WhiteStageInner = styled.div`
-    position: relative;
-    z-index: 1;
-    width: 100%;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 20px;
 `;
