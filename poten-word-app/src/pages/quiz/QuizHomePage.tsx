@@ -34,6 +34,8 @@ const UI = {
         quizHover: "#2c73e5",
         primaryStrong: "#3E63E0",
         indigo50: "#EEF2FF",
+        primary: "#4F76F1",
+        primarySoft: "#e6edff",
     },
 
     gradient: { quizCta: "linear-gradient(90deg, #3E82E8 0%, #2BC6A6 100%)" },
@@ -82,6 +84,19 @@ export default function QuizHomePage() {
     const [dailyPendingKind, setDailyPendingKind] = useState<DailyKind>("CHOICE");
     const [dailyResumeCandidate, setDailyResumeCandidate] =
         useState<DailyStartResponse | null>(null);
+
+    type CarryChoice = "RESUME" | "TODAY";
+    const [carryChoice, setCarryChoice] = useState<CarryChoice>("RESUME");
+
+    useEffect(() => {
+        if (dailyCarryOpen) setCarryChoice("RESUME");
+    }, [dailyCarryOpen]);
+
+    const onConfirmCarry = async () => {
+        if (dailyLoading) return;
+        if (carryChoice === "RESUME") onPickResume();
+        else await onPickToday();
+    };
 
     const pickSession = (kind: DailyKind): DailyStartSession | null => {
         const s = (dailyData?.sessions ?? []).find(x => String(x.questionType).toUpperCase() === kind);
@@ -588,27 +603,100 @@ export default function QuizHomePage() {
                 >
                     <CarrySheet onClick={(e) => e.stopPropagation()}>
                         <CarryHeader>
-                            <h3>이전 퀴즈가 남아 있어요</h3>
-                            <p>
-                                <strong>{dailyResumeCandidate.activeYmd}</strong> 퀴즈를 이어서 풀까요,
-                                아니면 <strong>{dailyResumeCandidate.todayYmd}</strong> 퀴즈를 새로 시작할까요?
-                            </p>
+                            <CarryHeaderTop>
+                                <div>
+                                    <h3>이전에 풀던 퀴즈가 있어요</h3>
+                                    <p>어떻게 시작할까요?</p>
+                                </div>
+
+                                <CarryClose aria-label="닫기" onClick={closeDailyCarry}>×</CarryClose>
+                            </CarryHeaderTop>
                         </CarryHeader>
 
-                        <CarryFooter>
-                            <CarryGhost onClick={closeDailyCarry} disabled={dailyLoading}>닫기</CarryGhost>
-                            <CarryBtnRow>
-                                <CarryOutline onClick={onPickResume} disabled={dailyLoading}>
-                                    이어하기
-                                </CarryOutline>
-                                <CarryPrimary onClick={onPickToday} disabled={dailyLoading}>
-                                    오늘 새로 시작
+                        <CarryBody>
+                            <CarryOptionGrid role="radiogroup" aria-label="진행 방식 선택">
+                                <CarryOptionCard
+                                    type="button"
+                                    $selected={carryChoice === "RESUME"}
+                                    onClick={() => setCarryChoice("RESUME")}
+                                    disabled={dailyLoading}
+                                    aria-checked={carryChoice === "RESUME"}
+                                    role="radio"
+                                >
+                                    <CarryOptionLeft>
+                                        <CarryOptionIcon $selected={carryChoice === "RESUME"} aria-hidden>
+                                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                                                <path d="M10 8H6V4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                                <path d="M6 8c2.2-2.2 5.2-3.5 8.5-3.5 5 0 9 3.6 9 8.5 0 4.7-3.8 8.5-8.5 8.5-2.4 0-4.6-.9-6.2-2.5"
+                                                      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                                            </svg>
+                                        </CarryOptionIcon>
+
+                                        {/* 타이틀/설명을 하나의 텍스트 컬럼으로 */}
+                                        <CarryOptionText>
+                                            <CarryOptionTitleRow>
+                                                <strong>이어하기</strong>
+                                                {/* <CarryBadge>추천</CarryBadge> */}
+                                            </CarryOptionTitleRow>
+                                            <span>이전에 풀던 퀴즈를 이어서 진행해요</span>
+                                        </CarryOptionText>
+                                    </CarryOptionLeft>
+
+                                    <CarryCheckMark $on={carryChoice === "RESUME"} aria-hidden>
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M20 6L9 17l-5-5" />
+                                        </svg>
+                                    </CarryCheckMark>
+                                </CarryOptionCard>
+
+                                <CarryOptionCard
+                                    type="button"
+                                    $selected={carryChoice === "TODAY"}
+                                    onClick={() => setCarryChoice("TODAY")}
+                                    disabled={dailyLoading}
+                                    aria-checked={carryChoice === "TODAY"}
+                                    role="radio"
+                                >
+                                    <CarryOptionLeft>
+                                        <CarryOptionIcon $selected={carryChoice === "TODAY"} aria-hidden>
+                                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                                                <path d="M7 3v3M17 3v3" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                                <path d="M4 9h16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                                <path d="M6 6h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2Z"
+                                                      stroke="currentColor" strokeWidth="2" strokeLinejoin="round"/>
+                                                <path d="M9 13h2M13 13h2M9 17h2" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                                            </svg>
+                                        </CarryOptionIcon>
+
+                                        <CarryOptionText>
+                                            <strong>오늘 새로 시작</strong>
+                                            <span>{dailyResumeCandidate.todayYmd} 퀴즈를 새로 만들어요</span>
+                                        </CarryOptionText>
+                                    </CarryOptionLeft>
+
+                                    <CarryCheckMark $on={carryChoice === "TODAY"} aria-hidden>
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                            <path d="M20 6L9 17l-5-5" />
+                                        </svg>
+                                    </CarryCheckMark>
+
+                                </CarryOptionCard>
+                            </CarryOptionGrid>
+
+                            <CarryActionRow>
+                                <CarryGhost onClick={closeDailyCarry} disabled={dailyLoading}>
+                                    닫기
+                                </CarryGhost>
+
+                                <CarryPrimary onClick={onConfirmCarry} disabled={dailyLoading}>
+                                    시작하기
                                 </CarryPrimary>
-                            </CarryBtnRow>
-                        </CarryFooter>
+                            </CarryActionRow>
+                        </CarryBody>
                     </CarrySheet>
                 </CarryScrim>
             )}
+
             <DailyQuizModal
                 open={dailyOpen}
                 title={session?.title ?? "오늘의 퀴즈"}
@@ -1157,7 +1245,7 @@ const Divider = styled.div`
     content: "";
     position: absolute; left: 24px; top: 0;
     width: 92px; height: 2px;
-    background: #111827;   /* 왼쪽 진한 부분(스크린샷 느낌) */
+    background: #111827;
   }
 `;
 
@@ -1372,9 +1460,9 @@ const JobSection = styled.section`
 
 const JobsHeading = styled.header`
   display: flex;
-  align-items: baseline;     /* 큰 제목과 보조문구 기준선 맞춤 */
-  gap: 12px;                 /* 제목 ↔ 보조문구 간격 */
-  flex-wrap: wrap;           /* 좁으면 줄바꿈 */
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
   margin-bottom: 14px;
 
   strong {
@@ -1388,8 +1476,8 @@ const JobsHeading = styled.header`
   small {
     font-size: 14px;
     color: ${UI.sub};
-    margin-top: 0;           /* 위쪽 여백 제거 */
-    white-space: nowrap;     /* 한 줄 유지(원하면 지워도 됨) */
+    margin-top: 0;
+    white-space: nowrap;
   }
 
   @media (max-width: 640px) {
@@ -1623,38 +1711,72 @@ const ShareAccent = styled.em`
   font-style: normal;
 `;
 
+const MODAL = {
+    scrimBg: "rgba(15,23,42,.50)",
+    scrimBlur: "blur(6px) saturate(120%)",
+
+    sheetBorder: UI.panelLineSoft,
+    sheetRadius: "18px",
+    sheetShadow: "0 30px 80px rgba(15,23,42,.20)",
+    headerBg: "linear-gradient(180deg, #ffffff 0%, #fbfcff 100%)",
+
+    btnH: "38px",
+    btnRadius: "10px",
+};
+
 // ===== Modal Styles (compact) =====
 const Scrim = styled.div`
-  position: fixed; inset: 0; z-index: 1000;
-  background: rgba(15,23,42,.45);
-  backdrop-filter: saturate(120%) blur(2px);
+    position: fixed; inset: 0; z-index: 1000;
+    background: ${MODAL.scrimBg};
+    backdrop-filter: ${MODAL.scrimBlur};
 `;
+
 const Sheet = styled.div`
-  position: fixed; z-index: 1001;
-  top: 50%; left: 50%; transform: translate(-50%, -50%);
-  width: min(760px, calc(100% - 32px));
-  max-height: min(84vh, calc(100vh - 32px));
-  display: flex; flex-direction: column;
-  background: #fff; border: 1px solid ${UI.panelLineSoft};
-  border-radius: 18px; box-shadow: 0 30px 80px rgba(0,0,0,.18);
-  overflow: hidden;
+    position: fixed; z-index: 1001;
+    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    width: min(760px, calc(100% - 32px));
+    max-height: min(84vh, calc(100vh - 32px));
+    display: flex; flex-direction: column;
+
+    background: #fff;
+    border: 1px solid ${MODAL.sheetBorder};
+    border-radius: ${MODAL.sheetRadius};
+    box-shadow: ${MODAL.sheetShadow};
+    overflow: hidden;
 `;
+
 const SheetHeader = styled.div`
-  position: relative; padding: 18px 20px 14px;
-  display:flex; align-items:center; gap:12px;
-  border-bottom: 1px solid ${UI.panelLineSoft};
-  background: linear-gradient(180deg, #ffffff 0%, #fbfbfd 100%);
+    position: relative;
+    padding: 18px 20px 14px;
+    display:flex; align-items:center; gap:12px;
+    border-bottom: 1px solid ${MODAL.sheetBorder};
+    background: ${MODAL.headerBg};
 `;
+
 const TitleWrap = styled.div`
   display:flex; flex-direction:column; gap:4px;
   h3{ margin:0; font-size:18px; letter-spacing:-0.02em; color:${UI.text}; }
   small{ color:${UI.sub}; font-weight:400; }
 `;
+
 const CloseX = styled.button`
-  margin-left:auto; border:0; background:transparent; cursor:pointer;
-  width:32px; height:32px; border-radius:10px;
-  display:grid; place-items:center; color:#6b7280;
-  &:hover{ background:#f3f4f6; color:#111827; }
+    margin-left: auto;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    font-size: 20px;
+    line-height: 1;
+
+    display: grid;
+    place-items: center;
+    color: #6b7280;
+
+    &:hover { background:#f3f4f6; color:#111827; }
+    &:focus-visible { outline: 3px solid rgba(79,118,241,.25); outline-offset: 2px; }
 `;
 const SheetBody = styled.div`
   padding: 16px 20px 8px;
@@ -1686,23 +1808,51 @@ const Select = styled.select`
   border-radius: 12px; border:1px solid #e5e7eb;
   background:#fff; color:#374151; letter-spacing: -0.02em;
 `;
+
 const SheetFooter = styled.div`
-  position: sticky; bottom: 0;
-  display:flex; justify-content:flex-end; gap:10px;
-  padding: 12px 20px;
-  background: linear-gradient(180deg, rgba(255,255,255,.85), #fff 60%);
-  border-top: 1px solid #e5e7eb;
+    position: sticky; bottom: 0;
+    display:flex; justify-content:flex-end; gap:10px;
+    padding: 12px 20px;
+    background: linear-gradient(180deg, rgba(255,255,255,.85), #fff 60%);
+    border-top: 1px solid #e5e7eb;
 `;
+
 const Ghost = styled.button`
-  height: 35px; padding: 0 16px; border-radius: 6px; font-weight: 700;
-  background: #fff; color: ${UI.primaryBlue}; border: 1px solid ${UI.primaryBlue};
-  cursor: pointer; &:hover { background: #eef2ff; }
+    height: ${MODAL.btnH};
+    padding: 0 14px;
+    border-radius: ${MODAL.btnRadius};
+    min-width: 72px;
+
+    font-weight: 800;
+    letter-spacing: -0.02em;
+
+    background: #fff;
+    color: ${UI.primaryBlue};
+    border: 1px solid ${UI.primaryBlue};
+    cursor: pointer;
+
+    &:hover { background: #eef2ff; }
+    &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.18); }
 `;
+
 const Primary = styled.button`
-  height: 35px; padding: 0 18px; border-radius: 6px; font-weight: 700; letter-spacing: -0.02em;
-  background: ${UI.primaryBlue}; border: 1px solid ${UI.primaryBlue}; color: #fff;
-  cursor: pointer; &:hover { filter: brightness(0.96); }
+    height: ${MODAL.btnH};
+    padding: 0 16px;
+    border-radius: ${MODAL.btnRadius};
+    min-width: 96px;
+
+    font-weight: 800;
+    letter-spacing: -0.02em;
+
+    background: ${UI.primaryBlue};
+    border: 1px solid ${UI.primaryBlue};
+    color: #fff;
+    cursor: pointer;
+
+    &:hover { filter: brightness(0.96); }
+    &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.18); }
 `;
+
 const TitleInputRow = styled.div`
   display: flex;
   align-items: center;
@@ -1743,93 +1893,293 @@ const HintText = styled.p`
 `;
 
 const CarryScrim = styled.div`
-  position: fixed; inset: 0;
-  z-index: 1200;
-  background: rgba(15,23,42,.45);
-  backdrop-filter: saturate(120%) blur(2px);
+    position: fixed; inset: 0;
+    z-index: 1200;
+    background: ${MODAL.scrimBg};
+    backdrop-filter: ${MODAL.scrimBlur};
 `;
 
 const CarrySheet = styled.div`
-  position: fixed; z-index: 1201;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: min(520px, calc(100% - 32px));
-  background: #fff;
-  border: 1px solid ${UI.panelLineSoft};
-  border-radius: 18px;
-  box-shadow: 0 30px 80px rgba(0,0,0,.18);
-  overflow: hidden;
+    position: fixed; z-index: 1201;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: min(540px, calc(100% - 28px));
+    border-radius: ${MODAL.sheetRadius};
+    background: #fff;
+
+    border: 1px solid ${MODAL.sheetBorder};
+    box-shadow: ${MODAL.sheetShadow};
+    overflow: hidden;
+
+    color: ${UI.text};
+    letter-spacing: -0.01em;
+    line-height: 1.45;
+
+    animation: carryIn .14s ease-out;
+    @keyframes carryIn {
+        from { opacity: .01; transform: translate(-50%, calc(-50% + 8px)) scale(.99); }
+        to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) { animation: none; }
 `;
 
 const CarryHeader = styled.div`
-  padding: 18px 18px 14px;
-  border-bottom: 1px solid ${UI.panelLineSoft};
+    padding: 18px 18px 14px;
+    border-bottom: 1px solid ${MODAL.sheetBorder};
+    background: ${MODAL.headerBg};
 
-  h3{
-    margin: 0 0 8px;
-    font-size: 18px;
-    letter-spacing: -0.02em;
-    color: ${UI.text};
-    font-weight: 800;
-  }
-  p{
-    margin: 0;
+    h3{
+        margin: 0;
+        font-size: 17px;
+        font-weight: 760;
+        letter-spacing: -0.01em;
+        line-height: 1.34;
+        color: ${UI.text};
+    }
+
+    p{
+        margin: 6px 0 0;
+        font-size: 13px;
+        color: ${UI.sub};
+        letter-spacing: -0.01em;
+        line-height: 1.55;
+    }
+`;
+
+const CarryHeaderTop = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 10px;
+`;
+
+const CarryClose = styled.button`
+    margin-left: auto;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    font-size: 20px;
+    line-height: 1;
+
     color: ${UI.sub};
-    font-size: 14px;
-    line-height: 1.5;
-    strong{ color: ${UI.text}; font-weight: 800; }
-  }
+    display: grid;
+    place-items: center;
+
+    &:hover { background:#f3f4f6; color:${UI.text}; }
+    &:focus-visible { outline: 3px solid rgba(79,118,241,.25); outline-offset: 2px; }
 `;
 
-const CarryFooter = styled.div`
-  padding: 14px 18px 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+const CarryBody = styled.div`
+    padding: 14px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 `;
 
-const CarryBtnRow = styled.div`
-  display: flex;
-  gap: 10px;
-  justify-content: flex-end;
-  flex-wrap: wrap;
+const CarryOptionGrid = styled.div`
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+`;
+
+const CarryOptionCard = styled.button<{ $selected?: boolean }>`
+    width: 100%;
+    text-align: left;
+    border-radius: 16px;
+
+    border: 1.5px solid ${({ $selected }) =>
+            $selected ? "rgba(67,105,229,.55)" : "#e5e7eb"};
+    background: ${({ $selected }) =>
+            $selected ? "rgba(238,242,255,.70)" : "#fff"};
+
+    box-shadow: none;
+
+    padding: 14px 14px;
+    min-height: 84px;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    cursor: pointer;
+
+    transition: transform 120ms ease, border-color 180ms ease, background 180ms ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: none;
+
+        border-color: ${({ $selected }) =>
+                $selected ? "rgba(67,105,229,.62)" : "#d1d5db"};
+        background: ${({ $selected }) =>
+                $selected ? "rgba(238,242,255,.80)" : "#fafafa"};
+    }
+
+    &:active {
+        transform: translateY(0) scale(.998);
+    }
+
+    &:focus-visible {
+        outline: 3px solid rgba(79,118,241,.25);
+        outline-offset: 2px;
+    }
+`;
+
+const CarryOptionLeft = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+`;
+
+const CarryOptionIcon = styled.span<{ $selected?: boolean }>`
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+
+    border: 1px solid ${({ $selected }) => ($selected ? "rgba(67,105,229,.25)" : "#e5e7eb")};
+    background: ${({ $selected }) => ($selected ? "rgba(67,105,229,.10)" : "#fff")};
+    color: ${({ $selected }) => ($selected ? UI.primaryBlue : UI.sub)};
+
+    svg { display: block; }
+`;
+
+const CarryOptionText = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 8px;
+    min-width: 0;
+
+    strong{
+        display: block;
+        font-size: 15px;
+        font-weight: 750;
+        letter-spacing: -0.02em;
+        color: ${UI.text};
+        line-height: 1.32;
+        -webkit-font-smoothing: antialiased;
+    }
+
+    span{
+        font-size: 13px;
+        color: ${UI.sub};
+        letter-spacing: -0.02em;
+        line-height: 1.45;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+`;
+
+const CarryOptionTitleRow = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+`;
+
+const CarryCheckMark = styled.span<{ $on?: boolean }>`
+    width: 22px;
+    height: 22px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    flex: 0 0 auto;
+
+    border: 2px solid ${({ $on }) => ($on ? UI.primaryBlue : "#d1d5db")};
+    background: ${({ $on }) => ($on ? UI.primaryBlue : "#fff")};
+    box-shadow: none;
+
+    transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+
+    svg{
+        width: 14px;
+        height: 14px;
+        opacity: ${({ $on }) => ($on ? 1 : 0)};
+        transform: ${({ $on }) => ($on ? "translateY(-0.5px) scale(1)" : "translateY(-0.5px) scale(.92)")};
+        transition: opacity 120ms ease, transform 120ms ease;
+    }
+    path{
+        stroke: #fff;
+        stroke-width: 3;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+`;
+
+const CarryActionRow = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 2px;
+
+    @media (max-width: 420px){
+        flex-direction: column;
+        align-items: stretch;
+    }
 `;
 
 const CarryGhost = styled.button`
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: ${UI.sub};
-  font-weight: 700;
-  cursor: pointer;
-  &:hover{ background: #f9fafb; }
-  &:disabled{ opacity: .6; cursor: not-allowed; }
-`;
+    height: ${MODAL.btnH};
+    padding: 0 14px;
+    width: fit-content;
+    min-width: 72px;
+    border-radius: ${MODAL.btnRadius};
 
-const CarryOutline = styled.button`
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 10px;
-  border: 1px solid ${UI.primaryBlue};
-  background: #fff;
-  color: ${UI.primaryBlue};
-  font-weight: 800;
-  cursor: pointer;
-  &:hover{ background: #eef2ff; }
-  &:disabled{ opacity: .6; cursor: not-allowed; }
+    border: 1px solid ${UI.color.primaryStrong};
+    background: #fff;
+    color: ${UI.color.primaryStrong};
+
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+
+    transition: background-color .15s ease, color .15s ease, border-color .15s ease, transform .08s ease;
+
+    &:hover { background: ${UI.color.primarySoft}; }
+    &:active { transform: translateY(1px); }
+    &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(62,99,224,.18); }
+    &:disabled{ opacity: .6; cursor: not-allowed; transform: none; }
+
+    @media (max-width: 420px){ width: 100%; }
 `;
 
 const CarryPrimary = styled.button`
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 10px;
-  border: 1px solid ${UI.primaryBlue};
-  background: ${UI.primaryBlue};
-  color: #fff;
-  font-weight: 800;
-  cursor: pointer;
-  &:hover{ filter: brightness(0.96); }
-  &:disabled{ opacity: .6; cursor: not-allowed; }
+    height: ${MODAL.btnH};
+    padding: 0 16px;
+    width: fit-content;
+    min-width: 96px;
+    border-radius: ${MODAL.btnRadius};
+
+    border: 1px solid ${UI.color.primary};
+    background: ${UI.color.primary};
+    color: #fff;
+
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+
+    transition: filter .15s ease, transform .08s ease, box-shadow .15s ease;
+    &:hover { filter: brightness(.96); }
+    &:active { transform: translateY(1px); }
+    &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.18); }
+    &:disabled{ opacity: .6; cursor: not-allowed; transform: none; }
+
+    @media (max-width: 420px){ width: 100%; }
 `;
