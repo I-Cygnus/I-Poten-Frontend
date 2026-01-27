@@ -4,7 +4,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import http, { authHeader } from "../../utils/http.ts";
 import { NarrowLeft } from "../../styles/layout.ts";
 import { goToAccountLogin } from "../../utils/auth.ts";
-import SystemMessageModal from "../../components/common/SystemMessageModal";
+import SystemMessageModal, {SystemMessage} from "../../components/common/SystemMessageModal";
+import { createPortal } from "react-dom";
+import {usePotenDialog} from "../../components/common/PotenDialog.tsx";
 
 /* ===== UI tokens ===== */
 const UI = {
@@ -84,6 +86,8 @@ const Screen = styled.div`
 `;
 
 const LeftCol = styled.div`
+    position: relative;
+    z-index: 2;
     display: grid;
     gap: 16px;
 `;
@@ -91,13 +95,12 @@ const LeftCol = styled.div`
 const RightCol = styled.aside`
     position: sticky;
     top: 64px;
+    z-index: 1;
 
-    /* 화면에 붙어있는 영역의 최대 높이 제한 */
     max-height: calc(100vh - 64px);
-    overflow: auto;               /* 오른쪽 컬럼 내부에서만 스크롤 */
-    padding-bottom: 12px;         /* 하단 여유 */
-    overscroll-behavior: contain; /* 바닥 튕김 전파 방지 */
-
+    overflow: auto;
+    padding-bottom: 12px;
+    overscroll-behavior: contain;
     align-self: start;
     display: grid;
     grid-template-rows: max-content max-content max-content max-content;
@@ -252,26 +255,27 @@ const Panel = styled.div`
 
 const TimelinePanel = styled(Panel)`
     min-height: 460px;
+    overflow: visible;
 `;
 
 /* ===== 타임라인 ===== */
 const Row = styled.div`
+    position: relative;
     display: grid;
     grid-template-columns: 1fr auto;
     align-items: center;
     gap: 16px;
     padding: 22px 20px;
+
     &:not(:last-child) {
         box-shadow: inset 0 -1px #f1f5f9;
     }
-    transition: background 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+
+    transition: background 0.15s ease, box-shadow 0.15s ease;
+
     &:hover {
         background: #fbfcff;
-        transform: translateY(-1px);
         box-shadow: inset 0 -1px #eef2f7, 0 1px 6px rgba(62, 99, 224, 0.05);
-    }
-    @media (max-width: 860px) {
-        grid-template-columns: 1fr;
     }
 `;
 
@@ -281,6 +285,23 @@ const ActionBar = styled.div`
     justify-content: flex-end;
     gap: 10px;
     min-width: 0;
+    padding-right: 0px;
+`;
+
+const MenuWrap = styled.div`
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+`;
+
+
+const RowMenuWrap = styled.div`
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 20;
+    display: inline-flex;
+    align-items: center;
 `;
 
 const DonutWrap = styled.div`
@@ -366,7 +387,7 @@ const MetaText = styled.span`
 
 const PillRow = styled.div`
     display: inline-flex;
-    align-items: center;   /* baseline -> center */
+    align-items: center;
     gap: 8px;
     flex-wrap: wrap;
 `;
@@ -1067,6 +1088,114 @@ type Recent = {
     label: string;
 };
 
+const MoreBtn = styled.button`
+    width: 24px;
+    height: 24px;
+    border-radius: 8px;
+    padding: 0;
+
+    border: 0;
+    outline: none;
+    background: transparent;
+    color: rgba(15, 23, 42, 0.72);
+    cursor: pointer;
+
+    display: inline-grid;
+    place-items: center;
+
+    position: relative;
+    transition: transform 80ms ease, background 150ms ease, box-shadow 150ms ease;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: -6px;
+    }
+
+    &:hover {
+        background: transparent;
+    }
+
+    &:active {
+        transform: translateY(1px);
+    }
+
+    &:focus-visible {
+        box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.16);
+        background: rgba(62, 99, 224, 0.08);
+    }
+
+    &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+`;
+
+const MoreIcon = () => (
+    <svg width="14" height="14" viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="5.5" r="1.35" fill="currentColor" />
+        <circle cx="12" cy="12" r="1.35" fill="currentColor" />
+        <circle cx="12" cy="18.5" r="1.35" fill="currentColor" />
+    </svg>
+);
+
+const DropMenu = styled.div`
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  z-index: 50;
+
+  min-width: 160px;
+  padding: 6px;
+  border-radius: 12px;
+
+  background: #fff;
+  border: 1px solid rgba(15, 23, 42, 0.10);
+  box-shadow: ${UI.shadow.menu};
+`;
+
+const MenuItemBtn = styled.button<{ $danger?: boolean }>`
+  width: 100%;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 10px 10px;
+  border-radius: 10px;
+
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  font-size: 13.5px;
+
+  color: ${({ $danger }) => ($danger ? "#b91c1c" : UI.color.text)};
+
+  &:hover {
+    background: ${({ $danger }) => ($danger ? "rgba(239,68,68,0.10)" : "#f7f9fc")};
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const MenuIcon = styled.span`
+  width: 18px;
+  display: inline-grid;
+  place-items: center;
+`;
+
 function RecentPager({ recent, pageSize = 6 }: { recent: Recent[]; pageSize?: number }) {
     const [page, setPage] = React.useState(0);
     const totalPages = Math.max(1, Math.ceil((recent?.length || 0) / pageSize));
@@ -1231,52 +1360,24 @@ const Quick = styled.button<{ $size?: "sm" | "md" }>`
     }
 `;
 
-const QuickIcon = styled.span`
-    width: var(--cta-ic);
-    height: var(--cta-ic);
-    flex: 0 0 auto;
-    border-radius: 999px;
-    background: #ffffff;
-    display: inline-grid;
-    place-items: center;
-
-    color: ${UI.color?.primaryStrong ?? "#3E63E0"};
-
-    svg {
-        width: 18px;
-        height: 18px;
-    }
-    svg *,
-    svg path,
-    svg polyline,
-    svg line,
-    svg circle {
-        vector-effect: non-scaling-stroke;
-    }
-    svg path,
-    svg polyline,
-    svg line,
-    svg circle {
-        stroke: currentColor;
-        fill: none;
-        stroke-width: 2;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-    }
-`;
+const Z = {
+    modal: 2147483000,
+};
 
 /* ===== Quick Retry Modal ===== */
 const ModalOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  background: rgba(15, 23, 42, 0.45);
-  display: grid;
-  place-items: center;
-  padding: 18px;
+    position: fixed;
+    inset: 0;
+    z-index: ${Z.modal};
+    background: rgba(15, 23, 42, 0.45);
+    display: grid;
+    place-items: center;
+    padding: 18px;
 `;
 
 const ModalCard = styled.div`
+  position: relative;
+  z-index: ${Z.modal + 1};
   width: min(520px, 100%);
   border-radius: 16px;
   background: #fff;
@@ -1461,6 +1562,106 @@ const ModalPrimary = styled(ModalBtnBase)`
     &:hover { filter: brightness(0.96); }
 `;
 
+const Field = styled.div`
+  display: grid;
+  gap: 6px;
+`;
+
+const FieldLabel = styled.div`
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: ${UI.color.text};
+`;
+
+const TextField = styled.input`
+  width: 100%;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid ${UI.color.line};
+  padding: 0 12px;
+  font-size: 14px;
+  letter-spacing: -0.02em;
+  background: #fff;
+
+  &:focus {
+    outline: none;
+    border-color: ${UI.color.primaryStrong};
+    box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.16);
+  }
+  &::placeholder {
+    color: #9aa4b2;
+  }
+`;
+
+const HelperRow = styled.div`
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+`;
+
+const HelperText = styled.div`
+  font-size: 12px;
+  letter-spacing: -0.02em;
+  color: ${UI.color.muted};
+`;
+
+const ErrorText = styled.div`
+  font-size: 12px;
+  letter-spacing: -0.02em;
+  color: #b91c1c;
+`;
+
+const CountText = styled.div`
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: -0.02em;
+  color: rgba(15, 23, 42, 0.55);
+`;
+
+const InfoBox = styled.div`
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  background: #f8fafc;
+  border-radius: 14px;
+  padding: 12px 12px;
+
+  display: grid;
+  gap: 6px;
+
+  .title {
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: ${UI.color.text};
+    line-height: 1.25;
+  }
+  .meta {
+    font-size: 12px;
+    letter-spacing: -0.02em;
+    color: ${UI.color.muted};
+  }
+`;
+
+const ModalDanger = styled(ModalBtnBase)`
+  height: 35px;
+  padding: 0 18px;
+  border-radius: 6px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+
+  background: #ef4444;
+  border: 1px solid #ef4444;
+  color: #fff;
+
+  &:hover {
+    filter: brightness(0.96);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.22);
+  }
+`;
+
 const ChartWrap = styled.div`
     width: 100%;
     height: 150px;
@@ -1468,7 +1669,7 @@ const ChartWrap = styled.div`
     border-radius: 14px;
     background: transparent;
     border: 0;
-    overflow: visible; /* 툴팁/글로우 잘릴 수 있어서 */
+    overflow: visible;
 `;
 
 const XBadges = styled.div`
@@ -1556,6 +1757,7 @@ type QuickDays = 7 | 30;
 
 type TimelineItem = {
     id: number | string;
+    sessionId?: number;
 
     /** 현재 세션의 타이틀(재도전 커스텀 문구 포함 가능) */
     title: string;
@@ -1638,8 +1840,12 @@ async function fetchTimeline(params: { q?: string; type?: PartType | "ALL"; page
             const rawMode = x.sessionMode == null ? "" : String(x.sessionMode);
             const mode = rawMode.trim().replace(/[\s-]+/g, "_").toUpperCase();
 
+            const sessionId = Number(x.sessionId ?? x.id);
+            const safeSessionId = Number.isFinite(sessionId) ? sessionId : undefined;
+
             return {
                 id: x.id ?? x.sessionId ?? `${x.date}-${originTitle ?? title}`,
+                sessionId: safeSessionId,
 
                 title,
                 originTitle,
@@ -1669,6 +1875,21 @@ async function fetchTimeline(params: { q?: string; type?: PartType | "ALL"; page
     const total = Number(data?.total ?? data?.totalElements ?? items.length);
 
     return { summary: s, items, recent, total };
+}
+
+async function updateMySessionTitle(sessionId: number, title: string) {
+    return http.patch(
+        `/me/quiz/sessions/${sessionId}/title`,
+        { title },
+        { headers: authHeader(), withCredentials: true }
+    );
+}
+
+async function deleteMySession(sessionId: number) {
+    return http.delete(`/me/quiz/sessions/${sessionId}`, {
+        headers: authHeader(),
+        withCredentials: true,
+    });
 }
 
 async function fetchTrend(params: { metric: "accuracy" | "sets" | "retryRate"; span?: string }) {
@@ -1705,6 +1926,12 @@ async function fetchTotalSetsFallback(span = "365d") {
 export default function QuizTimelinePage() {
     const nav = useNavigate();
     const location = useLocation();
+    const dialogs = usePotenDialog();
+
+    const [reloadSeq, setReloadSeq] = React.useState(0);
+    const invalidate = React.useCallback(() => {
+        setReloadSeq((n) => n + 1);
+    }, []);
 
     const [sysOpen, setSysOpen] = React.useState(false);
     const [sysMsg, setSysMsg] = React.useState<SystemMessage | null>(null);
@@ -1718,6 +1945,220 @@ export default function QuizTimelinePage() {
         setSysOpen(false);
         setSysMsg(null);
     }, []);
+
+    const [renameOpen, setRenameOpen] = React.useState(false);
+    const [renameTarget, setRenameTarget] = React.useState<TimelineItem | null>(null);
+    const [renameValue, setRenameValue] = React.useState("");
+    const [renameErr, setRenameErr] = React.useState<string | null>(null);
+    const [renameSaving, setRenameSaving] = React.useState(false);
+    const renameInputRef = React.useRef<HTMLInputElement | null>(null);
+
+    const openRenameModal = React.useCallback((it: TimelineItem) => {
+        if (!it.sessionId) return;
+        setRenameTarget(it);
+        setRenameValue(String(it.title ?? ""));
+        setRenameErr(null);
+        setRenameOpen(true);
+    }, []);
+
+    const closeRenameModal = React.useCallback(() => {
+        if (renameSaving) return;
+        setRenameOpen(false);
+        setRenameTarget(null);
+        setRenameErr(null);
+    }, [renameSaving]);
+
+    const validateRename = React.useCallback((v: string) => {
+        const raw = (v ?? "").trim().replace(/\s+/g, " ");
+        if (!raw) return "공백만 입력할 수 없어요.";
+        if (raw.length > 60) return "세션 이름은 최대 60자입니다.";
+        return null;
+    }, []);
+
+    const submitRename = React.useCallback(async () => {
+        if (!renameTarget?.sessionId) return;
+
+        const next = renameValue;
+        const err = validateRename(next);
+        if (err) {
+            setRenameErr(err);
+            return;
+        }
+
+        const finalTitle = next.trim().replace(/\s+/g, " ");
+        setRenameSaving(true);
+        setRenameErr(null);
+
+        try {
+            await updateMySessionTitle(renameTarget.sessionId, finalTitle);
+
+            setItems((prev) =>
+                prev.map((x) =>
+                    x.sessionId === renameTarget.sessionId ? { ...x, title: finalTitle } : x
+                )
+            );
+
+            invalidate();
+
+            setRenameOpen(false);
+            setRenameTarget(null);
+
+            openSys({
+                tone: "success",
+                title: "세션 이름을 변경했어요",
+                description: "타임라인에 바로 반영됐어요.",
+            });
+        } catch (e: any) {
+            const status = e?.response?.status;
+            if (status === 401) {
+                goToAccountLogin(location.pathname + location.search);
+                return;
+            }
+            setRenameErr(e?.response?.data?.message || "이름 변경에 실패했어요. 잠시 후 다시 시도해주세요.");
+        } finally {
+            setRenameSaving(false);
+        }
+    }, [
+        renameTarget,
+        renameValue,
+        validateRename,
+        invalidate,
+        location.pathname,
+        location.search,
+        openSys,
+    ]);
+
+    React.useEffect(() => {
+        if (!renameOpen) return;
+
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") closeRenameModal();
+        };
+        window.addEventListener("keydown", onKey);
+
+        const t = window.setTimeout(() => renameInputRef.current?.focus(), 0);
+
+        return () => {
+            window.clearTimeout(t);
+            document.body.style.overflow = prev;
+            window.removeEventListener("keydown", onKey);
+        };
+    }, [renameOpen, closeRenameModal]);
+
+    /* ===== Delete Modal (PotenNote style) ===== */
+    const [deleteOpen, setDeleteOpen] = React.useState(false);
+    const [deleteTarget, setDeleteTarget] = React.useState<TimelineItem | null>(null);
+    const [deleteTyped, setDeleteTyped] = React.useState("");
+    const [deleteErr, setDeleteErr] = React.useState<string | null>(null);
+    const [deleteLoading, setDeleteLoading] = React.useState(false);
+    const deleteInputRef = React.useRef<HTMLInputElement | null>(null);
+
+    const openDeleteModal = React.useCallback((it: TimelineItem) => {
+        if (!it.sessionId) return;
+        setDeleteTarget(it);
+        setDeleteTyped("");
+        setDeleteErr(null);
+        setDeleteOpen(true);
+    }, []);
+
+    const closeDeleteModal = React.useCallback(() => {
+        if (deleteLoading) return;
+        setDeleteOpen(false);
+        setDeleteTarget(null);
+        setDeleteTyped("");
+        setDeleteErr(null);
+    }, [deleteLoading]);
+
+    const submitDelete = React.useCallback(async () => {
+        if (!deleteTarget?.sessionId) return;
+
+        if (deleteTyped.trim() !== "삭제") {
+            setDeleteErr("정확히 '삭제'를 입력해야 삭제할 수 있어요.");
+            return;
+        }
+
+        setDeleteLoading(true);
+        setDeleteErr(null);
+
+        try {
+            const sid = deleteTarget.sessionId;
+
+            await deleteMySession(sid);
+
+            setItems((prev) => {
+                const next = prev.filter((x) => x.sessionId !== sid);
+
+                // 현재 페이지에 1개뿐이었다면 삭제 후 비게 되므로 이전 페이지로
+                if (prev.length === 1) {
+                    setPage((p) => (p > 0 ? p - 1 : 0));
+                }
+
+                return next;
+            });
+
+            setTotal((t) => Math.max(0, (t || 0) - 1));
+            setSummary((s) => ({
+                ...s,
+                totalSets: Math.max(0, Number(s.totalSets || 0) - 1),
+            }));
+
+            invalidate();
+
+            setDeleteOpen(false);
+            setDeleteTarget(null);
+
+            openSys({
+                tone: "success",
+                title: "세션을 삭제했어요",
+                description: "타임라인/목록에서 더 이상 보이지 않아요.",
+            });
+        } catch (e: any) {
+            const status = e?.response?.status;
+
+            if (status === 401) {
+                goToAccountLogin(location.pathname + location.search);
+                return;
+            }
+            if (status === 404) {
+                setDeleteErr("이미 삭제된 세션이에요. 새로고침하면 목록이 정리될 거예요.");
+                return;
+            }
+
+            setDeleteErr(e?.response?.data?.message || "삭제하지 못했어요. 잠시 후 다시 시도해주세요.");
+        } finally {
+            setDeleteLoading(false);
+        }
+    }, [
+        deleteTarget,
+        deleteTyped,
+        invalidate,
+        location.pathname,
+        location.search,
+        openSys,
+    ]);
+
+    React.useEffect(() => {
+        if (!deleteOpen) return;
+
+        const prev = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") closeDeleteModal();
+        };
+        window.addEventListener("keydown", onKey);
+
+        const t = window.setTimeout(() => deleteInputRef.current?.focus(), 0);
+
+        return () => {
+            window.clearTimeout(t);
+            document.body.style.overflow = prev;
+            window.removeEventListener("keydown", onKey);
+        };
+    }, [deleteOpen, closeDeleteModal]);
 
     const [quickModalOpen, setQuickModalOpen] = React.useState(false);
     const [quickDays, setQuickDays] = React.useState<QuickDays>(7);
@@ -1760,11 +2201,7 @@ export default function QuizTimelinePage() {
     const handleRetryAll = React.useCallback(
         async (sessionId: number | string) => {
             try {
-                const { data } = await http.post(`/me/quiz/sessions/${sessionId}/retry`, null, {
-                    headers: authHeader(),
-                    withCredentials: true,
-                });
-
+                const { data } = await http.post(`/me/quiz/sessions/${sessionId}/retry-wrong`, null, { headers: authHeader(), withCredentials: true });
                 const newSid = Number(data?.sessionId ?? data?.newSessionId ?? data?.id);
                 if (!Number.isFinite(newSid)) throw new Error("Invalid new sessionId");
 
@@ -1846,7 +2283,7 @@ export default function QuizTimelinePage() {
                 quickRetryInFlight.current = false;
             }
         },
-        [nav, location.pathname, location.search]
+        [nav, location.pathname, location.search, openSys]
     );
 
     const handleRetryWrongOnly = React.useCallback(async (sessionId: number | string) => {
@@ -1905,7 +2342,7 @@ export default function QuizTimelinePage() {
         return () => {
             cancel = true;
         };
-    }, []);
+    }, [reloadSeq]);
 
     React.useEffect(() => {
         let cancel = false;
@@ -1935,7 +2372,7 @@ export default function QuizTimelinePage() {
             cancel = true;
             clearTimeout(t);
         };
-    }, [q, type, page, perPage]);
+    }, [q, type, page, perPage, reloadSeq]);
 
     const pages = Math.max(1, Math.ceil((total || 0) / perPage));
 
@@ -2005,6 +2442,279 @@ export default function QuizTimelinePage() {
             cancel = true;
         };
     }, [metric, span]);
+
+    const handleRenameSession = React.useCallback(
+        async (it: TimelineItem) => {
+            const sid = it.sessionId;
+            if (!sid) {
+                openSys({
+                    tone: "error",
+                    title: "수정할 수 없는 항목이에요",
+                    description: "세션 식별자(sessionId)를 찾지 못했어요.",
+                });
+                return;
+            }
+
+            const nextTitle = await dialogs.prompt({
+                title: "세션 이름 변경",
+                label: "세션 이름",
+                placeholder: "세션 이름을 입력하세요",
+                okText: "저장하기",
+                // (PotenDialog 구현에 따라 initialValue / defaultValue 지원 시 사용)
+                // initialValue: it.title,
+                validator: (v: string) => {
+                    const raw = (v ?? "").trim().replace(/\s+/g, " ");
+                    if (!raw) return "공백만 입력할 수 없어요.";
+                    if (raw.length > 60) return "세션 이름은 최대 60자입니다.";
+                    return;
+                },
+            });
+
+            if (!nextTitle) return;
+            const finalTitle = nextTitle.trim().replace(/\s+/g, " ");
+
+            try {
+                await updateMySessionTitle(sid, finalTitle);
+
+                // UI 즉시 반영
+                setItems((prev) =>
+                    prev.map((x) => (x.sessionId === sid ? { ...x, title: finalTitle } : x))
+                );
+
+                invalidate();
+
+                openSys({
+                    tone: "success",
+                    title: "세션 이름을 변경했어요",
+                    description: "타임라인에 바로 반영됐어요.",
+                });
+            } catch (e: any) {
+                const status = e?.response?.status;
+                if (status === 401) {
+                    goToAccountLogin(location.pathname + location.search);
+                    return;
+                }
+
+                await dialogs.alert({
+                    title: "이름 변경에 실패했습니다.",
+                    description: e?.response?.data?.message || "잠시 후 다시 시도해 주세요.",
+                    okText: "확인",
+                });
+            }
+        },
+        [dialogs, invalidate, location.pathname, location.search, openSys]
+    );
+
+    const [menuOpenId, setMenuOpenId] = React.useState<string | number | null>(null);
+    const menuWrapRef = React.useRef<HTMLDivElement | null>(null);
+
+    React.useEffect(() => {
+        if (menuOpenId == null) return;
+
+        const onPointerDownCapture = (e: PointerEvent) => {
+            const el = menuWrapRef.current;
+            if (!el) return;
+            if (!el.contains(e.target as Node)) setMenuOpenId(null);
+        };
+
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key === "Escape") setMenuOpenId(null);
+        };
+
+        document.addEventListener("pointerdown", onPointerDownCapture, true);
+        window.addEventListener("keydown", onKey);
+
+        return () => {
+            document.removeEventListener("pointerdown", onPointerDownCapture, true);
+            window.removeEventListener("keydown", onKey);
+        };
+    }, [menuOpenId]);
+
+    // 목록/페이지 바뀌면 메뉴는 자동 닫히게
+    React.useEffect(() => {
+        setMenuOpenId(null);
+    }, [q, type, page, items.length]);
+
+    const handleDeleteSessionWithDialog = React.useCallback(
+        async (it: TimelineItem) => {
+            const sid = it.sessionId;
+            if (!sid) {
+                await dialogs.alert({
+                    title: "삭제할 수 없는 항목이에요",
+                    description: "세션 식별자(sessionId)를 찾지 못했어요. 새로고침 후 다시 시도해주세요.",
+                    okText: "확인",
+                });
+                return;
+            }
+
+            // PotenDialog에 confirm이 있으면 confirm 사용, 없으면 prompt로 안전 폴백
+            const confirmFn = (dialogs as any).confirm as
+                | undefined
+                | ((opts: any) => Promise<boolean>);
+
+            let ok = false;
+
+            if (typeof confirmFn === "function") {
+                ok = await confirmFn({
+                    title: "세션을 삭제할까요?",
+                    description: (
+                        <>
+                            <b>{it.title}</b>
+                            <div style={{ marginTop: 6 }}>
+                                {fmtDate(it.date)}
+                            </div>
+                            <div style={{ marginTop: 8 }}>
+                                삭제하면 타임라인/목록에서 숨겨져요. (오답노트는 삭제되지 않아요)
+                            </div>
+                        </>
+                    ),
+                    okText: "삭제",
+                    cancelText: "취소",
+                    // (PotenDialog가 danger 옵션 지원하면)
+                    // tone: "danger",
+                });
+            } else {
+                const typed = await dialogs.prompt({
+                    title: "세션 삭제",
+                    label: "삭제 확인",
+                    placeholder: "삭제하려면 '삭제'를 입력하세요",
+                    okText: "삭제",
+                    validator: (v: string) => {
+                        if ((v ?? "").trim() !== "삭제") return "정확히 '삭제'를 입력해야 삭제할 수 있어요.";
+                        return;
+                    },
+                });
+                ok = (typed ?? "").trim() === "삭제";
+            }
+
+            if (!ok) return;
+
+            try {
+                await deleteMySession(sid);
+
+                // 1) UI 즉시 반영
+                setItems((prev) => prev.filter((x) => x.sessionId !== sid));
+                setTotal((t) => Math.max(0, (t || 0) - 1));
+                setSummary((s) => ({ ...s, totalSets: Math.max(0, Number(s.totalSets || 0) - 1) }));
+
+                // 2) 현재 페이지가 비면 이전 페이지로
+                setPage((p) => {
+                    // 지금 페이지에서 하나 삭제했을 때 비는 케이스 대응
+                    if (items.length <= 1 && p > 0) return p - 1;
+                    return p;
+                });
+
+                invalidate();
+
+                openSys({
+                    tone: "success",
+                    title: "세션을 삭제했어요",
+                    description: "타임라인/목록에서 더 이상 보이지 않아요.",
+                });
+            } catch (e: any) {
+                const status = e?.response?.status;
+
+                if (status === 401) {
+                    goToAccountLogin(location.pathname + location.search);
+                    return;
+                }
+
+                if (status === 404) {
+                    await dialogs.alert({
+                        title: "이미 삭제된 세션이에요",
+                        description: "새로고침하면 목록이 정리될 거예요.",
+                        okText: "확인",
+                    });
+                    return;
+                }
+
+                await dialogs.alert({
+                    title: "삭제하지 못했어요",
+                    description: e?.response?.data?.message || "잠시 후 다시 시도해주세요.",
+                    okText: "확인",
+                });
+            }
+        },
+        [dialogs, invalidate, items.length, location.pathname, location.search, openSys]
+    );
+
+    const onOutsideClick = React.useCallback(
+        (e: React.MouseEvent<HTMLDivElement>) => {
+            if (e.target === e.currentTarget) closeQuickModal();
+        },
+        [closeQuickModal]
+    );
+
+    const quickModalPortal = quickModalOpen
+        ? createPortal(
+            <ModalOverlay
+                role="presentation"
+                onMouseDown={onOutsideClick}
+            >
+                <ModalCard
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="최근 오답 기간 선택"
+                    onMouseDown={(e) => e.stopPropagation()}
+                >
+                    <ModalHead>
+                        <ModalTitle>최근 오답 범위 선택</ModalTitle>
+                        <ModalDesc>선택한 기간 내에서 틀린 문제만 모아 새로운 퀴즈를 생성해요.</ModalDesc>
+                    </ModalHead>
+
+                    <ModalBody>
+                        <OptionGrid>
+                            <OptionBtn
+                                type="button"
+                                $active={quickDays === 7}
+                                aria-pressed={quickDays === 7}
+                                onClick={() => setQuickDays(7)}
+                            >
+                                <OptionTop>
+                                    <OptionLabel>최근 7일</OptionLabel>
+                                    <CheckDot $on={quickDays === 7} aria-hidden />
+                                </OptionTop>
+                                <OptionSub>최근 1주일 동안의 오답만 모아서 재도전</OptionSub>
+                            </OptionBtn>
+
+                            <OptionBtn
+                                type="button"
+                                $active={quickDays === 30}
+                                aria-pressed={quickDays === 30}
+                                onClick={() => setQuickDays(30)}
+                            >
+                                <OptionTop>
+                                    <OptionLabel>최근 30일</OptionLabel>
+                                    <CheckDot $on={quickDays === 30} aria-hidden />
+                                </OptionTop>
+                                <OptionSub>최근 1달 동안의 오답만 모아서 재도전</OptionSub>
+                            </OptionBtn>
+                        </OptionGrid>
+                    </ModalBody>
+
+                    <ModalFoot>
+                        <ModalGhost
+                            type="button"
+                            onClick={closeQuickModal}
+                            disabled={quickRetryLoading}
+                        >
+                            취소
+                        </ModalGhost>
+
+                        <ModalPrimary
+                            ref={quickStartBtnRef}
+                            type="button"
+                            onClick={() => handleQuickRetry(quickDays)}
+                            disabled={quickRetryLoading}
+                        >
+                            {quickRetryLoading ? "생성 중..." : "시작하기"}
+                        </ModalPrimary>
+                    </ModalFoot>
+                </ModalCard>
+            </ModalOverlay>,
+            document.body
+        )
+        : null;
 
     return (
         <NarrowLeft style={{ padding: "8px 0 24px" }}>
@@ -2167,6 +2877,8 @@ export default function QuizTimelinePage() {
                                         <DonutWrap>
                                             <Donut value={it.correct} total={it.total} />
                                         </DonutWrap>
+
+                                        {/* SegGroup */}
                                         <SegGroup>
                                             <SegGhost
                                                 onClick={() =>
@@ -2177,9 +2889,59 @@ export default function QuizTimelinePage() {
                                             >
                                                 결과 보기
                                             </SegGhost>
-                                            <SegPrimary onClick={() => handleRetryAll(it.id)}>재도전</SegPrimary>
+                                            <SegPrimary onClick={() => handleRetryAll(it.sessionId ?? it.id)}>재도전</SegPrimary>
                                         </SegGroup>
                                     </ActionBar>
+
+                                    {/* ⋮ 메뉴: Row 우측 상단 */}
+                                    <RowMenuWrap
+                                        ref={
+                                            menuOpenId === it.id
+                                                ? (el) => {
+                                                    menuWrapRef.current = el;
+                                                }
+                                                : undefined
+                                        }
+                                    >
+                                        <MoreBtn
+                                            type="button"
+                                            onClick={() => setMenuOpenId((cur) => (cur === it.id ? null : it.id))}
+                                            aria-label="세션 더보기"
+                                            aria-haspopup="menu"
+                                            aria-expanded={menuOpenId === it.id}
+                                            disabled={!it.sessionId}
+                                            title={!it.sessionId ? "삭제할 수 없는 항목" : "더보기"}
+                                        >
+                                            <MoreIcon />
+                                        </MoreBtn>
+
+                                        {menuOpenId === it.id && (
+                                            <DropMenu role="menu" aria-label="세션 메뉴">
+                                                <MenuItemBtn
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setMenuOpenId(null);
+                                                        openRenameModal(it);
+                                                    }}
+                                                    disabled={!it.sessionId}
+                                                >
+                                                    퀴즈 세션 이름 수정
+                                                </MenuItemBtn>
+
+                                                <MenuItemBtn
+                                                    type="button"
+                                                    $danger
+                                                    onClick={() => {
+                                                        setMenuOpenId(null);
+                                                        openDeleteModal(it);
+                                                    }}
+                                                    disabled={!it.sessionId}
+                                                >
+                                                    퀴즈 세션 삭제
+                                                </MenuItemBtn>
+                                            </DropMenu>
+                                        )}
+                                    </RowMenuWrap>
                                 </Row>
                             ))}
                         </TimelinePanel>
@@ -2299,71 +3061,130 @@ export default function QuizTimelinePage() {
                     </BottomGrid>
                 </Reveal>
             )}
-            {quickModalOpen && (
-                <ModalOverlay
-                    role="presentation"
-                    onMouseDown={(e) => {
-                        // 오버레이 클릭(바깥) 닫기
-                        if (e.target === e.currentTarget) closeQuickModal();
-                    }}
-                >
-                    <ModalCard role="dialog" aria-modal="true" aria-label="최근 오답 기간 선택">
-                        <ModalHead>
-                            <ModalTitle>최근 오답 범위 선택</ModalTitle>
-                            <ModalDesc>선택한 기간 내에서 틀린 문제만 모아 새로운 퀴즈를 생성해요.</ModalDesc>
-                        </ModalHead>
+            {quickModalPortal}
+            {renameOpen &&
+                createPortal(
+                    <ModalOverlay
+                        role="presentation"
+                        onMouseDown={(e) => {
+                            if (e.target === e.currentTarget) closeRenameModal();
+                        }}
+                    >
+                        <ModalCard
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label="세션 이름 변경"
+                            onMouseDown={(e) => e.stopPropagation()}
+                        >
+                            <ModalHead>
+                                <ModalTitle>세션 이름 변경하기</ModalTitle>
+                                <ModalDesc>타임라인에 표시될 이름을 바꿔요.</ModalDesc>
+                            </ModalHead>
 
-                        <ModalBody>
-                            <OptionGrid>
-                                <OptionBtn
+                            <ModalBody>
+                                <Field>
+                                    <FieldLabel>세션 이름</FieldLabel>
+                                    <TextField
+                                        ref={renameInputRef}
+                                        value={renameValue}
+                                        placeholder="세션 이름을 입력하세요"
+                                        onChange={(e) => {
+                                            setRenameValue(e.target.value);
+                                            if (renameErr) setRenameErr(null);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            // IME 조합 중 Enter 방지
+                                            // @ts-ignore
+                                            if ((e.nativeEvent as any)?.isComposing) return;
+                                            if (e.key === "Enter") submitRename();
+                                        }}
+                                        disabled={renameSaving}
+                                    />
+                                    <HelperRow>
+                                        <HelperText>최대 60자까지 입력 가능 · 공백만 입력하면 저장되지 않아요</HelperText>
+                                        <CountText>{(renameValue ?? "").trim().length}/60</CountText>
+                                    </HelperRow>
+                                    {renameErr && <ErrorText>{renameErr}</ErrorText>}
+                                </Field>
+                            </ModalBody>
+
+                            <ModalFoot>
+                                <ModalGhost type="button" onClick={closeRenameModal} disabled={renameSaving}>
+                                    취소
+                                </ModalGhost>
+                                <ModalPrimary type="button" onClick={submitRename} disabled={renameSaving}>
+                                    {renameSaving ? "저장 중..." : "저장하기"}
+                                </ModalPrimary>
+                            </ModalFoot>
+                        </ModalCard>
+                    </ModalOverlay>,
+                    document.body
+                )}
+
+            {/* ===== Delete Modal Portal ===== */}
+            {deleteOpen &&
+                createPortal(
+                    <ModalOverlay
+                        role="presentation"
+                        onMouseDown={(e) => {
+                            if (e.target === e.currentTarget) closeDeleteModal();
+                        }}
+                    >
+                        <ModalCard
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label="세션 삭제"
+                            onMouseDown={(e) => e.stopPropagation()}
+                        >
+                            <ModalHead>
+                                <ModalTitle>세션 삭제하기</ModalTitle>
+                                <ModalDesc>삭제하면 타임라인/목록에서 숨겨져요. (오답노트는 삭제되지 않아요)</ModalDesc>
+                            </ModalHead>
+
+                            <ModalBody>
+                                <InfoBox>
+                                    <div className="title">{deleteTarget?.title ?? "-"}</div>
+                                    <div className="meta">{deleteTarget ? fmtDate(deleteTarget.date) : ""}</div>
+                                </InfoBox>
+
+                                <Field>
+                                    <FieldLabel>삭제 확인</FieldLabel>
+                                    <TextField
+                                        ref={deleteInputRef}
+                                        value={deleteTyped}
+                                        placeholder="삭제하려면 '삭제'를 입력하세요"
+                                        onChange={(e) => {
+                                            setDeleteTyped(e.target.value);
+                                            if (deleteErr) setDeleteErr(null);
+                                        }}
+                                        onKeyDown={(e) => {
+                                            // @ts-ignore
+                                            if ((e.nativeEvent as any)?.isComposing) return;
+                                            if (e.key === "Enter") submitDelete();
+                                        }}
+                                        disabled={deleteLoading}
+                                    />
+                                    <HelperText>실수 방지를 위해 확인 문구 입력이 필요해요.</HelperText>
+                                    {deleteErr && <ErrorText>{deleteErr}</ErrorText>}
+                                </Field>
+                            </ModalBody>
+
+                            <ModalFoot>
+                                <ModalGhost type="button" onClick={closeDeleteModal} disabled={deleteLoading}>
+                                    취소
+                                </ModalGhost>
+                                <ModalDanger
                                     type="button"
-                                    $active={quickDays === 7}
-                                    aria-pressed={quickDays === 7}
-                                    onClick={() => setQuickDays(7)}
+                                    onClick={submitDelete}
+                                    disabled={deleteLoading || deleteTyped.trim() !== "삭제"}
                                 >
-                                    <OptionTop>
-                                        <OptionLabel>최근 7일</OptionLabel>
-                                        <CheckDot $on={quickDays === 7} aria-hidden />
-                                    </OptionTop>
-                                    <OptionSub>최근 1주일 동안의 오답만 모아서 재도전</OptionSub>
-                                </OptionBtn>
-
-                                <OptionBtn
-                                    type="button"
-                                    $active={quickDays === 30}
-                                    aria-pressed={quickDays === 30}
-                                    onClick={() => setQuickDays(30)}
-                                >
-                                    <OptionTop>
-                                        <OptionLabel>최근 30일</OptionLabel>
-                                        <CheckDot $on={quickDays === 30} aria-hidden />
-                                    </OptionTop>
-                                    <OptionSub>최근 1달 동안의 오답만 모아서 재도전</OptionSub>
-                                </OptionBtn>
-                            </OptionGrid>
-                        </ModalBody>
-
-                        <ModalFoot>
-                            <ModalGhost
-                                type="button"
-                                onClick={closeQuickModal}
-                                disabled={quickRetryLoading}
-                            >
-                                취소
-                            </ModalGhost>
-
-                            <ModalPrimary
-                                ref={quickStartBtnRef}
-                                type="button"
-                                onClick={() => handleQuickRetry(quickDays)}
-                                disabled={quickRetryLoading}
-                            >
-                                {quickRetryLoading ? "생성 중..." : "시작하기"}
-                            </ModalPrimary>
-                        </ModalFoot>
-                    </ModalCard>
-                </ModalOverlay>
-            )}
+                                    {deleteLoading ? "삭제 중..." : "삭제"}
+                                </ModalDanger>
+                            </ModalFoot>
+                        </ModalCard>
+                    </ModalOverlay>,
+                    document.body
+                )}
             <SystemMessageModal open={sysOpen} message={sysMsg} onClose={closeSys} />
         </NarrowLeft>
     );
