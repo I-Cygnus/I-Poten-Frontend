@@ -1,5 +1,6 @@
 import React from "react";
 import styled, {keyframes} from "styled-components";
+import { useNavigate } from "react-router-dom";
 
 import shot1 from "../../assets/quiz/landing/shot-1.jpg";
 import shot2 from "../../assets/quiz/landing/shot-2.jpg";
@@ -21,15 +22,50 @@ const WAVE_PATH_BIG =
     "C1260,225 1340,165 1400,120";
 
 export default function QuizLandingPage() {
-    const stageRef = React.useRef<HTMLDivElement | null>(null);
+    const navigate = useNavigate();
+    const stageRef = React.useRef<HTMLElement | null>(null);
+
+    type JumpState = { targetIdx: number; targetP: number; until: number };
+
     const [active, setActive] = React.useState(0);
+
+    const [, setStageProgress] = React.useState(0);
+
+    const jumpRef = React.useRef<JumpState | null>(null);
+
+    const svhProbeRef = React.useRef<HTMLDivElement | null>(null);
+
+    const getStepVh = React.useCallback(() => {
+        const probe = svhProbeRef.current;
+        if (probe) {
+            const h = probe.getBoundingClientRect().height;
+            if (h > 0) return h;
+        }
+        return document.documentElement.clientHeight || window.innerHeight || 1;
+    }, []);
+
+    const calcFrameHPx = () => {
+        const h = window.innerHeight || 800;
+        return clamp(h - 300, 540, 600);
+    };
+
+    const [frameHPx, setFrameHPx] = React.useState<number>(() => calcFrameHPx());
+    const vpRef = React.useRef<{ w: number; h: number }>({
+        w: typeof window !== "undefined" ? window.innerWidth : 0,
+        h: typeof window !== "undefined" ? window.innerHeight : 0,
+    });
+
+    React.useEffect(() => {
+        const onResize = () => setFrameHPx(calcFrameHPx());
+        onResize();
+        window.addEventListener("resize", onResize);
+        return () => window.removeEventListener("resize", onResize);
+    }, []);
 
     const images = React.useMemo(() => {
         if (SLIDES.length === 4) return SLIDES;
         return new Array(4).fill(null);
     }, []);
-
-    type PreviewType = "CHOICE" | "OX" | "INITIAL";
 
     const PREVIEW: Record<PreviewType, { q: string; a: string; why: string; hint?: string; choices?: string[] }> = {
         CHOICE: {
@@ -72,15 +108,28 @@ export default function QuizLandingPage() {
 
         const onScroll = () => {
             if (!stageRef.current) return;
-
             cancelAnimationFrame(raf);
+
             raf = requestAnimationFrame(() => {
                 const el = stageRef.current!;
                 const rect = el.getBoundingClientRect();
-                const vh = window.innerHeight || 1;
 
-                const progress = (-rect.top) / vh;
-                const idx = clamp(Math.floor(progress + 0.15), 0, images.length - 1);
+                const vh = getStepVh();
+                const steps = Math.max(1, SLIDES.length - 1);
+                const raw = clamp((-rect.top) / (vh * steps), 0, 1);
+
+                setStageProgress(raw);
+
+                const j = jumpRef.current;
+                if (j) {
+                    setActive(j.targetIdx);
+                    if (Math.abs(raw - j.targetP) < 0.035 || performance.now() > j.until) {
+                        jumpRef.current = null;
+                    }
+                    return;
+                }
+
+                const idx = clamp(Math.round(raw * steps), 0, SLIDES.length - 1);
                 setActive(idx);
             });
         };
@@ -94,7 +143,7 @@ export default function QuizLandingPage() {
             window.removeEventListener("scroll", onScroll);
             window.removeEventListener("resize", onScroll);
         };
-    }, [images.length]);
+    }, []);
 
     const stepRef = React.useRef<HTMLElement | null>(null);
     const [stepProgress, setStepProgress] = React.useState(0);
@@ -222,27 +271,102 @@ export default function QuizLandingPage() {
         stepBoxRefs.current[idx] = el;
     };
 
+    const getStageTop = () => {
+        const el = stageRef.current;
+        if (!el) return 0;
+        return el.getBoundingClientRect().top + window.scrollY;
+    };
+
+    const preClickYRef = React.useRef(0);
+
+    const rememberPreClickY = () => {
+        preClickYRef.current = window.scrollY;
+    };
+
+    const prefersReducedMotion = React.useMemo(() => {
+        try {
+            return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        } catch {
+            return false;
+        }
+    }, []);
+
+    const scrollToSlide = React.useCallback(
+        (idx: number) => {
+            const el = stageRef.current;
+            if (!el) return;
+
+            const stageTop = el.getBoundingClientRect().top + window.scrollY;
+
+            const vh = getStepVh();
+            const steps = Math.max(1, SLIDES.length - 1);
+
+            const safeIdx = clamp(idx, 0, SLIDES.length - 1);
+            const target = stageTop + vh * safeIdx;
+
+            const minY = stageTop;
+            const maxY = stageTop + vh * steps;
+
+            window.scrollTo({
+                top: clamp(target, minY, maxY),
+                behavior: prefersReducedMotion ? "auto" : "smooth",
+            });
+        },
+        [prefersReducedMotion, getStepVh]
+    );
+
+    const beginJumpTo = (idx: number, keepY: number) => {
+        const steps = Math.max(1, SLIDES.length - 1);
+        const p = idx / steps;
+
+        setActive(idx);
+        setStageProgress(p);
+
+        jumpRef.current = {
+            targetIdx: idx,
+            targetP: p,
+            until: performance.now() + 3000,
+        };
+
+        requestAnimationFrame(() => {
+            window.scrollTo({ top: keepY, behavior: "auto" });
+            requestAnimationFrame(() => scrollToSlide(idx));
+        });
+    };
+
     return (
         <>
             <ViewportBg aria-hidden />
+            <SvhProbe ref={svhProbeRef} aria-hidden />
 
             {/* 스크롤로 이미지가 바뀌는 구간 */}
             <ScrollStage ref={stageRef} style={{ ["--steps" as any]: images.length }}>
                 <StickyFrame>
-                    <HeroBlock aria-label="포텐퀴즈 소개">
-                        <HeroSubTitle>
-                            기술 면접 대비를 퀴즈로 빠르게 점검하고, 오답으로 실력을 다듬어요
-                        </HeroSubTitle>
-
-                        <HeroTitle>
-                            <span className="highlight">포텐퀴즈</span>로 실전 감각을 올려보세요
-                        </HeroTitle>
+                    <HeroBlock className="hero" aria-label="포텐퀴즈 소개">
+                        <HeroKicker className="heroKicker">포텐퀴즈</HeroKicker>
+                        <HeroTitle className="heroTitle">매일 조금씩, 실력은 확실하게.</HeroTitle>
+                        <HeroCTA className="heroCta">
+                            <HeroStartButton
+                                type="button"
+                                onClick={() => {
+                                    try {
+                                        navigate("/poten-word/quiz/home");
+                                    } catch {
+                                        window.location.href = "http://localhost/poten-word/quiz/home";
+                                    }
+                                }}
+                            >
+                                포텐퀴즈 지금 시작하기
+                            </HeroStartButton>
+                        </HeroCTA>
                     </HeroBlock>
 
-                    <StageWrap>
+                    <StageWrap
+                        className="stageWrap"
+                        style={{ ["--frame-h" as any]: `${frameHPx}px` } as React.CSSProperties}
+                    >
                         <UnifiedFrame>
                             <UnifiedGlow aria-hidden />
-
                             <LeftInfo aria-live="polite">
                                 {SLIDES.map((s, i) => (
                                     <LeftInfoItem key={s.title} $active={i === active}>
@@ -352,60 +476,66 @@ export default function QuizLandingPage() {
                                 </PreviewFrame>
                             </RightPane>
                         </UnifiedFrame>
-                    </StageWrap>
+                        <PillTabs role="tablist" aria-label="기능 탭">
+                            {SLIDES.map((s, i) => (
+                                <PillTab
+                                    key={s.title}
+                                    type="button"
+                                    $active={i === active}
 
-                    <Dots aria-label="퀴즈 랜딩 프리뷰 인디케이터">
-                        {images.map((_, i) => (
-                            <Dot key={i} $active={i === active} />
-                        ))}
-                    </Dots>
+                                    onPointerDownCapture={() => {
+                                        preClickYRef.current = window.scrollY;
+                                    }}
+
+                                    onMouseDown={(e) => {
+                                        e.preventDefault();
+                                    }}
+
+                                    onKeyDown={() => {
+                                        preClickYRef.current = window.scrollY;
+                                    }}
+
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+
+                                        const keepY = preClickYRef.current || window.scrollY;
+                                        beginJumpTo(i, keepY);
+                                    }}
+                                >
+                                    {s.title}
+                                </PillTab>
+                            ))}
+                        </PillTabs>
+                    </StageWrap>
                 </StickyFrame>
             </ScrollStage>
 
             <Inner>
-                <CTASection aria-label="빠른 시작">
-                    <CTABox>
-                        <CTATitle>바로 시작해 볼까요</CTATitle>
-                        <CTADesc>
-                            오늘 추천 문제로 감을 잡고, 오답으로 약점을 빠르게 보완해요.
-                        </CTADesc>
+                <Reveal delay={0}>
+                    <PinStage aria-label="학습 루틴" ref={stepRef as any}>
+                        <PinSticky>
+                            <PinInner>
+                                <SectionHeadBig>
+                                    <SectionTitleBig>풀고 · 정리하고 · 성장하세요</SectionTitleBig>
+                                    <SectionDescBig>포텐퀴즈는 “퀴즈 앱”이 아니라, 학습 루틴을 만들어주는 시스템이에요.</SectionDescBig>
+                                </SectionHeadBig>
 
-                        <CTAButtons>
-                            <CTAButtonPrimary type="button">오늘의 퀴즈 시작</CTAButtonPrimary>
-                            <CTAButtonGhost type="button">직무별 퀴즈 만들기</CTAButtonGhost>
-                        </CTAButtons>
+                                <FlowWrapBig>
+                                    {/* 라인(웨이브) */}
+                                    <FlowLineBig aria-hidden>
+                                        <svg ref={waveSvgRef} viewBox="0 70 1400 350" preserveAspectRatio="none">
+                                            <path ref={wavePathRef} className="ghost" d={WAVE_PATH_BIG} pathLength={1000} />
+                                            <path
+                                                className="progress"
+                                                d={WAVE_PATH_BIG}
+                                                pathLength={1000}
+                                                style={{ ["--p" as any]: stepProgress }}
+                                            />
+                                        </svg>
+                                    </FlowLineBig>
 
-                        <CTAFootNote>
-                            로그인하면 기록이 타임라인/오답노트로 자동 저장돼요.
-                        </CTAFootNote>
-                    </CTABox>
-                </CTASection>
-
-                <PinStage aria-label="학습 루틴" ref={stepRef as any}>
-                    <PinSticky>
-                        <PinInner>
-                            <SectionHeadBig>
-                                <SectionTitleBig>풀고 · 정리하고 · 성장하세요</SectionTitleBig>
-                                <SectionDescBig>포텐퀴즈는 “퀴즈 앱”이 아니라, 학습 루틴을 만들어주는 시스템이에요.</SectionDescBig>
-                            </SectionHeadBig>
-
-                            <FlowWrapBig>
-                                <FlowLineBig aria-hidden>
-                                    <svg
-                                        ref={waveSvgRef}
-                                        viewBox="0 70 1400 350"
-                                        preserveAspectRatio="none"
-                                    >
-                                        <path ref={wavePathRef} className="ghost" d={WAVE_PATH_BIG} pathLength={1000} />
-                                        <path
-                                            className="progress"
-                                            d={WAVE_PATH_BIG}
-                                            pathLength={1000}
-                                            style={{ ["--p" as any]: stepProgress }}
-                                        />
-                                    </svg>
-
-                                    <FlowIconsBig>
+                                    <FlowIconsBig aria-hidden>
                                         <WaveIconAnchor style={{ left: `${waveIconPts[0]?.x ?? 0}px`, top: `${waveIconPts[0]?.y ?? 0}px` }}>
                                             <StepIconCurve $active={stepProgress >= 0.05} $tone="primary">
                                                 <IconChoice />
@@ -424,103 +554,110 @@ export default function QuizLandingPage() {
                                             </StepIconCurve>
                                         </WaveIconAnchor>
                                     </FlowIconsBig>
-                                </FlowLineBig>
 
-                                <FlowGridBig>
-                                    {/* STEP 1 */}
-                                    <FlowStepBig ref={setStepBoxRef(0)} $active={is1}>
-                                        <StepIconBigMobile $active={stepProgress >= 0.05} $tone="primary">
-                                            <IconChoice />
-                                        </StepIconBigMobile>
+                                    {/* 카드 그리드 */}
+                                    <FlowGridBig>
+                                        {/* STEP 1 */}
+                                        <FlowStepBig ref={setStepBoxRef(0)} $active={is1}>
+                                            <StepIconBigMobile $active={stepProgress >= 0.05} $tone="primary">
+                                                <IconChoice />
+                                            </StepIconBigMobile>
 
-                                        <StepCardBig $active={is1}>
-                                            <StepBadgeBig>STEP 1</StepBadgeBig>
-                                            <StepTitleBig2>풀어보기</StepTitleBig2>
-                                            <StepDescBig2>
-                                                오늘의 추천 또는 직무별 설정으로 지금 필요한 문제부터 시작해요.
-                                            </StepDescBig2>
-                                        </StepCardBig>
-                                    </FlowStepBig>
+                                            <StepCardBig $active={is1}>
+                                                <StepBadgeBig>STEP 1</StepBadgeBig>
+                                                <StepTitleBig2>풀어보기</StepTitleBig2>
+                                                <StepDescBig2>
+                                                    오늘의 추천 또는 직무별 설정으로 지금 필요한 문제부터 시작해요.
+                                                </StepDescBig2>
+                                            </StepCardBig>
+                                        </FlowStepBig>
 
-                                    {/* STEP 2 */}
-                                    <FlowStepBig ref={setStepBoxRef(1)} $active={is2}>
-                                        <StepIconBigMobile $active={stepProgress >= 0.42} $tone="mint">
-                                            <IconReviewStatus />
-                                        </StepIconBigMobile>
+                                        {/* STEP 2 */}
+                                        <FlowStepBig ref={setStepBoxRef(1)} $active={is2}>
+                                            <StepIconBigMobile $active={stepProgress >= 0.42} $tone="mint">
+                                                <IconReviewStatus />
+                                            </StepIconBigMobile>
 
-                                        <StepCardBig $active={is2}>
-                                            <StepBadgeBig>STEP 2</StepBadgeBig>
-                                            <StepTitleBig2>정리하기</StepTitleBig2>
-                                            <StepDescBig2>
-                                                틀린 문제만 모아 다시 풀고, 해결 완료/진행 중으로 약점을 관리해요.
-                                            </StepDescBig2>
-                                        </StepCardBig>
-                                    </FlowStepBig>
+                                            <StepCardBig $active={is2}>
+                                                <StepBadgeBig>STEP 2</StepBadgeBig>
+                                                <StepTitleBig2>정리하기</StepTitleBig2>
+                                                <StepDescBig2>
+                                                    틀린 문제만 모아 다시 풀고, 해결 완료/진행 중으로 약점을 관리해요.
+                                                </StepDescBig2>
+                                            </StepCardBig>
+                                        </FlowStepBig>
 
-                                    {/* STEP 3 */}
-                                    <FlowStepBig ref={setStepBoxRef(2)} $active={is3}>
-                                        <StepIconBigMobile $active={stepProgress >= 0.74} $tone="violet">
-                                            <IconStats />
-                                        </StepIconBigMobile>
+                                        {/* STEP 3 */}
+                                        <FlowStepBig ref={setStepBoxRef(2)} $active={is3}>
+                                            <StepIconBigMobile $active={stepProgress >= 0.74} $tone="violet">
+                                                <IconStats />
+                                            </StepIconBigMobile>
 
-                                        <StepCardBig $active={is3}>
-                                            <StepBadgeBig>STEP 3</StepBadgeBig>
-                                            <StepTitleBig2>성장하기</StepTitleBig2>
-                                            <StepDescBig2>
-                                                학습 기록을 타임라인으로 확인하고, 꾸준함을 지표로 관리해요.
-                                            </StepDescBig2>
-                                        </StepCardBig>
-                                    </FlowStepBig>
-                                </FlowGridBig>
-                            </FlowWrapBig>
-                        </PinInner>
-                    </PinSticky>
-                </PinStage>
+                                            <StepCardBig $active={is3}>
+                                                <StepBadgeBig>STEP 3</StepBadgeBig>
+                                                <StepTitleBig2>성장하기</StepTitleBig2>
+                                                <StepDescBig2>
+                                                    학습 기록을 타임라인으로 확인하고, 꾸준함을 지표로 관리해요.
+                                                </StepDescBig2>
+                                            </StepCardBig>
+                                        </FlowStepBig>
+                                    </FlowGridBig>
+                                </FlowWrapBig>
+                            </PinInner>
+                        </PinSticky>
+                    </PinStage>
+                </Reveal>
 
-                <Section aria-label="문제 유형 미리보기">
-                    <SectionHead>
-                        <SectionTitle>문제 유형 미리보기</SectionTitle>
-                        <SectionDesc>객관식 · OX · 초성 퀴즈를 실제 플레이 UI 느낌으로 체감해보세요.</SectionDesc>
-                    </SectionHead>
+                <Reveal delay={60}>
+                    <Section aria-label="문제 유형 미리보기">
+                        <SectionHead>
+                            <SectionTitle>문제 유형 미리보기</SectionTitle>
+                            <SectionDesc>객관식 · OX · 초성 퀴즈를 실제 플레이 UI 느낌으로 체감해보세요.</SectionDesc>
+                        </SectionHead>
 
-                    <TypePreviewShell>
-                        <QuizTypePreview />
-                    </TypePreviewShell>
-                </Section>
+                        <TypePreviewShell>
+                            <QuizTypePreview />
+                        </TypePreviewShell>
+                    </Section>
+                </Reveal>
 
-                <Section aria-label="자주 묻는 질문">
-                    <SectionHead>
-                        <SectionTitle>자주 묻는 질문</SectionTitle>
-                        <SectionDesc>처음 쓰는 분들이 가장 많이 물어보는 것만 모았어요.</SectionDesc>
-                    </SectionHead>
+                <Reveal delay={80}>
+                    <Section aria-label="자주 묻는 질문">
+                        <SectionHead>
+                            <SectionTitle>자주 묻는 질문</SectionTitle>
+                            <SectionDesc>처음 쓰는 분들이 가장 많이 물어보는 것만 모았어요.</SectionDesc>
+                        </SectionHead>
 
-                    <FAQWrap>
-                        <FAQList role="list">
-                            {FAQS.map((f, i) => {
-                                const opened = openFaq === i;
-                                return (
-                                    <FAQRow key={f.q}>
-                                        <FAQButton
-                                            type="button"
-                                            onClick={() => setOpenFaq(opened ? -1 : i)}
-                                            aria-expanded={opened}
-                                        >
-                                            <FAQQuestion>{f.q}</FAQQuestion>
-                                            <FAQChevron $open={opened} aria-hidden />
-                                        </FAQButton>
+                        <FAQWrap>
+                            <FAQList role="list">
+                                {FAQS.map((f, i) => {
+                                    const opened = openFaq === i;
 
-                                        {/* Inner 래퍼 추가 */}
-                                        <FAQAnswer $open={opened}>
-                                            <FAQAnswerInner $open={opened}>
-                                                <p>{f.a}</p>
-                                            </FAQAnswerInner>
-                                        </FAQAnswer>
-                                    </FAQRow>
-                                );
-                            })}
-                        </FAQList>
-                    </FAQWrap>
-                </Section>
+                                    return (
+                                        <Reveal key={f.q} delay={i * 60}>
+                                            <FAQRow>
+                                                <FAQButton
+                                                    type="button"
+                                                    onClick={() => setOpenFaq(opened ? -1 : i)}
+                                                    aria-expanded={opened}
+                                                >
+                                                    <FAQQuestion>{f.q}</FAQQuestion>
+                                                    <FAQChevron $open={opened} aria-hidden />
+                                                </FAQButton>
+
+                                                <FAQAnswer $open={opened}>
+                                                    <FAQAnswerInner $open={opened}>
+                                                        <p>{f.a}</p>
+                                                    </FAQAnswerInner>
+                                                </FAQAnswer>
+                                            </FAQRow>
+                                        </Reveal>
+                                    );
+                                })}
+                            </FAQList>
+                        </FAQWrap>
+                    </Section>
+                </Reveal>
             </Inner>
         </>
     );
@@ -568,22 +705,55 @@ const ViewportBg = styled.div`
 const ScrollStage = styled.section`
     position: relative;
     z-index: 1;
-    height: calc(var(--steps, 4) * 100vh);
+
+    overflow-anchor: none;
+
+    height: calc(var(--steps, 4) * 100svh);
+    @supports not (height: 100svh) {
+        height: calc(var(--steps, 4) * 100vh);
+    }
+
     padding-top: 110px;
+
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
 `;
+
 
 /** 스크롤하는 동안 프레임은 고정 */
 const StickyFrame = styled.div`
+    --side-pad: 12px;
+    --hero-shift-y: 20px;
+
     position: sticky;
-    top: calc(var(--poten-header-h, 0px) + 18px);
-    height: calc(100vh - (var(--poten-header-h, 0px) + 24px));
-    display: grid;
-    place-items: center;
-    gap: 18px;
+    top: calc(var(--poten-header-h, 0px) + 12px);
+
+    z-index: 10;
+    isolation: isolate;
+
+    height: calc(100svh - (var(--poten-header-h, 0px) + 24px));
+    @supports not (height: 100svh) {
+        height: calc(100vh - (var(--poten-header-h, 0px) + 24px));
+    }
 
     width: 100%;
-    padding: 0 8px;
+    padding: 0 var(--side-pad);
+
+    display: grid;
+    grid-template-rows: auto auto;
+    justify-items: center;
+    align-content: start;
+    gap: 16px;
+    overflow: visible;
+
+    .hero { position: relative; z-index: 2; width: 100%; }
+    .stageWrap { position: relative; z-index: 5; width: 100%; }
+
+    @media (max-width: 720px) {
+        --hero-shift-y: 10px;
+    }
 `;
+
 
 /** 스샷처럼 큰 유리 프레임 */
 const Frame = styled.div`
@@ -637,24 +807,33 @@ const FrameGlow = styled.div`
 
 /** LeftInfo + Preview를 한 덩어리로 감싸는 컨테이너 */
 const UnifiedFrame = styled.div`
-    width: min(calc(var(--frame-h) * 2), var(--frame-w));
-    margin-inline: auto;
-    height: var(--frame-h);
+    --left-w: clamp(240px, 18vw, 300px);
 
     position: relative;
+    z-index: 1;
+
+    width: min(var(--frame-w), 100%);
+    margin-inline: auto;
+
+    height: var(--frame-h);
+    min-height: var(--frame-h);
+    max-height: var(--frame-h);
+
     overflow: hidden;
     border-radius: 44px;
 
     display: grid;
-    grid-template-columns: clamp(240px, 18vw, 300px) minmax(0, 1fr);
+    grid-template-columns: var(--left-w) minmax(0, 1fr);
 
     background: rgba(255, 255, 255, 0.22);
     border: 1px solid rgba(255, 255, 255, 0.6);
     box-shadow: 0 18px 70px rgba(15, 23, 42, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.65);
 
-    @media (max-width: 1080px) {
+    @media (max-width: 720px) {
         height: auto;
+        min-height: auto;
+        max-height: none;
         width: 100%;
         grid-template-columns: 1fr;
         border-radius: 28px;
@@ -689,13 +868,8 @@ const UnifiedLayer = styled.div`
 const RightPane = styled.div`
     position: relative;
     z-index: 1;
-
-    padding: 0;
     min-width: 0;
-
     height: 100%;
-    min-height: 0;
-
     display: flex;
     align-items: stretch;
 `;
@@ -706,7 +880,6 @@ const PreviewFrame = styled.div`
     width: 100%;
     height: 100%;
     min-height: 0;
-
     position: relative;
     overflow: hidden;
 
@@ -716,8 +889,8 @@ const PreviewFrame = styled.div`
     background: transparent;
     border: none;
     box-shadow: none;
-
-    @media (max-width: 1080px) {
+    
+    @media (max-width: 720px) {
         height: auto;
         aspect-ratio: 16 / 9;
     }
@@ -726,55 +899,137 @@ const PreviewFrame = styled.div`
 /** 이미지가 들어가는 스크린 */
 const Screen = styled.div`
     position: relative;
+    isolation: isolate;
     width: 100%;
     height: 100%;
     border-radius: inherit;
     overflow: hidden;
-    background: transparent;
 `;
 
 /** 각 이미지(페이드 전환) */
 const Shot = styled.div<{ $active: boolean }>`
     position: absolute;
     inset: 0;
+    z-index: ${({ $active }) => ($active ? 2 : 1)};
     opacity: ${({ $active }) => ($active ? 1 : 0)};
     transform: ${({ $active }) => ($active ? "translateY(0)" : "translateY(10px)")};
     transition: opacity 320ms ease, transform 420ms ease;
     will-change: opacity, transform;
+    pointer-events: ${({ $active }) => ($active ? "auto" : "none")};
 
-    img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        display: block;
-        user-select: none;
-    }
+    img { width: 100%; height: 100%; object-fit: cover; display: block; }
 `;
 
 /** 인디케이터 */
-const Dots = styled.div`
+const PillTab = styled.button<{ $active: boolean }>`
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid ${({ $active }) =>
+    $active ? "rgba(17,24,39,0.85)" : "rgba(255, 255, 255, 0.82)"};
+  background: ${({ $active }) =>
+    $active ? "rgba(17, 24, 39, 0.92)" : "rgba(255, 255, 255, 0.62)"};
+  color: ${({ $active }) =>
+    $active ? "rgba(255,255,255,0.98)" : "rgba(17, 24, 39, 0.92)"};
+  font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", system-ui, 
+    -apple-system, "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-size: 13.5px;
+  line-height: 1;
+  font-weight: 860;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 140ms cubic-bezier(0.22, 1, 0.36, 1), 
+    background 180ms ease, 
+    box-shadow 180ms ease, 
+    border-color 180ms ease, 
+    filter 180ms ease;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -30%;
+    pointer-events: none;
+    opacity: ${({ $active }) => ($active ? 0.18 : 0.12)};
+    background: radial-gradient(
+      220px 120px at 30% 20%,
+      rgba(255,255,255,0.75),
+      rgba(255,255,255,0) 60%
+    );
+    transition: opacity 180ms ease;
+  }
+
+  &:hover {
+    box-shadow: ${({ $active }) =>
+    $active
+        ? "0 10px 26px rgba(17,24,39,0.16)"
+        : "0 14px 34px rgba(15, 23, 42, 0.10)"};
+    filter: brightness(1.02);
+  }
+
+  &:active {
+    transform: translateY(1px) scale(0.985);
+    box-shadow: ${({ $active }) =>
+    $active
+        ? "0 6px 18px rgba(17,24,39,0.14)"
+        : "0 8px 20px rgba(15, 23, 42, 0.08)"};
+    filter: brightness(0.99);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 5px rgba(58, 131, 243, 0.14), 
+      0 14px 34px rgba(15, 23, 42, 0.10);
+  }
+
+  @media (max-width: 720px) {
+    height: 32px;
+    padding: 0 12px;
+    font-size: 12.75px;
+    letter-spacing: -0.045em;
+  }
+`;
+
+/** 인디케이터 */
+const PillTabs = styled.div`
+    position: relative;
+    z-index: 9999;
+    pointer-events: auto;
+    transform: translateZ(0);
+
     display: flex;
-    gap: 10px;
-    padding: 10px 12px;
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+
+    padding: 7px 8px;
     border-radius: 999px;
+
     background: rgba(255, 255, 255, 0.28);
     border: 1px solid rgba(255, 255, 255, 0.55);
     box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
-`;
+    backdrop-filter: blur(10px);
 
-const Dot = styled.div<{ $active: boolean }>`
-    width: ${({ $active }) => ($active ? "24px" : "10px")};
-    height: 10px;
-    border-radius: 999px;
-    background: ${({ $active }) =>
-    $active ? "rgba(15,23,42,0.72)" : "rgba(15,23,42,0.22)"};
-    transition: width 220ms ease, background 220ms ease;
+    max-width: min(920px, 100%);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
 `;
 
 /** 랜딩 본문(아래 섹션) */
 const Inner = styled.main`
     position: relative;
-    z-index: 1;
 
     width: min(1120px, 100%);
     margin: 0 auto;
@@ -788,24 +1043,39 @@ const Inner = styled.main`
 
 const StageWrap = styled.div`
     position: relative;
-
+    z-index: 2;
+    isolation: isolate;
     width: 100%;
     margin: 0 auto;
 
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
 
-    --frame-w: min(1920px, calc(100vw - 24px)); /* 1680px / -48px -> 1920px / -24px */
-    --frame-h: clamp(540px, calc(100vh - 300px), 600px);
+    --frame-h: clamp(540px, calc(100svh - 300px), 600px);
+    @supports not (height: 100svh) {
+        --frame-h: clamp(540px, calc(100vh - 300px), 600px);
+    }
 
-    padding-top: 110px;
-    gap: 22px;
+    --frame-w: min(
+            calc(var(--frame-h) * 2),
+            2240px,
+            calc(100vw - 24px)
+    );
 
     @media (max-width: 1080px) {
-        --frame-w: min(1120px, calc(100vw - 20px)); /* 980px -> 1120px (태블릿에서도 좀 더 넓게) */
-        --frame-h: clamp(520px, calc(100vh - 240px), 640px);
-        padding-top: 92px;
+        --frame-h: clamp(520px, calc(100svh - 240px), 640px);
+        @supports not (height: 100svh) {
+            --frame-h: clamp(520px, calc(100vh - 240px), 640px);
+        }
+
+        --frame-w: min(
+                calc(var(--frame-h) * 2),
+                1120px,
+                calc(100% - 20px)
+        );
     }
 `;
 
@@ -827,7 +1097,7 @@ const LeftInfo = styled.aside`
     display: grid;
     align-items: start;
 
-    @media (max-width: 1080px) {
+    @media (max-width: 720px) {
         height: auto;
         border-right: none;
         border-bottom: 1px solid rgba(255, 255, 255, 0.65);
@@ -850,7 +1120,7 @@ const LeftInfoItem = styled.div<{ $active: boolean }>`
         font-weight: 700;
         letter-spacing: -0.06em;
         line-height: 1.12;
-        color: rgba(17, 24, 39, 0.96); /* #111827 느낌 */
+        color: rgba(17, 24, 39, 0.96);
     }
 
     > p {
@@ -859,15 +1129,19 @@ const LeftInfoItem = styled.div<{ $active: boolean }>`
         font-weight: 500;
         line-height: 1.78;
         letter-spacing: -0.02em;
-        color: rgba(55, 65, 81, 0.72); /* #374151 느낌 */
+        color: rgba(55, 65, 81, 0.72);
         max-width: 32ch;
     }
 
-    @media (max-width: 1080px) {
+    @media (max-width: 720px) {
         position: relative;
+        inset: auto;
+
+        display: ${({ $active }) => ($active ? "block" : "none")};
         opacity: 1;
         transform: none;
         transition: none;
+
         padding: 22px 18px;
 
         > p {
@@ -1155,6 +1429,11 @@ function IconInsights() {
     );
 }
 
+const fadeUpHero = keyframes`
+  0% { opacity: 0; transform: translateY(18px); }
+  100% { opacity: 1; transform: translateY(0); }
+`;
+
 const fadeUp = keyframes`
     0% { opacity: 0; transform: translateY(20px) scale(0.98); }
     100% { opacity: 1; transform: translateY(0px) scale(1); }
@@ -1167,60 +1446,115 @@ const waveDrift = keyframes`
 `;
 
 const HeroBlock = styled.div`
-    position: absolute;
-    left: 50%;
-    top: 16px;
-    transform: translateX(-50%);
-    width: min(1100px, calc(100vw - 48px));
     text-align: center;
-    z-index: 3;
+
+    padding-top: var(--hero-shift-y);
+
+    margin-bottom: 14px;
     pointer-events: none;
 
-    @media (max-width: 1080px) {
-        top: 8px;
-        width: min(1100px, calc(100vw - 28px));
+    @media (max-width: 640px) {
+        text-align: left;
+        width: 100%;
     }
 `;
 
-const HeroSubTitle = styled.div`
-    font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
-    font-size: 22px;
+const HeroKicker = styled.h1`
+    margin: 0 0 6px;
+    font-size: clamp(44px, 6vw, 68px);
     font-weight: 700;
-    color: #111827;
-    margin-bottom: 5px;
+    color: #0f172a;
     letter-spacing: -0.02em;
 
     opacity: 0;
-    animation: ${fadeUp} 0.5s ease forwards;
-    animation-delay: 0.05s;
-
-    @media (max-width: 1080px) {
-        font-size: 18px;
-    }
+    animation: ${fadeUpHero} 0.55s ease forwards;
+    animation-delay: 0.02s;
 `;
 
-const HeroTitle = styled.div`
-    font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
+const HeroTitle = styled.h2`
+    margin: 0 0 8px;
     font-size: 36px;
     font-weight: 700;
-    color: #111827;
-    text-align: center;
+    color: #0f172a;
     letter-spacing: -0.02em;
-    word-break: keep-all;
 
-    .highlight {
-        background: linear-gradient(90deg, #3a83f3, #11b884);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
+    opacity: 0;
+    animation: ${fadeUpHero} 0.55s ease forwards;
+    animation-delay: 0.12s;
+
+    .strong {
         font-weight: 800;
     }
 
+    @media (max-width: 640px) {
+        font-size: 26px;
+    }
+`;
+
+const HeroCTA = styled.div`
+    margin-top: calc(18px + (var(--hero-shift-y) * 0.55));
+
+    display: flex;
+    justify-content: center;
+
+    pointer-events: auto;
+
     opacity: 0;
     animation: ${fadeUp} 0.55s ease forwards;
-    animation-delay: 0.18s;
+    animation-delay: 0.28s;
 
     @media (max-width: 1080px) {
-        font-size: 28px;
+        margin-top: calc(14px + (var(--hero-shift-y) * 0.45));
+    }
+`;
+
+const HeroStartButton = styled.button`
+    pointer-events: auto;
+    height: 60px;            
+    padding: 0 24px;         
+    min-width: 320px;
+    border-radius: 999px;
+    border: none;
+
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+
+    font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1;
+
+    color: rgba(255, 255, 255, 0.98);
+    background: linear-gradient(90deg, #3a83f3, #11b884);
+    box-shadow: 0 22px 70px rgba(58, 131, 243, 0.22);
+
+    transition: transform 120ms ease, box-shadow 180ms ease, filter 180ms ease;
+
+    &:hover {
+        box-shadow: 0 28px 86px rgba(17, 184, 132, 0.22);
+        filter: brightness(1.03);
+    }
+
+    &:active {
+        transform: translateY(1px) scale(0.99);
+        filter: brightness(0.99);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow:
+                0 0 0 6px rgba(58, 131, 243, 0.16),
+                0 28px 86px rgba(17, 184, 132, 0.22);
+    }
+
+    @media (max-width: 720px) {
+        height: 52px;
+        padding: 0 18px;
+        font-size: 15px;
+        min-width: 0;
+        width: min(100%, 360px);
     }
 `;
 
@@ -1265,265 +1599,6 @@ const GlassCard = styled.div`
     border: 1px solid rgba(255, 255, 255, 0.75);
     box-shadow: 0 18px 60px rgba(15, 23, 42, 0.10);
     backdrop-filter: blur(10px);
-`;
-
-const CTASection = styled.section`
-    margin-top: 0;
-    margin-bottom: 88px;
-
-    @media (max-width: 720px) {
-        margin-bottom: 64px;
-    }
-`;
-
-const CTABox = styled(GlassCard)`
-    padding: 28px;
-    text-align: center;
-
-    @media (max-width: 720px) {
-        padding: 20px;
-        border-radius: 22px;
-    }
-`;
-
-const CTATitle = styled.h2`
-    margin: 0;
-    font-size: 28px;
-    font-weight: 900;
-    letter-spacing: -0.03em;
-    color: rgba(17, 24, 39, 0.95);
-`;
-
-const CTADesc = styled.p`
-    margin: 10px auto 0;
-    max-width: 66ch;
-    font-size: 15px;
-    line-height: 1.75;
-    font-weight: 560;
-    color: rgba(55, 65, 81, 0.72);
-`;
-
-const CTAButtons = styled.div`
-    margin-top: 18px;
-    display: flex;
-    gap: 12px;
-    justify-content: center;
-    flex-wrap: wrap;
-`;
-
-const CTAButtonBase = styled.button`
-    height: 46px;
-    padding: 0 16px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.75);
-    font-weight: 800;
-    letter-spacing: -0.02em;
-    cursor: pointer;
-    transition: transform 120ms ease, box-shadow 180ms ease, background 180ms ease;
-
-    &:active {
-        transform: translateY(1px);
-    }
-`;
-
-const CTAButtonPrimary = styled(CTAButtonBase)`
-    color: white;
-    border: none;
-    background: linear-gradient(90deg, #3a83f3, #11b884);
-    box-shadow: 0 16px 40px rgba(17, 184, 132, 0.18);
-
-    &:hover {
-        box-shadow: 0 18px 46px rgba(58, 131, 243, 0.18);
-    }
-`;
-
-const CTAButtonGhost = styled(CTAButtonBase)`
-    background: rgba(255, 255, 255, 0.5);
-    color: rgba(17, 24, 39, 0.92);
-
-    &:hover {
-        background: rgba(255, 255, 255, 0.66);
-        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
-    }
-`;
-
-const CTAFootNote = styled.div`
-    margin-top: 12px;
-    font-size: 12.5px;
-    font-weight: 560;
-    color: rgba(55, 65, 81, 0.65);
-`;
-
-const CardGrid = styled.div`
-    margin-top: 18px;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
-
-    @media (max-width: 900px) {
-        grid-template-columns: 1fr;
-    }
-`;
-
-const StepCard = styled(GlassCard)`
-    padding: 18px 18px 16px;
-`;
-
-const StepBadge = styled.div`
-    display: inline-flex;
-    padding: 6px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 850;
-    letter-spacing: 0.02em;
-    color: rgba(17, 24, 39, 0.78);
-    background: rgba(255, 255, 255, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.75);
-`;
-
-const StepTitle = styled.h3`
-    margin: 12px 0 0;
-    font-size: 18px;
-    font-weight: 900;
-    letter-spacing: -0.02em;
-    color: rgba(17, 24, 39, 0.95);
-`;
-
-const StepDesc = styled.p`
-    margin: 8px 0 0;
-    font-size: 14px;
-    line-height: 1.72;
-    font-weight: 560;
-    color: rgba(55, 65, 81, 0.72);
-`;
-
-const PreviewCard = styled(GlassCard)`
-    padding: 22px;
-
-    @media (max-width: 720px) {
-        padding: 18px;
-        border-radius: 22px;
-    }
-`;
-
-const TabRow = styled.div`
-    display: flex;
-    gap: 8px;
-    justify-content: center;
-    flex-wrap: wrap;
-`;
-
-const TabButton = styled.button<{ $active: boolean }>`
-    height: 38px;
-    padding: 0 14px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    background: ${({ $active }) =>
-    $active ? "rgba(17, 24, 39, 0.86)" : "rgba(255, 255, 255, 0.5)"};
-    color: ${({ $active }) =>
-    $active ? "rgba(255,255,255,0.96)" : "rgba(17, 24, 39, 0.88)"};
-    font-weight: 850;
-    letter-spacing: -0.02em;
-    cursor: pointer;
-    transition: background 180ms ease, transform 120ms ease;
-
-    &:active {
-        transform: translateY(1px);
-    }
-`;
-
-const PreviewBody = styled.div`
-    margin-top: 18px;
-    padding: 24px;
-    border-radius: 22px;
-    background: rgba(255, 255, 255, 0.42);
-    border: 1px solid rgba(255, 255, 255, 0.70);
-
-    @media (max-width: 720px) {
-        padding: 18px;
-    }
-`;
-
-const PreviewQ = styled.div`
-    font-size: 17px;
-    font-weight: 820;
-    letter-spacing: -0.02em;
-    line-height: 1.6;
-    color: rgba(17, 24, 39, 0.95);
-
-    .qLabel {
-        display: inline-block;
-        margin-right: 8px;
-        font-weight: 900;
-        color: rgba(58, 131, 243, 0.95);
-    }
-`;
-
-const ChoiceGrid = styled.div`
-    margin-top: 12px;
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 10px;
-
-    @media (max-width: 560px) {
-        grid-template-columns: 1fr;
-    }
-`;
-
-const ChoiceItem = styled.div`
-    padding: 12px 12px;
-    border-radius: 16px;
-    background: rgba(255, 255, 255, 0.56);
-    border: 1px solid rgba(255, 255, 255, 0.75);
-    color: rgba(17, 24, 39, 0.9);
-    font-weight: 720;
-`;
-
-const PreviewHint = styled.div`
-    margin-top: 12px;
-    padding: 12px 12px;
-    border-radius: 16px;
-    background: rgba(58, 131, 243, 0.10);
-    border: 1px solid rgba(58, 131, 243, 0.18);
-    color: rgba(17, 24, 39, 0.86);
-    font-weight: 700;
-`;
-
-const PreviewActions = styled.div`
-    margin-top: 14px;
-    display: grid;
-    gap: 10px;
-`;
-
-const MiniButton = styled.button`
-    height: 36px;
-    width: fit-content;
-    padding: 0 12px;
-    border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.8);
-    background: rgba(255, 255, 255, 0.6);
-    color: rgba(17, 24, 39, 0.9);
-    font-weight: 850;
-    letter-spacing: -0.02em;
-    cursor: pointer;
-`;
-
-const PreviewAnswer = styled.div<{ $show: boolean }>`
-    display: ${({ $show }) => ($show ? "block" : "none")};
-    padding: 12px 12px;
-    border-radius: 16px;
-    background: rgba(17, 24, 39, 0.06);
-    border: 1px solid rgba(17, 24, 39, 0.12);
-    color: rgba(17, 24, 39, 0.88);
-
-    font-size: 14.5px;
-    line-height: 1.75;
-    font-weight: 650;
-
-    .sep {
-        margin: 0 8px;
-        opacity: 0.6;
-    }
 `;
 
 const FAQWrap = styled.div`
@@ -1646,39 +1721,34 @@ const StepIcon = styled.div<{ $active: boolean; $tone: "primary" | "mint" | "vio
 
     background:
             ${({ $tone }) =>
-    $tone === "primary"
-        ? "linear-gradient(180deg, rgba(58,131,243,0.14), rgba(255,255,255,0.62))"
-        : $tone === "mint"
-            ? "linear-gradient(180deg, rgba(17,184,132,0.14), rgba(255,255,255,0.62))"
-            : "linear-gradient(180deg, rgba(155,81,224,0.14), rgba(255,255,255,0.62))"};
+                    $tone === "primary"
+                            ? "linear-gradient(180deg, rgba(58,131,243,0.22), rgba(255,255,255,0.76))"
+                            : $tone === "mint"
+                                    ? "linear-gradient(180deg, rgba(17,184,132,0.22), rgba(255,255,255,0.76))"
+                                    : "linear-gradient(180deg, rgba(155,81,224,0.22), rgba(255,255,255,0.76))"};
 
-    border: 1px solid rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.88);
     backdrop-filter: blur(10px);
 
     box-shadow:
             0 18px 50px rgba(15, 23, 42, 0.10),
-            0 0 0 ${({ $active }) => ($active ? "6px" : "0px")} rgba(58, 131, 243, 0.10);
+            0 0 0 ${({ $active }) => ($active ? "6px" : "0px")} rgba(58, 131, 243, 0.14);
 
     transform:
             translateY(var(--step-icon-shift, 0px))
             ${({ $active }) => ($active ? "translateY(-2px) scale(1.02)" : "scale(1)")};
+
     transition: transform 220ms ease, box-shadow 220ms ease, background 220ms ease;
 
     svg {
         width: 24px;
         height: 24px;
         stroke: ${({ $tone }) =>
-    $tone === "primary"
-        ? "rgba(58,131,243,0.92)"
-        : $tone === "mint"
-            ? "rgba(17,184,132,0.92)"
-            : "rgba(155,81,224,0.92)"};
-    }
-
-    @media (max-width: 900px) {
-        width: 48px;
-        height: 48px;
-        border-radius: 16px;
+                $tone === "primary"
+                        ? "rgba(58,131,243,0.98)"
+                        : $tone === "mint"
+                                ? "rgba(17,184,132,0.98)"
+                                : "rgba(155,81,224,0.98)"};
     }
 `;
 
@@ -1733,9 +1803,9 @@ const PinStage = styled.section`
     position: relative;
     z-index: 1;
 
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
+    width: 100%;
+    margin-left: 0;
+    margin-right: 0;
 
     height: 280vh;
     margin-top: 110px;
@@ -1755,7 +1825,7 @@ const PinSticky = styled.div`
 `;
 
 const PinInner = styled.div`
-    width: min(1120px, calc(100vw - 40px));
+    width: min(1120px, calc(100% - 40px));
     margin: 0 auto;
 
     display: flex;
@@ -1782,10 +1852,10 @@ const SectionHeadBig = styled.div`
 
 const SectionTitleBig = styled.h2`
     margin: 0;
-    font-size: 36px;                 /* SectionTitle과 동일 */
-    font-weight: 700;                /* SectionTitle과 동일 */
-    letter-spacing: -0.03em;         /* SectionTitle과 동일 */
-    color: rgba(17, 24, 39, 0.95);   /* SectionTitle과 동일 */
+    font-size: 36px; 
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: rgba(17, 24, 39, 0.95);
     line-height: 1.2;
 `;
 
@@ -2013,12 +2083,16 @@ function magnetize(
 
 const FlowIconsBig = styled.div`
     position: absolute;
-    left: 0;
-    right: 0;
+
+    left: var(--pad-x);
+    right: var(--pad-x);
+
     top: var(--line-top);
     height: var(--wave-h);
+
     pointer-events: none;
-    z-index: 2;
+
+    z-index: 10;
 
     @media (max-width: 900px) {
         display: none;
@@ -2405,14 +2479,7 @@ const TypePreviewShell = styled(GlassCard)`
     }
 `;
 
-
 const TypePreviewWrap = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-`;
-
-const TypePreviewLeft = styled.div`
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -2460,45 +2527,6 @@ const TypeTab = styled.button<{ $active: boolean }>`
     }
 `;
 
-const TypeBullets = styled.ul`
-    margin: 0;
-    padding: 0;
-    list-style: none;
-
-    display: grid;
-    gap: 10px;
-
-    li {
-        display: grid;
-        gap: 4px;
-        padding: 12px 12px;
-        border-radius: 18px;
-        background: rgba(255, 255, 255, 0.42);
-        border: 1px solid rgba(255, 255, 255, 0.72);
-    }
-
-    b {
-        font-size: 14px;
-        font-weight: 900;
-        letter-spacing: -0.02em;
-        color: rgba(17, 24, 39, 0.92);
-    }
-
-    span {
-        font-size: 13.5px;
-        line-height: 1.65;
-        font-weight: 560;
-        letter-spacing: -0.02em;
-        color: rgba(55, 65, 81, 0.70);
-    }
-`;
-
-const TypeActions = styled.div`
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-`;
-
 const TypeBtnBase = styled.button`
     height: 40px;
     padding: 0 14px;
@@ -2520,145 +2548,10 @@ const TypeBtnBase = styled.button`
     }
 `;
 
-const TypeGhostBtn = styled(TypeBtnBase)`
-    background: rgba(255, 255, 255, 0.55);
-    color: rgba(17, 24, 39, 0.90);
-
-    &:hover {
-        background: rgba(255, 255, 255, 0.70);
-        box-shadow: 0 14px 36px rgba(15, 23, 42, 0.10);
-    }
-`;
-
-const TypePrimaryBtn = styled(TypeBtnBase)`
-    border: none;
-    color: white;
-    background: linear-gradient(90deg, #3a83f3, #11b884);
-    box-shadow: 0 16px 40px rgba(58, 131, 243, 0.16);
-
-    &:hover {
-        box-shadow: 0 18px 46px rgba(17, 184, 132, 0.18);
-    }
-
-    &:disabled {
-        background: rgba(17, 24, 39, 0.30);
-        box-shadow: none;
-    }
-`;
-
-const TypeHintPill = styled.div`
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    width: fit-content;
-
-    padding: 10px 12px;
-    border-radius: 999px;
-
-    background: rgba(58, 131, 243, 0.10);
-    border: 1px solid rgba(58, 131, 243, 0.18);
-
-    .k {
-        font-size: 12px;
-        font-weight: 950;
-        letter-spacing: 0.04em;
-        color: rgba(58, 131, 243, 0.95);
-    }
-
-    .v {
-        font-size: 13px;
-        font-weight: 750;
-        letter-spacing: -0.02em;
-        color: rgba(17, 24, 39, 0.88);
-    }
-`;
-
 const TypePreviewRight = styled.div`
     display: flex;
     flex-direction: column;
     gap: 10px;
-`;
-
-const MiniTop = styled.div`
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-`;
-
-const MiniDot = styled.div<{ $active: boolean }>`
-    width: ${({ $active }) => ($active ? "18px" : "8px")}; 
-    height: 8px;                         
-    border-radius: 999px;
-    background: ${({ $active }) =>
-    $active ? "rgba(17,24,39,0.72)" : "rgba(17,24,39,0.18)"};
-    transition: width 180ms ease, background 180ms ease;
-`;
-
-const MiniDots = styled.div`
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-`;
-
-const MiniQArea = styled.div`
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-`;
-
-const MiniQLabel = styled.div`
-    width: 32px;              
-    height: 32px;
-    border-radius: 12px;   
-    display: grid;
-    place-items: center;
-    background: rgba(17, 24, 39, 0.08);
-    border: 1px solid rgba(17, 24, 39, 0.12);
-    font-weight: 950;
-    color: rgba(17, 24, 39, 0.88);
-`;
-
-const MiniHeaderRight = styled.div`
-    display: flex;
-    align-items: center;
-`;
-
-const MiniBadge = styled.div`
-    padding: 8px 10px;
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 950;
-    letter-spacing: 0.03em;
-
-    color: rgba(17, 24, 39, 0.78);
-    background: rgba(255, 255, 255, 0.55);
-    border: 1px solid rgba(255, 255, 255, 0.78);
-`;
-
-const MiniQuestion = styled.div`
-    margin-top: 16px;
-    font-size: 20px;
-    line-height: 1.62;
-    font-weight: 850;
-    letter-spacing: -0.02em;
-    color: rgba(17, 24, 39, 0.94);
-
-    .qLead {
-        margin-right: 6px;
-        color: rgba(58, 131, 243, 0.95);
-        font-weight: 950;
-    }
-
-    .initial {
-        margin-left: 6px;
-        font-weight: 950;
-        color: rgba(155, 81, 224, 0.92);
-    }
-
-    @media (max-width: 720px) {
-        font-size: 18px; 
-    }
 `;
 
 const MiniChoiceList = styled.div`
@@ -2679,7 +2572,6 @@ const MiniChoiceRow = styled.div<{ $state: "idle" | "correct" | "wrong"; $active
   overflow: hidden;
   border-radius: 18px;
 
-  /* state별 톤(배지 컬러) */
   --tone-ring: ${({ $state, $active }) =>
     $state === "correct"
         ? "rgba(17,184,132,0.14)"
@@ -2689,7 +2581,6 @@ const MiniChoiceRow = styled.div<{ $state: "idle" | "correct" | "wrong"; $active
                 ? "rgba(58,131,243,0.12)"
                 : "rgba(0,0,0,0)"};
 
-  /* 숫자칸도 같이 물들이기 */
   --mini-num-bg: ${({ $state }) =>
     $state === "correct"
         ? "rgba(17,184,132,0.14)"
@@ -2709,7 +2600,6 @@ const MiniChoiceRow = styled.div<{ $state: "idle" | "correct" | "wrong"; $active
             ? "rgba(239,68,68,0.92)"
             : "rgba(17,24,39,0.82)"};
 
-  /* 배경을 배지 톤으로 채우기(유리 질감 유지) */
   background: ${({ $state }) =>
     $state === "correct"
         ? "linear-gradient(180deg, rgba(17,184,132,0.16) 0%, rgba(255,255,255,0.56) 76%)"
@@ -2730,7 +2620,6 @@ const MiniChoiceRow = styled.div<{ $state: "idle" | "correct" | "wrong"; $active
         ? `${$active ? "0 16px 40px rgba(15, 23, 42, 0.10), " : ""}0 0 0 6px var(--tone-ring)`
         : "none"};
 
-  /* 유리 하이라이트 */
   &::before {
     content: "";
     position: absolute;
@@ -2882,21 +2771,6 @@ const MiniNum = styled.div`
         display: block;
         transform: translateY(-0.5px);
     }
-`;
-
-const MiniSelectedMark = styled.div`
-    width: 18px;
-    height: 18px;
-    border-radius: 999px;
-    background: rgba(58, 131, 243, 0.18);
-    border: 1px solid rgba(58, 131, 243, 0.26);
-`;
-
-const MiniPillSlot = styled.div`
-    margin-top: -6px;
-    padding: 0 12px 12px;
-    display: flex;
-    gap: 8px;
 `;
 
 const MiniOX = styled.div`
@@ -3135,41 +3009,6 @@ const MiniScreen16x9 = styled.div`
     }
 `;
 
-const MiniScreenHeader = styled.div`
-    grid-row: 1;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-
-    background: rgba(255, 255, 255, 0.42);
-
-    /* 문서 라인 제거 */
-    border-bottom: none;
-`;
-
-const MiniTypeLine = styled.div`
-    display: flex;
-    align-items: baseline;
-    gap: 10px;
-
-    .label {
-        font-size: 15.5px;
-        font-weight: 900;
-        letter-spacing: -0.03em;
-        color: rgba(17, 24, 39, 0.92);
-        line-height: 1.05;
-    }
-    .sub {
-        font-size: 12.5px;
-        font-weight: 750;
-        letter-spacing: -0.02em;
-        color: rgba(55, 65, 81, 0.66);
-        line-height: 1.05;
-    }
-`;
-
 const MiniScreenBody = styled.div`
     grid-row: 2;
     position: relative;
@@ -3394,7 +3233,6 @@ const InitialTile = styled.div<{ $size: "md" | "lg"; $judge: InitialJudge }>`
     }
 `;
 
-
 const MiniScreenInputBar = styled.div`
   grid-row: 3;
   padding: 12px 16px;
@@ -3421,4 +3259,108 @@ const MiniInitialTilesStage = styled.div`
     @media (max-width: 720px) {
         transform: translateY(-24px);
     }
+`;
+
+function useInViewOnce<T extends Element>(opts?: {
+    rootMargin?: string;
+    threshold?: number;
+}) {
+    const ref = React.useRef<T | null>(null);
+    const [inView, setInView] = React.useState(false);
+
+    React.useEffect(() => {
+        const el = ref.current;
+        if (!el || inView) return;
+
+        const io = new IntersectionObserver(
+            (entries) => {
+                const entry = entries[0];
+                if (entry.isIntersecting) {
+                    setInView(true);
+                    io.disconnect();
+                }
+            },
+            {
+                root: null,
+                rootMargin: opts?.rootMargin ?? "0px 0px -10% 0px",
+                threshold: opts?.threshold ?? 0.12,
+            }
+        );
+
+        io.observe(el);
+        return () => io.disconnect();
+    }, [inView, opts?.rootMargin, opts?.threshold]);
+
+    return { ref, inView };
+}
+
+function Reveal({
+                    children,
+                    delay = 0,
+                    y = 16,
+                    scale = 0.995,
+                    once = true,
+                }: {
+    children: React.ReactNode;
+    delay?: number;
+    y?: number;
+    scale?: number;
+    once?: boolean;
+}) {
+    const { ref, inView } = useInViewOnce<HTMLDivElement>({
+        rootMargin: "0px 0px -12% 0px",
+        threshold: 0.12,
+    });
+
+    return (
+        <RevealBox
+            ref={ref}
+            data-show={inView ? "true" : "false"}
+            style={
+                {
+                    ["--d" as any]: `${delay}ms`,
+                    ["--y" as any]: `${y}px`,
+                    ["--s" as any]: `${scale}`,
+                } as React.CSSProperties
+            }
+        >
+            {children}
+        </RevealBox>
+    );
+}
+
+const RevealBox = styled.div`
+  opacity: 0;
+  transform: translateY(var(--y, 16px)) scale(var(--s, 0.995));
+  filter: blur(6px);
+  transition:
+    opacity 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 560ms cubic-bezier(0.22, 1, 0.36, 1),
+    filter 560ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--d, 0ms);
+  will-change: opacity, transform, filter;
+
+  &[data-show="true"] {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0px);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    filter: none;
+    transform: none;
+    opacity: 1;
+  }
+`;
+
+const SvhProbe = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 100svh;
+  opacity: 0;
+  pointer-events: none;
+  z-index: -1;
 `;
