@@ -681,25 +681,20 @@ export default function PotenWordLandingPage() {
                         setSelectedJob(null);
                     }}
                     onSave={handleSaveJobToNotebook}
-                    onCreate={async (name) => {
-                        // 폴더 생성
-                        const { data: wb } = await http.post("/me/folders", {
-                            wordbookName: name,
-                        });
 
+                    onCreate={async (name) => {
+                        // 1) 폴더 생성만
+                        const { data: wb } = await http.post("/me/folders", { wordbookName: name });
                         const newId = String(wb.id);
 
-                        // 2생성된 폴더에 직무 추천 단어 저장
-                        await attachJobRecommendationToFolder(
-                            newId,
-                            selectedJob!.key
-                        );
-
-                        // UI 갱신
+                        // 2) UI 갱신
                         const newName = wb.wordbookName ?? name;
                         setNotebooks((prev) => [{ id: newId, name: newName }, ...prev]);
 
-                        return newId;
+                        // 3) 여기서 attach 호출하지 않음
+                        // (저장은 사용자가 "저장하기" 누를 때 onSave에서만)
+
+                        return newId; // 모달이 이 값을 받아서 "선택" 처리할 수 있게
                     }}
                     onReorder={async (orderedIds) => {
                         try {
@@ -1007,15 +1002,15 @@ const FeatureRow = styled.div<{
 
     display: grid;
     grid-template-columns: ${({ $cardOnLeft }) =>
-            $cardOnLeft ? "minmax(0, 1.6fr) minmax(0, 1fr)" : "minmax(0, 1fr) minmax(0, 1.6fr)"};
+    $cardOnLeft ? "minmax(0, 1.6fr) minmax(0, 1fr)" : "minmax(0, 1fr) minmax(0, 1.6fr)"};
     gap: 40px;
     align-items: center;
 
     opacity: ${({ $visible }) => ($visible ? 1 : 0)};
     transform: ${({ $visible }) =>
-            $visible
-                    ? "translate3d(var(--shift-x), 0px, 0) scale(1)"
-                    : "translate3d(var(--shift-x), 20px, 0) scale(0.98)"};
+    $visible
+        ? "translate3d(var(--shift-x), 0px, 0) scale(1)"
+        : "translate3d(var(--shift-x), 20px, 0) scale(0.98)"};
     transition: opacity 0.6s ease, transform 0.6s cubic-bezier(.16,1,.3,1);
 
     @media (max-width: 960px) {
@@ -1141,7 +1136,7 @@ const JobCard = styled.div<{ $visible?: boolean; $row?: number }>`
     /* 인뷰 등장 애니메이션 (줄 단위 딜레이) */
     opacity: ${({ $visible }) => ($visible ? 1 : 0)};
     transform: ${({ $visible }) =>
-            $visible ? "translateY(0px)" : "translateY(18px)"};
+    $visible ? "translateY(0px)" : "translateY(18px)"};
     transition:
             opacity 0.55s ease,
             transform 0.55s cubic-bezier(.16,1,.3,1),
@@ -1149,7 +1144,7 @@ const JobCard = styled.div<{ $visible?: boolean; $row?: number }>`
             border-color 0.25s ease,
             background 0.25s ease;
     transition-delay: ${({ $visible, $row }) =>
-            $visible ? `${0.08 * (($row ?? 0))}s` : "0s"};
+    $visible ? `${0.08 * (($row ?? 0))}s` : "0s"};
 
     &:hover {
         transform: translateY(-4px);
@@ -1227,8 +1222,8 @@ const SearchSection = styled.section<{ $visible?: boolean }>`
     }
 
     ${({ $visible }) =>
-            $visible &&
-            css`
+    $visible &&
+    css`
             & > * {
                 opacity: 1;
                 transform: translateY(0);

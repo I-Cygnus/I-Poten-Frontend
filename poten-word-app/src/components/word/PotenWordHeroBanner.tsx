@@ -37,54 +37,74 @@ const HeroWrap = styled.section`
     position: relative;
     isolation: isolate;
 
-    /* blob RGB는 공백 구분 r g b, 텍스트/배경은 변수로 */
-    --blob-sky: 168 198 255;   /* 하늘 파랑 */
-    --blob-mint: 196 236 220;  /* 연한 민트 */
-    --bg-top: #f7fbff;
-    --bg-bottom: #f9fffb;
+    /* SoftBg와 동일한 팔레트 */
+    --soft-blue: 211 228 253;  /* rgba(211,228,253,...) */
+    --soft-mint: 213 247 239;  /* rgba(213,247,239,...) */
+    --base: #ffffff;
+
     --title-color: #0f172a;
     --sub-color: #334155;
 
     background:
-            radial-gradient(900px 600px at 20% 72%,
-            rgb(var(--blob-sky) / 0.55) 0%,
-            rgb(var(--blob-sky) / 0.28) 24%,
-            rgb(var(--blob-sky) / 0.10) 40%,
-            rgb(var(--blob-sky) / 0.00) 64%),
-            radial-gradient(720px 620px at 76% 30%,
-            rgb(var(--blob-mint) / 0.60) 0%,
-            rgb(var(--blob-mint) / 0.26) 34%,
-            rgb(var(--blob-mint) / 0.08) 54%,
-            rgb(var(--blob-mint) / 0.00) 68%),
-            linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+            radial-gradient(
+                    900px 900px at 20% 60%,
+                    rgb(var(--soft-blue) / 0.55) 0%,
+                    rgb(var(--soft-blue) / 0.30) 40%,
+                    rgb(var(--soft-blue) / 0.15) 60%,
+                    rgb(var(--soft-blue) / 0.05) 80%,
+                    transparent 100%
+            ),
+            radial-gradient(
+                    900px 900px at 80% 55%,
+                    rgb(var(--soft-mint) / 0.55) 0%,
+                    rgb(var(--soft-mint) / 0.30) 40%,
+                    rgb(var(--soft-mint) / 0.15) 60%,
+                    rgb(var(--soft-mint) / 0.05) 80%,
+                    transparent 100%
+            ),
+            var(--base);
+
     background-repeat: no-repeat;
 
-    /* 시스템 다크 선호 */
+    @media (max-width: 640px) {
+        background:
+                radial-gradient(
+                        600px 600px at 30% 70%,
+                        rgb(var(--soft-blue) / 0.50) 0%,
+                        rgb(var(--soft-blue) / 0.20) 50%,
+                        transparent 100%
+                ),
+                radial-gradient(
+                        600px 600px at 80% 50%,
+                        rgb(var(--soft-mint) / 0.50) 0%,
+                        rgb(var(--soft-mint) / 0.20) 50%,
+                        transparent 100%
+                ),
+                var(--base);
+    }
+
     @media (prefers-color-scheme: dark) {
-        --blob-sky: 120 150 255;
-        --blob-mint: 160 220 205;
-        --bg-top: #0b1222;
-        --bg-bottom: #0a0f1c;
+        --soft-blue: 120 150 255;
+        --soft-mint: 160 220 205;
+        --base: #0a0f1c;
         --title-color: #e5e7eb;
         --sub-color: #9aa4b2;
     }
 
-    /* 명시 오버라이드: <html data-theme="light|dark"> 또는 body에 지정 */
     :root[data-theme='light'] &,
     body[data-theme='light'] & {
-        --blob-sky: 168 198 255;
-        --blob-mint: 196 236 220;
-        --bg-top: #f7fbff;
-        --bg-bottom: #f9fffb;
+        --soft-blue: 211 228 253;
+        --soft-mint: 213 247 239;
+        --base: #ffffff;
         --title-color: #0f172a;
         --sub-color: #334155;
     }
+
     :root[data-theme='dark'] &,
     body[data-theme='dark'] & {
-        --blob-sky: 120 150 255;
-        --blob-mint: 160 220 205;
-        --bg-top: #0b1222;
-        --bg-bottom: #0a0f1c;
+        --soft-blue: 120 150 255;
+        --soft-mint: 160 220 205;
+        --base: #0a0f1c;
         --title-color: #e5e7eb;
         --sub-color: #9aa4b2;
     }

@@ -14,10 +14,7 @@ export type PotenNoteModalProps = {
     onGoToFolder?: (wordbookId: string, name?: string) => void | Promise<void>;
     onRequestDelete?: (wordbookId: string, currentName: string) => void | Promise<void>;
     onRequestBulkDelete?: (wordbookIds: string[]) => void | Promise<void>;
-    /** 새 API: 모달에서 받은 새 이름을 직접 전달 */
-    onRename?: (wordbookId: string, newName: string) => void | Promise<void>;
-    /** 구 API(하위호환): 기존 prompt 흐름. (submit 시 newName을 두 번째 인자로 넘겨 폴백 호출) */
-    onRequestRename?: (wordbookId: string, currentName: string) => void | Promise<void>;
+    onRename: (wordbookId: string, newName: string) => void | Promise<void>;
     /** 새로고침: 서버에서 최신 폴더 목록을 받아와 동기화 */
     onRefresh?: () => Promise<Notebook[]>;
 };
@@ -678,7 +675,6 @@ export default function PotenNoteModal({
                                            onCreate,
                                            onReorder,
                                            onGoToFolder,
-                                           onRequestRename,
                                            onRequestDelete,
                                            onRequestBulkDelete,
                                            onRename,
@@ -761,31 +757,23 @@ export default function PotenNoteModal({
         setRenameError("");
         setRenameOpen(true);
     };
-    const closeRename = () => {
+    const closeRename = React.useCallback(() => {
         setRenameOpen(false);
         setRenameTarget(null);
         setRenameValue("");
         setRenameError("");
-    };
+    }, []);
 
-    const submitRename = async () => {
+    const submitRename = React.useCallback(async () => {
         if (!renameTarget) return;
+
         const err = validateRename(renameValue, renameTarget.id);
-        if (err) {
-            setRenameError(err);
-            return;
-        }
+        if (err) { setRenameError(err); return; }
+
         const nextName = renameValue.trim();
+
         try {
-            if (onRename) {
-                await Promise.resolve(onRename(renameTarget.id, nextName));
-            } else if (onRequestRename) {
-                await Promise.resolve(onRequestRename(renameTarget.id, nextName));
-            } else {
-                showHint("이름 변경 핸들러가 연결되지 않았어요(onRename).", "warn");
-                return;
-            }
-            // 낙관적 반영
+            await Promise.resolve(onRename(renameTarget.id, nextName));
             setList((prev) => prev.map((n) => (n.id === renameTarget.id ? { ...n, name: nextName } : n)));
             closeRename();
             triggerSaved();
@@ -793,8 +781,7 @@ export default function PotenNoteModal({
             setRenameError("이름 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.");
             console.error("[rename modal] failed:", e);
         }
-    };
-    // =====================================
+    }, [renameTarget, renameValue, validateRename, onRename, closeRename, triggerSaved]);
 
     const getRenameSelection = React.useCallback(() => {
         if (bulkMode) {
@@ -847,64 +834,9 @@ export default function PotenNoteModal({
         setList((prev) => (shallowSame(prev, notebooks) ? prev : notebooks));
         lastStableRef.current = notebooks;
 
-        if (!selectedId && !bulkMode && !creating && !savingOrder && notebooks.length > 0) {
-            setSelectedId(notebooks[0].id);
-        }
     }, [internalOpen, notebooks, savingOrder, shallowSame, selectedId, bulkMode, creating]);
 
     const normalizeName = React.useCallback((s: string) => s.trim().replace(/\s+/g, " ").toLowerCase(), []);
-
-    // ESC 한 번에 닫기 (내부 상태 즉시 false + 부모 onClose)
-    React.useEffect(() => {
-        function onKey(e: KeyboardEvent) {
-            if (e.key === "Escape") {
-                if (renameOpen) {
-                    closeRename();
-                    return;
-                }
-                if (confirmOpen) {
-                    setConfirmOpen(false);
-                    return;
-                }
-                if (menuOpen) {
-                    setMenuOpen(false);
-                    return;
-                }
-                if (bulkMode) {
-                    /* 선택 유지 */
-                    return;
-                }
-                setInternalOpen(false); // 즉시 사라짐
-                onClose();
-            }
-            if (e.key === "Enter") {
-                if (renameOpen) {
-                    void submitRename();
-                    return;
-                }
-                if (confirmOpen) {
-                    void executeBulkDelete();
-                } else if (bulkMode) {
-                    /* Enter 무시 */
-                } else handlePrimary();
-            }
-        }
-        if (internalOpen) window.addEventListener("keydown", onKey);
-        return () => window.removeEventListener("keydown", onKey);
-    }, [
-        internalOpen,
-        creating,
-        selectedId,
-        newName,
-        error,
-        menuOpen,
-        bulkMode,
-        deleteIds,
-        confirmOpen,
-        renameOpen,
-        renameValue,
-        onClose,
-    ]);
 
     const headerRef = React.useRef<HTMLDivElement | null>(null);
     React.useEffect(() => {
@@ -952,20 +884,23 @@ export default function PotenNoteModal({
         setError("");
     };
 
-    const handleCreate = async () => {
+    const handleCreate = React.useCallback(async () => {
         const name = newName.trim();
         if (!name) return setError("공백만 입력할 수 없어요.");
         if (error) return;
+
         try {
             let newId: string | undefined;
             if (onCreate) {
                 const r = onCreate(name);
                 newId = typeof (r as any)?.then === "function" ? await (r as Promise<string>) : (r as string);
             }
+
             if (newId) {
-                setList((prev) => [{ id: newId!, name }, ...prev]);
                 setSelectedId(newId);
+                showHint("폴더를 만들었어요. 저장하려면 '저장하기'를 눌러주세요.");
             }
+
             setCreating(false);
             setNewName("");
             setError("");
@@ -976,18 +911,75 @@ export default function PotenNoteModal({
             else if (e?.message === "EMPTY_NAME" || status === 400) setError("공백만 입력할 수 없어요.");
             else setError("폴더 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
         }
-    };
+    }, [newName, error, onCreate, showHint, triggerSaved]);
 
-    const handleSave = async () => {
+    const handleSave = React.useCallback(async () => {
         if (!selectedId) return;
         await Promise.resolve(onSave(selectedId));
         setInternalOpen(false);
         onClose();
-    };
-    const handlePrimary = () => {
-        if (creating) handleCreate();
-        else handleSave();
-    };
+    }, [selectedId, onSave, onClose]);
+
+    const handlePrimary = React.useCallback(() => {
+        if (creating) void handleCreate();
+        else void handleSave();
+    }, [creating, handleCreate, handleSave]);
+
+    const executeBulkDelete = React.useCallback(async () => {
+        const ids = Array.from(deleteIds);
+        if (!ids.length) return;
+        try {
+            if (onRequestBulkDelete) await Promise.resolve(onRequestBulkDelete(ids));
+            else if (onRequestDelete) {
+                for (const id of ids) {
+                    const name = list.find((n) => n.id === id)?.name ?? "";
+                    await Promise.resolve(onRequestDelete(id, name));
+                }
+            }
+            setList((prev) => prev.filter((n) => !ids.includes(n.id)));
+            setConfirmOpen(false);
+            setBulkMode(false);
+            setDeleteIds(new Set());
+            triggerSaved();
+        } finally {
+            setMenuOpen(false);
+        }
+    }, [deleteIds, onRequestBulkDelete, onRequestDelete, list, triggerSaved]);
+
+    // ESC 한 번에 닫기 (내부 상태 즉시 false + 부모 onClose)
+    React.useEffect(() => {
+        function onKey(e: KeyboardEvent) {
+            if (e.key === "Escape") {
+                if (renameOpen) return closeRename();
+                if (confirmOpen) return setConfirmOpen(false);
+                if (menuOpen) return setMenuOpen(false);
+                if (bulkMode) return;
+                setInternalOpen(false);
+                onClose();
+                return;
+            }
+
+            if (e.key === "Enter") {
+                if (renameOpen) return void submitRename();
+                if (confirmOpen) return void executeBulkDelete();
+                if (!bulkMode) return void handlePrimary();
+            }
+        }
+
+        if (internalOpen) window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [
+        internalOpen,
+        renameOpen,
+        confirmOpen,
+        menuOpen,
+        bulkMode,
+        closeRename,
+        submitRename,
+        executeBulkDelete,
+        handlePrimary,
+        onClose,
+    ]);
 
     const moveItem = (arr: Notebook[], from: number, to: number) => {
         const copy = arr.slice();
@@ -1082,33 +1074,6 @@ export default function PotenNoteModal({
     const onDragEnd = () => {
         setDraggingId(null);
         setDragOver(null);
-    };
-
-    const executeBulkDelete = async () => {
-        const ids = Array.from(deleteIds);
-        if (!ids.length) return;
-        try {
-            if (onRequestBulkDelete) {
-                await Promise.resolve(onRequestBulkDelete(ids));
-            } else if (onRequestDelete) {
-                for (const id of ids) {
-                    const name = list.find((n) => n.id === id)?.name ?? "";
-                    // eslint-disable-next-line no-await-in-loop
-                    await Promise.resolve(onRequestDelete(id, name));
-                }
-            }
-            // 낙관적 반영
-            setList((prev) => prev.filter((n) => !ids.includes(n.id)));
-
-            setConfirmOpen(false);
-            setBulkMode(false);
-            setDeleteIds(new Set());
-            triggerSaved();
-        } catch (e) {
-            console.error("[bulk delete] failed:", e);
-        } finally {
-            setMenuOpen(false);
-        }
     };
 
     /** ===== 새로고침 상태/핸들러 (조기 return 위쪽) ===== */
@@ -1357,6 +1322,7 @@ export default function PotenNoteModal({
                                         const el = e.target as HTMLElement;
                                         if (el.closest('input, button, [role="checkbox"], [role="switch"]')) return;
                                         if (e.key === "Enter" || e.key === " ") {
+                                            e.preventDefault();
                                             setMenuOpen(false);
                                             handleToggle(nb.id);
                                         }

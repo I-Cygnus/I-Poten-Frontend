@@ -13,6 +13,7 @@ import http from "./utils/http";
 import { fetchUserFolders, patchReorderFolders } from "./api/wordbook";
 import WordbookPage from "./pages/note/WordbookPage.tsx";
 
+import QuizLandingPage from "./pages/quiz/QuizLandingPage.tsx";
 import QuizHomePage from "./pages/quiz/QuizHomePage.tsx";
 import QuizPlayPage from "./pages/quiz/regular/QuizPlayPage.tsx";
 import PotenNoteHomePage from "./pages/note/PotenNoteHomePage.tsx";
@@ -28,6 +29,8 @@ import SearchPage from "./pages/word/SearchPage.tsx";
 import TermListPage from "./pages/word/TermListPage.tsx";
 import PotenWordLandingPage from "./pages/word/PotenWordLandingPage.tsx";
 import QuizReviewPage from "./pages/quiz/regular/QuizReviewPage.tsx";
+import QuizWrongNotePage from "./pages/quiz/QuizWrongNotePage.tsx";
+import HallPage from "./pages/quiz/hall/HallPage.tsx";
 
 // notes 전용 로그인 가드(필요하면 라우트에 연결해서 사용)
 function NotesGuard() {
@@ -273,14 +276,18 @@ export default function App() {
                 <Route index element={<PotenWordLandingPage />} />
 
                 {/* /poten-word/terms → 용어 리스트 */}
-                <Route path="terms" element={<TermListPage />} />
+                <Route path="terms" element={<SearchPage />} />
 
                 <Route path="notes" element={<PotenNoteHomePage />} />
                 <Route path="search" element={<SearchPage />} />
 
                 {/* 퀴즈 경로 */}
                 <Route path="quiz">
-                  <Route index element={<QuizHomePage />} />
+                  {/* /poten-word/quiz → 랜딩 */}
+                  <Route index element={<QuizLandingPage />} />
+
+                  {/* /poten-word/quiz/home → 기존 홈 */}
+                  <Route path="home" element={<QuizHomePage />} />
 
                   {/* 일반 세트 플레이 */}
                   <Route path="play" element={<QuizPlayPage />} />
@@ -294,6 +301,13 @@ export default function App() {
 
                   {/* 타임라인 대시보드 */}
                   <Route path="timeline" element={<QuizTimelinePage />} />
+
+                  {/* 오답노트: 퀴즈 하위로 이동 */}
+                  <Route path="wrong-notes" element={<QuizWrongNotePage />} />
+
+                  {/* 퀴즈 명예의 전당 */}
+                  <Route path="hall" element={<HallPage />} />
+
                 </Route>
 
                 <Route path="book" element={<BookLandingPage />} />

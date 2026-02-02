@@ -1,5 +1,5 @@
 import React from "react";
-import axiosInstance from "../api/axiosInstance";
+import http from "../utils/http";
 
 export type Category = {
     id: number;
@@ -47,11 +47,11 @@ async function fetchCategories(p: FetchParams): Promise<Category[]> {
 
     let data: any[] = [];
     try {
-        const res = await axiosInstance.get("/categories", { params });
+        const res = await http.get("/categories", { params });
         data = Array.isArray(res.data) ? res.data : res.data?.items ?? [];
     } catch {
         try {
-            const res2 = await axiosInstance.get("/category", { params });
+            const res2 = await http.get("/categories", { params });
             data = Array.isArray(res2.data) ? res2.data : res2.data?.items ?? [];
         } catch {
             data = [];
@@ -141,3 +141,4 @@ export function useCategoryTree(selected0?: number | null, selected1?: number | 
         level2: { items: d2, loading: loading2, error: error2 },
     };
 }
+export default http;
