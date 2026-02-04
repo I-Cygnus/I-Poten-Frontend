@@ -44,12 +44,15 @@ RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {}
 RUN npm install --no-audit --no-fund
 
 # 네이티브 바인딩 명시적 설치 (Linux x64)
-RUN npm install --no-save @rspack/binding-linux-x64-gnu @lightningcss/linux-x64-gnu
+RUN npm install --no-save @rspack/binding-linux-x64-gnu
 
 # -------------------------
 # 3. 전체 소스 복사
 # -------------------------
 COPY . .
+
+# lightningcss 네이티브 바인딩 재빌드
+RUN npm rebuild lightningcss
 
 # -------------------------
 # 4. 빌드
