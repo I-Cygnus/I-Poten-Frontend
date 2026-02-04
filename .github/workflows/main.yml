@@ -15,28 +15,12 @@ jobs:
 
       - name: Create .env files
         run: |
-          # 메인 컨테이너 환경변수
           echo "${{ secrets.MAIN_CONTAINER_ENV }}" > main-container/.env
-          
-          # 계정 앱 환경변수
           echo "${{ secrets.ACCOUNT_ENV }}" > vue-account-app/.env
-          
-          # 면접 앱 환경변수
           echo "${{ secrets.INTERVIEW_ENV }}" > vue-ai-interview-app/.env
-          
-          # 마이페이지 앱 환경변수
           echo "${{ secrets.MY_PAGE_ENV }}" > mypage-app/.env
-          
-          
-          # 퀴즈 및 단어사전 앱 환경변수
           echo "${{ secrets.POTEN_WORD_ENV }}" > poten-word-app/.env
-          
-          # navation-bar 앱 환경변수
           echo "${{ secrets.NAVIGATION_BAR_ENV }}" > navigation-bar-app/.env
-          
-         
-          
-   
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -51,16 +35,15 @@ jobs:
           username: i-cygnus
           password: ${{ secrets.GHCR_TOKEN }}
 
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: Dockerfile
-          push: true
-          tags: ghcr.io/i-cygnus/i-poten-frontend:latest
-          platforms: linux/amd64
-
-
+      - name: Build and push Docker image (Multi-arch)
+        run: |
+          docker buildx create --use
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            -t ghcr.io/i-cygnus/i-poten-frontend:latest \
+            --push \
+            .
+  
   deploy:
     needs: build
     name: Deploy
@@ -79,7 +62,7 @@ jobs:
           # 최신 이미지 가져오기
           docker pull ghcr.io/i-cygnus/i-poten-frontend:latest
           
-          # 새 컨테이너 실행 
+          # 새 컨테이너 실행
           docker run -d -p 80:80 --name i-poten-frontend-container --network ipoten-net ghcr.io/i-cygnus/i-poten-frontend:latest
           
           # 사용하지 않는 이미지 정리
