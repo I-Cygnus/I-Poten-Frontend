@@ -51,8 +51,8 @@ RUN npm install --no-save @rspack/binding-linux-x64-gnu
 # -------------------------
 COPY . .
 
-# lightningcss 네이티브 바인딩 재빌드
-RUN npm rebuild lightningcss
+# lightningcss 재설치 (네이티브 바인딩 포함)
+RUN npm uninstall lightningcss && npm install lightningcss --no-save
 
 # -------------------------
 # 4. 빌드
