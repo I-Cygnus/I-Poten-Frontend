@@ -40,8 +40,11 @@ COPY packages/theme-bridge/package.json packages/theme-bridge/
 # workspace:* 프로토콜을 npm 호환 형식으로 변경
 RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {} \;
 
-# rspack 네이티브 바인딩을 포함한 모든 의존성 설치
-RUN npm install --include=optional --no-audit --no-fund
+# 의존성 설치
+RUN npm install --no-audit --no-fund
+
+# rspack 네이티브 바인딩 명시적 설치 (Linux x64)
+RUN npm install --no-save @rspack/binding-linux-x64-gnu
 
 # -------------------------
 # 3. 전체 소스 복사
