@@ -51,8 +51,11 @@ RUN npm install --no-save @rspack/binding-linux-x64-gnu
 # -------------------------
 COPY . .
 
-# lightningcss 재설치 (네이티브 바인딩 포함)
-RUN npm uninstall lightningcss && npm install lightningcss --no-save
+# 복사된 소스의 workspace:* 다시 변환
+RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {} \;
+
+# lightningcss 강제 재설치 (네이티브 바인딩 포함)
+RUN npm install --force lightningcss
 
 # -------------------------
 # 4. 빌드
