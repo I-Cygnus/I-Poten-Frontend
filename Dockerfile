@@ -12,8 +12,16 @@ RUN test -d studyroom-app || \
   (mkdir -p studyroom-app && \
    printf '{"name":"studyroom-app","version":"0.0.0","private":true}' > studyroom-app/package.json)
 
+RUN test -d packages/app-state || \
+  (mkdir -p packages/app-state && \
+   printf '{"name":"@jobspoon/app-state","version":"0.1.0","private":true}' > packages/app-state/package.json)
+
+RUN test -d packages/theme-bridge || \
+  (mkdir -p packages/theme-bridge && \
+   printf '{"name":"@jobspoon/theme-bridge","version":"0.1.0","private":true}' > packages/theme-bridge/package.json)
+
 # -------------------------
-# 1. 의존성 메타데이터만 복사 (캐시 핵심)
+# 1. 의존성 메타데이터만 복사 (캐시 활용)
 # -------------------------
 COPY package.json ./
 
@@ -24,10 +32,10 @@ COPY vue-ai-interview-app/package.json vue-ai-interview-app/
 COPY mypage-app/package.json mypage-app/
 COPY poten-word-app/package.json poten-word-app/
 
-# ❌ package-lock.json 복사 금지 (Mac arm64 지옥 방지)
+# ❌ package-lock.json 복사 금지 (Mac ARM64 지옥 방지)
 
 # -------------------------
-# 2. 의존성 설치 (Linux 환경 기준으로 재해석)
+# 2. 의존성 설치 (Linux 환경 기준)
 # -------------------------
 RUN npm install --no-audit --no-fund
 
@@ -46,7 +54,6 @@ RUN npm -ws run build -w @jobspoon/theme-bridge -w @jobspoon/app-state \
   && npm run build -w vue-ai-interview-app \
   && npm run build -w mypage-app \
   && npm run build -w poten-word-app
-
 
 # =========================
 # 2단계: Nginx
