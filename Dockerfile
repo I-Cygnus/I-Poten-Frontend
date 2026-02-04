@@ -43,8 +43,8 @@ RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {}
 # 의존성 설치
 RUN npm install --no-audit --no-fund
 
-# rspack 네이티브 바인딩 명시적 설치 (Linux x64)
-RUN npm install --no-save @rspack/binding-linux-x64-gnu
+# 네이티브 바인딩 명시적 설치 (Linux x64)
+RUN npm install --no-save @rspack/binding-linux-x64-gnu @lightningcss/linux-x64-gnu
 
 # -------------------------
 # 3. 전체 소스 복사
