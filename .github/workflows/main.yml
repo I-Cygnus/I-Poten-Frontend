@@ -58,7 +58,7 @@ jobs:
           file: Dockerfile
           push: true
           tags: ghcr.io/i-cygnus/i-poten-frontend:latest
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
 
 
   deploy:
