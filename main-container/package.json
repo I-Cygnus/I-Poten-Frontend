@@ -28,8 +28,8 @@
   "dependencies": {
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
-    "@jobspoon/app-state": "0.1.0",
-    "@jobspoon/theme-bridge": "0.1.0",
+    "@jobspoon/app-state": "workspace:*",
+    "@jobspoon/theme-bridge": "workspace:*",
     "@module-federation/enhanced": "^0.8.9",
     "@mui/icons-material": "^7.0.1",
     "@mui/material": "^7.0.1",
