@@ -20,7 +20,7 @@ RUN npm -ws run build -w @jobspoon/theme-bridge -w @jobspoon/app-state \
   && npm run build -w vue-account-app \
   && npm run build -w vue-ai-interview-app \
   && npm run build -w mypage-app \
-  && npm run build -w spoon-word-app
+  && npm run build -w poten-word-app
 
 
 # 2단계: Nginx
