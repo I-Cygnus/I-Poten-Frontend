@@ -13,7 +13,7 @@ RUN test -d studyroom-app || \
 # -------------------------
 # 1. 의존성 파일만 먼저 복사 (캐시 핵심)
 # -------------------------
-COPY package.json package-lock.json ./
+COPY package.json package-lock.json* ./
 
 COPY main-container/package.json main-container/
 COPY navigation-bar-app/package.json navigation-bar-app/
@@ -21,6 +21,8 @@ COPY vue-account-app/package.json vue-account-app/
 COPY vue-ai-interview-app/package.json vue-ai-interview-app/
 COPY mypage-app/package.json mypage-app/
 COPY poten-word-app/package.json poten-word-app/
+COPY packages/app-state/package.json packages/app-state/
+COPY packages/theme-bridge/package.json packages/theme-bridge/
 
 # -------------------------
 # 2. 의존성 설치
