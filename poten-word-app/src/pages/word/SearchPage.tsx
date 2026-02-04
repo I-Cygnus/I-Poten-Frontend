@@ -139,6 +139,21 @@ const NEW_ARRIVALS_SAMPLE: NewArrivalItem[] = [
     },
 ];
 
+type ClickToHomeProps = {
+    to?: string;
+    children: React.ReactNode;
+};
+
+const ClickToHome: React.FC<ClickToHomeProps> = ({ to = "/poten-word/terms", children }) => {
+    const navigate = useNavigate();
+
+    return (
+        <div onClick={() => navigate(to)} style={{ cursor: "pointer" }}>
+            {children}
+        </div>
+    );
+};
+
 /** 세션 캐시 유틸 */
 const readCache = (k: string): CacheData | null => {
     try {
@@ -1530,45 +1545,50 @@ export default function SearchPage() {
             <SoftBg />
 
             {/* ===== Landing Hero (검색) ===== */}
-            <Wrapper>
-                <HeroWatermark aria-hidden="true">
-                    <HeroWatermarkImg src={potenWordMark} alt="" />
-                </HeroWatermark>
+            <ClickToHome>
+                <Wrapper>
+                    <HeroWatermark aria-hidden="true">
+                        <HeroWatermarkImg src={potenWordMark} alt="" />
+                    </HeroWatermark>
 
-                <SearchSectionInView onVisible={() => setStartTypingPlaceholder(true)}>
-                    <SearchHeader>
-                        <BrandTitle>포텐워드</BrandTitle>
-                        <SearchTitle>궁금한 IT 용어를 바로 검색해 보세요.</SearchTitle>
-                        <SearchDesc>
-                            모르는 용어를 만날 때마다 포텐워드에서 바로 검색해 보세요. 개념, 중요성, 실무 혹은 면접에서의 포인트까지
-                            연결해서 정리해 드립니다.
-                        </SearchDesc>
-                    </SearchHeader>
-
-                    <SearchBarForm
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            goSearch();
-                        }}
+                    <SearchSectionInView
+                        onClick={(e) => e.stopPropagation()}
+                        onVisible={() => setStartTypingPlaceholder(true)}
                     >
-                        <SearchInput
-                            type="text"
-                            value={searchKeyword}
-                            onChange={(e) => setSearchKeyword(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === "Enter") {
-                                    e.preventDefault();
-                                    goSearch();
-                                }
+                    <SearchHeader>
+                            <BrandTitle>포텐워드</BrandTitle>
+                            <SearchTitle>궁금한 IT 용어를 바로 검색해 보세요.</SearchTitle>
+                            <SearchDesc>
+                                모르는 용어를 만날 때마다 포텐워드에서 바로 검색해 보세요. 개념, 중요성, 실무 혹은 면접에서의 포인트까지
+                                연결해서 정리해 드립니다.
+                            </SearchDesc>
+                        </SearchHeader>
+
+                        <SearchBarForm
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                goSearch();
                             }}
-                            placeholder={placeholderText || SEARCH_PLACEHOLDER}
-                        />
-                        <SearchButton type="button" aria-label="검색" onClick={goSearch}>
-                            <IconSearch />
-                        </SearchButton>
-                    </SearchBarForm>
-                </SearchSectionInView>
-            </Wrapper>
+                        >
+                            <SearchInput
+                                type="text"
+                                value={searchKeyword}
+                                onChange={(e) => setSearchKeyword(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        goSearch();
+                                    }
+                                }}
+                                placeholder={placeholderText || SEARCH_PLACEHOLDER}
+                            />
+                            <SearchButton type="button" aria-label="검색" onClick={goSearch}>
+                                <IconSearch />
+                            </SearchButton>
+                        </SearchBarForm>
+                    </SearchSectionInView>
+                </Wrapper>
+            </ClickToHome>
 
             {/* ===== Landing WhiteStage (탐색 탭) ===== */}
             <WhiteStage>
