@@ -5,6 +5,8 @@ FROM node:20 AS builder
 
 WORKDIR /app
 
+ARG TARGETARCH
+
 # -------------------------
 # workspace에 있지만 실제 폴더 없는 경우 방어
 # -------------------------
@@ -23,7 +25,7 @@ RUN test -d packages/theme-bridge || \
 # -------------------------
 # 1. 의존성 메타데이터만 복사 (캐시 활용)
 # -------------------------
-COPY package.json package-lock.json* ./
+COPY package.json ./
 
 COPY main-container/package.json main-container/
 COPY navigation-bar-app/package.json navigation-bar-app/
@@ -43,19 +45,23 @@ RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {}
 # 의존성 설치
 RUN npm install --no-audit --no-fund
 
-# 네이티브 바인딩 명시적 설치 (Linux x64)
-RUN npm install --no-save @rspack/binding-linux-x64-gnu
+# 네이티브 바인딩 명시적 설치 (buildx 멀티아키텍처 대응)
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
+    npm install --no-save \
+      @rspack/binding-linux-x64-gnu \
+      lightningcss-linux-x64-gnu \
+      @rollup/rollup-linux-x64-gnu ; \
+  else \
+    npm install --no-save \
+      @rspack/binding-linux-arm64-gnu \
+      lightningcss-linux-arm64-gnu \
+      @rollup/rollup-linux-arm64-gnu ; \
+  fi
 
 # -------------------------
 # 3. 전체 소스 복사
 # -------------------------
 COPY . .
-
-# 복사된 소스의 workspace:* 다시 변환
-RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {} \;
-
-# lightningcss 강제 재설치 (네이티브 바인딩 포함)
-RUN npm install --force lightningcss
 
 # -------------------------
 # 4. 빌드
