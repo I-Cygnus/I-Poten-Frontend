@@ -137,12 +137,12 @@ const Header = styled.header<{ $scrolled?: boolean; $hidden?: boolean }>`
   -webkit-backdrop-filter: ${({ $scrolled }) => $scrolled ? "blur(20px)" : "none"};
   color: #1a1a1a;
   border-bottom: ${({ $scrolled }) => 
-    $scrolled 
+    $scrolled
       ? "1px solid rgba(0, 0, 0, 0.08)" 
       : "1px solid transparent"
   };
   box-shadow: ${({ $scrolled }) => 
-    $scrolled 
+    $scrolled
       ? "0 2px 16px rgba(0, 0, 0, 0.04)" 
       : "none"
   };
@@ -416,33 +416,12 @@ const App: React.FC = () => {
     const NAV_HEIGHT = 72;
 
     const updateMode = () => {
-      if (cancelled) return;
+      if (cancelled || !target) return;
+      const rect = target.getBoundingClientRect();
+      const shouldUseBottomBar = rect.top <= NAV_HEIGHT + 1;
 
-      const scrollY = window.scrollY;
-      let shouldUseBottomBar = false;
-      let rectTop: number | null = null;
-
-      if (target) {
-        const rect = target.getBoundingClientRect();
-        rectTop = rect.top;
-        // 요소가 화면 상단에 도달하면 하단바 표시
-        shouldUseBottomBar = rect.top <= 0;
-      } else {
-        // 타겟을 찾지 못한 경우, 스크롤 위치 기준으로 동작 (약간만 내리면 표시)
-        shouldUseBottomBar = scrollY > 200;
-      }
-
-      console.log('[BottomBar Debug]', {
-        targetFound: !!target,
-        rectTop,
-        scrollY,
-        threshold: target ? 0 : 200,
-        shouldUseBottomBar,
-      });
-
-      setIsServiceNavMode((prev) => {
+      setIsServiceNavMode(prev => {
         if (prev === shouldUseBottomBar) return prev;
-        console.log('[BottomBar] Mode changed to:', shouldUseBottomBar);
         return shouldUseBottomBar;
       });
 
@@ -463,26 +442,17 @@ const App: React.FC = () => {
       if (cancelled) return;
 
       target = document.querySelector(
-        "[data-service-title], [data-service-section], [data-service-grid], [data-search-title2]"
+        "[data-service-title], [data-service-section], [data-service-grid]"
       ) as Element | null;
-
-      console.log('[BottomBar] Attempt', attempts + 1, 'Target found:', !!target, target);
 
       if (!target) {
         attempts += 1;
         if (attempts < 30) {
           window.setTimeout(tryAttach, 250);
-        } else {
-          console.warn('[BottomBar] Failed to find target element after 30 attempts, fallback to scrollY');
-          // 타겟을 끝까지 찾지 못해도 scrollY 기준으로 동작하도록 리스너 부착
-          updateMode();
-          window.addEventListener("scroll", onScroll, { passive: true });
-          window.addEventListener("resize", onScroll);
         }
         return;
       }
 
-      console.log('[BottomBar] Target attached successfully!', target);
       updateMode();
       window.addEventListener("scroll", onScroll, { passive: true });
       window.addEventListener("resize", onScroll);
