@@ -18,7 +18,7 @@ import logoEncore from "../assets/e1.png";
 import logoKT from "../assets/3.png";
 import backFont from "../assets/Back-Font.png";
 import imageLogo from "../assets/logo.png";
-import imageLogo2 from "../assets/logo2.png";
+import imageLogo2 from "../assets/Logo2.png";
 
 const BRAND = {
   blue: "#3b82f6",
