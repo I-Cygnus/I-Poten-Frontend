@@ -131,10 +131,10 @@ const Header = styled.header<{ $scrolled?: boolean; $hidden?: boolean }>`
   background: ${({ $scrolled }) => 
     $scrolled 
       ? "rgba(255, 255, 255, 0.95)" 
-      : "rgba(255, 255, 255, 0.7)"
+      : "transparent"
   };
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: ${({ $scrolled }) => $scrolled ? "blur(20px)" : "none"};
+  -webkit-backdrop-filter: ${({ $scrolled }) => $scrolled ? "blur(20px)" : "none"};
   color: #1a1a1a;
   border-bottom: ${({ $scrolled }) => 
     $scrolled 
@@ -146,7 +146,7 @@ const Header = styled.header<{ $scrolled?: boolean; $hidden?: boolean }>`
       ? "0 2px 16px rgba(0, 0, 0, 0.04)" 
       : "none"
   };
-  transition: height 0.28s ease, opacity 0.28s ease, transform 0.28s ease, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: height 0.28s ease, opacity 0.28s ease, transform 0.28s ease, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
   overflow: hidden;
   opacity: ${({ $hidden }) => ($hidden ? 0 : 1)};
   transform: ${({ $hidden }) => ($hidden ? "translateY(-100%)" : "translateY(0)")};
@@ -299,7 +299,7 @@ const LogoImg = styled.img`
   //width: clamp(70px, 6.458333vw, 300px);
   //height: clamp(40px, 3.680556vw, 200px);
   //margin-top: 15px;
-  width: 90px;
+  width: 150px;
   //height: 130px;
   height: auto;
   object-fit: contain;
@@ -395,6 +395,9 @@ const App: React.FC = () => {
       setIsScrolled(window.scrollY > 20);
     };
 
+    // 초기 로드 시 스크롤 위치 확인
+    handleScroll();
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -413,12 +416,33 @@ const App: React.FC = () => {
     const NAV_HEIGHT = 72;
 
     const updateMode = () => {
-      if (cancelled || !target) return;
-      const rect = target.getBoundingClientRect();
-      const shouldUseBottomBar = rect.top <= NAV_HEIGHT + 1;
+      if (cancelled) return;
 
-      setIsServiceNavMode(prev => {
+      const scrollY = window.scrollY;
+      let shouldUseBottomBar = false;
+      let rectTop: number | null = null;
+
+      if (target) {
+        const rect = target.getBoundingClientRect();
+        rectTop = rect.top;
+        // 요소가 화면 상단에 도달하면 하단바 표시
+        shouldUseBottomBar = rect.top <= 0;
+      } else {
+        // 타겟을 찾지 못한 경우, 스크롤 위치 기준으로 동작 (약간만 내리면 표시)
+        shouldUseBottomBar = scrollY > 200;
+      }
+
+      console.log('[BottomBar Debug]', {
+        targetFound: !!target,
+        rectTop,
+        scrollY,
+        threshold: target ? 0 : 200,
+        shouldUseBottomBar,
+      });
+
+      setIsServiceNavMode((prev) => {
         if (prev === shouldUseBottomBar) return prev;
+        console.log('[BottomBar] Mode changed to:', shouldUseBottomBar);
         return shouldUseBottomBar;
       });
 
@@ -439,17 +463,26 @@ const App: React.FC = () => {
       if (cancelled) return;
 
       target = document.querySelector(
-        "[data-service-title], [data-service-section], [data-service-grid]"
+        "[data-service-title], [data-service-section], [data-service-grid], [data-search-title2]"
       ) as Element | null;
+
+      console.log('[BottomBar] Attempt', attempts + 1, 'Target found:', !!target, target);
 
       if (!target) {
         attempts += 1;
         if (attempts < 30) {
           window.setTimeout(tryAttach, 250);
+        } else {
+          console.warn('[BottomBar] Failed to find target element after 30 attempts, fallback to scrollY');
+          // 타겟을 끝까지 찾지 못해도 scrollY 기준으로 동작하도록 리스너 부착
+          updateMode();
+          window.addEventListener("scroll", onScroll, { passive: true });
+          window.addEventListener("resize", onScroll);
         }
         return;
       }
 
+      console.log('[BottomBar] Target attached successfully!', target);
       updateMode();
       window.addEventListener("scroll", onScroll, { passive: true });
       window.addEventListener("resize", onScroll);

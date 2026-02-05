@@ -108,6 +108,9 @@ function InnerApp() {
           location.pathname.startsWith(path)
       );
 
+      const shouldHideNavbar = hideLayout;
+      const shouldShowFooter = !hideLayoutFooter;
+
       const hiddenLayoutsLogo = [
           "/vue-ai-interview/ai-interview/select",
           "/vue-ai-interview/ai-interview/form/",
@@ -143,7 +146,7 @@ function InnerApp() {
           </Helmet>
         )}
 
-        {!hideLayout && <NavigationBarApp />}
+        {!shouldHideNavbar && <NavigationBarApp />}
         {hiddenLayoutLogo && (
           <div className="fixed top-0 left-0 p-10 z-50">
             <img
@@ -181,7 +184,7 @@ function InnerApp() {
           />
         </Routes>
 
-        {!hideLayoutFooter && <Footer />}
+        {shouldShowFooter && <Footer />}
       </Suspense>
     );
   }
