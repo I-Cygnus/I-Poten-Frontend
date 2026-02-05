@@ -126,7 +126,7 @@ export default function SiteFooter() {
         <TopSection>
           <Nav>
             <NavLink to="/">i-poten</NavLink>
-            <NavLink to="/">이용약관</NavLink>
+            <NavLink to="/vue-account/account/terms-of-service">이용약관</NavLink>
             <NavLink to="/">개인정보 처리방침</NavLink>
             <NavLink to="/">제휴문의</NavLink>
           </Nav>
