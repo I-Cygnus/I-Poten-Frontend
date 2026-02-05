@@ -16,6 +16,9 @@ import logoDanggeun from "../assets/d1.png";
 import logoToss from "../assets/t2.png";
 import logoEncore from "../assets/e1.png";
 import logoKT from "../assets/3.png";
+import backFont from "../assets/Back-Font.png";
+import imageLogo from "../assets/logo.png";
+import imageLogo2 from "../assets/logo2.png";
 
 const BRAND = {
   blue: "#3b82f6",
@@ -29,23 +32,109 @@ const BRAND = {
   surfaceAlt: "#f8fafc",
 } as const;
 
+/* ========== 배경 원형 그라데이션 ========== */
+const BackgroundCirclesContainer = styled.div<{ $opacity?: number }>`
+  position: fixed;
+  top: 72px;
+  left: 0;
+  right: 0;
+  height: calc(100vh - 72px);
+  pointer-events: none;
+  z-index: 999;
+  overflow: visible;
+  opacity: ${({ $opacity }) => $opacity ?? 1};
+  transition: opacity 0.3s ease;
+`;
+
+const BackgroundCircle = styled.div<{ 
+  $size: number; 
+  $top: string; 
+  $left: string; 
+  $color: string;
+  $blur?: number;
+}>`
+  position: absolute;
+  width: ${props => props.$size}px;
+  height: ${props => props.$size}px;
+  top: ${props => props.$top};
+  left: ${props => props.$left};
+  background: ${props => props.$color};
+  border-radius: 50%;
+  filter: blur(${props => props.$blur || 80}px);
+  opacity: 0.6;
+  transform: translate(-50%, -50%);
+  
+  @media (max-width: 768px) {
+    width: ${props => props.$size * 0.6}px;
+    height: ${props => props.$size * 0.6}px;
+    filter: blur(${props => (props.$blur || 80) * 0.7}px);
+  }
+`;
+
+/* ========== 배경 레이어 (poten-word 스타일) ========== */
+const SoftBg = styled.div`
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+
+    background:
+            radial-gradient(
+                    900px 900px at 20% 60%,
+                    rgba(211, 228, 253, 0.55) 0%,
+                    rgba(211, 228, 253, 0.30) 40%,
+                    rgba(211, 228, 253, 0.15) 60%,
+                    rgba(211, 228, 253, 0.05) 80%,
+                    transparent 100%
+            ),
+            radial-gradient(
+                    900px 900px at 80% 55%,
+                    rgba(213, 247, 239, 0.55) 0%,
+                    rgba(213, 247, 239, 0.30) 40%,
+                    rgba(213, 247, 239, 0.15) 60%,
+                    rgba(213, 247, 239, 0.05) 80%,
+                    transparent 100%
+            ),
+            #ffffff;
+
+    @media (max-width: 640px) {
+        background:
+                radial-gradient(
+                        600px 600px at 30% 70%,
+                        rgba(211, 228, 253, 0.50) 0%,
+                        rgba(211, 228, 253, 0.20) 50%,
+                        transparent 100%
+                ),
+                radial-gradient(
+                        600px 600px at 80% 50%,
+                        rgba(213, 247, 239, 0.50) 0%,
+                        rgba(213, 247, 239, 0.20) 50%,
+                        transparent 100%
+                ),
+                #ffffff;
+    }
+`;
+
 /* ========== 공통 레이아웃 ========== */
 const Page = styled.main`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 60px 20px 0px;
-  background: linear-gradient(180deg, #ffffff 0%, #f0f9ff 40%, #e0f2fe 100%);
+  padding: 0;
+  background: transparent;
   position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
   
-  @media (max-width: 768px) {
-    padding: 40px 16px 0px;
+  & > section {
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
   }
   
-  :root[data-theme="dark"] & {
-    background: linear-gradient(180deg, #1e293b 0%, #0f1f3a 40%, #0c2340 100%);
+  @media (max-width: 768px) {
+    padding: 0;
   }
 
   [data-reveal] {
@@ -119,15 +208,18 @@ const ScheduleWideInner = styled.div`
 `;
 
 const ProgressSection = styled.section`
-  max-width: 1100px;
   width: 100%;
-  max-height: 1900px;
-  height: 100%;
-  margin: 10px auto 0;
-  padding: 96px 20px 140px;
+  margin-top: 308px;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
   text-align: center;
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
 
   &::after {
     content: "";
@@ -157,7 +249,8 @@ const ProgressSection = styled.section`
   }
 
   @media (max-width: 768px) {
-    padding: 72px 16px 110px;
+    min-height: 100vh;
+    padding: 40px 16px;
   }
 `;
 
@@ -220,13 +313,20 @@ const ProgressDescription = styled.p`
 `;
 
 const FaqSection = styled.section`
-  max-width: 980px;
   width: 100%;
-  margin: clamp(80px, 12vw, 180px) auto;
-  padding: 40px 20px 80px;
+  min-height: 100vh;
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
-    padding: 30px 16px 70px;
+    min-height: 100vh;
+    padding: 40px 16px;
   }
 `;
 
@@ -314,15 +414,22 @@ const FaqAnswer = styled.div`
 `;
 
 const ShowcaseSection = styled.section`
-  max-width: 1200px;
   width: 100%;
-  margin: 50px auto;
-  padding: 0px 20px 120px;
+  min-height: 100vh;
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
-    padding: 80px 16px 90px;
+    min-height: 100vh;
+    padding: 40px 16px;
   }
 `;
 
@@ -555,15 +662,22 @@ const ScheduleListInner = styled.div`
 `;
 
 const InsightsSection = styled.section`
-  max-width: 1100px;
   width: 100%;
-  margin: clamp(60px, 10vw, 120px) auto;
-  padding: 120px 20px 60px;
+  min-height: 100vh;
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
 
   @media (max-width: 768px) {
-    padding: 90px 16px 50px;
+    min-height: 100vh;
+    padding: 40px 16px;
   }
 `;
 
@@ -1235,28 +1349,21 @@ const BackgroundTextContainer = styled.div`
   width: 100%;
   transform: translateY(-50%);
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
   overflow: hidden;
 `;
 
 const BackgroundText = styled.div<{ $isVisible: boolean }>`
   display: flex;
+  align-items: center;
   white-space: nowrap;
-  font-size: clamp(70px, 10vw, 120px);
-  font-weight: 900;
-  color: rgba(200, 230, 255, 0.35);
-  letter-spacing: 0.1em;
   opacity: ${props => props.$isVisible ? 1 : 0};
   transition: opacity 0.3s ease;
   animation: scrollLeft 30s linear infinite;
+  will-change: transform;
   
   @media (max-width: 640px) {
-    font-size: 60px;
-    opacity: ${props => props.$isVisible ? 0.5 : 0};
-  }
-  
-  :root[data-theme="dark"] & {
-    color: rgba(30, 60, 100, 0.4);
+    opacity: ${props => props.$isVisible ? 0.8 : 0};
   }
 
   @keyframes scrollLeft {
@@ -1269,44 +1376,134 @@ const BackgroundText = styled.div<{ $isVisible: boolean }>`
   }
 `;
 
-/* ====== 히어로 섹션 ====== */
-const HeroSection = styled.section`
-  max-width: 900px;
-  width: 100%;
-  text-align: center;
-  position: relative;
-  z-index: 1;
-  margin-top: 35px;
-  margin-bottom: 100px;
-  padding: 0 20px;
-
-  @media (max-width: 768px) {
-    margin-top: 20px;
-    margin-bottom: 60px;
-    padding: 0 16px;
+const BackgroundImage = styled.img`
+  height: clamp(100px, 15vw, 110px);
+  width: auto;
+  display: inline-block;
+  opacity: 1;
+  margin-top: 40px;
+  margin-right: 30px;
+  flex-shrink: 0;
+  
+  @media (max-width: 640px) {
+    height: 80px;
+    margin-right: 12px;
   }
 `;
 
-const MainTitle = styled.h1`
-  font-size: clamp(36px, 7vw, 50px);
-  font-weight: 900;
-  letter-spacing: -0.04em;
-  line-height: 1.25;
-  margin-bottom: 28px;
-  word-break: keep-all;
-  color: #0f172a;
+
+const ImgBOX = styled.div`
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+`;
+
+
+const ImageLogo = styled.img`
+  height: 370px;
+  width: auto;
+  display: inline-block;
+  opacity: 1;
+  flex-shrink: 0;
   
   @media (max-width: 640px) {
-    font-size: clamp(28px, 8vw, 36px);
-    line-height: 1.3;
-    margin-bottom: 20px;
-    animation: fadeInUp 0.8s ease-out;
+    height: 80px;
+    margin-right: 12px;
   }
+`;
+
+const ImageLogo2 = styled.img`
+  height: 100px;
+  width: auto;
+  opacity: 0;
+  flex-shrink: 0;
+  animation: fadeInBounce 1s ease-out forwards;
+  animation-delay: 1.3s;
+  
+  @keyframes fadeInBounce {
+    0% {
+      opacity: 0;
+      transform: translateY(30px) scale(0.9);
+    }
+    60% {
+      opacity: 1;
+      transform: translateY(-10px) scale(1.05);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  @media (max-width: 768px) {
+    height: 60px;
+  }
+`;
+
+
+
+/* ====== 히어로 섹션 ====== */
+const HeroSection = styled.section`
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  padding: 0 20px;
+  padding-bottom: 360px;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    min-height: 100vh;
+    padding: 0 16px;
+    padding-bottom: 100px;
+  }
+`;
+
+// const MainTitle = styled.span`
+//   font-size: 40px;
+//   font-weight: 900;
+//   letter-spacing: -0.045em;
+//   line-height: 1;
+//   display: inline-block;
+//   transform: scaleX(0.97);
+// `;
+
+const MainTitle = styled.h1`
+  margin: 0 0 6px;
+  font-size: clamp(44px, 6vw, 78px);
+  font-weight: 700;
+  color: #404040;
+  letter-spacing: -0.02em;
+`;
+
+const SearchTitle = styled.h2`
+    margin: 0 0 8px;
+    font-size: 28px;
+    margin-bottom: 48px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+`;
+
+const SearchTitle3 = styled.div`
+  font-size: 140px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+  opacity: 0;
+  animation: fadeInUp 1.2s ease-out forwards;
+  animation-delay: 0.3s;
   
   @keyframes fadeInUp {
     from {
       opacity: 0;
-      transform: translateY(20px);
+      transform: translateY(40px);
     }
     to {
       opacity: 1;
@@ -1314,10 +1511,77 @@ const MainTitle = styled.h1`
     }
   }
   
-  :root[data-theme="dark"] & {
-    color: #f8fafc;
+  @media (max-width: 768px) {
+    font-size: 60px;
   }
 `;
+const SearchTitle4 = styled.div`
+  font-size: 90px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -0.02em;
+  margin-bottom: 60px;
+  opacity: 0;
+  animation: fadeInScale 1s ease-out forwards;
+  animation-delay: 0.8s;
+  background-size: 200% 200%;
+  animation: fadeInScale 1s ease-out forwards, gradientShift 3s ease infinite;
+  animation-delay: 0.8s, 1.8s;
+  
+  @keyframes fadeInScale {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+  
+  @keyframes gradientShift {
+    0%, 100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 40px;
+  }
+`;
+
+
+const SearchTitle2 = styled.h2<{ $isVisible?: boolean }>`
+    margin: 0 0 8px;
+    font-size: 48px;
+    font-weight: 800;
+    margin-top: 400px;
+    margin-bottom: 350px;
+    
+    letter-spacing: -0.02em;
+    color: #0f172a;
+    font-family: Freesentation, sans-serif;
+    overflow-wrap: break-word;
+    word-break: keep-all;
+    
+    opacity: ${props => props.$isVisible ? 1 : 0.2};
+    transform: translateY(${props => props.$isVisible ? '0' : '30px'});
+    filter: blur(${props => props.$isVisible ? '0px' : '8px'});
+    transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    @media (max-width: 768px) {
+      font-size: 28px;
+      font-weight: 700;
+    }
+`;
+
+
 
 const Highlight = styled.span`
   background: ${BRAND.blue};
@@ -1341,6 +1605,8 @@ const Highlight2 = styled.span`
   text-decoration-color: rgba(59, 130, 246, 0.3);
   text-decoration-thickness: 4px;
   text-underline-offset: 6px;
+
+
 `;
 
 const Subtitle = styled.p`
@@ -1382,15 +1648,16 @@ const PrimaryButton = styled.a`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 5px;
   padding: 16px 36px;
-  font-size: 16px;
+  font-size: 30px;
   font-weight: 700;
   color: #fff;
+  height: 60px;
   background: linear-gradient(90deg, ${BRAND.blue} 0%, ${BRAND.greenDeep} 100%);
   //background-color: #21A3AE ;
   border: none;
-  border-radius: 8px;
+  border-radius: 40px;
   text-decoration: none;
   cursor: pointer;
   transition: all 0.3s ease;
@@ -1538,20 +1805,24 @@ const ScrollTopButton = styled(FloatingButton)`
 
 /* ====== 서비스 카드 섹션 ====== */
 const ServiceSection = styled.section`
-  max-width: 1200px;
   width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   position: relative;
   z-index: 1;
-  margin-top: 300px;
-  padding: 0 20px 300px;
+  padding: 60px 20px;
+  box-sizing: border-box;
   
   @media (max-width: 768px) {
-    margin-top: 150px;
-    padding: 0 20px 150px;
+    min-height: 100vh;
+    padding: 40px 20px;
   }
   
   @media (max-width: 640px) {
-    padding: 0 16px 120px;
+    padding: 40px 16px;
   }
   
   &::after {
@@ -1799,27 +2070,27 @@ type ServiceCardItem = {
 const SERVICE_CARDS: ServiceCardItem[] = [
   {
     label: "Lecture Room",
-    title: "강의실",
+    title: "공부",
     icon: "✏️",
   },
   {
     label: "Treatment Room",
-    title: "진료실",
+    title: "시험",
     icon: "💉",
   },
   {
     label: "Conference Room",
-    title: "회의실",
+    title: "면접 연습",
     icon: "💬",
   },
   {
     label: "Waiting Room",
-    title: "대기실",
+    title: "모의 면접",
     icon: "🛋️",
   },
   {
     label: "Consultation Room",
-    title: "상담실",
+    title: "복기",
     icon: "�",
   },
 ];
@@ -1838,16 +2109,23 @@ const WhiteBackground = styled.div`
 
 
 const PracticeSection = styled.section`
-  max-width: 1200px;
   width: 100%;
+  min-height: 100vh;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 170px 20px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
   text-align: center;
   position: relative;
   z-index: 1;
+  box-sizing: border-box;
   
   @media (max-width: 768px) {
-    padding: 80px 16px 10px;
+    min-height: 100vh;
+    padding: 40px 16px;
   }
 `;
 
@@ -2462,6 +2740,323 @@ const Companies = styled.div`
   }
 `;
 
+/* ========== COREVALUE 섹션 ========== */
+const CoreValueSection = styled.section`
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  background: #ffffff;
+  box-sizing: border-box;
+  
+  @media (max-width: 768px) {
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+`;
+
+const CoreValueHeader = styled.div`
+  text-align: center;
+  margin-bottom: 50px;
+`;
+
+const CoreValueLabel = styled.span`
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: #3b82f6;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+`;
+
+const CoreValueTitle = styled.h2`
+  font-size: clamp(28px, 3.8vw, 40px);
+  font-weight: 800;
+  color: #111827;
+  line-height: 1.5;
+  margin: 0;
+  
+  span {
+    color: #2563eb;
+  }
+`;
+
+const CoreValueGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+`;
+
+const CoreValueCard = styled.div`
+  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 20px;
+  padding: 40px 28px 36px;
+  text-align: center;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(59, 130, 246, 0.1);
+  }
+`;
+
+const CoreValueIcon = styled.div`
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const CoreValueCardTitle = styled.h3`
+  font-size: 17px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 12px;
+  line-height: 1.5;
+`;
+
+const CoreValueCardDesc = styled.p`
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.8;
+  margin: 0;
+`;
+
+/* ========== GROWTH 섹션 ========== */
+const GrowthSection = styled.section`
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  background: #ffffff;
+  box-sizing: border-box;
+  
+  @media (max-width: 768px) {
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+`;
+
+const GrowthHeader = styled.div`
+  margin-bottom: 60px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+`;
+
+const GrowthLabel = styled.span`
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+`;
+
+const GrowthTitle = styled.h2`
+  font-size: clamp(26px, 3.5vw, 38px);
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.4;
+  margin: 0;
+  
+  span {
+    color: #3b82f6;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 2px;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #3b82f6;
+      border-style: dashed;
+      opacity: 0.6;
+    }
+  }
+`;
+
+const GrowthTimeline = styled.div`
+  display: flex;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  align-items: flex-start;
+  
+  @media (max-width: 900px) {
+    flex-direction: column;
+    gap: 20px;
+  }
+`;
+
+const GrowthCard = styled.div<{ $offset?: number }>`
+  flex: 1;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 28px 24px;
+  margin-top: ${({ $offset }) => $offset || 0}px;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+  }
+  
+  @media (max-width: 900px) {
+    margin-top: 0;
+  }
+`;
+
+const GrowthCardYear = styled.span`
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3b82f6;
+  margin-bottom: 10px;
+`;
+
+const GrowthCardTitle = styled.h3`
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 0 0 10px;
+  line-height: 1.4;
+`;
+
+const GrowthCardDesc = styled.p`
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.7;
+  margin: 0;
+`;
+
+/* ========== 스크롤 인터랙티브 섹션 ========== */
+const ScrollSectionsWrapper = styled.div`
+  position: relative;
+  width: 100%;
+`;
+
+const ScrollSectionWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  height: 200vh;
+`;
+
+const ScrollSection = styled.section<{ $bgColor: string; $zIndex: number }>`
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 40px;
+  background: ${props => props.$bgColor};
+  position: sticky;
+  top: 0;
+  z-index: ${props => props.$zIndex};
+  
+  @media (max-width: 768px) {
+    padding: 60px 20px;
+    height: 100vh;
+  }
+`;
+
+const ScrollContainer = styled.div`
+  max-width: 1400px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+`;
+
+const ScrollTextContent = styled.div`
+  @media (max-width: 900px) {
+    order: 1;
+  }
+`;
+
+const ScrollLabel = styled.div`
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  opacity: 0.7;
+`;
+
+const ScrollTitle = styled.h2`
+  font-size: clamp(32px, 5vw, 56px);
+  font-weight: 900;
+  line-height: 1.2;
+  margin: 0 0 24px;
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+`;
+
+const ScrollDescription = styled.p`
+  font-size: clamp(16px, 2vw, 18px);
+  line-height: 1.7;
+  margin: 0;
+  opacity: 0.8;
+  word-break: keep-all;
+`;
+
+const ScrollImageBox = styled.div`
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  @media (max-width: 900px) {
+    order: 0;
+    aspect-ratio: 16 / 9;
+  }
+`;
+
+const ScrollImagePlaceholder = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 600;
+  opacity: 0.5;
+  background: linear-gradient(135deg, rgba(255,255,255,0.2), rgba(255,255,255,0.1));
+`;
+
 const LogoSlider = styled.div`
   overflow: hidden;
   width: 100%;
@@ -2597,6 +3192,9 @@ export default function Main() {
   const [featureVisibility, setFeatureVisibility] = useState([false, false, false, false]);
   const [progressValue, setProgressValue] = useState(0);
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
+  const [circlesOpacity, setCirclesOpacity] = useState(1);
+  const [isSearchTitle2Visible, setIsSearchTitle2Visible] = useState(false);
+  const [shouldHideNavbar, setShouldHideNavbar] = useState(false);
 
   const revealStyle = (delayMs: number) =>
     ({ ["--reveal-delay" as any]: `${delayMs}ms` } as React.CSSProperties);
@@ -2782,53 +3380,93 @@ export default function Main() {
     };
 
     const handleScroll = () => {
+      // 배경 원들 페이드아웃 - 스크롤 위치에 따라
+      const scrollY = window.scrollY;
+      const fadeStart = 200; // 페이드 시작 스크롤 위치
+      const fadeEnd = 600; // 페이드 완료 스크롤 위치
+      const newOpacity = Math.max(0, 1 - (scrollY - fadeStart) / (fadeEnd - fadeStart));
+      setCirclesOpacity(scrollY < fadeStart ? 1 : newOpacity);
+
+      // SearchTitle2 스크롤 애니메이션 및 navbar/footer 토글
+      const searchTitle2 = document.querySelector('[data-search-title2]');
+      if (searchTitle2) {
+        const rect = searchTitle2.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        // 요소가 화면 중간 정도에 도달하면 애니메이션 시작
+        const triggerPoint = windowHeight * 0.65;
+        setIsSearchTitle2Visible(rect.top < triggerPoint);
+        
+        // SearchTitle2가 화면 상단을 지나가면 navbar 숨기고 footer 표시
+        const shouldHide = rect.top < 0;
+        setShouldHideNavbar(shouldHide);
+        
+        // navbar와 footer 토글을 위한 이벤트 발생
+        if (shouldHide) {
+          window.dispatchEvent(new CustomEvent('hideNavbar', { detail: { hide: true } }));
+        } else {
+          window.dispatchEvent(new CustomEvent('hideNavbar', { detail: { hide: false } }));
+        }
+      }
+
+      // 프로그레스 섹션(AI 모의 면접 피드백) 관련 처리
+      const progressSection = progressSectionRef.current;
+      let progressRect: DOMRect | null = null;
+      
+      if (progressSection) {
+        progressRect = progressSection.getBoundingClientRect();
+        // 프로그레스 섹션이 화면 하단 70% 위치에 도달하면 배경 글자 숨김
+        setIsBackgroundVisible(progressRect.top > window.innerHeight * 0.7);
+      }
+
       const serviceSectionTitle = document.querySelector('[data-service-title]');
       if (serviceSectionTitle) {
-        const rect = serviceSectionTitle.getBoundingClientRect();
-        // 타이틀이 화면 상단 100px 이내에 들어오면 배경 글자 숨김
-        setIsBackgroundVisible(rect.top > 100);
+        const titleRect = serviceSectionTitle.getBoundingClientRect();
+        // 서비스 타이틀이 화면 상단 100px 이내에 들어오면 배경 글자 숨김 (기존 로직 유지)
+        if (titleRect.top <= 100) {
+          setIsBackgroundVisible(false);
+        }
       }
 
       // 카드 애니메이션 트리거 (반복 가능)
       const serviceGrid = document.querySelector('[data-service-grid]');
       if (serviceGrid) {
-        const rect = serviceGrid.getBoundingClientRect();
+        const gridRect = serviceGrid.getBoundingClientRect();
         // 그리드가 화면에 보이면 카드 표시, 벗어나면 숨김
-        if (rect.top < window.innerHeight * 0.7 && rect.bottom > window.innerHeight * 0.2) {
+        if (gridRect.top < window.innerHeight * 0.7 && gridRect.bottom > window.innerHeight * 0.2) {
           setAreCardsVisible(true);
         } else {
           setAreCardsVisible(false);
         }
       }
 
-      const progressEl = progressSectionRef.current;
+      // 프로그레스 섹션 스크롤 락 로직
       if (
-        progressEl &&
+        progressSection &&
+        progressRect &&
         !isProgressPinnedRef.current &&
         !isSnappingRef.current &&
         Date.now() > pinCooldownUntilRef.current
       ) {
-        const rect = progressEl.getBoundingClientRect();
         const vh = window.innerHeight;
         const NAV_HEIGHT = 0;
 
         if (progressCompletedOnceRef.current) {
-          const isOutOfView = rect.bottom < 0 || rect.top > vh;
+          const isOutOfView = progressRect.bottom < 0 || progressRect.top > vh;
           if (isOutOfView) {
             progressCompletedOnceRef.current = false;
           }
         }
 
-        const crossedTopLineDown = lastProgressTopRef.current > NAV_HEIGHT && rect.top <= NAV_HEIGHT;
-        const topLineInRange = rect.bottom > NAV_HEIGHT;
+        const crossedTopLineDown = lastProgressTopRef.current > NAV_HEIGHT && progressRect.top <= NAV_HEIGHT;
+        const topLineInRange = progressRect.bottom > NAV_HEIGHT;
         const scrollingDown = window.scrollY > lastScrollYRef.current;
 
         if (crossedTopLineDown && topLineInRange && scrollingDown && !progressCompletedOnceRef.current) {
-          const targetScrollY = window.scrollY + (rect.top - NAV_HEIGHT);
+          const targetScrollY = window.scrollY + (progressRect.top - NAV_HEIGHT);
           lockProgressScroll(targetScrollY);
         }
 
-        lastProgressTopRef.current = rect.top;
+        lastProgressTopRef.current = progressRect.top;
       }
 
       lastScrollYRef.current = window.scrollY;
@@ -2877,29 +3515,47 @@ export default function Main() {
 
   return (
     <Page>
+      <SoftBg />
       <BackgroundTextContainer>
         <BackgroundText $isVisible={isBackgroundVisible}>
-          <span>I-Poten · I-Poten · I-Poten · I-Poten · I-Poten · I-Poten · </span>
-          <span>I-Poten · I-Poten · I-Poten · I-Poten · I-Poten · I-Poten · </span>
+          <BackgroundImage src={backFont} alt="" />
+          <BackgroundImage src={backFont} alt="" />
+          <BackgroundImage src={backFont} alt="" />
+          <BackgroundImage src={backFont} alt="" />
+          <BackgroundImage src={backFont} alt="" />
+          <BackgroundImage src={backFont} alt="" />
+          <BackgroundImage src={backFont} alt="" />
+          <BackgroundImage src={backFont} alt="" />
         </BackgroundText>
       </BackgroundTextContainer>
       <HeroSection>
         <MainTitle>
-          AI로 검증하는 <Highlight>면접솔루션</Highlight>,
-          {/*<br />*/}
-          {/*잡스푼*/}
-          <br />
-          <Highlight2>I-Poten</Highlight2>
+          <ImgBOX>
+            {/*<ImageLogo src={imageLogo}></ImageLogo>*/}
+
+            <SearchTitle3 align="center">Show your potential <br/>  <SearchTitle4 align="center"> With</SearchTitle4></SearchTitle3>
+            {/*<SearchTitle4 align="center"> with</SearchTitle4>*/}
+            <ImageLogo2 src={imageLogo2}></ImageLogo2>
+
+          </ImgBOX>
+
+          {/*<SearchTitle align="center">Show your potential with i-Poten</SearchTitle>*/}
+
+          {/*I-Poten*/}
+          {/*아이포텐*/}
         </MainTitle>
-        <Subtitle>
-          I-Poten과 함께, 더 똑똑하고 효과적인 면접을 경험하세요
-          <br />
-          면접 AI 함께 가나다라 마바사
-        </Subtitle>
+        {/*<SearchTitle align="center">면접으로 시작해 더욱 다양한 가치를 만드는데 함께 하세요</SearchTitle>*/}
+        {/*<SearchTitle align="center">면접으로 시작해 더욱 다양한 가치를 만드는데 함께 하세요</SearchTitle>*/}
+        {/*<SearchTitle align="center">아이포텐</SearchTitle>*/}
+        {/*<Subtitle>*/}
+        {/*  I-Poten과 함께, 더 똑똑하고 효과적인 면접을 경험하세요*/}
+        {/*  <br />*/}
+        {/*  면접 AI 함께 가나다라 마바사*/}
+        {/*</Subtitle>*/}
         <ButtonGroup>
-          <PrimaryButton href="#start">
-            AI 면접 시작하기 →
-          </PrimaryButton>
+          {/*<PrimaryButton href="#start">*/}
+          {/*  시작*/}
+          {/*</PrimaryButton>*/}
           {/*<SecondaryButton href="#free">*/}
           {/*  무료 체험*/}
           {/*</SecondaryButton>*/}
@@ -2909,36 +3565,42 @@ export default function Main() {
         </ButtonGroup>
       </HeroSection>
 
-      <ServiceSection>
-        <ServiceTitle data-service-title data-reveal style={revealStyle(0)}>
-          <Highlight>취업 준비</Highlight>, 어디까지 해보셨나요?
-        </ServiceTitle>
-        <ServiceSubtitle data-reveal style={revealStyle(120)}>
-          ↓ 잡스푼은 다양한 방향의 취업 준비 솔루션을 제공합니다
-        </ServiceSubtitle>
+
+      <SearchTitle2 data-search-title2 $isVisible={isSearchTitle2Visible} style={{ textAlign: 'center' }}>
+        면접으로 시작해 더욱 다양한 가치를  <br/>
+        면접으로 시작해 더욱 다양한 가치를 만드는데 함께 하세요
+      </SearchTitle2>
+
+      {/*<ServiceSection>*/}
+        {/*<ServiceTitle data-service-title data-reveal style={revealStyle(0)}>*/}
+        {/*  <Highlight>취업 준비</Highlight>, 어디까지 해보셨나요?*/}
+        {/*</ServiceTitle>*/}
+        {/*<ServiceSubtitle data-reveal style={revealStyle(120)}>*/}
+        {/*  ↓ 잡스푼은 다양한 방향의 취업 준비 솔루션을 제공합니다*/}
+        {/*</ServiceSubtitle>*/}
         
-        <ServiceGrid data-service-grid>
-          {SERVICE_CARDS.map((card, index) => {
-            const rotations = [-12, -6, 0, 6, 12];
-            const zIndexes = [1, 2, 3, 2, 1];
-            const delays = ["0s", "0.06s", "0.12s", "0.18s", "0.24s"];
-            return (
-              <ServiceCard
-                key={card.title}
-                $rotation={rotations[index] ?? 0}
-                $zIndex={zIndexes[index] ?? 1}
-                $translateX={0}
-                $isVisible={areCardsVisible}
-                style={{ transitionDelay: delays[index] ?? "0s" }}
-              >
-                <CardLabel>{card.label}</CardLabel>
-                <CardTitle>{card.title}</CardTitle>
-                <CardIcon aria-hidden>{card.icon}</CardIcon>
-              </ServiceCard>
-            );
-          })}
-        </ServiceGrid>
-      </ServiceSection>
+      {/*  <ServiceGrid data-service-grid>*/}
+      {/*    {SERVICE_CARDS.map((card, index) => {*/}
+      {/*      const rotations = [-12, -6, 0, 6, 12];*/}
+      {/*      const zIndexes = [1, 2, 3, 2, 1];*/}
+      {/*      const delays = ["0s", "0.06s", "0.12s", "0.18s", "0.24s"];*/}
+      {/*      return (*/}
+      {/*        <ServiceCard*/}
+      {/*          key={card.title}*/}
+      {/*          $rotation={rotations[index] ?? 0}*/}
+      {/*          $zIndex={zIndexes[index] ?? 1}*/}
+      {/*          $translateX={0}*/}
+      {/*          $isVisible={areCardsVisible}*/}
+      {/*          style={{ transitionDelay: delays[index] ?? "0s" }}*/}
+      {/*        >*/}
+      {/*          <CardLabel>{card.label}</CardLabel>*/}
+      {/*          <CardTitle>{card.title}</CardTitle>*/}
+      {/*          <CardIcon aria-hidden>{card.icon}</CardIcon>*/}
+      {/*        </ServiceCard>*/}
+      {/*      );*/}
+      {/*    })}*/}
+      {/*  </ServiceGrid>*/}
+      {/*</ServiceSection>*/}
 
       <ProgressSection data-progress-section ref={progressSectionRef}>
         <ProgressKicker data-reveal style={revealStyle(0)}>I-POTEN FLOW</ProgressKicker>
@@ -2978,6 +3640,217 @@ export default function Main() {
           <ProgressBottomDescription>{activeStep.description}</ProgressBottomDescription>
         </ProgressBottomSlot>
       </ProgressSection>
+
+      <CoreValueSection>
+        <CoreValueHeader data-reveal style={revealStyle(0)}>
+          <CoreValueLabel>COREVALUE</CoreValueLabel>
+          <CoreValueTitle>
+            합격을 넘어,
+            나만의 Identity를 완성하는<br />
+            면접 준비의 <span>핵심</span>을 제공합니다.
+          </CoreValueTitle>
+        </CoreValueHeader>
+
+        <CoreValueGrid>
+          <CoreValueCard data-reveal style={revealStyle(100)}>
+            <CoreValueIcon>
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                <path d="M32 56C32 56 8 40 8 24C8 12 18 4 32 16C46 4 56 12 56 24C56 40 32 56 32 56Z" fill="url(#heart-gradient)" />
+                <defs>
+                  <linearGradient id="heart-gradient" x1="8" y1="4" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+                    <stop stopColor="#60a5fa" />
+                    <stop offset="1" stopColor="#3b82f6" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </CoreValueIcon>
+            <CoreValueCardTitle>
+              정답을 외우는 면접은 끝났다<br />
+              나만의 Identity로 증명하는 면접
+            </CoreValueCardTitle>
+            <CoreValueCardDesc>
+              면접 면접 면접 면접 면접 면접
+              <br />
+              면접 면접 면접 면접 면접 면접
+              <br />
+              존재 이유죠.
+            </CoreValueCardDesc>
+          </CoreValueCard>
+
+          <CoreValueCard data-reveal style={revealStyle(200)}>
+            <CoreValueIcon>
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                <circle cx="32" cy="32" r="24" fill="#3b82f6" />
+                <path d="M32 16V32M32 32L24 40M32 32L40 40M32 32V48" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="32" cy="12" r="4" fill="white" />
+              </svg>
+            </CoreValueIcon>
+            <CoreValueCardTitle>
+              왜 떨어졌는지 모르는 면접은 그만
+              <br />
+              연습을 넘어 면접을 주도하는
+            </CoreValueCardTitle>
+            <CoreValueCardDesc>
+              면접 면접 면접 면접 면접 면접
+              <br />
+              면접 면접 면접 면접 면접 면접
+              <br />
+              면접 면접 면접 면접 면접 면접
+            </CoreValueCardDesc>
+          </CoreValueCard>
+
+          <CoreValueCard data-reveal style={revealStyle(300)}>
+            <CoreValueIcon>
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+                <circle cx="32" cy="32" r="24" stroke="#3b82f6" strokeWidth="4" fill="none" />
+                <circle cx="32" cy="32" r="16" stroke="#3b82f6" strokeWidth="3" fill="none" />
+                <circle cx="32" cy="32" r="6" fill="#3b82f6" />
+                <path d="M48 16L56 8M56 8H48M56 8V16" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </CoreValueIcon>
+            <CoreValueCardTitle>
+              합격하기 위한 면접을 넘어
+              <br />
+              합격할 수 밖에 없는 나를 만들어갑니다
+            </CoreValueCardTitle>
+            <CoreValueCardDesc>
+              면접 면접 면접 면접 면접 면접
+              <br />
+              면접 면접 면접 면접 면접 면접
+              <br />
+              면접 면접 면접 면접 면접 면접
+            </CoreValueCardDesc>
+          </CoreValueCard>
+        </CoreValueGrid>
+      </CoreValueSection>
+
+      {/* GROWTH 섹션 */}
+      <GrowthSection>
+        <GrowthHeader data-reveal style={revealStyle(0)}>
+          <GrowthLabel>GROWTH</GrowthLabel>
+          <GrowthTitle>
+            면접의 경험과 준비는
+            <br />
+            함께 발전하며, <span>내가 걸어온 길</span> 의 증명 입니다
+          </GrowthTitle>
+        </GrowthHeader>
+
+        <GrowthTimeline>
+          <GrowthCard $offset={0} data-reveal style={revealStyle(100)}>
+            <GrowthCardYear>신입</GrowthCardYear>
+            <GrowthCardTitle>나를 잠채력과 성장 가치 </GrowthCardTitle>
+            <GrowthCardDesc>
+              노력과 성장 가능성을
+              <br />
+              어필하며 ,,,,,,
+            </GrowthCardDesc>
+          </GrowthCard>
+
+          <GrowthCard $offset={60} data-reveal style={revealStyle(200)}>
+            <GrowthCardYear>주니어</GrowthCardYear>
+            <GrowthCardTitle>
+              나의 노력과 경험을 어필하는
+              <br />
+              능력과 성장 ,,,,
+            </GrowthCardTitle>
+            <GrowthCardDesc>
+              호호호홓호호
+              <br />
+              호호호홓호호
+            </GrowthCardDesc>
+          </GrowthCard>
+
+          <GrowthCard $offset={120} data-reveal style={revealStyle(300)}>
+            <GrowthCardYear>시니어</GrowthCardYear>
+            <GrowthCardTitle>
+              나의 가치를 증명하고 어필하는
+              <br />
+              라라랄ㄹ랄
+            </GrowthCardTitle>
+            <GrowthCardDesc>
+              호호호홓호호
+              <br />
+              호호호홓호호
+            </GrowthCardDesc>
+          </GrowthCard>
+        </GrowthTimeline>
+      </GrowthSection>
+
+      {/* 스크롤 인터랙티브 섹션들 */}
+      <ScrollSectionsWrapper>
+        {/* 스크롤 인터랙티브 섹션 1 - 흰색 배경 */}
+        <ScrollSectionWrapper>
+          <ScrollSection $bgColor="#ffffff" $zIndex={1}>
+            <ScrollContainer>
+              <ScrollTextContent>
+                <ScrollLabel style={{ color: '#64748b' }}>Slogan</ScrollLabel>
+                <ScrollTitle style={{ color: '#0f172a' }}>
+                  EXPANDING<br />
+                  LEGACY,<br />
+                  EMPOWERING<br />
+                  TOMORROW
+                </ScrollTitle>
+                <ScrollDescription style={{ color: '#64748b' }}>
+                  축적된 기지에 새로운 더를<br />
+                  미래 산업을 향한<br />
+                  새로운 도전을 시작합니다.
+                </ScrollDescription>
+              </ScrollTextContent>
+              <ScrollImageBox>
+                <ScrollImagePlaceholder>이미지 영역 1</ScrollImagePlaceholder>
+              </ScrollImageBox>
+            </ScrollContainer>
+          </ScrollSection>
+        </ScrollSectionWrapper>
+
+        {/* 스크롤 인터랙티브 섹션 2 - 녹색 배경 */}
+        <ScrollSectionWrapper>
+          <ScrollSection $bgColor="#00ff88" $zIndex={2}>
+            <ScrollContainer>
+              <ScrollTextContent>
+                <ScrollLabel style={{ color: '#0a5940' }}>Heritage</ScrollLabel>
+                <ScrollTitle style={{ color: '#0f172a' }}>
+                  아이디어와 인사이트가<br />
+                  교차하는 곳에서<br />
+                  새로운 경험을
+                </ScrollTitle>
+                <ScrollDescription style={{ color: '#1e3a32' }}>
+                  사회가계층이 안나 새로운 가치를 만들고<br />
+                  변화와 성장을 선도하여<br />
+                  막막한 방향 잡기를 도와드립니다.
+                </ScrollDescription>
+              </ScrollTextContent>
+              <ScrollImageBox>
+                <ScrollImagePlaceholder>이미지 영역 2</ScrollImagePlaceholder>
+              </ScrollImageBox>
+            </ScrollContainer>
+          </ScrollSection>
+        </ScrollSectionWrapper>
+
+        {/* 스크롤 인터랙티브 섹션 3 - 보라색 배경 */}
+        <ScrollSectionWrapper>
+          <ScrollSection $bgColor="#7c3aed" $zIndex={3}>
+            <ScrollContainer>
+              <ScrollTextContent>
+                <ScrollLabel style={{ color: '#e9d5ff' }}>Vision</ScrollLabel>
+                <ScrollTitle style={{ color: '#ffffff' }}>
+                  사람과 기업,<br />
+                  사회를 연결하는<br />
+                  글로벌 브랜드
+                </ScrollTitle>
+                <ScrollDescription style={{ color: '#e9d5ff' }}>
+                  더 나은 내일을 위한 혁신을 추구하며<br />
+                  지속 가능한 성장을 실현하는<br />
+                  글로벌 리더로 자리매김합니다.
+                </ScrollDescription>
+              </ScrollTextContent>
+              <ScrollImageBox>
+                <ScrollImagePlaceholder>이미지 영역 3</ScrollImagePlaceholder>
+              </ScrollImageBox>
+            </ScrollContainer>
+          </ScrollSection>
+        </ScrollSectionWrapper>
+      </ScrollSectionsWrapper>
       <LightShowcaseBand>
         <ShowcaseSection>
           <ShowcaseGrid>
@@ -3000,7 +3873,7 @@ export default function Main() {
               </ShowcaseOverlayFrame>
             </ShowcaseVisual>
 
-            <ShowcaseContent data-reveal style={revealStyle(140)}>
+            <ShowcaseContent data-reveal style={revealStyle(100)}>
               <ShowcaseTitle>
                 빠르고
                 <br />
@@ -3017,6 +3890,9 @@ export default function Main() {
             </ShowcaseContent>
           </ShowcaseGrid>
         </ShowcaseSection>
+
+        {/* COREVALUE 섹션 */}
+
 
         <ScheduleShowcaseSection>
           <ScheduleShowcaseTitle data-reveal style={revealStyle(0)}>
