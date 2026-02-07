@@ -131,22 +131,22 @@ const Header = styled.header<{ $scrolled?: boolean; $hidden?: boolean }>`
   background: ${({ $scrolled }) => 
     $scrolled 
       ? "rgba(255, 255, 255, 0.95)" 
-      : "rgba(255, 255, 255, 0.7)"
+      : "transparent"
   };
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: ${({ $scrolled }) => $scrolled ? "blur(20px)" : "none"};
+  -webkit-backdrop-filter: ${({ $scrolled }) => $scrolled ? "blur(20px)" : "none"};
   color: #1a1a1a;
   border-bottom: ${({ $scrolled }) => 
-    $scrolled 
+    $scrolled
       ? "1px solid rgba(0, 0, 0, 0.08)" 
       : "1px solid transparent"
   };
   box-shadow: ${({ $scrolled }) => 
-    $scrolled 
+    $scrolled
       ? "0 2px 16px rgba(0, 0, 0, 0.04)" 
       : "none"
   };
-  transition: height 0.28s ease, opacity 0.28s ease, transform 0.28s ease, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition: height 0.28s ease, opacity 0.28s ease, transform 0.28s ease, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
   overflow: hidden;
   opacity: ${({ $hidden }) => ($hidden ? 0 : 1)};
   transform: ${({ $hidden }) => ($hidden ? "translateY(-100%)" : "translateY(0)")};
@@ -299,7 +299,7 @@ const LogoImg = styled.img`
   //width: clamp(70px, 6.458333vw, 300px);
   //height: clamp(40px, 3.680556vw, 200px);
   //margin-top: 15px;
-  width: 90px;
+  width: 150px;
   //height: 130px;
   height: auto;
   object-fit: contain;
@@ -394,6 +394,9 @@ const App: React.FC = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
     };
+
+    // 초기 로드 시 스크롤 위치 확인
+    handleScroll();
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);

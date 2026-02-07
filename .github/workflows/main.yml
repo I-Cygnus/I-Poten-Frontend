@@ -1,0 +1,69 @@
+name: Docker Build and Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Create .env files
+        run: |
+          echo "${{ secrets.MAIN_CONTAINER_ENV }}" > main-container/.env
+          echo "${{ secrets.ACCOUNT_ENV }}" > vue-account-app/.env
+          echo "${{ secrets.INTERVIEW_ENV }}" > vue-ai-interview-app/.env
+          echo "${{ secrets.MY_PAGE_ENV }}" > mypage-app/.env
+          echo "${{ secrets.POTEN_WORD_ENV }}" > poten-word-app/.env
+          echo "${{ secrets.NAVIGATION_BAR_ENV }}" > navigation-bar-app/.env
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+        with:
+          buildkitd-flags: --debug
+          driver: docker-container
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: i-cygnus
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Build and push Docker image (Multi-arch)
+        run: |
+          docker buildx create --use
+          docker buildx build \
+            --platform linux/amd64,linux/arm64 \
+            -t ghcr.io/i-cygnus/i-poten-frontend:latest \
+            --push \
+            .
+  
+  deploy:
+    needs: build
+    name: Deploy
+    runs-on: [ self-hosted, i-poten-front ]
+    steps:
+      - name: Deploy to production
+        run: |
+          cd /home/ec2-user/i-poten/frontend
+          # GitHub Container Registry 로그인
+          echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u i-cygnus --password-stdin
+          
+          # 기존 컨테이너 중지 및 삭제
+          docker stop i-poten-frontend-container || true
+          docker rm i-poten-frontend-container || true
+          
+          # 최신 이미지 가져오기
+          docker pull ghcr.io/i-cygnus/i-poten-frontend:latest
+          
+          # 새 컨테이너 실행
+          docker run -d -p 80:80 --name i-poten-frontend-container --network ipoten-net ghcr.io/i-cygnus/i-poten-frontend:latest
+          
+          # 사용하지 않는 이미지 정리
+          docker image prune -af
