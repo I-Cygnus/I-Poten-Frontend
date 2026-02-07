@@ -40,6 +40,10 @@ COPY packages/theme-bridge/package.json packages/theme-bridge/
 # -------------------------
 # 2. 의존성 설치 (Linux 환경 기준)
 # -------------------------
+# workspace:* 프로토콜을 npm 호환 형식으로 변경
+RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {} \;
+
+# 의존성 설치
 RUN npm install --no-audit --no-fund
 
 # -------------------------
