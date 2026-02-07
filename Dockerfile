@@ -4,11 +4,11 @@ WORKDIR /app
 
 COPY . .
 
-# workspace: 프로토콜을 npm이 이해할 수 있는 형태로 변환
+# workspace: 프로토콜 변환
 RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {} \;
 
-# 의존성 설치
-RUN npm install
+# package-lock.json 제거 후 설치
+RUN rm -f package-lock.json && npm install --legacy-peer-deps
 
 # 공통 패키지 빌드
 RUN npm -ws run build -w @jobspoon/theme-bridge -w @jobspoon/app-state
@@ -25,6 +25,7 @@ RUN rm -f /etc/nginx/conf.d/default.conf
 COPY --from=builder /app/main-container/dist /usr/share/nginx/html/html-container
 COPY --from=builder /app/mypage-app/dist /usr/share/nginx/html/mypage-app
 COPY --from=builder /app/navigation-bar-app/dist /usr/share/nginx/html/navigation-bar-app
+COPY --from=builder /app/studyroom-app/dist /usr/share/nginx/html/studyroom-app
 COPY --from=builder /app/vue-account-app/dist /usr/share/nginx/html/vue-account-app
 COPY --from=builder /app/vue-ai-interview-app/dist /usr/share/nginx/html/vue-ai-interview-app
 COPY --from=builder /app/poten-word-app/dist /usr/share/nginx/html/spoon-word-app
