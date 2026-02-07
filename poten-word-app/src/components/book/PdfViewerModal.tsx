@@ -2,6 +2,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styled from "styled-components";
+import * as pdfjsLib from "pdfjs-dist";
+import workerSrc from "pdfjs-dist/build/pdf.worker.min.js?url";
+(pdfjsLib as any).GlobalWorkerOptions.workerSrc = workerSrc;
 
 /* ========= 스타일 ========= */
 const Backdrop = styled.div`
@@ -152,16 +155,21 @@ const Hud = styled.div`
 `;
 
 /* ========= 타입 ========= */
-type Props = { open: boolean; title?: string; src?: string; onClose: () => void };
+type Props = {
+    open: boolean;
+    title?: string;
+    src?: string;
+    assetOrigin?: string;
+    onClose: () => void;
+};
 
-/* ========= 오리진 유틸 ========= */
-function isHttpOrigin(x: string | null | undefined) {
-    return !!x && /^https?:\/\//i.test(x);
+/** 전역에서 사용할 리모트 오리진 상수 */
+function isHttpOrigin(o: string) {
+    return /^https?:\/\//i.test(o);
 }
 
-/** 리모트(이 컴포넌트가 호스팅되는 번들)의 오리진을 런타임에 추론 */
 function resolveRemoteOrigin(): string {
-    // 1) 런타임 주입 (권장): window.__APP_CONFIG__.MFE_PUBLIC_SERVICE
+    // 1) 런타임 주입이 있으면 그게 제일 정확함 (권장)
     try {
         const injected = (window as any).__APP_CONFIG__?.MFE_PUBLIC_SERVICE;
         if (injected) {
@@ -170,69 +178,48 @@ function resolveRemoteOrigin(): string {
         }
     } catch {}
 
-    // 2) 이 파일이 로드된 번들의 URL(import.meta.url)에서 오리진 추출
+    // 2) import.meta.url에서 오리진 추출 (단, http(s)만 허용)
     try {
         // @ts-ignore
-        const fromImport = new URL(import.meta.url).origin;
-        if (isHttpOrigin(fromImport)) return fromImport;
+        const o = new URL(import.meta.url).origin;
+        if (isHttpOrigin(o)) return o;
     } catch {}
 
-    // 3) remoteEntry / federation 스크립트에서 유추
-    try {
-        const s = Array.from(document.scripts).find((scr) =>
-            /(remoteEntry|federation|__federation_expose_).*\.js(?:$|\?)/i.test(scr.src)
-        );
-        if (s?.src) {
-            const o = new URL(s.src).origin;
-            if (isHttpOrigin(o)) return o;
-        }
-    } catch {}
-
-    // 4) 최후 수단: 현재 페이지 오리진 (file:// 방지를 위해 http(s)만 허용)
-    return isHttpOrigin(window.location.origin) ? window.location.origin : "";
+    // 3) 마지막 fallback: 현재 페이지 오리진 (http(s)만)
+    return isHttpOrigin(window.location.origin) ? window.location.origin : "http://localhost:3006";
 }
 
-/** 전역에서 사용할 리모트 오리진 상수 */
 const REMOTE_ORIGIN = resolveRemoteOrigin();
 
-/* ========= pdf.js 동적 로더 =========
-   /public/pdfjs/build/pdf.js, /public/pdfjs/build/pdf.worker.js 필요 */
-async function loadPdfJs(): Promise<any> {
-    const g = window as any;
-    if (g.pdfjsLib) return g.pdfjsLib;
-
-    const base = REMOTE_ORIGIN;
-    const libUrl = `${base}/pdfjs/build/pdf.js`;
-    const workerUrl = `${base}/pdfjs/build/pdf.worker.js`;
-
-    await new Promise<void>((resolve, reject) => {
-        const s = document.createElement("script");
-        s.src = libUrl;
-        s.async = true;
-        s.onload = () => resolve();
-        s.onerror = () => reject(new Error(`Failed to load ${libUrl}`));
-        document.head.appendChild(s);
-    });
-
-    const pdfjsLib = (window as any).pdfjsLib;
-    if (!pdfjsLib) throw new Error(`pdfjsLib not found after script load. Check that ${libUrl} returns JS (not HTML).`);
-
-    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
-    return pdfjsLib;
-}
-
 /* ========= URL 후보 & 안전 fetch ========= */
-function buildPdfUrlCandidates(src: string): string[] {
+function buildPdfUrlCandidates(src: string, assetOrigin?: string): string[] {
     if (!src) return [];
-    if (/^https?:\/\//i.test(src)) return [src]; // 절대 URL이면 후보 1개
 
-    const hostUrl = new URL(src, window.location.origin + "/").toString();
-    const remoteUrl = new URL(src, REMOTE_ORIGIN + "/").toString();
-    return hostUrl === remoteUrl ? [hostUrl] : [hostUrl, remoteUrl];
+    if (/^file:\/\//i.test(src)) {
+        try { src = new URL(src).pathname; } catch { return []; }
+    }
+
+    if (/^https?:\/\//i.test(src)) return [src];
+
+    const candidates: string[] = [];
+
+    if (assetOrigin && /^https?:\/\//i.test(assetOrigin)) {
+        candidates.push(new URL(src, assetOrigin + "/").toString());
+    }
+
+    // 기존 fallback들
+    if (/^https?:\/\//i.test(REMOTE_ORIGIN)) {
+        candidates.push(new URL(src, REMOTE_ORIGIN + "/").toString());
+    }
+    candidates.push(new URL(src, window.location.origin + "/").toString());
+
+    return Array.from(new Set(candidates));
 }
+
 
 /** PDF 컨텐츠를 안전하게 받아온다(HTML이면 다음 후보로 재시도) */
 async function fetchPdfBuffer(urls: string[]): Promise<{ buf: ArrayBuffer; finalUrl: string }> {
+    console.log("[PdfViewer] candidates =", urls);
     let lastErr: any = null;
 
     for (const url of urls) {
@@ -275,11 +262,15 @@ function useDpr() {
 /* ========= 뷰어 ========= */
 function SmoothPdfPane({
                            src,
+                           assetOrigin,
                            onResolvedUrl,
-                       }: {
+                       } : {
     src: string;
+    assetOrigin?: string;
     onResolvedUrl?: (url: string) => void;
 }) {
+    console.log("[PdfViewer] src =", src);
+
     // 줌
     const [zoom, setZoom] = useState(1);
     const Z_MIN = 0.5,
@@ -304,7 +295,10 @@ function SmoothPdfPane({
     const OVERSAMPLE = 1.3;
     const MAX_PIXELS = 12_000_000;
 
-    const urlCandidates = useMemo(() => buildPdfUrlCandidates(src), [src]);
+    const urlCandidates = useMemo(
+        () => buildPdfUrlCandidates(src, assetOrigin),
+        [src, assetOrigin]
+    );
 
     // 컨테이너 크기 관찰
     useEffect(() => {
@@ -339,6 +333,7 @@ function SmoothPdfPane({
     // 문서 로드
     useEffect(() => {
         let alive = true;
+
         setErr(null);
         setPdf(null);
         setPages(0);
@@ -346,10 +341,11 @@ function SmoothPdfPane({
 
         (async () => {
             try {
-                const pdfjs = await loadPdfJs();
                 const { buf, finalUrl } = await fetchPdfBuffer(urlCandidates);
                 if (!alive) return;
-                const doc = await pdfjs.getDocument({ data: buf }).promise;
+
+                const loadingTask = pdfjsLib.getDocument({ data: buf });
+                const doc = await loadingTask.promise;
                 if (!alive) return;
 
                 setPdf(doc);
@@ -553,7 +549,7 @@ function SmoothPdfPane({
 }
 
 /* ========= 모달 본체 ========= */
-function PdfViewerModalInner({ open, title, src, onClose }: Props) {
+function PdfViewerModalInner({ open, title, src, assetOrigin, onClose }: Props)  {
     // ESC + 스크롤 잠금
     useEffect(() => {
         const onEsc = (e: KeyboardEvent) => e.key === "Escape" && onClose();
@@ -598,7 +594,11 @@ function PdfViewerModalInner({ open, title, src, onClose }: Props) {
 
                 <Stage>
                     {src ? (
-                        <SmoothPdfPane src={src} onResolvedUrl={(u) => setOriginUrl(u)} />
+                        <SmoothPdfPane
+                            src={src}
+                            assetOrigin={assetOrigin}
+                            onResolvedUrl={(u) => setOriginUrl(u)}
+                        />
                     ) : (
                         <div
                             style={{

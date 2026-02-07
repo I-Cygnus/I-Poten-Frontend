@@ -45,9 +45,25 @@ const BookIcon = () => (
 
 const Wrap = styled.section` padding: 6px 0 24px; `;
 const Grid = styled.ul`
-    list-style: none; margin: 0; padding: 0;
-    display: grid; gap: 34px 36px;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    list-style: none;
+    margin: 0;
+    padding: 0;
+
+    display: grid;
+    gap: 34px 36px;
+
+    /* 데스크탑 4개 고정 */
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+
+    /* 태블릿 2개 */
+    @media (max-width: 1100px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    /* 모바일 1개 */
+    @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+    }
 `;
 const Card = styled.li` display: grid; justify-items: center; text-align: center; `;
 const CoverBox = styled.button.attrs({ type: "button" })`
@@ -123,6 +139,7 @@ export default function EbookGrid({ items, className }: Props) {
                 open={pdfOpen}
                 title={pdfTitle}
                 src={pdfSrc}
+                assetOrigin="http://localhost:3006"
                 onClose={() => setPdfOpen(false)}
             />
         </Wrap>

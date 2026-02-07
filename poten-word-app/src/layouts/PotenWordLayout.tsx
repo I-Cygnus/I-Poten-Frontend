@@ -391,7 +391,7 @@ export default function PotenWordLayout() {
                                 </ItemLink>
                             </li>
                             <li>
-                                <ItemLink to="/poten-word/quiz">포텐퀴즈</ItemLink>
+                                <ItemLink to="/poten-word/quiz/home">포텐퀴즈</ItemLink>
                             </li>
                             <li>
                                 <ItemLink to="/poten-word/book">포텐북</ItemLink>
