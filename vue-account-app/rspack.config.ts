@@ -70,6 +70,11 @@ export default defineConfig({
     uniqueName: "vue_account_app",
     // publicPath must be configured if using manifest
     publicPath: `${ process.env.MFE_PUBLIC_SERVICE }/` ,
+    path: path.resolve(__dirname, "dist"),
+    filename: isDev ? "assets/[name].js" : "assets/[name].[contenthash:8].js",
+    chunkFilename: isDev ? "assets/[name].js" : "assets/[name].[contenthash:8].js",
+    assetModuleFilename: "assets/[name].[hash][ext][query]",
+    clean: true,
   },
 
   experiments: {
@@ -128,7 +133,7 @@ export default defineConfig({
       "process.env.VUE_APP_SPRING_API_BASE_URL": JSON.stringify(process.env.VUE_APP_SPRING_API_BASE_URL),
       "process.env.VUE_APP_AI_API_BASE_URL": JSON.stringify(process.env.VUE_APP_AI_API_BASE_URL),
       // "process.env.MFE_CORS_ORIGIN": JSON.stringify(process.env.MFE_CORS_ORIGIN),
-      "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
+      "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV ?? "development"),
       "process.env.ADMIN_SESSION_TTL_MINUTES": JSON.stringify(process.env.ADMIN_SESSION_TTL_MINUTES || "60"),
     }),
     new ModuleFederationPlugin(mfConfig),

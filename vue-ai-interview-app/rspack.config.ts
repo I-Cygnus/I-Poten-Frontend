@@ -70,6 +70,11 @@ export default defineConfig({
         uniqueName: "vue_ai_interview_app",
         // publicPath must be configured if using manifest
         publicPath: `${process.env.MFE_PUBLIC_SERVICE}/`,
+        path: path.resolve(__dirname, "dist"),
+        filename: isDev ? "assets/[name].js" : "assets/[name].[contenthash:8].js",
+        chunkFilename: isDev ? "assets/[name].js" : "assets/[name].[contenthash:8].js",
+        assetModuleFilename: "assets/[name].[hash][ext][query]",
+        clean: true,
       },
     
       experiments: {
@@ -127,7 +132,7 @@ export default defineConfig({
           "process.env.CURRENT_URL": JSON.stringify(process.env.CURRENT_URL),
 
           // "process.env.MFE_CORS_ORIGIN": JSON.stringify(process.env.MFE_CORS_ORIGIN),
-          "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV),
+          "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV?? "development"),
         }),
         new ModuleFederationPlugin(mfConfig),
       ].filter(Boolean),
