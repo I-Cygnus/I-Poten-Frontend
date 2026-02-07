@@ -399,7 +399,7 @@ export default function QuizReviewPage() {
     }, [sessionId]);
 
     const prefix = window.location.pathname.startsWith("/poten-word/") ? "/poten-word" : "";
-    const quizHome = `${prefix}/quiz`;
+    const quizHome = "/poten-word/quiz/home";
     const quizPlay = `${quizHome}/play`;
 
     // "이전 페이지"로 닫기 (없으면 quizHome)
@@ -407,22 +407,8 @@ export default function QuizReviewPage() {
     const from = (location.state as NavState | null)?.from;
 
     const handleClose = React.useCallback(() => {
-        // 다른 페이지에서 state로 from을 넘겨준 경우(가장 확실)
-        if (from) {
-            nav(from, { replace: true });
-            return;
-        }
-
-        // 히스토리 스택에 이전이 있으면 뒤로
-        const idx = (window.history.state?.idx ?? 0) as number;
-        if (idx > 0) {
-            nav(-1);
-            return;
-        }
-
-        // 직접 진입 등 뒤로갈 곳이 없으면 홈으로
         nav(quizHome, { replace: true });
-    }, [nav, from, quizHome]);
+    }, [nav, quizHome]);
 
     const handleRetryWrong = async () => {
         if (!sessionId || retrying) return;

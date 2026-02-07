@@ -437,17 +437,8 @@ export default function QuizPlayPage() {
 
     // 취소/닫기 공용 핸들러
     const handleCancel = React.useCallback(() => {
-        if (from) {
-            nav(from, { replace: true });
-            return;
-        }
-        const idx = (window.history.state?.idx ?? 0) as number;
-        if (idx > 0) {
-            nav(-1);
-            return;
-        }
-        nav(base, { replace: true });
-    }, [nav, from, base]);
+        nav("/poten-word/quiz/home", { replace: true });
+    }, [nav]);
 
     const sp = useMemo(() => new URLSearchParams(loc.search), [loc.search]);
     const sessionId =
@@ -616,9 +607,14 @@ export default function QuizPlayPage() {
                 { headers: { ...authHeader() }, withCredentials: true }
             );
 
+            const fromUrl = `${base}/play?sessionId=${sid}`;
+
             // 결과 페이지로 이동 (리뷰 페이지에서 직접 GET /review)
             nav(`${base}/review/${sid}`, {
-                state: { title: payload.title ?? "포텐퀴즈", from: loc.pathname + loc.search },
+                state: {
+                    title: payload.title ?? "포텐퀴즈",
+                    from: payload.from ?? fromUrl,
+                },
                 replace: true,
             });
         } catch (e: any) {

@@ -32,6 +32,11 @@ export default defineConfig({
     uniqueName: "mypage_app",
     // publicPath must be configured if using manifest
     publicPath: `${ process.env.MFE_PUBLIC_SERVICE }/` ,
+    path: path.resolve(__dirname, "dist"),
+    filename: isDev ? "assets/[name].js" : "assets/[name].[contenthash:8].js",
+    chunkFilename: isDev ? "assets/[name].js" : "assets/[name].[contenthash:8].js",
+    assetModuleFilename: "assets/[name].[hash][ext][query]",
+    clean: true,
   },
 
   experiments: {
