@@ -7,14 +7,14 @@ COPY . .
 # workspace: 프로토콜 변환
 RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {} \;
 
-# package-lock.json 제거 후 설치
+# 의존성 설치
 RUN rm -f package-lock.json && npm install --legacy-peer-deps
 
 # 공통 패키지 빌드
 RUN npm -ws run build -w @jobspoon/theme-bridge -w @jobspoon/app-state
 
-# lerna를 사용한 나머지 빌드
-RUN npm run build
+# sveltekit-review-app 제외하고 빌드
+RUN npm run build:remotes && npm run build:host
 
 # 2단계: Nginx
 FROM nginx:alpine
