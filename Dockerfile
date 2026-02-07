@@ -1,7 +1,9 @@
 # 1단계: 빌드
-FROM node:18 AS builder
+FROM node:20 AS builder
 
 WORKDIR /app
+
+RUN npm install -g npm@latest
 
 # 소스 전체 복사
 COPY . .
