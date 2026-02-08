@@ -40,6 +40,12 @@ jobs:
           docker buildx create --use
           docker buildx build \
             --platform linux/amd64,linux/arm64 \
+            --build-arg REACT_POTEN_WORD_APP=https://i-poten.com/poten-word-app \
+            --build-arg REACT_NAVIGATION_APP=https://i-poten.com/navigation-bar-app \
+            --build-arg REACT_MYPAGE_APP=https://i-poten.com/mypage-app \
+            --build-arg VUE_ACCOUNT_APP=https://i-poten.com/vue-account-app \
+            --build-arg VUE_AI_INTERVIEW_APP=https://i-poten.com/vue-ai-interview-app \
+            --build-arg MFE_PUBLIC_SERVICE=https://i-poten.com \
             -t ghcr.io/i-cygnus/i-poten-frontend:latest \
             --push \
             .
