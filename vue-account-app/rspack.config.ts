@@ -3,7 +3,6 @@ import * as path from "node:path";
 import { defineConfig } from "@rspack/cli";
 import { DefinePlugin, rspack } from "@rspack/core";
 import { ModuleFederationPlugin } from "@module-federation/enhanced/rspack";
-import { VueLoaderPlugin } from "vue-loader";
 import 'dotenv/config';
 
 import { mfConfig } from "./module-federation.config";
@@ -89,10 +88,7 @@ export default defineConfig({
       },
       {
         test: /\.vue$/,
-        loader: "vue-loader",
-        options: {
-          experimentalInlineMatchResource: true,
-        },
+        use: "builtin:vue-loader",
       },
       {
         test: /\.css$/,
@@ -119,7 +115,6 @@ export default defineConfig({
     ],
   },
   plugins: [
-    new VueLoaderPlugin(),
     new rspack.HtmlRspackPlugin({
       template: "./index.html",
     }),
