@@ -25,7 +25,8 @@
     "ts-node": "^10.9.2",
     "typescript": "^5.7.3",
     "@vue/compiler-sfc": "^3.4.0",
-    "vue-loader": "^17.4.2"
+    "vue-loader": "^17.4.2",
+    "webpack": "^5.90.0"
   },
   "dependencies": {
     "@jobspoon/theme-bridge": "0.1.0",
