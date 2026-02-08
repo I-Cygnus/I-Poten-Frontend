@@ -3,7 +3,7 @@ import * as path from "node:path";
 import { defineConfig } from "@rspack/cli";
 import { DefinePlugin, rspack } from "@rspack/core";
 import { ModuleFederationPlugin } from "@module-federation/enhanced/rspack";
-import { VuePlugin } from "@rspack/plugin-vue";
+import { VueLoaderPlugin } from "vue-loader";
 import 'dotenv/config';
 
 import { mfConfig } from "./module-federation.config";
@@ -116,7 +116,7 @@ export default defineConfig({
     ],
   },
   plugins: [
-    new VuePlugin(),
+    new VueLoaderPlugin(),
     new rspack.HtmlRspackPlugin({
       template: "./index.html",
     }),
