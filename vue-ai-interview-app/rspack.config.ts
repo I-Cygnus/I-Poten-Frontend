@@ -89,7 +89,10 @@ export default defineConfig({
           },
           {
             test: /\.vue$/,
-            use: "vue-loader",
+            loader: "vue-loader",
+            options: {
+              experimentalInlineMatchResource: true,
+            },
           },
           {
             test: /\.css$/,
