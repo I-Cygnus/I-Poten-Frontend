@@ -325,6 +325,31 @@ async function apiToggleResolved(reviewId: number, resolved: boolean) {
     );
 }
 
+async function apiDeleteWrongReviews(reviewIds: number[]) {
+    const ids = (reviewIds || []).filter(Number.isFinite);
+    if (!ids.length) return;
+
+    try {
+        await http.delete(`/me/quiz/reviews/wrong`, {
+            headers: { ...authHeader(), "Content-Type": "application/json" },
+            data: { reviewIds: ids },
+            withCredentials: true,
+        });
+        return;
+    } catch (e) {
+        // bulk가 막혀도 최소한 개별로는 지우게
+    }
+
+    await Promise.all(
+        ids.map((rid) =>
+            http.delete(`/me/quiz/reviews/${rid}`, {
+                headers: authHeader(),
+                withCredentials: true,
+            })
+        )
+    );
+}
+
 async function apiStartWrongOnlySession(questionIds: number[]) {
     const url = `/me/quiz/sessions/start`;
     const { data } = await http.post(
@@ -365,6 +390,7 @@ export default function QuizWrongNotePage() {
 
     const [items, setItems] = useState<WrongItem[]>([]);
     const [loading, setLoading] = useState(false);
+    const [deleting, setDeleting] = useState(false);
     const inFlightRef = useRef(false);
 
     const openSys = useCallback((m: SystemMessage) => {
@@ -587,6 +613,64 @@ export default function QuizWrongNotePage() {
         }
     };
 
+    const onDeleteSelected = useCallback(async () => {
+        if (!checkedReviewIds.length) {
+            openSys({ title: "선택된 기록이 없어요", message: "삭제할 오답 기록을 체크해 주세요." } as any);
+            return;
+        }
+
+        openSys({
+            tone: "warning",
+            title: "기록을 삭제할까요?",
+            description: (
+                <>
+                    선택한 오답 기록 <b>{checkedReviewIds.length}</b>개를 삭제합니다.<br />
+                    삭제하면 복구할 수 없어요.
+                </>
+            ),
+            actions: [
+                {
+                    label: "삭제",
+                    tone: "danger",
+                    onClick: async () => {
+                        setDeleting(true);
+
+                        const snapshotItems = items;
+                        const snapshotSelected = selected;
+
+                        try {
+                            const delSet = new Set(checkedReviewIds);
+                            setItems((prev) => prev.filter((x) => !delSet.has(x.reviewId)));
+                            setSelected({});
+
+                            await apiDeleteWrongReviews(checkedReviewIds);
+                            await fetchPage(page, appliedRef.current);
+
+                            openSys({ tone: "success", title: "삭제 완료", description: "선택한 기록을 삭제했어요." } as any);
+                        } catch (e: any) {
+                            setItems(snapshotItems);
+                            setSelected(snapshotSelected);
+
+                            const { message } = getApiError(e);
+                            openSys({ tone: "error", title: "삭제 실패", description: message } as any);
+                            throw e; // (모달에서 catch로 삼켜도 되고, 여기서 throw 안 해도 됨)
+                        } finally {
+                            setDeleting(false);
+                        }
+                    },
+                    autoClose: false,
+                }
+            ],
+        } as any);
+    }, [
+        checkedReviewIds,
+        openSys,
+        closeSys,
+        fetchPage,
+        page,
+        getApiError,
+    ]);
+
     const clearFilters = () => {
         setDraft(DEFAULT_FILTERS);
         applyAndSearch(DEFAULT_FILTERS);
@@ -785,9 +869,19 @@ export default function QuizWrongNotePage() {
                     </BulkLeft>
 
                     <BulkRight>
-                        <PrimaryBtn onClick={onRetrySelected} disabled={!checkedQuestionIds.length}>
+                        <PrimaryBtn
+                            onClick={onRetrySelected}
+                            disabled={!checkedQuestionIds.length || deleting}
+                        >
                             선택 오답 다시풀기
                         </PrimaryBtn>
+
+                        <DangerBtn
+                            onClick={onDeleteSelected}
+                            disabled={deleting}
+                        >
+                            {deleting ? "삭제 중..." : "기록 삭제"}
+                        </DangerBtn>
                     </BulkRight>
                 </BulkRow>
             </Panel>
@@ -1277,6 +1371,33 @@ const PrimaryBtn = styled.button`
     }
 `;
 
+const DangerBtn = styled.button`
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.10);
+  color: ${UI.danger};
+
+  font-weight: 900;
+  cursor: pointer;
+  letter-spacing: -0.02em;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.14);
+    border-color: rgba(239, 68, 68, 0.45);
+  }
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  &:focus-visible {
+    outline: 3px solid rgba(239, 68, 68, 0.18);
+    outline-offset: 2px;
+  }
+`;
+
 const List = styled.div`
     display: flex;
     flex-direction: column;
@@ -1397,8 +1518,8 @@ const TopMeta = styled.div`
 
     color: rgba(107,114,128,0.92);
     font-size: 12px;
-    font-weight: 650;        /* ✅ 추가 */
-    letter-spacing: -0.01em; /* ✅ 완화 */
+    font-weight: 650;
+    letter-spacing: -0.01em;
 
     min-width: 0;
 

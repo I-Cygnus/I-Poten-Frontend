@@ -1,7 +1,16 @@
 import React from "react";
 import styled, { keyframes } from "styled-components";
 
+export type SystemMessageActionTone = "normal" | "primary" | "danger";
+
 export type SystemMessageTone = "info" | "success" | "warning" | "error";
+
+export type SystemMessageAction = {
+    label: string;
+    tone?: SystemMessageActionTone;
+    onClick?: () => void | Promise<void>;
+    autoClose?: boolean;
+};
 
 export type SystemMessage = {
     tone?: SystemMessageTone;
@@ -9,6 +18,9 @@ export type SystemMessage = {
     description?: React.ReactNode;
     bullets?: React.ReactNode[];
     size?: "default" | "wide";
+    actions?: SystemMessageAction[];
+    closeOnScrim?: boolean;
+    closeOnEsc?: boolean;
 };
 
 export type SystemMessageModalProps = {
@@ -319,6 +331,21 @@ const Ghost = styled.button`
     }
 `;
 
+const Primary = styled(Ghost)`
+  border-color: #3E63E0;
+  background: #3E63E0;
+  color: #fff;
+
+  &:hover { filter: brightness(0.98); }
+`;
+
+const Danger = styled(Ghost)`
+  border-color: rgba(239, 68, 68, 0.45);
+  background: rgba(239, 68, 68, 0.12);
+  color: #DC2626;
+
+  &:hover { background: rgba(239, 68, 68, 0.16); }
+`;
 
 const checkDraw = keyframes`
     from {
@@ -347,13 +374,17 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                                                                    onClose,
                                                                }) => {
     React.useEffect(() => {
-        if (!open) return;
+        if (!open || !message) return;
+
+        const closeOnEsc = message.closeOnEsc ?? true;
+        if (!closeOnEsc) return;
+
         const onKey = (e: KeyboardEvent) => {
             if (e.key === "Escape") onClose();
         };
         document.addEventListener("keydown", onKey);
         return () => document.removeEventListener("keydown", onKey);
-    }, [open, onClose]);
+    }, [open, message, onClose]);
 
     if (!open || !message) return null;
 
@@ -365,9 +396,22 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
         message.size ??
         ((tone === "warning" || tone === "error") && hasBullets ? "wide" : "default");
 
+    const actions: SystemMessageAction[] = message.actions?.length
+        ? message.actions
+        : [{ label: "닫기", tone: "normal", onClick: onClose, autoClose: true }];
+
+    const closeOnScrim = message.closeOnScrim ?? true;
+
+    const renderActionBtn = (a: SystemMessageAction) => {
+        const t = a.tone ?? "normal";
+        if (t === "danger") return Danger;
+        if (t === "primary") return Primary;
+        return Ghost;
+    };
+
     return (
         <>
-            <Scrim onClick={onClose} />
+            <Scrim onClick={closeOnScrim ? onClose : undefined} />
             <Sheet
                 role="dialog"
                 aria-modal="true"
@@ -390,7 +434,6 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                     </CloseX>
                 </SheetHeader>
 
-                {/* bullets 있을 때만 본문 리스트 */}
                 {hasBullets && (
                     <SheetBody>
                         <BulletList>
@@ -402,9 +445,26 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                 )}
 
                 <SheetFooter $hasDescription={hasDescription}>
-                    <Ghost type="button" onClick={onClose}>
-                        닫기
-                    </Ghost>
+                    {actions.map((a, idx) => {
+                        const Btn = renderActionBtn(a);
+                        return (
+                            <Btn
+                                key={idx}
+                                type="button"
+                                onClick={async () => {
+                                    try {
+                                        await a.onClick?.();
+                                        const autoClose = a.autoClose ?? true;
+                                        if (autoClose) onClose();
+                                    } catch (err) {
+                                        console.error("[SystemMessageModal action error]", err);
+                                    }
+                                }}
+                            >
+                                {a.label}
+                            </Btn>
+                        );
+                    })}
                 </SheetFooter>
             </Sheet>
         </>

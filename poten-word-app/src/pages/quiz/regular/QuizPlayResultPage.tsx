@@ -195,7 +195,8 @@ export default function QuizPlayResultPage() {
     const { sessionId: sessionIdParam } = useParams();
 
     const st = (loc.state as any) ?? {};
-    const backTo: string | undefined = st.backTo;
+    type NavState = { from?: string };
+    const from = (loc.state as NavState | null)?.from;
 
     const sessionId: number | undefined = (() => {
         const fromState = st.sessionId;
@@ -410,7 +411,11 @@ export default function QuizPlayResultPage() {
     const quizPlay = `${quizHome}/play`;
 
     const handleClose = () => {
-        if (backTo) return nav(backTo, { replace: true });
+        if (from) return nav(from, { replace: true });
+
+        const idx = (window.history.state?.idx ?? 0) as number;
+        if (idx > 0) return nav(-1);
+
         return nav(quizHome, { replace: true });
     };
 
