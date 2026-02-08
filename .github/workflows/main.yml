@@ -1,5 +1,4 @@
 name: Docker Build and Deploy
-
 on:
   push:
     branches: [ main ]
@@ -8,11 +7,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
+      
       - name: Create .env files
         run: |
           # 메인 컨테이너 환경변수
@@ -29,34 +27,41 @@ jobs:
           
           # 퀴즈 및 단어사전 앱 환경변수
           echo "${{ secrets.POTEN_WORD_ENV }}" > poten-word-app/.env
-
-          # navation-bar 앱 환경변수
+          
+          # navigation-bar 앱 환경변수
           echo "${{ secrets.NAVIGATION_BAR_ENV }}" > navigation-bar-app/.env
-          
-
-          
-
+      
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
         with:
           buildkitd-flags: --debug
           driver: docker-container
-
+      
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
           username: i-cygnus
           password: ${{ secrets.GHCR_TOKEN }}
-
-      - name: Build and push Docker image
+      
+      - name: Build and push Docker image (Multi-arch)
         uses: docker/build-push-action@v4
         with:
           context: .
           file: Dockerfile
           push: true
-          tags: ghcr.io/i-cygnus/i-poten-frontend-container:latest
+          tags: ghcr.io/i-cygnus/i-poten-frontend:latest
           platforms: linux/amd64,linux/arm64
+          build-args: |
+            REACT_POTEN_WORD_APP=https://i-poten.com/poten-word-app
+            REACT_NAVIGATION_APP=https://i-poten.com/navigation-bar-app
+            REACT_MYPAGE_APP=https://i-poten.com/mypage-app
+            VUE_ACCOUNT_APP=https://i-poten.com/vue-account-app
+            VUE_AI_INTERVIEW_APP=https://i-poten.com/vue-ai-interview-app
+            MFE_PUBLIC_SERVICE=https://i-poten.com
+            NODE_OPTIONS=--max-old-space-size=4096
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
   
   deploy:
     needs: build
@@ -66,6 +71,7 @@ jobs:
       - name: Deploy to production
         run: |
           cd /home/ec2-user/i-poten/frontend
+          
           # GitHub Container Registry 로그인
           echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u i-cygnus --password-stdin
           
@@ -77,7 +83,7 @@ jobs:
           docker pull ghcr.io/i-cygnus/i-poten-frontend:latest
           
           # 새 컨테이너 실행
-          docker run -d -p 80:80 --name i-poten-frontend-container --network ipoten-net ghcr.io/i-cygnus/i-poten-frontend-container:latest
+          docker run -d -p 80:80 --name i-poten-frontend-container --network ipoten-net ghcr.io/i-cygnus/i-poten-frontend:latest
           
           # 사용하지 않는 이미지 정리
           docker image prune -af
