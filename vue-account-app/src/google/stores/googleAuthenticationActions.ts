@@ -86,6 +86,43 @@ export const googleAuthenticationAction = {
         }
     },
 
+    async requestRegister(): Promise<void> {
+        try {
+            const { springAxiosInstance } = axiosUtility.createAxiosInstances();
+            const accessToken = sessionStorage.getItem("tempToken");
+            let userInfo = null;
+            const user = sessionStorage.getItem("userInfo");
+
+            if (user) {
+                userInfo = JSON.parse(user);
+                userInfo.loginType = "GOOGLE";
+            }
+
+            const res = await springAxiosInstance.post(
+                "/api/account/signup",
+                userInfo,
+                {
+                    headers: {
+                        "Authentication": accessToken
+                    }
+                }
+            );
+
+            localStorage.setItem("isLoggedIn", "wxx-sdwsx-ds=!>,?");
+            localStorage.removeItem("tempToken");
+            window.location.href = "/";
+
+        } catch (error: any) {
+            console.error("회원가입 요청 실패:", error);
+
+            alert("회원가입 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+
+            if (error.response) {
+                console.error("서버 응답:", error.response.data);
+            }
+        }
+    },
+
     async requestGoogleWithdrawToDjango(this: any): Promise<void> {
         const { djangoAxiosInstance } = axiosUtility.createAxiosInstances();
         const userToken = localStorage.getItem("userToken");
