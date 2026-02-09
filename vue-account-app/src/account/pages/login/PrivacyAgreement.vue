@@ -276,7 +276,7 @@ const agreeAndLogin = async () => {
     if (loginType.value === "KAKAO") {
       await kakaoAuthentication.requestRegister();
     } else if (loginType.value === "GOOGLE") {
-      await googleAuthentication.requestGoogleLoginToDjango();
+      await googleAuthentication.requestRegister();
     } else if (loginType.value === "NAVER") {
       await naverAuthentication.requestRegister();
     } else if (loginType.value === "META") {
