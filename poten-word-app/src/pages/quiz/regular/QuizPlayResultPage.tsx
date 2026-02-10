@@ -292,11 +292,6 @@ export default function QuizPlayResultPage() {
                 payload?.data?.quizQuestions
             ) ?? [];
 
-        const rawIsAnswer = c?.isAnswer ?? c?.answer ?? c?.correct;
-        const isAnswer = (rawIsAnswer === null || rawIsAnswer === undefined)
-            ? null
-            : Boolean(rawIsAnswer);
-
         const out: SessionItem[] = [];
 
         for (const x of raw) {
@@ -315,11 +310,7 @@ export default function QuizPlayResultPage() {
                     ""
                 ) || "(문항 텍스트 없음)";
 
-            const qExpl =
-                q?.explanation ??
-                q?.questionExplanation ??
-                x?.explanation ??
-                null;
+            const qExpl = q?.explanation ?? q?.questionExplanation ?? x?.explanation ?? null;
 
             const choicesRaw =
                 (Array.isArray(q?.choices) && q.choices) ||
@@ -434,10 +425,12 @@ export default function QuizPlayResultPage() {
             );
             if (!Number.isFinite(newSessionId)) throw new Error("세션 생성 실패");
 
-            // 재도전은 같은 플레이 경로(목록 화면)로 돌려보내고 state로 sessionId 전달하거나
-            // 네비게이션 단에서 sessionId 쿼리/상태 처리하도록 사용 중인 UX에 맞춰 수정 가능
             nav(quizPlay, {
-                state: { sessionId: newSessionId, title, source: "retry" },
+                state: {
+                    sessionId: newSessionId,
+                    startPayload: payload,
+                    source: "retry-wrong",
+                },
                 replace: true,
             });
         } catch (e: any) {

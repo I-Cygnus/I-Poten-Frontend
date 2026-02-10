@@ -399,8 +399,8 @@ export default function QuizReviewPage() {
     }, [sessionId]);
 
     const prefix = window.location.pathname.startsWith("/poten-word/") ? "/poten-word" : "";
-    const quizHome = "/poten-word/quiz/home";
-    const quizPlay = `${quizHome}/play`;
+    const quizHome = `${prefix}/quiz/home`;
+    const quizPlay = `${prefix}/quiz/play`;
 
     // "이전 페이지"로 닫기 (없으면 quizHome)
     type NavState = { from?: string };
@@ -427,7 +427,11 @@ export default function QuizReviewPage() {
             if (!Number.isFinite(newSessionId)) throw new Error("세션 생성 실패");
 
             nav(quizPlay, {
-                state: { sessionId: newSessionId, source: "retry-wrong" },
+                state: {
+                    sessionId: newSessionId,
+                    startPayload: payload,
+                    source: "retry-wrong",
+                },
                 replace: true,
             });
         } catch (e: any) {
