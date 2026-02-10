@@ -8,6 +8,7 @@ import PrivacyAgreement from "./account/pages/login/PrivacyAgreement.vue";
 import AccountMy from "./account/pages/my/AccountMy.vue";
 import ModifyIndex from "./account/pages/modify/ModifyIndex.vue";
 import AccountWithdraw from "./account/pages/withdraw/AccountWithdraw.vue";
+import TermsOfService from "./terms-of-service/page/TermsOfService.vue";
 
 // 소셜/게스트 인증 리다이렉션
 import KakaoRedirection from "./kakao/redirection/KakaoRedirection.vue";
@@ -33,6 +34,7 @@ const routes: Array<RouteRecordRaw> = [
   { path: "/account/mypage", component: AccountMy },
   { path: "/account/modify/modify-profile", component: ModifyIndex },
   { path: "/account/withdraw", component: AccountWithdraw },
+  { path: "/terms-of-service", name: "TermsOfService", component: TermsOfService },
 
   //관리자 인증 플로우
   {

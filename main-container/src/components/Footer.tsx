@@ -126,7 +126,7 @@ export default function SiteFooter() {
         <TopSection>
           <Nav>
             <NavLink to="/">i-poten</NavLink>
-            <NavLink to="/vue-account/account/terms-of-service">이용약관</NavLink>
+            <NavLink to="/vue-account/terms-of-service">이용약관</NavLink>
             <NavLink to="/">개인정보 처리방침</NavLink>
             <NavLink to="/">제휴문의</NavLink>
           </Nav>
@@ -135,10 +135,10 @@ export default function SiteFooter() {
         {/* 하단 회사 정보 */}
         <BottomSection>
           <CompanyText>
-            서울특별시 송파구 새말로8길 26, 3층(문정동)
+            서울특별시 송파구 새말로8길
           </CompanyText>
           <CopyrightText>
-            Copyright © 2025 에디(EDDI). All rights reserved.
+            Copyright © 2025 AQ. All rights reserved.
           </CopyrightText>
         </BottomSection>
       </Container>
