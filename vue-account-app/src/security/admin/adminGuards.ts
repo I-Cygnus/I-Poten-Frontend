@@ -4,7 +4,7 @@ import { verifyAdminOnServer, validateTempTokenOnServer } from "@/administrator/
 // 위에 /admin-auth/temp/verify 같은 얇은 엔드포인트 하나 추가 구현 필요.
 
 function isPublicRoute(to: RouteLocationNormalized): boolean {
-    const PUBLIC_NAMES = new Set(["VueAccountLogin","AdminAuthCode","AdminAuthSocialLogin"]);
+    const PUBLIC_NAMES = new Set(["VueAccountLogin","AdminAuthCode","AdminAuthSocialLogin","TermsOfService"]);
     const PUBLIC_PREFIXES = ["/kakao_oauth/","/google-oauth/","/github-oauth/","/guest-oauth/","/naver-oauth/"];
     const byName = to.name && PUBLIC_NAMES.has(String(to.name));
     const byPath = PUBLIC_PREFIXES.some((p)=> String(to.path).startsWith(p));
