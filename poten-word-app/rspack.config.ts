@@ -51,7 +51,7 @@ module.exports = defineConfig({
     // You need to set a unique value that is not equal to other applications
     uniqueName: "spoon_word_app",
     // publicPath must be configured if using manifest
-    publicPath: isDev ? "/" : "auto",
+    publicPath: "auto",
     crossOriginLoading: "anonymous",
     path: path.resolve(__dirname, "dist"),
     filename: isDev ? "assets/[name].js" : "assets/[name].[contenthash:8].js",

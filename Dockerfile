@@ -63,7 +63,7 @@ COPY --from=builder /app/navigation-bar-app/dist /usr/share/nginx/html/navigatio
 COPY --from=builder /app/studyroom-app/dist /usr/share/nginx/html/studyroom-app
 COPY --from=builder /app/vue-account-app/dist /usr/share/nginx/html/vue-account-app
 COPY --from=builder /app/vue-ai-interview-app/dist /usr/share/nginx/html/vue-ai-interview-app
-COPY --from=builder /app/poten-word-app/dist /usr/share/nginx/html/spoon-word-app
+COPY --from=builder /app/poten-word-app/dist /usr/share/nginx/html/poten-word-app
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

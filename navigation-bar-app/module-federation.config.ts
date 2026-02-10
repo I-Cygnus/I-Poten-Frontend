@@ -9,7 +9,7 @@ export const mfConfig = {
     "react-dom": { singleton: true, requiredVersion: "^18.2.0", eager: true },
     "@mui/material": { singleton: true, requiredVersion: "^7.0.1" },
     "@mui/icons-material": { singleton: true, requiredVersion: "^7.0.1" },
-    "react-router-dom": { singleton: true, requiredVersion: "^6.30.0" },
+    "react-router-dom": { singleton: true, requiredVersion: "^6.30.0", eager: true },
     three: { singleton: true, requiredVersion: "^0.177.0" },
     '@jobspoon/app-state': { singleton: true, eager: true },
     '@jobspoon/theme-bridge': { singleton: true, eager: true },

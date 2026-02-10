@@ -33,7 +33,6 @@ const WebpackAssetsManifest = loadAssetsManifestCtor();
 
 export default defineConfig({
   context: __dirname,
-
   entry: { main: "./src/index.ts" },
   resolve: { extensions: ["...", ".ts", ".tsx", ".jsx"] },
 
@@ -58,14 +57,6 @@ export default defineConfig({
         { from: /./, to: "/index.html" }
       ]
     },
-
-    setupMiddlewares: (middlewares, devServer) => {
-      devServer.app?.get("/", (_req, res) => {
-        res.sendFile(path.resolve(__dirname, "public", "index.html"));
-      });
-      return middlewares;
-    },
-
     watchFiles: [path.resolve(__dirname, "src")]
   },
 
