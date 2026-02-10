@@ -31,7 +31,6 @@ function goHome() {
 }
 
 const NavigationBarApp = lazy(() => import("navigationBarApp/App"));
-const StudyRoomApp = lazy(() => import("studyRoomApp/App"));
 const MyPageApp = lazy(() => import("myPageApp/App"));
 const PotenWordApp = lazy(() => import("potenWordApp/App"));
 
@@ -164,7 +163,6 @@ function InnerApp() {
             path="/vue-account/*"
             element={<VueAccountAppWrapper eventBus={eventBus} />}
           />
-          <Route path="/studies/*" element={<StudyRoomApp />} />
           <Route path="/poten-word/*" element={<PotenWordApp />} />
           <Route
             path="/vue-ai-interview/*"

@@ -29,7 +29,7 @@ export default defineConfig({
     // You need to set a unique value that is not equal to other applications
     uniqueName: "navigation_bar_app",
     // publicPath must be configured if using manifest
-    publicPath: isDev ? "/" : "auto",
+    publicPath: "auto",
     path: path.resolve(__dirname, "dist"),
     filename: isDev ? "assets/[name].js" : "assets/[name].[contenthash:8].js",
     chunkFilename: isDev ? "assets/[name].js" : "assets/[name].[contenthash:8].js",
