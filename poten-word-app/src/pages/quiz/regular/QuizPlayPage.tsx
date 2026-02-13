@@ -343,12 +343,12 @@ type SessionItem = {
 };
 
 /* ====== 경로 유틸(유지) ====== */
-const BASE_PATH_CAPTURE_RE = /(\/poten-word)?\/(poten-quiz|quiz)/i;
+const BASE_PATH_CAPTURE_RE = /(\/learning)?\/(learning|quiz)/i;
 
 function getQuizBasePath(pathname: string): string {
     const m = pathname.match(BASE_PATH_CAPTURE_RE);
-    const base = m ? m[0].replace(/\/$/, "") : "/poten-word/quiz";
-    return base.replace(/\/poten-quiz\b/i, "/quiz");
+    const base = m ? m[0].replace(/\/$/, "") : "/learning/quiz";
+    return base.replace(/\/quiz\b/i, "/quiz");
 }
 
 /* 강조(‘않는’) 하이라이트 */
@@ -437,7 +437,7 @@ export default function QuizPlayPage() {
 
     // 취소/닫기 공용 핸들러
     const handleCancel = React.useCallback(() => {
-        nav("/poten-word/quiz/home", { replace: true });
+        nav("/learning/quiz/home", { replace: true });
     }, [nav]);
 
     const sp = useMemo(() => new URLSearchParams(loc.search), [loc.search]);

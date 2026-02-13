@@ -169,7 +169,7 @@ export default function ExploreStageTabs({ defaultCollapsed }: Props) {
         userToggledRef.current = true;
 
         const sp = buildSearchParams();
-        navigate({ pathname: "/poten-word/search", search: `?${sp.toString()}` });
+        navigate({ pathname: "/learning/search", search: `?${sp.toString()}` });
     }, [canSearch, buildSearchParams, navigate]);
 
     const clearAndSet = React.useCallback((next: ExploreSelection) => {

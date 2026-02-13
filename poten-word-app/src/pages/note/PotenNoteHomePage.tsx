@@ -948,7 +948,7 @@ export default function PotenNoteHomePage() {
                     </EmptyDesc>
                     <EmptyActions>
                         <Primary onClick={createFolder}>+ 새 폴더 만들기</Primary>
-                        <GhostBtn onClick={() => nav("/poten-word/search")}>용어 탐색하기</GhostBtn>
+                        <GhostBtn onClick={() => nav("/learning/search")}>용어 탐색하기</GhostBtn>
                     </EmptyActions>
                 </EmptyWrap>
             ) : (q && all.length === 0) ? (
@@ -999,7 +999,7 @@ export default function PotenNoteHomePage() {
 
                                     <Cell>
                                         <WordbookName
-                                            onClick={() => nav(`/poten-word/folders/${f.id}`, { state: { wordbookName: f.name } })}
+                                            onClick={() => nav(`/learning/folders/${f.id}`, { state: { wordbookName: f.name } })}
                                             aria-label={`${f.name} 폴더 열기`}
                                             >
                                             {f.name}

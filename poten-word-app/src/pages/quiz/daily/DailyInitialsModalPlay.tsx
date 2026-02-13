@@ -154,7 +154,7 @@ export default function DailyInitialsModalPlay({
             }
 
             onClose();
-            nav(`/poten-word/quiz/play/result/${sessionId}`, {
+            nav(`/learning/quiz/play/result/${sessionId}`, {
                 state: { sessionId, progress: p },
                 replace: true,
             });

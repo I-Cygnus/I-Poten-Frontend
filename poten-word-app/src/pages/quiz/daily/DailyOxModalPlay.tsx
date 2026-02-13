@@ -284,7 +284,7 @@ export default function DailyOxModalPlay({
                     onShowResult({ sessionId, progress });
                     return;
                 }
-                nav(`/poten-word/quiz/play/result/${sessionId}`, { replace:true, state:{ sessionId, progress }});
+                nav(`/learning/quiz/play/result/${sessionId}`, { replace:true, state:{ sessionId, progress }});
             } catch (e: any) {
                 console.error("[OX] submit/nav failed:", e?.response?.status, e?.response?.data ?? e);
                 alert("제출/이동에 실패했어요. 콘솔 로그를 확인해주세요.");

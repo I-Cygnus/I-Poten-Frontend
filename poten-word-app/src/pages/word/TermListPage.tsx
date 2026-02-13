@@ -365,7 +365,7 @@ const TermListPage: React.FC = () => {
                 onGoToFolder={(fid, name) => {
                     // 폴더 상세 페이지로 이동하고 모달 닫기
                     setModalOpen(false);
-                    navigate(`/poten-word/folders/${fid}`, { state: { wordbookName: name } });
+                    navigate(`/learning/folders/${fid}`, { state: { wordbookName: name } });
                 }}
                 onRequestDelete={async (fid, name) => {
                     await deleteUserFolder(fid, "purge");

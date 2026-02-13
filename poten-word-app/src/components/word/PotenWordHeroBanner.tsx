@@ -179,7 +179,7 @@ export default function PotenWordHeroBanner({
     offsetRight = 0,
     floatingIcons,
     assetHost,
-    linkTo = "/poten-word/terms",
+    linkTo = "/learning/word",
     iconProps,
 }: Props) {
     return (

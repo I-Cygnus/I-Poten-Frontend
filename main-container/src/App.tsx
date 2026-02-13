@@ -130,7 +130,7 @@ function InnerApp() {
       "/mypage",
       "/sveltekit-review",
       "/studies/", // 슬래시 포함 → 정확히 하위만 매칭
-      "/poten-word/",
+      "/learning/",
     ];
     const noindex = noindexPrefixes.some((p) =>
       location.pathname.startsWith(p)
@@ -163,7 +163,7 @@ function InnerApp() {
             path="/vue-account/*"
             element={<VueAccountAppWrapper eventBus={eventBus} />}
           />
-          <Route path="/poten-word/*" element={<PotenWordApp />} />
+          <Route path="/learning/*" element={<PotenWordApp />} />
           <Route
             path="/vue-ai-interview/*"
             element={

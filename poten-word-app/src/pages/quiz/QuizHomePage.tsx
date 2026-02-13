@@ -176,10 +176,10 @@ export default function QuizHomePage() {
 
     const actions = useMemo(
         () => [
-            { id: "a1", label: "내 포텐노트",        icon: act1, to: "/poten-word/notes" },
-            { id: "a2", label: "내 퀴즈 타임라인",  icon: act2, to: "/poten-word/quiz/timeline" },
-            { id: "a3", label: "오답노트 바로 가기", icon: act3, to: "/poten-word/quiz/wrong-notes" },
-            { id: "a4", label: "명예의 전당",        icon: act4, to: "/poten-word/quiz/hall" },
+            { id: "a1", label: "내 포텐노트",        icon: act1, to: "/learning/note" },
+            { id: "a2", label: "내 퀴즈 타임라인",  icon: act2, to: "/learning/quiz/timeline" },
+            { id: "a3", label: "오답노트 바로 가기", icon: act3, to: "/learning/quiz/wrong-notes" },
+            { id: "a4", label: "명예의 전당",        icon: act4, to: "/learning/quiz/hall" },
         ],
         []
     );
@@ -419,7 +419,7 @@ export default function QuizHomePage() {
         const filter =
             getTopicFilter(topic.id) ||
             getTopicFilter(topic.to) ||                       // topic.to("/quiz/js")를 키로 쓰는 경우 대비
-            getTopicFilter(topic.to.replace("/poten-word", "")); // prefix 바뀐 경우 대비
+            getTopicFilter(topic.to.replace("/learning", "")); // prefix 바뀐 경우 대비
 
         if (!filter) {
             setSetupOpen(false);
@@ -489,7 +489,7 @@ export default function QuizHomePage() {
             const sessionId = Number((started as any)?.sessionId);
             if (!Number.isFinite(sessionId)) throw new Error("sessionId가 응답에 없습니다.");
 
-            const playPath = String((started as any)?.playPath ?? "").trim() || "/poten-word/quiz/play";
+            const playPath = String((started as any)?.playPath ?? "").trim() || "/learning/quiz/play";
 
             nav(playPath, {
                 replace: true,
@@ -885,7 +885,7 @@ export default function QuizHomePage() {
                     ))}
 
                     <MoreRow>
-                        <MoreBtn onClick={() => nav('/poten-word/quiz/categories')}>
+                        <MoreBtn onClick={() => nav('/learning/quiz/categories')}>
                             더 많은 직무 카테고리에서 고르기
                         </MoreBtn>
                     </MoreRow>

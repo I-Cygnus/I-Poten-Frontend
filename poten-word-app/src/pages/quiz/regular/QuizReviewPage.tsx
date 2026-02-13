@@ -398,7 +398,7 @@ export default function QuizReviewPage() {
         };
     }, [sessionId]);
 
-    const prefix = window.location.pathname.startsWith("/poten-word/") ? "/poten-word" : "";
+    const prefix = window.location.pathname.startsWith("/learning/") ? "/learning" : "";
     const quizHome = `${prefix}/quiz/home`;
     const quizPlay = `${prefix}/quiz/play`;
 

@@ -397,7 +397,7 @@ export default function QuizPlayResultPage() {
         ])
     );
 
-    const prefix = loc.pathname.startsWith("/poten-word/") ? "/poten-word" : "";
+    const prefix = loc.pathname.startsWith("/learning/") ? "/learning" : "";
     const quizHome = `${prefix}/quiz`;
     const quizPlay = `${quizHome}/play`;
 
