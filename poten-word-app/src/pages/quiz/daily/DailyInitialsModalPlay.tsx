@@ -1,8 +1,10 @@
 import React from "react";
 import styled from "styled-components";
-import DailyInitialsCard from "../../../components/quiz/DailyInitialsCard.tsx";
 import { useNavigate } from "react-router-dom";
-import http from "../../../utils/http.ts";
+
+import DailyInitialsCard from "../../../components/quiz/DailyInitialsCard";
+import http from "../../../utils/http";
+import { checkDailyQuestion } from "../../../api/dailyQuiz";
 
 type OX = "O" | "X";
 
@@ -19,6 +21,7 @@ type StartedItem = {
     explanation?: string | null;
     choices?: StartedChoice[];
     answerText?: string;
+    initialsHint?: string | null;
 };
 
 type Props = {
@@ -45,32 +48,22 @@ const LS_KEY_LAST_SESSION = "quiz:lastSessionId";
 const LS_KEY_PROGRESS = "quiz/initials-or-ox/progress";
 
 const nz = (v: any) => String(v ?? "").trim();
-const norm = (s: any) => nz(s).replace(/\s+/g, "").toLowerCase();
 
-function hangulToInitials(text: string): string[] {
-    const CHO = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
-    const res: string[] = [];
-    for (const ch of (text ?? "")) {
-        const code = ch.charCodeAt(0);
-        if (code >= 0xac00 && code <= 0xd7a3) {
-            const idx = code - 0xac00;
-            res.push(CHO[Math.floor(idx / 588)] ?? ch);
-        } else if (/\s/.test(ch)) continue;
-        else res.push(ch);
-    }
-    return res;
-}
+const toHintArray = (hint?: string | null) =>
+    String(hint ?? "")
+        .trim()
+        .split("")
+        .filter((ch) => ch !== " ");
 
-function extractAnswer(it: StartedItem): string {
-    const direct = nz((it as any).answerText);
-    if (direct) return direct;
-
-    const found =
-        (it.choices ?? []).find(c => c.isAnswer)?.choiceText ??
-        (it.choices ?? []).find(c => c.isAnswer)?.text ??
-        "";
-
-    return nz(found);
+function pickAnswerText(data: any) {
+    return (
+        data?.answerText ??
+        data?.correctAnswer ??
+        data?.correctText ??
+        data?.answer ??
+        data?.solution ??
+        ""
+    );
 }
 
 export default function DailyInitialsModalPlay({
@@ -80,27 +73,14 @@ export default function DailyInitialsModalPlay({
                                                    onShowResult,
                                                }: Props) {
     const nav = useNavigate();
-    const [startMs] = React.useState(() => Date.now()); // elapsedMs 용
+    const [startMs] = React.useState(() => Date.now());
 
     const qs = React.useMemo(() => {
-        return (items ?? [])
-            .map((it) => {
-                const ans = extractAnswer(it);
-                return {
-                    id: it.questionId,
-                    q: nz(it.questionText),
-                    answer: ans,
-                    initials: hangulToInitials(ans),
-                    explanation: it.explanation ?? null,
-                };
-            })
-            .filter((x) => !!x.answer) as Array<{
-            id: number;
-            q: string;
-            answer: string;
-            initials: string[];
-            explanation: string | null;
-        }>;
+        return (items ?? []).map((it) => ({
+            id: it.questionId,
+            q: nz(it.questionText),
+            hint: nz(it.initialsHint),
+        }));
     }, [items]);
 
     const total = qs.length;
@@ -113,36 +93,46 @@ export default function DailyInitialsModalPlay({
         () => Array.from({ length: total }, () => null)
     );
 
-    // 각 문항의 "사용자 입력"을 저장해 둬야 마지막 submit 가능
     const [userAnswers, setUserAnswers] = React.useState<(string | null)[]>(
         () => Array.from({ length: total }, () => null)
     );
 
-    // 최신 progress를 항상 들고있기 (stale 방지)
+    const [correctAnswer, setCorrectAnswer] = React.useState("");
+
+    const [checked, setChecked] = React.useState<{
+        correct: boolean;
+        explanation?: string | null;
+    } | null>(null);
+
+    const [checking, setChecking] = React.useState(false);
+    const [submitting, setSubmitting] = React.useState(false);
+
+    // stale 방지 refs
     const progressRef = React.useRef<(OX | null)[]>(progress);
-    React.useEffect(() => { progressRef.current = progress; }, [progress]);
+    React.useEffect(() => {
+        progressRef.current = progress;
+    }, [progress]);
 
-    // 최신 userAnswers도 ref로(마지막 submit 시점 stale 방지)
     const userAnswersRef = React.useRef<(string | null)[]>(userAnswers);
-    React.useEffect(() => { userAnswersRef.current = userAnswers; }, [userAnswers]);
+    React.useEffect(() => {
+        userAnswersRef.current = userAnswers;
+    }, [userAnswers]);
 
+    // session/문항 변동 시 초기화
     React.useEffect(() => {
         setIdx(0);
         setAnswer("");
         setShowResult(false);
+        setChecked(null);
+        setCorrectAnswer("");
         setProgress(Array.from({ length: total }, () => null));
         setUserAnswers(Array.from({ length: total }, () => null));
-    }, [total]);
+    }, [sessionId, total]);
 
     const cur = qs[idx];
-    if (!cur) return <Stage>문항이 없습니다.</Stage>;
-
-    // showResult 상관없이 "현재 입력 기준" 정답 판단
-    const correctNow = norm(answer) === norm(cur.answer);
 
     const finishToResult = React.useCallback(
         (p: (OX | null)[]) => {
-            // localStorage는 항상 저장(라우트/새로고침 대비)
             try {
                 localStorage.setItem(LS_KEY_LAST_SESSION, String(sessionId));
                 localStorage.setItem(LS_KEY_PROGRESS, JSON.stringify(p));
@@ -162,34 +152,78 @@ export default function DailyInitialsModalPlay({
         [onShowResult, sessionId, onClose, nav]
     );
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
+        if (!cur) return;
         if (!answer.trim()) return;
 
-        // 현재 문항 사용자답 저장
-        setUserAnswers((prev) => {
-            const next = prev.length === total ? [...prev] : Array.from({ length: total }, () => null);
-            next[idx] = answer; // raw 저장
-            userAnswersRef.current = next;
-            return next;
-        });
+        // 이미 결과 보여주는 상태면 재채점 금지
+        if (showResult) return;
 
-        // 제출 순간에 correctNow로 진행도 기록
-        setShowResult(true);
-        setProgress((prev) => {
-            const next =
-                prev.length === total ? [...prev] : Array.from({ length: total }, () => null);
+        // 더블클릭/엔터 연타 방지
+        if (checking) return;
 
-            next[idx] = correctNow ? "O" : "X";
-            progressRef.current = next;
-            return next;
-        });
+        setChecking(true);
+        try {
+            setUserAnswers((prev) => {
+                const next = [...prev];
+                next[idx] = answer;
+                userAnswersRef.current = next;
+                return next;
+            });
+
+            const res = await checkDailyQuestion(sessionId, cur.id, { answerText: answer });
+
+            setChecked({ correct: !!res?.correct, explanation: res?.explanation ?? null });
+            setCorrectAnswer(pickAnswerText(res));
+            setShowResult(true);
+
+            setProgress((prev) => {
+                const next = [...prev];
+                next[idx] = res?.correct ? "O" : "X";
+                progressRef.current = next;
+                return next;
+            });
+        } catch (e: any) {
+            const status = e?.response?.status;
+            const data = e?.response?.data;
+            const msg = String(data?.message ?? "");
+
+            // 세션 만료/조회 금지
+            if (msg.includes("만료") || msg.includes("조회는 금지")) {
+                alert("오늘의 퀴즈 세션이 만료되었어요. 새로고침 후 다시 시도해주세요.");
+                onClose();
+                return;
+            }
+
+            // 이미 채점됨(409): 백엔드가 payload를 내려주면 그걸로 결과 렌더
+            if (status === 409) {
+                const correct = !!data?.correct;
+                const explanation = data?.explanation ?? null;
+
+                setChecked({ correct, explanation });
+                setCorrectAnswer(pickAnswerText(data));
+                setShowResult(true);
+
+                setProgress((prev) => {
+                    const next = [...prev];
+                    next[idx] = data?.correct === undefined ? prev[idx] : correct ? "O" : "X";
+                    progressRef.current = next;
+                    return next;
+                });
+
+                return;
+            }
+
+            console.error("[daily initials check] failed:", data ?? e);
+            alert("채점 중 문제가 발생했어요. 잠시 후 다시 시도해주세요.");
+        } finally {
+            setChecking(false);
+        }
     };
 
-    const [submitting, setSubmitting] = React.useState(false);
-
     function buildSubmitAnswers() {
-        // 서버 제출 payload (텍스트형)
-        const answers: Array<{ quizQuestionId: number; textAnswer: string; answerText?: string }> = [];
+        const answers: Array<{ quizQuestionId: number; textAnswer: string; answerText?: string }> =
+            [];
 
         for (let i = 0; i < qs.length; i++) {
             const qid = qs[i]?.id;
@@ -197,11 +231,12 @@ export default function DailyInitialsModalPlay({
             if (!qid) continue;
             answers.push({ quizQuestionId: qid, textAnswer: a, answerText: a });
         }
+
         return answers;
     }
 
     const handleNext = async () => {
-        // 마지막: "결과 보기" 클릭
+        // 마지막: 결과 보기(세션 submit)
         if (idx >= total - 1) {
             if (submitting) return;
 
@@ -218,7 +253,6 @@ export default function DailyInitialsModalPlay({
                     { withCredentials: true }
                 );
 
-                // submit 성공 후 결과로
                 finishToResult(progressRef.current);
             } catch (e: any) {
                 console.error("[initials submit] failed:", e?.response?.data ?? e);
@@ -229,11 +263,15 @@ export default function DailyInitialsModalPlay({
             return;
         }
 
-        // 다음 문제
+        // 다음 문항
         setIdx((i) => i + 1);
         setAnswer("");
         setShowResult(false);
+        setChecked(null);
+        setCorrectAnswer("");
     };
+
+    if (!cur) return <Stage>문항이 없습니다.</Stage>;
 
     return (
         <Stage>
@@ -241,13 +279,13 @@ export default function DailyInitialsModalPlay({
                 index={idx + 1}
                 total={total}
                 question={cur.q}
-                initials={cur.initials}
+                initials={toHintArray(cur.hint)}
                 value={answer}
                 onChange={setAnswer}
                 onSubmit={handleSubmit}
                 onNext={handleNext}
                 showResult={showResult}
-                correctAnswer={cur.answer}
+                correctAnswer={showResult ? correctAnswer : ""}
                 progress={progress}
             />
         </Stage>

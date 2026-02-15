@@ -624,8 +624,9 @@ export default function DailyChoiceCard({
             for (let i = 0; i < Math.min(progress.length, total); i++) base[i] = progress[i];
         }
 
-        if (selected != null && correctIdx >= 0) {
-            const pos = Math.max(0, Math.min(total - 1, index - 1));
+        const pos = Math.max(0, Math.min(total - 1, index - 1));
+
+        if (base[pos] == null && selected != null && correctIdx >= 0) {
             base[pos] = selected === correctIdx ? "O" : "X";
         }
 

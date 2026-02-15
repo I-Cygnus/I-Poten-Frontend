@@ -4,6 +4,7 @@ import http from "../../../utils/http.ts";
 import { getSessionReport } from "../../../api/quiz.ts";
 import DailyOXCard from "../../../components/quiz/DailyOXCard.tsx";
 import { useNavigate } from "react-router-dom";
+import {checkDailyQuestion} from "../../../api/dailyQuiz.ts";
 
 type OX = "O" | "X";
 
@@ -27,9 +28,12 @@ type StartedChoice = {
 
 type StartedItem = {
     questionId: number;
+    questionType: "OX";
     questionText: string;
     explanation?: string | null;
-    choices: StartedChoice[];
+    correctChoiceId?: number | null;
+    options: Array<{ choiceId: number; text: string; isAnswer?: boolean }>;
+    answerText?: string | null;
 };
 
 const Stage = styled.div`
@@ -73,7 +77,7 @@ function deriveCorrectFromIsAnswer(it: StartedItem): OX | null {
 const getOptions = (it: any) => (it?.options ?? it?.choices ?? it?.choiceList ?? []) as any[];
 
 const getOptId = (o: any) => Number(o?.choiceId ?? o?.id ?? o?.optionId);
-const getOptText = (o: any) => String(o?.choiceText ?? o?.text ?? o?.optionText ?? o?.label ?? "").trim();
+const getOptText = (o: any) => String(o?.text ?? o?.choiceText ?? o?.optionText ?? o?.label ?? "").trim();
 
 const deriveCorrectOX = (it: any): OX => {
     // 1) answerText가 있으면 그걸 우선
@@ -105,6 +109,11 @@ export default function DailyOxModalPlay({
     const [loading, setLoading] = React.useState(true);
 
     const choiceMapRef = React.useRef<Map<number, { O?: number; X?: number }>>(new Map());
+
+    const getSelectedChoiceId = (qid: number, v: OX) => {
+        const m = choiceMapRef.current.get(qid);
+        return v === "O" ? m?.O : m?.X;
+    };
 
     const putChoice = React.useCallback((qid: number, ox: OX, cid: number) => {
         if (!Number.isFinite(qid) || !Number.isFinite(cid)) return;
@@ -306,12 +315,57 @@ export default function DailyOxModalPlay({
                 total={total}
                 question={cur.q}
                 value={value}
-                onChange={(v: OX) => {
-                    setPicked((prev) => {
+                onChange={async (v: OX) => {
+                    // 1) UI 즉시 반영
+                    setPicked(prev => {
                         const next = [...prev];
                         next[idx] = v;
                         return next;
                     });
+
+                    // 2) check 호출
+                    const qid = cur.qid;
+                    const selectedChoiceId = getSelectedChoiceId(qid, v);
+
+                    if (!Number.isFinite(selectedChoiceId)) {
+                        console.warn("[OX] selectedChoiceId missing", { qid, v });
+                        return;
+                    }
+
+                    try {
+                        const res = await checkDailyQuestion(sessionId, qid, { choiceId: selectedChoiceId! });
+
+                        // 3) 서버가 준 해설/정답으로 화면 반영
+                        if (res?.correctChoiceId != null) {
+                            setView(prev => {
+                                const next = [...prev];
+                                const at = next[idx];
+                                if (!at) return prev;
+
+                                const m = choiceMapRef.current.get(qid) ?? {};
+                                // correctChoiceId가 m.O면 O, 아니면 X로 판단
+                                const serverCorrect: OX =
+                                    Number(res.correctChoiceId) === Number(m.O) ? "O" : "X";
+
+                                next[idx] = {
+                                    ...at,
+                                    correct: serverCorrect,
+                                    explanation: res.explanation ?? at.explanation,
+                                };
+                                return next;
+                            });
+                        } else if (res?.explanation != null) {
+                            setView(prev => {
+                                const next = [...prev];
+                                const at = next[idx];
+                                if (!at) return prev;
+                                next[idx] = { ...at, explanation: res.explanation };
+                                return next;
+                            });
+                        }
+                    } catch (e) {
+                        console.error("[OX] check failed", e);
+                    }
                 }}
                 showResult={showResult}
                 correct={cur.correct}

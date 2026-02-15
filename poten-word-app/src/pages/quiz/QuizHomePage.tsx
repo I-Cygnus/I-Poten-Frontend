@@ -84,6 +84,11 @@ export default function QuizHomePage() {
     const [dailyPendingKind, setDailyPendingKind] = useState<DailyKind>("CHOICE");
     const [dailyResumeCandidate, setDailyResumeCandidate] =
         useState<DailyStartResponse | null>(null);
+    const [resultKind, setResultKind] = useState<DailyKind | null>(null);
+    const [resultItems, setResultItems] = useState<any[]>([]);
+    const [retryToken, setRetryToken] = useState(0);
+
+
 
     type CarryChoice = "RESUME" | "TODAY";
     const [carryChoice, setCarryChoice] = useState<CarryChoice>("RESUME");
@@ -155,7 +160,7 @@ export default function QuizHomePage() {
 
         setDailyLoading(true);
         try {
-            const res = await startGeneralDaily("TODAY"); // 강제로 오늘 세션 생성
+            const res = await startGeneralDaily("TODAY");
             setDailyData(res);
             setDailyKind(dailyPendingKind);
             setDailyOpen(true);
@@ -173,6 +178,35 @@ export default function QuizHomePage() {
     const [resultOpen, setResultOpen] = useState(false);
     const [resultProgress, setResultProgress] = useState<(OX | null)[]>([]);
     const [resultSessionId, setResultSessionId] = useState<number | null>(null);
+
+    const retryWrongInDailyModal = useCallback(() => {
+        if (!resultKind || !resultItems?.length) return;
+
+        const wrongIdxs = resultProgress
+            .map((v, i) => ({ v, i }))
+            .filter(x => x.v === "X")
+            .map(x => x.i);
+
+        if (wrongIdxs.length === 0) {
+            openSys({ title: "오답이 없어요", message: "틀린 문제가 없어서 다시 풀 수 없어요." } as any);
+            return;
+        }
+
+        const wrongItems = wrongIdxs.map(i => resultItems[i]).filter(Boolean);
+
+        // 1) 결과 모달 닫기
+        setResultOpen(false);
+
+        // 2) 데일리 모달을 “오답 items”로 시작
+        setDailyKind(resultKind);
+        setDailyOverrideItems(wrongItems);
+
+        // 3) 강제 리마운트
+        setRetryToken(t => t + 1);
+
+        // 4) 데일리 모달 열기
+        setDailyOpen(true);
+    }, [resultKind, resultItems, resultProgress]);
 
     const actions = useMemo(
         () => [
@@ -543,6 +577,8 @@ export default function QuizHomePage() {
 
     const session = pickSession(dailyKind);
 
+    const [dailyOverrideItems, setDailyOverrideItems] = useState<any[] | null>(null);
+
     return (
         <PageWrap>
             <HeroWrap style={{
@@ -769,45 +805,74 @@ export default function QuizHomePage() {
 
                 {session && dailyKind === "CHOICE" && (
                     <DailyChoiceModalPlay
-                        key={`choice-${session.sessionId}`}
+                        key={`choice-${session.sessionId}-${retryToken}`}
                         sessionId={session.sessionId}
-                        items={(session.items ?? []) as any}
-                        onClose={() => setDailyOpen(false)}
+                        items={((dailyOverrideItems ?? session.items) ?? []) as any}
+                        onClose={() => {
+                            setDailyOpen(false);
+                            setDailyOverrideItems(null);
+                        }}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
+
+                            const playedItems = (dailyOverrideItems ?? session.items) ?? [];
+
                             setResultSessionId(sessionId);
                             setResultProgress(progress);
+                            setResultKind(dailyKind);
+                            setResultItems(playedItems as any);
                             setResultOpen(true);
+                            setDailyOverrideItems(null);
                         }}
                     />
                 )}
 
                 {session && dailyKind === "OX" && (
                     <DailyOxModalPlay
-                        key={`ox-${session.sessionId}`}
+                        key={`ox-${session.sessionId}-${retryToken}`}
                         sessionId={session.sessionId}
-                        items={(session.items ?? []) as any}
-                        onClose={() => setDailyOpen(false)}
+                        items={((dailyOverrideItems ?? session.items) ?? []) as any}
+                        onClose={() => {
+                            setDailyOpen(false);
+                            setDailyOverrideItems(null);
+                        }}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
+
+                            const playedItems = (dailyOverrideItems ?? session.items) ?? [];
+
                             setResultSessionId(sessionId);
                             setResultProgress(progress);
+                            setResultKind(dailyKind);
+                            setResultItems(playedItems as any);
                             setResultOpen(true);
+
+                            setDailyOverrideItems(null);
                         }}
                     />
                 )}
 
                 {session && dailyKind === "INITIALS" && (
                     <DailyInitialsModalPlay
-                        key={`initials-${session.sessionId}`}
+                        key={`initials-${session.sessionId}-${retryToken}`}
                         sessionId={session.sessionId}
-                        items={session.items ?? []}
-                        onClose={() => setDailyOpen(false)}
+                        items={((dailyOverrideItems ?? session.items) ?? []) as any}
+                        onClose={() => {
+                            setDailyOpen(false);
+                            setDailyOverrideItems(null);
+                        }}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
+
+                            const playedItems = (dailyOverrideItems ?? session.items) ?? [];
+
                             setResultSessionId(sessionId);
                             setResultProgress(progress);
+                            setResultKind(dailyKind);
+                            setResultItems(playedItems as any);
                             setResultOpen(true);
+
+                            setDailyOverrideItems(null);
                         }}
                     />
                 )}
@@ -819,6 +884,7 @@ export default function QuizHomePage() {
                     progress={resultProgress}
                     sessionId={resultSessionId}
                     title="결과 보기"
+                    onRetryWrong={retryWrongInDailyModal}
                     onClose={() => {
                         setResultOpen(false);
                         setResultSessionId(null);
