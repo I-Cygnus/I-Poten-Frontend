@@ -271,6 +271,7 @@ const BulletList = styled.ul`
     font-size: 13px;
     line-height: 1.6;
     color: #4b5563;
+    text-align: left;
 `;
 
 const BulletItem = styled.li`
@@ -324,11 +325,15 @@ const Ghost = styled.button`
 `;
 
 const Primary = styled(Ghost)`
-  border-color: #3E63E0;
-  background: #3E63E0;
-  color: #fff;
+    border-color: #3E63E0;
+    background: #3E63E0;
+    color: #fff;
 
-  &:hover { filter: brightness(0.98); }
+    &:hover {
+        background: #3E63E0;
+        border-color: #3E63E0;
+        filter: brightness(0.96);
+    }
 `;
 
 const Danger = styled(Ghost)`
@@ -366,6 +371,7 @@ const PlainBody = styled.div`
     line-height: 1.6;
     color: #4b5563;
     white-space: pre-wrap;
+    text-align: center;
 `;
 
 const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
