@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: '리뷰 이벤트 - 최대 6,000P 혜택 | 아이포텐',
     description: '아이포텐 AI 면접 리뷰를 작성하고 최대 6,000P 포인트를 받으세요!',
-    url: 'https://yourdomain.com/event',
+    url: 'https://i-poten.com/event',
     siteName: '아이포텐',
     images: [
       {
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     images: ['/twitter-event.jpg'],
   },
   alternates: {
-    canonical: 'https://yourdomain.com/event',
+    canonical: 'https://i-poten.com/event',
   },
 };
 
