@@ -127,10 +127,7 @@ const Sheet = styled.div<SheetProps>`
 
     max-height: min(80vh, calc(100vh - 48px));
 
-    background: ${({ $hasDescription }) =>
-            $hasDescription
-                    ? "#ffffff"
-                    : "linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)"};
+    background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
 
     border-radius: 16px;
     border: 1px solid #e5e7eb;
@@ -147,14 +144,8 @@ const SheetHeader = styled.div<SheetHeaderProps>`
     align-items: center;
     gap: 10px;
     padding: 20px 20px 16px;
-
-    border-bottom: ${({ $hasDescription }) =>
-            $hasDescription ? "1px solid #f3f4f6" : "none"};
-
-    background: ${({ $hasDescription }) =>
-            $hasDescription
-                    ? "linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)"
-                    : "transparent"};
+    border-bottom: none;
+    background: transparent;
 `;
 
 type IconBoxProps = { $tone: SystemMessageTone };
@@ -187,6 +178,7 @@ const iconRing = keyframes`
 
 const IconBox = styled.span<IconBoxProps>`
     position: relative;
+    margin-bottom: 6px;
     flex: 0 0 auto;
     width: 76px;
     height: 76px;
@@ -222,7 +214,7 @@ const TitleWrap = styled.div`
     display: flex;
     flex-direction: column;
     gap: 4px;
-    padding-top: 2px;
+    padding-top: 10px;
     text-align: center;
     align-items: center;
 
@@ -268,7 +260,7 @@ const CloseX = styled.button`
 `;
 
 const SheetBody = styled.div`
-    padding: 12px 18px 10px;
+    padding: 8px 20px 12px;
     overflow: auto;
     background: transparent;
 `;
@@ -279,6 +271,7 @@ const BulletList = styled.ul`
     font-size: 13px;
     line-height: 1.6;
     color: #4b5563;
+    text-align: left;
 `;
 
 const BulletItem = styled.li`
@@ -332,11 +325,15 @@ const Ghost = styled.button`
 `;
 
 const Primary = styled(Ghost)`
-  border-color: #3E63E0;
-  background: #3E63E0;
-  color: #fff;
+    border-color: #3E63E0;
+    background: #3E63E0;
+    color: #fff;
 
-  &:hover { filter: brightness(0.98); }
+    &:hover {
+        background: #3E63E0;
+        border-color: #3E63E0;
+        filter: brightness(0.96);
+    }
 `;
 
 const Danger = styled(Ghost)`
@@ -368,6 +365,15 @@ const SuccessIconSvg = styled.svg`
     }
 `;
 
+const PlainBody = styled.div`
+    margin-top: 0;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #4b5563;
+    white-space: pre-wrap;
+    text-align: center;
+`;
+
 const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                                                                    open,
                                                                    message,
@@ -389,12 +395,27 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
     if (!open || !message) return null;
 
     const tone: SystemMessageTone = message.tone ?? "info";
-    const hasDescription = !!message.description;
+
     const hasBullets = !!(message.bullets && message.bullets.length > 0);
+
+    // 불릿은 warning/error에서만 허용
+    const shouldRenderBullets = hasBullets && (tone === "warning" || tone === "error");
+
+    // bullets를 안 쓰는 경우 description을 본문으로
+    const hasBodyDescription = !!message.description && !shouldRenderBullets;
+
+    // bullets가 들어왔지만 warning/error가 아니면 문장 형태로 보여주기
+    const hasBodyFromBullets = hasBullets && !shouldRenderBullets;
+
+    // 헤더 small은 불릿 모드에서만 (원치 않으면 false로 고정해도 됨)
+    const showHeaderDescription = !!message.description && shouldRenderBullets;
+
+    // 스타일(테두리/배경)용: 본문이 있으면 true
+    const hasDescription = hasBodyDescription || hasBodyFromBullets || showHeaderDescription;
 
     const size: "default" | "wide" =
         message.size ??
-        ((tone === "warning" || tone === "error") && hasBullets ? "wide" : "default");
+        ((tone === "warning" || tone === "error") && shouldRenderBullets ? "wide" : "default");
 
     const actions: SystemMessageAction[] = message.actions?.length
         ? message.actions
@@ -426,7 +447,9 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
 
                     <TitleWrap>
                         <h3 id="system-message-title">{message.title}</h3>
-                        {hasDescription && <small>{message.description}</small>}
+
+                        {/* bullets 있을 때만 small(헤더)로 */}
+                        {showHeaderDescription && <small>{message.description}</small>}
                     </TitleWrap>
 
                     <CloseX type="button" aria-label="닫기" onClick={onClose}>
@@ -434,15 +457,26 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                     </CloseX>
                 </SheetHeader>
 
-                {hasBullets && (
+                {(shouldRenderBullets || hasBodyDescription || hasBodyFromBullets) && (
                     <SheetBody>
-                        <BulletList>
-                            {message.bullets!.map((b, i) => (
-                                <BulletItem key={i}>{b}</BulletItem>
-                            ))}
-                        </BulletList>
+                        {shouldRenderBullets ? (
+                            <BulletList>
+                                {message.bullets!.map((b, i) => (
+                                    <BulletItem key={i}>{b}</BulletItem>
+                                ))}
+                            </BulletList>
+                        ) : hasBodyFromBullets ? (
+                            <PlainBody>
+                                {message.bullets!.map((b, i) => (
+                                    <div key={i}>{b}</div>
+                                ))}
+                            </PlainBody>
+                        ) : (
+                            <PlainBody>{message.description}</PlainBody>
+                        )}
                     </SheetBody>
                 )}
+
 
                 <SheetFooter $hasDescription={hasDescription}>
                     {actions.map((a, idx) => {

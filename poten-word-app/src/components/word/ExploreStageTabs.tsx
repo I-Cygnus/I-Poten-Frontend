@@ -25,32 +25,37 @@ const INITIALS = ["ㄱ","ㄴ","ㄷ","ㄹ","ㅁ","ㅂ","ㅅ","ㅇ","ㅈ","ㅊ","�
 const ALPHABETS = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
 const SYMBOLS = ["@","#","$","%","&","*","/","?","-","_",".","!"];
 
-const LANG_ITEMS: string[] = [
-    "Java",
-    "Python",
-    "JavaScript",
-    "TypeScript",
-    "C / C++ / C#",
-    "SQL",
-    "Shell / Bash",
-    "Go(Golang)",
-    "Rust",
-    "Kotlin",
-    "Swift",
-    "Ruby",
-    "PHP",
-    "Dart",
-    "R",
-    "Julia",
-    "Assembly",
-    "Bash",
-    "PowerShell",
-    "HTML/CSS",
-    "GraphQL",
-    "Haskell, Scala,\nElixir",
-    "Objective-C",
-    "Lua",
-];
+function LangGridPanel({
+                           items,
+                           selected,
+                           onPick,
+                       }: {
+    items: { id: number; label: string }[];
+    selected: number | null;
+    onPick: (item: { id: number; label: string }) => void;
+}) {
+    return (
+        <LangFrame aria-label="언어별 찾기" className="panelTop">
+            <LangGrid>
+                {items.map((it) => {
+                    const active = selected === it.id;
+                    return (
+                        <LangCell
+                            key={it.id}
+                            type="button"
+                            $active={active}
+                            onClick={() => onPick(it)}
+                            aria-pressed={active}
+                            title={it.label.replace("\n", " ")}
+                        >
+                            <LangText $active={active}>{it.label}</LangText>
+                        </LangCell>
+                    );
+                })}
+            </LangGrid>
+        </LangFrame>
+    );
+}
 
 const JOB_KO_MAP: Record<string, string> = {
     "Frontend": "프론트엔드",
@@ -126,7 +131,7 @@ export default function ExploreStageTabs({ defaultCollapsed }: Props) {
     const [etcSelItem, setEtcSelItem] = React.useState<number | null>(null);
 
     // lang panel state
-    const [langSelected, setLangSelected] = React.useState<string | null>(null);
+    const [langSelected, setLangSelected] = React.useState<number | null>(null);
 
     // initial panel state
     const [glyphSelected, setGlyphSelected] = React.useState<{ mode: FilterMode; value: string } | null>(null);
@@ -169,7 +174,7 @@ export default function ExploreStageTabs({ defaultCollapsed }: Props) {
         userToggledRef.current = true;
 
         const sp = buildSearchParams();
-        navigate({ pathname: "/poten-word/search", search: `?${sp.toString()}` });
+        navigate({ pathname: "/learning/search", search: `?${sp.toString()}` });
     }, [canSearch, buildSearchParams, navigate]);
 
     const clearAndSet = React.useCallback((next: ExploreSelection) => {
@@ -262,9 +267,29 @@ export default function ExploreStageTabs({ defaultCollapsed }: Props) {
                         <LangGridPanel
                             items={LANG_ITEMS}
                             selected={langSelected}
-                            onPick={(label) => {
-                                setLangSelected(label);
-                                setSelection({ kind: "tag", label: `언어별: ${label.replace("\n", " ")}`, tag: label });
+                            onPick={(item) => {
+                                setLangSelected(item.id);
+
+                                const label = `언어별: ${item.label.replace("\n", " ")}`;
+                                const catPath = `${LANG_ROOT_ID}/${item.id}`;
+
+                                setSelection({ kind: "catPath", label, catPath });
+
+                                {active === "lang" && (
+                                    <LangGridPanel
+                                        items={LANG_ITEMS}
+                                        selected={langSelected}
+                                        onPick={(item) => {
+                                            setLangSelected(item.id);
+
+                                            const label = `언어별: ${item.label.replace("\n", " ")}`;
+                                            const catPath = `${LANG_ROOT_ID}/${item.id}`; // depth 2
+
+                                            // 선택만 세팅 (이동은 아래 "검색" 버튼에서)
+                                            setSelection({ kind: "catPath", label, catPath });
+                                        }}
+                                    />
+                                )}
                             }}
                         />
                     )}
@@ -361,37 +386,34 @@ export default function ExploreStageTabs({ defaultCollapsed }: Props) {
 }
 /* ------------------- 패널들 ------------------- */
 
-function LangGridPanel({
-                           items,
-                           selected,
-                           onPick,
-                       }: {
-    items: string[];
-    selected: string | null;
-    onPick: (label: string) => void;
-}) {
-    return (
-        <LangFrame aria-label="언어별 찾기" className="panelTop">
-            <LangGrid>
-                {items.map((label) => {
-                    const active = selected === label;
-                    return (
-                        <LangCell
-                            key={label}
-                            type="button"
-                            $active={active}
-                            onClick={() => onPick(label)}
-                            aria-pressed={active}
-                            title={label.replace("\n", " ")}
-                        >
-                            <LangText $active={active}>{label}</LangText>
-                        </LangCell>
-                    );
-                })}
-            </LangGrid>
-        </LangFrame>
-    );
-}
+const LANG_ROOT_ID = 2;
+
+const LANG_ITEMS: { id: number; label: string }[] = [
+    { id: 94, label: "Java" },
+    { id: 95, label: "Python" },
+    { id: 96, label: "JavaScript" },
+    { id: 97, label: "TypeScript" },
+    { id: 98, label: "C / C++ / C#" },
+    { id: 99, label: "SQL" },
+    { id: 100, label: "Shell / Bash" },
+    { id: 101, label: "Go(Golang)" },
+    { id: 102, label: "Rust" },
+    { id: 103, label: "Kotlin" },
+    { id: 104, label: "Swift" },
+    { id: 105, label: "Ruby" },
+    { id: 106, label: "PHP" },
+    { id: 107, label: "Dart" },
+    { id: 108, label: "R" },
+    { id: 109, label: "Julia" },
+    { id: 110, label: "Assembly" },
+    { id: 111, label: "Bash" },
+    { id: 112, label: "PowerShell" },
+    { id: 113, label: "HTML/CSS" },
+    { id: 114, label: "GraphQL" },
+    { id: 115, label: "Haskell, Scala, Elixir" },
+    { id: 116, label: "Objective-C" },
+    { id: 117, label: "Lua" },
+];
 
 function InitialPickerPanel({
                                 selected,
@@ -637,7 +659,7 @@ const UI = {
 };
 
 const Root = styled.div`
-  width: 100%;
+    width: 100%;
 `;
 
 const TabRow = styled.div`
@@ -736,11 +758,11 @@ const TabLabel = styled.span<{ $active?: boolean }>`
 
         @media (prefers-reduced-motion: reduce) {
             transition: none;
-    }
+        }
 `;
 
 const BoxStack = styled.div`
-  width: 100%;
+    width: 100%;
 `;
 
 const PanelFrame = styled.div`
@@ -814,9 +836,9 @@ const SummaryLeft = styled.div`
 `;
 
 const SummaryRight = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 `;
 
 const SummaryChip = styled.div`
@@ -890,29 +912,29 @@ const ChipX = styled.button`
     }
 `;
 const SummaryEmpty = styled.div`
-  font-size: 15px;
-  color: rgba(17, 24, 39, 0.55);
-  letter-spacing: -0.02em;
+    font-size: 15px;
+    color: rgba(17, 24, 39, 0.55);
+    letter-spacing: -0.02em;
 `;
 
 const SummaryHint = styled.div`
-  font-size: 14px;
-  color: rgba(17, 24, 39, 0.55);
-  letter-spacing: -0.02em;
-  white-space: nowrap;
+    font-size: 14px;
+    color: rgba(17, 24, 39, 0.55);
+    letter-spacing: -0.02em;
+    white-space: nowrap;
 
-  @media (max-width: 720px) {
-    display: none;
-  }
+    @media (max-width: 720px) {
+        display: none;
+    }
 `;
 
 const SummaryText = styled.div`
-  font-size: 16px;
-  color: #111827;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    font-size: 16px;
+    color: #111827;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 `;
 
 const GoBtn = styled.button`
@@ -1033,23 +1055,23 @@ const LangText = styled.div<{ $active?: boolean }>`
 `;
 
 const Cols = styled.div`
-  display: grid;
-  grid-template-columns: 0.8fr 1.2fr;
-  gap: 22px;
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr;
+    gap: 22px;
 
-  @media (max-width: 860px) {
-    grid-template-columns: 1fr;
-  }
+    @media (max-width: 860px) {
+        grid-template-columns: 1fr;
+    }
 `;
 
 const Col = styled.div``;
 
 const ColTitle = styled.div`
-  font-size: 16px;
-  font-weight: 600;
-  color: #111827;
-  margin-bottom: 14px;
-  letter-spacing: -0.02em;
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 14px;
+    letter-spacing: -0.02em;
 `;
 
 function ScrollPillBox({
@@ -1137,77 +1159,77 @@ const ListBoxShell = styled.div`
 `;
 
 const ListScroll = styled.div<{ $maxHeight: number }>`
-  padding: 10px;
-  max-height: ${({ $maxHeight }) => $maxHeight}px;
-  overflow: auto;
-  overscroll-behavior: contain;
+    padding: 10px;
+    max-height: ${({ $maxHeight }) => $maxHeight}px;
+    overflow: auto;
+    overscroll-behavior: contain;
 
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  &::-webkit-scrollbar {
-    width: 0;
-    height: 0;
-  }
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    &::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+    }
 
-  padding-right: 18px;
+    padding-right: 18px;
 `;
 
 const ScrollPill = styled.div`
-  position: absolute;
-  right: 6px;
-  top: 10px;
+    position: absolute;
+    right: 6px;
+    top: 10px;
 
-  width: 8px;
-  border-radius: 999px;
-  background: rgba(156, 163, 175, 0.15);
+    width: 8px;
+    border-radius: 999px;
+    background: rgba(156, 163, 175, 0.15);
 
-  pointer-events: none;
+    pointer-events: none;
 `;
 
 const ListItem = styled.button<{ $active?: boolean }>`
-  width: 100%;
-  border: 0;
-  background: ${({ $active }) => ($active ? "#EEF2FF" : "transparent")};
-  border-radius: 12px;
-  padding: 14px 14px;
-  text-align: left;
-  cursor: pointer;
-  transition: background 120ms ease;
+    width: 100%;
+    border: 0;
+    background: ${({ $active }) => ($active ? "#EEF2FF" : "transparent")};
+    border-radius: 12px;
+    padding: 14px 14px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 120ms ease;
 
-  &:hover {
-    background: ${({ $active }) => ($active ? "#EEF2FF" : "rgba(15, 23, 42, 0.03)")};
-  }
+    &:hover {
+        background: ${({ $active }) => ($active ? "#EEF2FF" : "rgba(15, 23, 42, 0.03)")};
+    }
 `;
 
 const NameBlock = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 `;
 
 const KName = styled.div`
-  font-size: 16px;
-  font-weight: 500;
-  color: #111827;
-  letter-spacing: -0.02em;
+    font-size: 16px;
+    font-weight: 500;
+    color: #111827;
+    letter-spacing: -0.02em;
 `;
 
 const EnName = styled.div`
-  font-size: 14px;
-  color: rgba(17, 24, 39, 0.75);
-  letter-spacing: -0.02em;
+    font-size: 14px;
+    color: rgba(17, 24, 39, 0.75);
+    letter-spacing: -0.02em;
 `;
 
 const Loading = styled.div`
-  padding: 14px;
-  color: #6b7280;
-  font-size: 14px;
+    padding: 14px;
+    color: #6b7280;
+    font-size: 14px;
 `;
 
 const Empty = styled.div`
-  padding: 14px;
-  color: #6b7280;
-  font-size: 14px;
+    padding: 14px;
+    color: #6b7280;
+    font-size: 14px;
 `;
 
 const LABEL_COL = 64;
@@ -1215,84 +1237,84 @@ const LABEL_COL = 64;
 const GRID_COLS = 14;
 
 const PickRow = styled.div`
-  display: grid;
-  grid-template-columns: ${LABEL_COL}px 1fr;
-  gap: 14px;
-  align-items: start;
-  margin-bottom: 22px;
+    display: grid;
+    grid-template-columns: ${LABEL_COL}px 1fr;
+    gap: 14px;
+    align-items: start;
+    margin-bottom: 22px;
 
-  @media (max-width: 720px) {
-    grid-template-columns: 56px 1fr;
-    gap: 12px;
-    margin-bottom: 18px;
-  }
+    @media (max-width: 720px) {
+        grid-template-columns: 56px 1fr;
+        gap: 12px;
+        margin-bottom: 18px;
+    }
 `;
 
 const PickRowLast = styled(PickRow)`
-  margin-bottom: 0;
+    margin-bottom: 0;
 `;
 
 const PickLabel = styled.div`
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
 
-  font-size: 16px;
-  font-weight: 700;
-  color: #111827;
-  letter-spacing: -0.02em;
+    font-size: 16px;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.02em;
 `;
 
 const PickGrid = styled.div<{ $cols?: number }>`
-  display: grid;
+    display: grid;
     grid-template-columns: repeat(${({ $cols }) => $cols ?? GRID_COLS}, 44px);
-  gap: 7px;
-  justify-content: start;
+    gap: 7px;
+    justify-content: start;
 
     @media (max-width: 980px) {
-    grid-template-columns: repeat(10, 44px);
-  }
-  @media (max-width: 720px) {
-    grid-template-columns: repeat(7, 44px);
-    gap: 10px;
-  }
-  @media (max-width: 420px) {
-    grid-template-columns: repeat(6, 1fr);
-  }
+        grid-template-columns: repeat(10, 44px);
+    }
+    @media (max-width: 720px) {
+        grid-template-columns: repeat(7, 44px);
+        gap: 10px;
+    }
+    @media (max-width: 420px) {
+        grid-template-columns: repeat(6, 1fr);
+    }
 `;
 
 const PickBtn = styled.button<{ $active?: boolean; $kind?: GlyphKind }>`
-  width: 44px;
-  height: 44px;
-  border-radius: 6px;
+    width: 44px;
+    height: 44px;
+    border-radius: 6px;
 
-  border: 1px solid ${({ $active }) => ($active ? "#4F76F1" : "rgba(17,24,39,0.14)")};
-  background: ${({ $active }) => ($active ? "#EEF2FF" : "#ffffff")};
+    border: 1px solid ${({ $active }) => ($active ? "#4F76F1" : "rgba(17,24,39,0.14)")};
+    background: ${({ $active }) => ($active ? "#EEF2FF" : "#ffffff")};
 
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 
-  font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-synthesis: none;
+    font-family: "Pretendard Variable", Pretendard, "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-synthesis: none;
 
-  font-weight: ${({ $active, $kind }) => ($active ? 650 : $kind === "ko" ? 550 : 500)};
-  font-size: 16px;
-  color: ${({ $active }) => ($active ? "#1d4ed8" : "#111827")};
+    font-weight: ${({ $active, $kind }) => ($active ? 650 : $kind === "ko" ? 550 : 500)};
+    font-size: 16px;
+    color: ${({ $active }) => ($active ? "#1d4ed8" : "#111827")};
 
-  cursor: pointer;
-  outline: none;
-  box-shadow: none;
-  transition: background 140ms ease, border-color 140ms ease, transform 80ms ease;
+    cursor: pointer;
+    outline: none;
+    box-shadow: none;
+    transition: background 140ms ease, border-color 140ms ease, transform 80ms ease;
 
-  &:hover {
-    background: ${({ $active }) => ($active ? "#EEF2FF" : "rgba(15, 23, 42, 0.02)")};
-  }
-  &:active { transform: scale(0.98); }
-  &:focus-visible { box-shadow: 0 0 0 3px rgba(79, 118, 241, 0.22); }
+    &:hover {
+        background: ${({ $active }) => ($active ? "#EEF2FF" : "rgba(15, 23, 42, 0.02)")};
+    }
+    &:active { transform: scale(0.98); }
+    &:focus-visible { box-shadow: 0 0 0 3px rgba(79, 118, 241, 0.22); }
 
-  @media (max-width: 420px) { width: 100%; }
+    @media (max-width: 420px) { width: 100%; }
 `;
 
 const PanelsArea = styled.div<{ $collapsed: boolean }>`
@@ -1304,30 +1326,30 @@ const PanelsArea = styled.div<{ $collapsed: boolean }>`
 `;
 
 const CrumbRow = styled.span`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
 `;
 
 const CrumbText = styled.span`
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 `;
 
 const PathSepIcon = styled.svg`
-  width: 14px;
-  height: 14px;
-  flex: 0 0 auto;
-  opacity: 0.55;
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    opacity: 0.55;
 
-  path {
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2.4;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-  }
+    path {
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 2.4;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
 `;

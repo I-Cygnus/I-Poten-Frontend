@@ -47,6 +47,9 @@ RUN rm -f package-lock.json && npm install --legacy-peer-deps
 # 공통 패키지 빌드
 RUN npm -ws run build -w @jobspoon/theme-bridge -w @jobspoon/app-state
 
+# next-seo-app 빌드
+RUN npm run build:next-seo
+
 # sveltekit-review-app 제외하고 빌드
 RUN npm run build:remotes && npm run build:host
 
@@ -57,6 +60,7 @@ COPY docker/nginx.conf /etc/nginx/nginx.conf
 RUN rm -f /etc/nginx/conf.d/default.conf
 
 # 빌드 결과물 복사
+COPY --from=builder /app/next-seo-app/out /usr/share/nginx/html/next-seo-app
 COPY --from=builder /app/main-container/dist /usr/share/nginx/html/html-container
 COPY --from=builder /app/mypage-app/dist /usr/share/nginx/html/mypage-app
 COPY --from=builder /app/navigation-bar-app/dist /usr/share/nginx/html/navigation-bar-app

@@ -1,8 +1,7 @@
 import React from "react";
 import styled from "styled-components";
-import http from "../../../utils/http.ts";
-import { getSessionReport } from "../../../api/quiz.ts";
 import DailyChoiceCard from "../../../components/quiz/DailyChoiceCard.tsx";
+import {checkDailyQuestion} from "../../../api/dailyQuiz.ts";
 
 type OX = "O" | "X";
 
@@ -24,8 +23,10 @@ type ChoiceView = {
     id: number;
     q: string;
     choices: string[];
-    correctIndex: number;
     explanation: string | null;
+    correctIndex: number;
+    checked: boolean;
+    isCorrect: boolean | null;
 };
 
 const Stage = styled.div`
@@ -46,30 +47,6 @@ function safeTextOrNull(v: any): string | null {
     return s ? s : null;
 }
 
-async function hydrateFromReport(sessionId: number, items: StartedItem[]) {
-    const rep = await getSessionReport(sessionId);
-
-    const byQ = new Map<number, { correctChoiceId?: number; explanation?: string | null }>();
-    for (const d of rep?.details ?? []) {
-        const qid = Number(d?.quizQuestionId);
-        if (!Number.isFinite(qid)) continue;
-        byQ.set(qid, {
-            correctChoiceId: d?.correctChoiceId != null ? Number(d.correctChoiceId) : undefined,
-            explanation: d?.explanation ?? null,
-        });
-    }
-
-    const correctIndexes = items.map((it) => {
-        const correctCid = byQ.get(it.questionId)?.correctChoiceId;
-        if (correctCid == null) return -1;
-        const idx = (it.options ?? []).findIndex((c) => Number(c.choiceId) === Number(correctCid));
-        return idx >= 0 ? idx : -1;
-    });
-
-    const explanations = items.map((it) => byQ.get(it.questionId)?.explanation ?? null);
-    return { correctIndexes, explanations };
-}
-
 export default function DailyChoiceModalPlay({
                                                  sessionId,
                                                  items,
@@ -84,10 +61,14 @@ export default function DailyChoiceModalPlay({
     const [qs, setQs] = React.useState<ChoiceView[]>([]);
     const [loading, setLoading] = React.useState(true);
 
-    // idx는 0-based로
     const [idx, setIdx] = React.useState(0);
+
+    /** picked는 “선택한 보기 인덱스(0-based)” */
     const [picked, setPicked] = React.useState<(number | null)[]>([]);
     const [startMs] = React.useState(() => Date.now());
+
+    /** 문항별 check 결과 캐시(중복 호출 방지) */
+    const checkedRef = React.useRef(new Map<number, any>());
 
     React.useEffect(() => {
         let mounted = true;
@@ -95,45 +76,22 @@ export default function DailyChoiceModalPlay({
         (async () => {
             setLoading(true);
 
-            const needReport =
-                items.some((it) => it.correctChoiceId == null) ||
-                items.some((it) => !String(it.explanation ?? "").trim());
-
-            let correctIndexes: number[] = [];
-            let repExps: (string | null)[] = [];
-
-            if (needReport) {
-                try {
-                    const hydrated = await hydrateFromReport(sessionId, items);
-                    correctIndexes = hydrated.correctIndexes;
-                    repExps = hydrated.explanations;
-                } catch {
-                    correctIndexes = items.map(() => -1);
-                    repExps = items.map(() => null);
-                }
-            } else {
-                // 서버가 다 내려줄 때
-                correctIndexes = items.map((it) => {
-                    if (it.correctChoiceId == null) return -1;
-                    const i = (it.options ?? []).findIndex((c) => Number(c.choiceId) === Number(it.correctChoiceId));
-                    return i >= 0 ? i : -1;
-                });
-                repExps = items.map((it) => it.explanation ?? null);
-            }
-
-            const view: ChoiceView[] = items.map((it, i) => ({
+            const view: ChoiceView[] = items.map((it) => ({
                 id: it.questionId,
                 q: safeTextOrNull(it.questionText) ?? "",
                 choices: (it.options ?? []).map((c) => safeTextOrNull(c.text) ?? ""),
-                correctIndex: correctIndexes[i] ?? -1,
-                explanation: safeTextOrNull(it.explanation) ?? safeTextOrNull(repExps[i]),
+                explanation: safeTextOrNull(it.explanation) ?? null,
+
+                correctIndex: -1,
+                checked: false,
+                isCorrect: null,
             }));
 
             if (!mounted) return;
-
             setQs(view);
             setPicked(Array.from({ length: view.length }, () => null));
             setIdx(0);
+            checkedRef.current.clear();
             setLoading(false);
         })();
 
@@ -145,44 +103,61 @@ export default function DailyChoiceModalPlay({
     const cur = qs[idx];
     const total = qs.length;
 
+    /** progress는 “체크된 문항만 O/X, 아니면 null” */
     const progress = React.useMemo<(OX | null)[]>(() => {
         return qs.map((q, i) => {
-            const p = picked[i];
-            if (p == null) return null;
-            if (q.correctIndex < 0) return null;
-            return p === q.correctIndex ? "O" : "X";
+            if (!q.checked || q.isCorrect == null) return null;
+            return q.isCorrect ? "O" : "X";
         });
-    }, [qs, picked]);
+    }, [qs]);
 
-    function buildSubmitAnswers() {
-        const answers: Array<{ quizQuestionId: number; selectedChoiceId: number }> = [];
-        for (let i = 0; i < items.length; i++) {
-            const pickedIdx = picked[i];
-            if (pickedIdx == null) continue;
-            const it = items[i];
-            const ch = it?.options?.[pickedIdx];
-            if (!it?.questionId || !ch?.choiceId) continue;
-            answers.push({ quizQuestionId: it.questionId, selectedChoiceId: ch.choiceId });
+    const runCheck = async (qIndex: number, pickedIndex: number) => {
+        const q = qs[qIndex];
+        if (!q) return;
+
+        const it = items[qIndex];
+        const selected = it?.options?.[pickedIndex];
+        if (!selected?.choiceId) return;
+
+        try {
+            const res = await checkDailyQuestion(sessionId, it.questionId, {
+                choiceId: selected.choiceId,
+            });
+
+            checkedRef.current.set(q.id, res);
+
+            const correctChoiceId = res?.correctChoiceId != null ? Number(res.correctChoiceId) : null;
+            const correctIndex =
+                correctChoiceId == null ? -1
+                    : it.options.findIndex((c) => Number(c.choiceId) === correctChoiceId);
+
+            setQs((prev) => {
+                const next = [...prev];
+                const prevQ = next[qIndex];
+                if (!prevQ) return prev;
+
+                next[qIndex] = {
+                    ...prevQ,
+                    checked: true,
+                    isCorrect: !!res?.correct,
+                    correctIndex: correctIndex >= 0 ? correctIndex : -1,
+                    explanation: safeTextOrNull(res?.explanation) ?? prevQ.explanation,
+                };
+                return next;
+            });
+        } catch (e: any) {
+            const msg = e?.response?.data?.message ?? e?.message ?? "채점 중 오류가 발생했습니다.";
+            alert(msg);
         }
-        return answers;
-    }
+    };
 
     const goNext = async () => {
+        if (!qs[idx]?.checked) return;
+
         if (idx >= total - 1) {
-            const answers = buildSubmitAnswers();
-            if (!answers.length) return;
-
-            const elapsedMs = Math.max(0, Date.now() - startMs);
-            await http.post(
-                `/me/quiz/sessions/${sessionId}/submit`,
-                { answers, elapsedMs },
-                { withCredentials: true }
-            );
-
             onShowResult?.({ sessionId, progress });
             return;
         }
-
         setIdx((i) => i + 1);
     };
 
@@ -190,7 +165,9 @@ export default function DailyChoiceModalPlay({
     if (!cur) return <Stage>문항이 없습니다.</Stage>;
 
     const selectedIndex = picked[idx];
-    const showResult = selectedIndex != null;
+
+    /** “선택하면 결과 표시” */
+    const showResult = cur.checked && cur.correctIndex >= 0;
 
     return (
         <Stage>
@@ -207,9 +184,10 @@ export default function DailyChoiceModalPlay({
                         next[idx] = i;
                         return next;
                     });
+                    runCheck(idx, i);
                 }}
                 showResult={showResult}
-                correct={cur.correctIndex}
+                correct={cur.correctIndex >= 0 ? cur.correctIndex : null}
                 explanation={cur.explanation}
                 progress={progress}
                 onNext={goNext}

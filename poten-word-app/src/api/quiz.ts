@@ -91,9 +91,10 @@ async function tryPost(url: string, body: any) {
     });
 }
 
-type QType = "mix" | "choice" | "ox" | "initials";
+type QType = "MIX" | "CHOICE" | "OX" | "INITIALS";
 type QLevel = "MIX" | "EASY" | "MEDIUM" | "HARD";
 type SeedMode = "AUTO" | "DAILY" | "FIXED";
+type WireType = "mix" | "choice" | "ox" | "initials";
 
 function normalizeType(v: any): "MIX" | "CHOICE" | "OX" | "INITIALS" | undefined {
     const s = String(v ?? "").trim();
@@ -109,6 +110,16 @@ function normalizeLevel(v: any): "MIX" | "EASY" | "MEDIUM" | "HARD" | undefined 
     const u = s.toUpperCase();
     if (u === "MIX" || u === "EASY" || u === "MEDIUM" || u === "HARD") return u;
     return undefined;
+}
+
+function toWireType(t: QType): WireType {
+    switch (t) {
+        case "CHOICE": return "choice";
+        case "OX": return "ox";
+        case "INITIALS": return "initials";
+        case "MIX":
+        default: return "mix";
+    }
 }
 
 // undefined 값은 JSON.stringify에서 빠지니까 “키 자체가 제거”되는 효과
@@ -154,6 +165,30 @@ export type StartQuizSessionUnifiedPayload =
     labelKeys?: string[];
     title?: string;
     customTitle?: string;
+
+}
+    | {
+    source: "labels";
+    labelKeys: string[];
+    count: number;
+    type: QType;
+    level: QLevel;
+    seedMode?: SeedMode;
+    fixedSeed?: number | null;
+    title?: string;
+    customTitle?: string;
+}
+
+    | {
+    source: "multi";
+    filters: Array<{ termCategoryId: number; labelKeys?: string[] }>;
+    count: number;
+    type: QType;
+    level: QLevel;
+    seedMode?: SeedMode;
+    fixedSeed?: number | null;
+    title?: string;
+    customTitle?: string;
 };
 
 export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) {
@@ -178,11 +213,16 @@ export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) 
 
             const labelKeys = Array.isArray((payload as any).labelKeys) ? (payload as any).labelKeys : [];
 
+            // NaN이면 보내지 말고 바로 에러(프론트에서 잡아 UX 처리)
+            if (!Number.isFinite(termCategoryId)) {
+                throw new Error("termCategoryId가 유효하지 않습니다.");
+            }
+
             return compact({
                 source: "term_category",
                 termCategoryId,
                 count,
-                type: typeNorm.toLowerCase(),
+                type: toWireType(typeNorm),
                 level: levelNorm,
                 seedMode,
                 fixedSeed,
@@ -193,14 +233,14 @@ export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) 
 
         // 2) wordbook
         if (payload.source === "wordbook") {
-            const typeNorm = normalizeType(payload.type);
-            const levelNorm = normalizeLevel(payload.level);
+            const typeNorm = normalizeType(payload.type) ?? "MIX";
+            const levelNorm = normalizeLevel(payload.level) ?? "MIX";
 
             return compact({
                 source: "wordbook",
                 wordbookId: payload.wordbookId,
                 count: payload.count,
-                type: typeNorm ? typeNorm.toLowerCase() : undefined,
+                type: toWireType(typeNorm),
                 level: levelNorm,
                 seedMode: payload.seedMode ?? "AUTO",
                 ...(payload.seedMode === "FIXED" ? { fixedSeed: payload.fixedSeed ?? null } : {}),
@@ -208,11 +248,61 @@ export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) 
             });
         }
 
+        if (payload.source === "labels") {
+            const count = Number((payload as any).count);
+            const typeNorm = normalizeType((payload as any).type ?? "mix") ?? "MIX";
+            const levelNorm = normalizeLevel((payload as any).level ?? "MIX") ?? "MIX";
+
+            const seedMode = (payload as any).seedMode ?? "AUTO";
+            const fixedSeed = seedMode === "FIXED" ? ((payload as any).fixedSeed ?? null) : undefined;
+
+            const labelKeys = Array.isArray((payload as any).labelKeys) ? (payload as any).labelKeys : [];
+            if (!labelKeys.length) throw new Error("labelKeys가 비어 있습니다.");
+
+            return compact({
+                source: "labels",
+                labelKeys,
+                count,
+                type: toWireType(typeNorm),
+                level: levelNorm,
+                seedMode,
+                fixedSeed,
+                ...(customTitle ? { customTitle, title: customTitle } : {}),
+            });
+        }
+
+        if (payload.source === "multi") {
+            const count = Number((payload as any).count);
+
+            const typeNorm = normalizeType((payload as any).type ?? "MIX") ?? "MIX";
+            const levelNorm = normalizeLevel((payload as any).level ?? "MIX") ?? "MIX";
+
+            const seedMode = (payload as any).seedMode ?? "AUTO";
+            const fixedSeed = seedMode === "FIXED" ? ((payload as any).fixedSeed ?? null) : undefined;
+
+            const filters = Array.isArray((payload as any).filters) ? (payload as any).filters : [];
+            if (!filters.length) throw new Error("filters가 비어 있습니다.");
+
+            return compact({
+                source: "multi",
+                filters: filters.map((f: any) => ({
+                    termCategoryId: Number(f.termCategoryId),
+                    ...(Array.isArray(f.labelKeys) && f.labelKeys.length ? { labelKeys: f.labelKeys } : {}),
+                })),
+                count,
+                type: toWireType(typeNorm),
+                level: levelNorm,
+                seedMode,
+                fixedSeed,
+                ...(customTitle ? { customTitle, title: customTitle } : {}),
+            });
+        }
+
         // 3) set
         const quizSetId = (payload as any).quizSetId ?? (payload as any).setId;
 
-        const typeNorm = normalizeType((payload as any).type);
-        const levelNorm = normalizeLevel((payload as any).level);
+        const typeNorm = normalizeType((payload as any).type) ?? "MIX";
+        const levelNorm = normalizeLevel((payload as any).level) ?? "MIX";
 
         return compact({
             source: "set",
@@ -220,7 +310,7 @@ export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) 
             seedMode: (payload as any).seedMode ?? "AUTO",
             ...(payload.seedMode === "FIXED" ? { fixedSeed: (payload as any).fixedSeed ?? null } : {}),
             ...(payload.count ? { count: payload.count } : {}),
-            type: typeNorm ? typeNorm.toLowerCase() : undefined,
+            type: toWireType(typeNorm),
             level: levelNorm,
             ...(customTitle ? { customTitle, title: customTitle } : {}),
         });
@@ -248,7 +338,7 @@ export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) 
         quizSetId: Number(d?.quizSetId ?? 0) || undefined,
         questionIds: Array.isArray(d?.questionIds) ? d.questionIds : [],
         items: Array.isArray(d?.items) ? d.items : [],
-        playPath: String(d?.playPath ?? "").trim() || `/poten-word/quiz/play`,
+        playPath: String(d?.playPath ?? "").trim() || `/learning/quiz/play`,
     };
 }
 
@@ -260,7 +350,7 @@ export function startDailySetSession(
     return startQuizUnified({
         source: "set",
         setId,
-        type: type.toLowerCase() as any,
+        type: type as any,
         seedMode: "DAILY",
     });
 }

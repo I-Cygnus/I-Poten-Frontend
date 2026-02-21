@@ -107,9 +107,9 @@ export default function QuizResultRoute() {
     function resolveRouteForQuestionType(qt: string): string {
         const Q = qt.toUpperCase();
         if (Q.includes("OX") || Q.includes("TRUE_FALSE") || Q === "TF" || Q === "BOOLEAN")
-            return "/poten-word/quiz/ox";
-        if (Q.includes("INITIAL")) return "/poten-word/quiz/initials";
-        return "/poten-word/quiz/choice";
+            return "/learning/quiz/ox";
+        if (Q.includes("INITIAL")) return "/learning/quiz/initials";
+        return "/learning/quiz/choice";
     }
 
     return (
@@ -118,8 +118,8 @@ export default function QuizResultRoute() {
             sessionId={sessionId}
             title="결과 보기"
             onRetryWrong={handleRetryWrong}
-            onClose={() => nav("/poten-word/quiz", { replace: true })}
-            onFinish={() => nav("/poten-word/quiz", { replace: true })}
+            onClose={() => nav("/learning/quiz", { replace: true })}
+            onFinish={() => nav("/learning/quiz", { replace: true })}
         />
     );
 }

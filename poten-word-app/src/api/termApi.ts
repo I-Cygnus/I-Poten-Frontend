@@ -27,7 +27,7 @@ export const fetchTermsByTag = async (
     const t = (tag ?? "").trim();
     if (!t) return { page, size, total: 0, items: [] };
 
-    const { data } = await http.get<SearchByTagResponse>("/terms/search/by-tag", {
+    const { data } = await http.get<SearchByTagResponse>("/word/search/by-tag", {
         params: { tag: t, page, size }, // http 인터셉터가 빈 값 자동 제거
     });
 

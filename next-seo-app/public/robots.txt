@@ -1,0 +1,11 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow authenticated pages (handled by main-container)
+Disallow: /vue-account/
+Disallow: /mypage/
+Disallow: /vue-ai-interview/
+
+# Sitemaps
+Sitemap: https://yourdomain.com/sitemap.xml

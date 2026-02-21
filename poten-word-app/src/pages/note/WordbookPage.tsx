@@ -907,11 +907,11 @@ type FolderSelectProps = {
 };
 
 /* ---------- 퀴즈 베이스 경로 유틸 ---------- */
-//  /poten-word/quiz  또는  /poten-word/poten-quiz  또는  /quiz  /poten-quiz
-const BASE_PATH_CAPTURE_RE = /(\/poten-word)?\/(poten-quiz|quiz)/;
+//  /learning/quiz
+const BASE_PATH_CAPTURE_RE = /(\/learning)?\/(quiz)/;
 function getQuizBasePath(pathname: string): string {
     const m = pathname.match(BASE_PATH_CAPTURE_RE);
-    return m ? m[0].replace(/\/$/, "") : "/poten-quiz";
+    return m ? m[0].replace(/\/$/, "") : "/quiz";
 }
 
 const FolderSelect: React.FC<FolderSelectProps> = ({ value, onChange, options, placeholder="내 포텐노트 폴더 선택" }) => {
@@ -2551,7 +2551,7 @@ export default function WordbookPage() {
     }
 
     const basePath = React.useMemo(
-        () => (location.pathname.startsWith("/poten-word") ? "/poten-word" : ""),
+        () => (location.pathname.startsWith("/learning") ? "/learning" : ""),
         [location.pathname]
     );
 
@@ -2576,8 +2576,8 @@ export default function WordbookPage() {
     // }
 
     const goToNotes = React.useCallback(() => {
-        const base = location.pathname.startsWith("/poten-word") ? "/poten-word" : "";
-        navigate(`${base}/notes`);
+        const base = location.pathname.startsWith("/learning") ? "/learning" : "";
+        navigate(`${base}/note`);
     }, [location.pathname, navigate]);
 
     /** 용어 카드 1장씩 등장 */
@@ -3071,7 +3071,7 @@ export default function WordbookPage() {
                 onSave={handleConfirmMove}
                 onGoToFolder={(fid, name) => {
                     setMoveOpen(false);
-                    navigate(`/poten-word/folders/${fid}`, { state: { wordbookName: name } });
+                    navigate(`/learning/folders/${fid}`, { state: { wordbookName: name } });
                 }}
                 onRename={async (wordbookId, newName) => {
                     await renameUserFolder(wordbookId, newName);

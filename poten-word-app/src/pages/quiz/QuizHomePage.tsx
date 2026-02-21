@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback, useEffect } from "react";
+import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import quiz1 from "../../assets/hero/quiz-1.png";
@@ -84,6 +84,11 @@ export default function QuizHomePage() {
     const [dailyPendingKind, setDailyPendingKind] = useState<DailyKind>("CHOICE");
     const [dailyResumeCandidate, setDailyResumeCandidate] =
         useState<DailyStartResponse | null>(null);
+    const [resultKind, setResultKind] = useState<DailyKind | null>(null);
+    const [resultItems, setResultItems] = useState<any[]>([]);
+    const [retryToken, setRetryToken] = useState(0);
+
+
 
     type CarryChoice = "RESUME" | "TODAY";
     const [carryChoice, setCarryChoice] = useState<CarryChoice>("RESUME");
@@ -103,7 +108,7 @@ export default function QuizHomePage() {
         return s ?? null;
     };
 
-    const dailyInFlightRef = React.useRef(false);
+    const dailyInFlightRef = useRef(false);
 
     const openDaily = useCallback(async (kind: DailyKind) => {
         console.log("[daily] openDaily called", kind, "inFlight=", dailyInFlightRef.current);
@@ -155,7 +160,7 @@ export default function QuizHomePage() {
 
         setDailyLoading(true);
         try {
-            const res = await startGeneralDaily("TODAY"); // 강제로 오늘 세션 생성
+            const res = await startGeneralDaily("TODAY");
             setDailyData(res);
             setDailyKind(dailyPendingKind);
             setDailyOpen(true);
@@ -174,12 +179,41 @@ export default function QuizHomePage() {
     const [resultProgress, setResultProgress] = useState<(OX | null)[]>([]);
     const [resultSessionId, setResultSessionId] = useState<number | null>(null);
 
+    const retryWrongInDailyModal = useCallback(() => {
+        if (!resultKind || !resultItems?.length) return;
+
+        const wrongIdxs = resultProgress
+            .map((v, i) => ({ v, i }))
+            .filter(x => x.v === "X")
+            .map(x => x.i);
+
+        if (wrongIdxs.length === 0) {
+            openSys({ title: "오답이 없어요", message: "틀린 문제가 없어서 다시 풀 수 없어요." } as any);
+            return;
+        }
+
+        const wrongItems = wrongIdxs.map(i => resultItems[i]).filter(Boolean);
+
+        // 1) 결과 모달 닫기
+        setResultOpen(false);
+
+        // 2) 데일리 모달을 “오답 items”로 시작
+        setDailyKind(resultKind);
+        setDailyOverrideItems(wrongItems);
+
+        // 3) 강제 리마운트
+        setRetryToken(t => t + 1);
+
+        // 4) 데일리 모달 열기
+        setDailyOpen(true);
+    }, [resultKind, resultItems, resultProgress]);
+
     const actions = useMemo(
         () => [
-            { id: "a1", label: "내 포텐노트",        icon: act1, to: "/poten-word/notes" },
-            { id: "a2", label: "내 퀴즈 타임라인",  icon: act2, to: "/poten-word/quiz/timeline" },
-            { id: "a3", label: "오답노트 바로 가기", icon: act3, to: "/poten-word/quiz/wrong-notes" },
-            { id: "a4", label: "명예의 전당",        icon: act4, to: "/poten-word/quiz/hall" },
+            { id: "a1", label: "내 포텐노트",        icon: act1, to: "/learning/note" },
+            { id: "a2", label: "내 퀴즈 타임라인",  icon: act2, to: "/learning/quiz/timeline" },
+            { id: "a3", label: "오답노트 바로 가기", icon: act3, to: "/learning/quiz/wrong-notes" },
+            { id: "a4", label: "명예의 전당",        icon: act4, to: "/learning/quiz/hall" },
         ],
         []
     );
@@ -310,12 +344,12 @@ export default function QuizHomePage() {
             tag: "AI",
             tone: "slate",
             items: [
-                { id: "rag2",  label: "LLM·RAG·파인튜닝",   to: "/quiz/ai-rag" },
-                { id: "exp2",  label: "모델 평가·실험 설계", to: "/quiz/ai-eval" },
-                { id: "mlops2",label: "MLOps·프로덕션 운영", to: "/quiz/ai-mlops" },
-                { id: "de2",   label: "데이터 엔지니어링",   to: "/quiz/ai-de" },
-                { id: "perf2", label: "성능 최적화·가속",    to: "/quiz/ai-perf" },
-                { id: "gov2",  label: "책임 있는 AI·거버넌스",to: "/quiz/ai-gov2" },
+                { id: "rag",  label: "LLM·RAG·파인튜닝",   to: "/quiz/ai-rag" },
+                { id: "exp",  label: "모델 평가·실험 설계", to: "/quiz/ai-eval" },
+                { id: "mlops",label: "MLOps·프로덕션 운영", to: "/quiz/ai-mlops" },
+                { id: "de",   label: "데이터 엔지니어링",   to: "/quiz/ai-de" },
+                { id: "perf", label: "성능 최적화·가속",    to: "/quiz/ai-perf" },
+                { id: "gov",  label: "책임 있는 AI·거버넌스",to: "/quiz/ai-gov2" },
             ],
         },
     ] as const;
@@ -360,9 +394,14 @@ export default function QuizHomePage() {
         if (status === 400 || status === 404 || status === 409 || status === 422) return true;
 
         const m = (message || "").toLowerCase();
-        if (m.includes("조건에 맞는 문항") || m.includes("문항이 없습니다") || m.includes("not enough")) return true;
+        if (
+            m.includes("조건에 맞는 문항") ||
+            m.includes("문항이 없습니다") ||
+            m.includes("not enough") ||
+            m.includes("insufficient") ||
+            m.includes("no questions")
+        ) return true;
 
-        if (status === 500) return true;
         return false;
     };
 
@@ -400,37 +439,91 @@ export default function QuizHomePage() {
         return s.length > 40 ? s.slice(0, 40) : s;
     }
 
+    const startInFlightRef = React.useRef(false);
+
     const onConfirmStart = async () => {
         if (loading) return;
-        if (!topic) return;
+        if (startInFlightRef.current) return;
 
-        const scope = getTopicFilter(topic.id);
-        if (!scope) return;
+        if (!topic) {
+            openSys({ title: "퀴즈 시작 불가", message: "주제를 먼저 선택해 주세요." } as any);
+            return;
+        }
+
+        const filter =
+            getTopicFilter(topic.id) ||
+            getTopicFilter(topic.to) ||                       // topic.to("/quiz/js")를 키로 쓰는 경우 대비
+            getTopicFilter(topic.to.replace("/learning", "")); // prefix 바뀐 경우 대비
+
+        if (!filter) {
+            setSetupOpen(false);
+            setTimeout(() => {
+                openSys({
+                    title: "퀴즈를 준비하는 중 문제가 생겼어요",
+                    message: "해당 주제 퀴즈가 아직 준비되지 않았어요. 다른 주제로 먼저 풀어볼까요?",
+                    bullets: [
+                        <>다른 주제를 선택해 다시 시도해 주세요.</>,
+                        <>문제가 계속되면 잠시 후 다시 시도해 주세요.</>,
+                    ],
+                } as any);
+            }, 0);
+            return;
+        }
 
         const builtTitle = `${topic.label} · ${qCount}문항 · ${toTypeLabel(qType)} · ${toLevelLabel(qLevel)}`;
         const inputTitle = normalizeTitle(sessionTitle);
         const finalTitle = inputTitle ?? builtTitle;
 
+        // 공통 베이스
+        const basePayload = {
+            title: finalTitle,
+            count: qCount,
+            type: toServerType(qType),
+            level: toServerLevel(qLevel),
+            seedMode: "AUTO",
+            fixedSeed: null,
+        } as const;
+
+        startInFlightRef.current = true;
         setLoading(true);
         try {
-            const started = await startQuizUnified({
-                source: "term_category",
-                title: finalTitle,
-                termCategoryId: scope.termCategoryId,
-                labelKeys: Array.from(scope.labelKeys ?? []),
-                count: qCount,
-                type: toServerType(qType),
-                level: toServerLevel(qLevel),
-                seedMode: "AUTO",
-                fixedSeed: null,
-            } as any);
+            let payload: any;
+
+            if (filter.source === "term_category") {
+                if (!Number.isFinite(filter.termCategoryId)) throw new Error("termCategoryId가 유효하지 않습니다.");
+                payload = {
+                    ...basePayload,
+                    source: "term_category",
+                    termCategoryId: filter.termCategoryId,
+                    labelKeys: Array.from(filter.labelKeys ?? []),
+                };
+            } else if (filter.source === "labels") {
+                payload = {
+                    ...basePayload,
+                    source: "labels",
+                    labelKeys: Array.from(filter.labelKeys ?? []),
+                };
+            } else if (filter.source === "multi") {
+                payload = {
+                    ...basePayload,
+                    source: "multi",
+                    filters: filter.filters.map(f => ({
+                        termCategoryId: f.termCategoryId,
+                        labelKeys: Array.from(f.labelKeys ?? []),
+                    })),
+                };
+            } else {
+                throw new Error(`지원하지 않는 필터 source: ${(filter as any)?.source}`);
+            }
+
+            const started = await startQuizUnified(payload);
 
             setSetupOpen(false);
 
             const sessionId = Number((started as any)?.sessionId);
             if (!Number.isFinite(sessionId)) throw new Error("sessionId가 응답에 없습니다.");
 
-            const playPath = String((started as any)?.playPath ?? "").trim() || "/poten-word/quiz/play";
+            const playPath = String((started as any)?.playPath ?? "").trim() || "/learning/quiz/play";
 
             nav(playPath, {
                 replace: true,
@@ -440,26 +533,29 @@ export default function QuizHomePage() {
                     questionIds: (started as any)?.questionIds ?? [],
                     items: (started as any)?.items ?? [],
                     title: (started as any)?.title ?? finalTitle,
-                    source: scope.source,
+                    source: filter.source,
                 },
             });
         } catch (err: any) {
+            console.log("[onConfirmStart] error", err?.response?.status, err?.response?.data, err?.message);
             const { status, message } = getApiError(err);
 
             if (looksLikeNotEnoughQuestions(status, message)) {
-                openSys({
-                    title: "조건에 맞는 문항이 없습니다",
-                    message: "현재 선택한 조건으로는 퀴즈를 만들 수 없어요. 설정을 바꿔서 다시 시도해 주세요.",
-                    bullets: buildNotEnoughBullets(),
-                } as any);
+                setSetupOpen(false);
+                setTimeout(() => {
+                    openSys({
+                        title: "조건에 맞는 문제가 없어요",
+                        message: "선택한 조건으로 만들 수 있는 문제가 부족해요. 설정을 바꿔서 다시 시도해 주세요.",
+                        bullets: buildNotEnoughBullets(),
+                    } as any);
+                }, 0);
+
                 return;
             }
 
-            openSys({
-                title: "퀴즈 시작 실패",
-                message,
-            } as any);
+            openSys({ title: "퀴즈 시작 실패", message } as any);
         } finally {
+            startInFlightRef.current = false;
             setLoading(false);
         }
     };
@@ -480,6 +576,8 @@ export default function QuizHomePage() {
     }, [setupOpen, defaultSessionTitle, titleTouched]);
 
     const session = pickSession(dailyKind);
+
+    const [dailyOverrideItems, setDailyOverrideItems] = useState<any[] | null>(null);
 
     return (
         <PageWrap>
@@ -707,45 +805,74 @@ export default function QuizHomePage() {
 
                 {session && dailyKind === "CHOICE" && (
                     <DailyChoiceModalPlay
-                        key={`choice-${session.sessionId}`}
+                        key={`choice-${session.sessionId}-${retryToken}`}
                         sessionId={session.sessionId}
-                        items={(session.items ?? []) as any}
-                        onClose={() => setDailyOpen(false)}
+                        items={((dailyOverrideItems ?? session.items) ?? []) as any}
+                        onClose={() => {
+                            setDailyOpen(false);
+                            setDailyOverrideItems(null);
+                        }}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
+
+                            const playedItems = (dailyOverrideItems ?? session.items) ?? [];
+
                             setResultSessionId(sessionId);
                             setResultProgress(progress);
+                            setResultKind(dailyKind);
+                            setResultItems(playedItems as any);
                             setResultOpen(true);
+                            setDailyOverrideItems(null);
                         }}
                     />
                 )}
 
                 {session && dailyKind === "OX" && (
                     <DailyOxModalPlay
-                        key={`ox-${session.sessionId}`}
+                        key={`ox-${session.sessionId}-${retryToken}`}
                         sessionId={session.sessionId}
-                        items={(session.items ?? []) as any}
-                        onClose={() => setDailyOpen(false)}
+                        items={((dailyOverrideItems ?? session.items) ?? []) as any}
+                        onClose={() => {
+                            setDailyOpen(false);
+                            setDailyOverrideItems(null);
+                        }}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
+
+                            const playedItems = (dailyOverrideItems ?? session.items) ?? [];
+
                             setResultSessionId(sessionId);
                             setResultProgress(progress);
+                            setResultKind(dailyKind);
+                            setResultItems(playedItems as any);
                             setResultOpen(true);
+
+                            setDailyOverrideItems(null);
                         }}
                     />
                 )}
 
                 {session && dailyKind === "INITIALS" && (
                     <DailyInitialsModalPlay
-                        key={`initials-${session.sessionId}`}
+                        key={`initials-${session.sessionId}-${retryToken}`}
                         sessionId={session.sessionId}
-                        items={session.items ?? []}
-                        onClose={() => setDailyOpen(false)}
+                        items={((dailyOverrideItems ?? session.items) ?? []) as any}
+                        onClose={() => {
+                            setDailyOpen(false);
+                            setDailyOverrideItems(null);
+                        }}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
+
+                            const playedItems = (dailyOverrideItems ?? session.items) ?? [];
+
                             setResultSessionId(sessionId);
                             setResultProgress(progress);
+                            setResultKind(dailyKind);
+                            setResultItems(playedItems as any);
                             setResultOpen(true);
+
+                            setDailyOverrideItems(null);
                         }}
                     />
                 )}
@@ -757,6 +884,7 @@ export default function QuizHomePage() {
                     progress={resultProgress}
                     sessionId={resultSessionId}
                     title="결과 보기"
+                    onRetryWrong={retryWrongInDailyModal}
                     onClose={() => {
                         setResultOpen(false);
                         setResultSessionId(null);
@@ -823,15 +951,19 @@ export default function QuizHomePage() {
                     ))}
 
                     <MoreRow>
-                        <MoreBtn onClick={() => nav('/poten-word/quiz/categories')}>
+                        <MoreBtn onClick={() => nav('/learning/quiz/categories')}>
                             더 많은 직무 카테고리에서 고르기
                         </MoreBtn>
                     </MoreRow>
                 </JobsSurface>
             </JobSection>
             {setupOpen && (
-                <Scrim role="dialog" aria-modal="true"
-                       onClick={(e) => { if (e.target === e.currentTarget) setSetupOpen(false); }}>
+                <Scrim
+                    onClick={(e) => {
+                        console.log("SCRIM CLICK", e.target === e.currentTarget);
+                        if (e.target === e.currentTarget) setSetupOpen(false);
+                    }}
+                >
                     <Sheet onClick={(e) => e.stopPropagation()}>
                         <SheetHeader>
 
@@ -906,7 +1038,15 @@ export default function QuizHomePage() {
 
                         <SheetFooter>
                             <Ghost onClick={()=>setSetupOpen(false)}>취소</Ghost>
-                            <Primary type="button" onClick={onConfirmStart} disabled={loading}>
+                            <Primary
+                                type="button"
+                                onClick={(e) => {
+                                    console.log("PRIMARY CLICK");
+                                    e.stopPropagation();
+                                    onConfirmStart();
+                                }}
+                                disabled={loading}
+                            >
                                 시작하기
                             </Primary>
                         </SheetFooter>

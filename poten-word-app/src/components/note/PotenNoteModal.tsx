@@ -663,8 +663,8 @@ const ArrowLink = styled.a`
 
 /** 컴포넌트 내부 헬퍼 */
 const getFolderHref = (wordbookId: string) => {
-    const inPoten = window.location.pathname.startsWith("/poten-word");
-    return inPoten ? `/poten-word/folders/${wordbookId}` : `/folders/${wordbookId}`;
+    const inPoten = window.location.pathname.startsWith("/learning");
+    return inPoten ? `/learning/folders/${wordbookId}` : `/folders/${wordbookId}`;
 };
 
 export default function PotenNoteModal({
