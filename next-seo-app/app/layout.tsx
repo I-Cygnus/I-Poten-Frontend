@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://yourdomain.com'),
+  metadataBase: new URL('https://i-poten.com'),
   title: {
     default: '모의면접 AI 플랫폼 - 면접준비 면접연습 | 아이포텐',
     template: '%s | 아이포텐'
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: 'website',
     locale: 'ko_KR',
-    url: 'https://yourdomain.com',
+    url: 'https://i-poten.com',
     siteName: '아이포텐 - 모의면접 AI 플랫폼',
     title: '모의면접 AI - 면접준비 면접연습 완벽 가이드 | 아이포텐',
     description: 'AI모의면접으로 면접 잘 보는 법 배우기! 실전 면접연습과 면접준비를 한 번에. 무료 체험 가능',

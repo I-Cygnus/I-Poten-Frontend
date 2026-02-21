@@ -8,4 +8,4 @@ Disallow: /mypage/
 Disallow: /vue-ai-interview/
 
 # Sitemaps
-Sitemap: https://yourdomain.com/sitemap.xml
+Sitemap: https://i-poten.com/sitemap.xml

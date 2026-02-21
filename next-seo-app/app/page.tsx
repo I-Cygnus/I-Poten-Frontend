@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: '모의면접 AI - 면접준비 면접연습 면접 잘 보는 법 | 아이포텐',
     description: 'AI모의면접으로 면접 잘 보는 법 배우기! 실전 면접연습과 면접준비를 한 번에. 무료 체험 가능',
-    url: 'https://yourdomain.com',
+    url: 'https://i-poten.com',
     siteName: '아이포텐 - 모의면접 AI 플랫폼',
     images: [
       {
@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     images: ['/twitter-main.jpg'],
   },
   alternates: {
-    canonical: 'https://yourdomain.com',
+    canonical: 'https://i-poten.com',
   },
 };
 
