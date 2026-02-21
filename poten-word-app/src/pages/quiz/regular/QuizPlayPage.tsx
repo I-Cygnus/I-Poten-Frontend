@@ -4,6 +4,7 @@ import { NarrowLeft } from "../../../styles/layout.ts";
 import { useLocation, useNavigate } from "react-router-dom";
 import SoftBlobsBackground from "../../../components/quiz/SoftBlobsBackground.tsx";
 import http, { authHeader } from "../../../utils/http.ts";
+import SystemMessageModal, { SystemMessage } from "../../../components/common/SystemMessageModal.tsx";
 
 /* ====== 색/토큰 ====== */
 const UI = {
@@ -343,12 +344,12 @@ type SessionItem = {
 };
 
 /* ====== 경로 유틸(유지) ====== */
-const BASE_PATH_CAPTURE_RE = /(\/poten-word)?\/(poten-quiz|quiz)/i;
+const BASE_PATH_CAPTURE_RE = /(\/learning)?\/(learning|quiz)/i;
 
 function getQuizBasePath(pathname: string): string {
     const m = pathname.match(BASE_PATH_CAPTURE_RE);
-    const base = m ? m[0].replace(/\/$/, "") : "/poten-word/quiz";
-    return base.replace(/\/poten-quiz\b/i, "/quiz");
+    const base = m ? m[0].replace(/\/$/, "") : "/learning/quiz";
+    return base.replace(/\/quiz\b/i, "/quiz");
 }
 
 /* 강조(‘않는’) 하이라이트 */
@@ -434,11 +435,6 @@ export default function QuizPlayPage() {
     const from = (loc.state as NavState | null)?.from;
 
     const base = getQuizBasePath(loc.pathname);
-
-    // 취소/닫기 공용 핸들러
-    const handleCancel = React.useCallback(() => {
-        nav("/poten-word/quiz/home", { replace: true });
-    }, [nav]);
 
     const sp = useMemo(() => new URLSearchParams(loc.search), [loc.search]);
     const sessionId =
@@ -547,18 +543,74 @@ export default function QuizPlayPage() {
         isInitialsQ(q) ? !(normalizeText(textByQ[q.questionId]).length > 0) : !hasValidSelection(q)
     );
 
+    // ===== System Message =====
+    const [sysOpen, setSysOpen] = React.useState(false);
+    const [sysMsg, setSysMsg] = React.useState<SystemMessage | null>(null);
+
+    const closeSys = React.useCallback(() => {
+        setSysOpen(false);
+        setSysMsg(null);
+    }, []);
+
+    const openSys = React.useCallback((m: SystemMessage) => {
+        setSysMsg(m);
+        setSysOpen(true);
+    }, []);
+
+    const getApiError = (err: any) => {
+        const status = err?.response?.status ?? null;
+        const data = err?.response?.data ?? null;
+        const message =
+            data?.message ??
+            data?.error ??
+            data?.detail ??
+            data?.reason ??
+            err?.message ??
+            "요청 처리 중 오류가 발생했습니다.";
+        return { status, data, message };
+    };
+
     async function submit() {
         if (inFlightRef.current) return;
 
         const sid = sessionId;
         if (!sid) {
-            alert("세션 ID가 없습니다.");
+            openSys({
+                tone: "error",
+                title: "제출할 수 없어요",
+                description: "세션 정보가 없어서 제출을 진행할 수 없습니다. 목록으로 돌아가 다시 시작해 주세요.",
+                actions: [
+                    { label: "확인", tone: "primary", onClick: closeSys, autoClose: true },
+                ],
+                closeOnScrim: true,
+                closeOnEsc: true,
+            });
             return;
         }
 
         // 미응답 방지
         if (unanswered.length > 0) {
-            alert("모든 문항에 응답해 주세요.");
+            const nums = unanswered
+                .map(u => items.findIndex(it => it.questionId === u.questionId) + 1)
+                .filter(n => n > 0);
+
+            const preview = nums.slice(0, 8).join(", ");
+            const more = nums.length > 8 ? ` 외 ${nums.length - 8}개` : "";
+
+            openSys({
+                tone: "warning",
+                title: "아직 답하지 않은 문항이 있어요",
+                description: `응답 ${answeredCount}/${total}문항 · 미응답 ${unanswered.length}문항`,
+                bullets: [
+                    <>미응답 문항 번호: <strong>{preview}{more}</strong></>,
+                    <>모든 문항에 답한 뒤에 제출할 수 있어요.</>,
+                ],
+                actions: [
+                    { label: "확인", tone: "primary", onClick: closeSys, autoClose: true },
+                ],
+                closeOnScrim: true,
+                closeOnEsc: true,
+            });
             return;
         }
 
@@ -622,19 +674,74 @@ export default function QuizPlayPage() {
             console.log("DATA:", e?.response?.data);
             console.log("HEADERS:", e?.response?.headers);
 
-            const msg =
-                e?.response?.data?.message ??
-                e?.response?.data?.error ??
-                (e?.response?.data ? JSON.stringify(e?.response?.data) : null) ??
-                e?.message ??
-                "제출 중 오류";
+            const { status, message } = getApiError(e);
 
-            alert(msg);
+            openSys({
+                tone: "error",
+                title: "제출 중 오류가 발생했어요",
+                description: message,
+                bullets: [
+                    ...(status ? [<>HTTP 상태 코드: <strong>{status}</strong></>] : []),
+                    <>잠시 후 다시 시도해 주세요.</>,
+                ],
+                actions: [
+                    { label: "닫기", tone: "primary", onClick: closeSys, autoClose: true },
+                ],
+                closeOnScrim: true,
+                closeOnEsc: true,
+            });
         } finally {
             inFlightRef.current = false;
             setSubmitting(false);
         }
     }
+
+    // 취소/닫기 공용 핸들러
+    const handleCancel = React.useCallback(() => {
+        if (submitting) {
+            openSys({
+                tone: "info",
+                title: "잠시만요",
+                description: "제출 처리 중입니다. 잠시만 기다려 주세요.",
+                actions: [{ label: "확인", tone: "primary", onClick: closeSys, autoClose: true }],
+                closeOnScrim: true,
+                closeOnEsc: true,
+            });
+            return;
+        }
+
+        const exitTo = from ?? payload.from ?? `${base}/home`;
+
+        openSys({
+            tone: "warning",
+            title: "정말 종료할까요?",
+            description: "지금 나가면 진행 중인 답안이 저장되지 않아요.",
+            actions: [
+                {
+                    label: "계속 풀기",
+                    tone: "primary",
+                    onClick: closeSys,
+                    autoClose: true,
+                },
+                {
+                    label: "나가기",
+                    tone: "danger",
+                    onClick: () => nav(exitTo, { replace: true }),
+                    autoClose: true,
+                },
+            ],
+            closeOnScrim: true,
+            closeOnEsc: true,
+        });
+    }, [
+        submitting,
+        openSys,
+        closeSys,
+        nav,
+        from,
+        payload.from,
+        base,
+    ]);
 
     return (
         <>
@@ -764,6 +871,7 @@ export default function QuizPlayPage() {
                     </Card>
                 </NarrowLeft>
             </Screen>
+            <SystemMessageModal open={sysOpen} message={sysMsg} onClose={closeSys} />
         </>
     );
 }

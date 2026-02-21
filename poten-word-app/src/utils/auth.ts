@@ -11,7 +11,7 @@ import { ensureAuthOrAlertRedirect } from "./authGuard.ts";
  *
  * 사용 예)
  *  - 단순 이동: `goToAccountLogin()`
- *  - 특정 복귀 지점 지정: `goToAccountLogin("/poten-word/folders/1?page=2")`
+ *  - 특정 복귀 지점 지정: `goToAccountLogin("/learning/folders/1?page=2")`
  *
  * 주의
  *  - 이 함수는 **항상 리다이렉트**를 시도합니다. 로그인 체크가 필요하면 `ensureAuthOrAlertRedirect`를 직접 사용하세요.

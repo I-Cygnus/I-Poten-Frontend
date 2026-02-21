@@ -208,7 +208,7 @@ export default function PotenQuizHeroBanner({
                                                 offsetLeft = 0,
                                                 offsetRight = 0,
                                                 assetHost,
-                                                linkTo = "/poten-word/quiz",
+                                                linkTo = "/learning/quiz",
                                                 floatingIcons,
                                                 iconProps,
                                             }: Props) {

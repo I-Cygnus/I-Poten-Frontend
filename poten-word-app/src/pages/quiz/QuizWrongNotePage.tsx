@@ -359,7 +359,7 @@ async function apiStartWrongOnlySession(questionIds: number[]) {
     );
     const sessionId = Number(data?.sessionId ?? data?.id);
     if (!Number.isFinite(sessionId)) throw new Error("sessionId가 응답에 없습니다.");
-    return { sessionId, playPath: "/poten-word/quiz/play" };
+    return { sessionId, playPath: "/learning/quiz/play" };
 }
 
 export default function QuizWrongNotePage() {
@@ -600,7 +600,7 @@ export default function QuizWrongNotePage() {
 
         try {
             const { sessionId } = await apiStartWrongOnlySession(checkedQuestionIds);
-            nav(`/poten-word/quiz/play?sessionId=${sessionId}`, {
+            nav(`/learning/quiz/play?sessionId=${sessionId}`, {
                 replace: true,
                 state: { sessionId, source: "wrong_note", pickedQuestionIds: checkedQuestionIds },
             });
@@ -984,7 +984,7 @@ export default function QuizWrongNotePage() {
                                                                 openSys({ title: "이동 불가", message: "termTitle이 없습니다." } as any);
                                                                 return;
                                                             }
-                                                            nav(`/poten-word/terms?q=${encodeURIComponent(keyword)}`);
+                                                            nav(`/learning/word?q=${encodeURIComponent(keyword)}`);
                                                         }}
                                                     >
                                                         {it.termTitle}

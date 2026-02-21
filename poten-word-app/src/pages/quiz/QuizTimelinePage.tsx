@@ -2205,7 +2205,7 @@ export default function QuizTimelinePage() {
                 const newSid = Number(data?.sessionId ?? data?.newSessionId ?? data?.id);
                 if (!Number.isFinite(newSid)) throw new Error("Invalid new sessionId");
 
-                nav(`/poten-word/quiz/play?sessionId=${newSid}`);
+                nav(`/learning/quiz/play?sessionId=${newSid}`);
             } catch (e) {
                 console.error("[retryAll] failed", e);
                 openSys({
@@ -2242,7 +2242,7 @@ export default function QuizTimelinePage() {
                 if (!Number.isFinite(newSid)) throw new Error("Invalid sessionId");
 
                 setQuickModalOpen(false);
-                nav(`/poten-word/quiz/play?sessionId=${newSid}`);
+                nav(`/learning/quiz/play?sessionId=${newSid}`);
             } catch (e: any) {
                 console.error("[quickRetry] failed", e);
 
@@ -2297,7 +2297,7 @@ export default function QuizTimelinePage() {
             const newSid = Number(data?.sessionId ?? data?.newSessionId ?? data?.id);
             if (!Number.isFinite(newSid)) throw new Error("Invalid new sessionId");
 
-            nav(`/poten-word/quiz/play?sessionId=${newSid}`);
+            nav(`/learning/quiz/play?sessionId=${newSid}`);
         } catch (e) {
             console.error("[retryWrongOnly] failed", e);
             openSys({
@@ -2882,7 +2882,7 @@ export default function QuizTimelinePage() {
                                         <SegGroup>
                                             <SegGhost
                                                 onClick={() =>
-                                                    nav(`/poten-word/quiz/play/result/${it.id}`, {
+                                                    nav(`/learning/quiz/play/result/${it.id}`, {
                                                         state: { backTo: location.pathname + location.search },
                                                     })
                                                 }

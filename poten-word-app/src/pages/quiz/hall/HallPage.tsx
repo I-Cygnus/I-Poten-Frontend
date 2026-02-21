@@ -254,7 +254,7 @@ export default function HallPage() {
                     </TitleBox>
 
                     <HeaderActions>
-                        <GhostBtn onClick={() => nav("/poten-word/quiz/timeline")}>내 퀴즈 타임라인</GhostBtn>
+                        <GhostBtn onClick={() => nav("/learning/quiz/timeline")}>내 퀴즈 타임라인</GhostBtn>
                         <PrimaryBtn onClick={onCopyShare}>내 기록 공유</PrimaryBtn>
                     </HeaderActions>
                 </HeaderTop>

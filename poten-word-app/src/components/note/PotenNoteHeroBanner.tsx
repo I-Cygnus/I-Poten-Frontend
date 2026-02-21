@@ -161,7 +161,7 @@ export default function SpoonNoteHeroBanner({
                                                 offsetLeft = 0,
                                                 offsetRight = 0,
                                                 assetHost,
-                                                linkTo = "/poten-word/notes",
+                                                linkTo = "/learning/note",
                                                 floatingIcons,
                                                 iconProps,
                                             }: Props) {
