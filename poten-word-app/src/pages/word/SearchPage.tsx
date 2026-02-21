@@ -144,7 +144,7 @@ type ClickToHomeProps = {
     children: React.ReactNode;
 };
 
-const ClickToHome: React.FC<ClickToHomeProps> = ({ to = "/poten-word/terms", children }) => {
+const ClickToHome: React.FC<ClickToHomeProps> = ({ to = "/learning/word", children }) => {
     const navigate = useNavigate();
 
     return (

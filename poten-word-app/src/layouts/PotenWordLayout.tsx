@@ -134,37 +134,42 @@ export default function PotenWordLayout() {
     const shellRef = React.useRef<HTMLDivElement | null>(null);
     const mainRef = React.useRef<HTMLElement | null>(null);
 
+    const BASE = "/learning";
+
     const under = (base: string) =>
         loc.pathname === base || loc.pathname.startsWith(base + "/");
 
     // Hall 라우트 판별 추가
-    const isQuizHallRoute = /^\/poten-word\/quiz\/hall(\/|$)/.test(loc.pathname);
+    const isQuizHallRoute = new RegExp(`^${BASE}\\/quiz\\/hall(\\/|$)`).test(loc.pathname);
 
     // 퀴즈 영역에서는 글로벌 히어로 숨김
-    const hideGlobalHero = under("/poten-word/quiz");
+    const hideGlobalHero = under(`${BASE}/quiz`);
 
-    const isQuizLandingRoute = /^\/poten-word\/quiz\/?$/.test(loc.pathname);
+    const isQuizLandingRoute = new RegExp(`^${BASE}\\/quiz\\/?$`).test(loc.pathname);
 
     // QuizTimelinePage 라우트 판별 추가
-    const isQuizTimelineRoute = /^\/poten-word\/quiz\/timeline(\/|$)/.test(loc.pathname);
+    const isQuizTimelineRoute = new RegExp(`^${BASE}\\/quiz\\/timeline(\\/|$)`).test(loc.pathname);
 
     // 오답노트 라우트도 판별 추가
-    const isQuizWrongNotesRoute = /^\/poten-word\/quiz\/wrong-notes(\/|$)/.test(loc.pathname);
+    const isQuizWrongNotesRoute = new RegExp(`^${BASE}\\/quiz\\/wrong-notes(\\/|$)`).test(loc.pathname);
 
     // timeline / wrong-notes / hall 에서 QuizHero 노출
     const showQuizHero = isQuizTimelineRoute || isQuizWrongNotesRoute || isQuizHallRoute;
 
     // OX·초성·오늘의 등 “퀴즈 모드” 화면에서는 사이드 숨김 (퀴즈 전용 와이드)
-    const isQuizModePage = /^\/poten-word\/quiz\/daily(\/|$)/.test(loc.pathname);
+    const isQuizModePage = new RegExp(`^${BASE}\\/quiz\\/daily(\\/|$)`).test(loc.pathname);
 
     // 라우트 분기
     const isLanding =
-        loc.pathname === "/poten-word" || loc.pathname === "/poten-word/";
-    const isNotesRoute = under("/poten-word/notes");
-    const isFolderRoute = under("/poten-word/folders");
-    const isBookRoute = under("/poten-word/book") || loc.pathname === "/book";
-    const isTermsRoute = /^\/poten-word\/terms(\/|$)/.test(loc.pathname);
-    const isSearchRoute = /^\/poten-word\/search(\/|$)/.test(loc.pathname);
+        loc.pathname === BASE ||
+        loc.pathname === `${BASE}/` ||
+        loc.pathname === `${BASE}/word` ||
+        loc.pathname === `${BASE}/word/`;
+    const isNotesRoute = under(`${BASE}/note`);
+    const isFolderRoute = under(`${BASE}/folders`);
+    const isBookRoute = under(`${BASE}/book`) || loc.pathname === "/book";
+    const isTermsRoute = new RegExp(`^${BASE}\\/terms(\\/|$)`).test(loc.pathname);
+    const isSearchRoute = new RegExp(`^${BASE}\\/search(\\/|$)`).test(loc.pathname);
     const isSearchLikeRoute = isSearchRoute || isTermsRoute;
 
     // 노출 플래그
@@ -180,6 +185,8 @@ export default function PotenWordLayout() {
         !isSearchLikeRoute &&
         !(isNotesRoute || isFolderRoute || isBookRoute);
 
+    const isWordHome = loc.pathname === `${BASE}/word` || loc.pathname === `${BASE}/word/`;
+
     // ── 검색/필터 상태 동기화 ──
     const [q, setQ] = React.useState("");
     React.useEffect(() => {
@@ -194,7 +201,7 @@ export default function PotenWordLayout() {
         sp.set("q", t);
         sp.delete("page");
         sp.delete("tag");
-        nav({ pathname: "/poten-word/search", search: `?${sp.toString()}` });
+        nav({ pathname: `${BASE}/search`, search: `?${sp.toString()}` });
     };
 
     React.useLayoutEffect(() => {
@@ -275,7 +282,7 @@ export default function PotenWordLayout() {
         sp.delete("symbol");
         if (sel) sp.set(sel.mode, sel.value);
         sp.delete("page");
-        nav({ pathname: "/poten-word/search", search: `?${sp.toString()}` });
+        nav({ pathname: `${BASE}/search`, search: `?${sp.toString()}` });
     };
 
     return (
@@ -374,11 +381,11 @@ export default function PotenWordLayout() {
                         showWordHero || showNoteHero || showBookHero || showQuizHero ? "12px" : "0px",
                 }}
             >
-                {/* 메인 랜딩(/poten-word) 에서는 사이드바 렌더 X */}
+                {/* 메인 랜딩(/learning) 에서는 사이드바 렌더 X */}
                 {!isQuizModePage && !isLanding && !isSearchLikeRoute && !isQuizLandingRoute && (
                     <Side aria-label="포텐워드 네비게이션">
                         <TitleLink
-                            to="/poten-word/terms"
+                            to={`${BASE}/word`}
                             end
                             aria-label="포텐워드 홈으로"
                         >
@@ -386,15 +393,15 @@ export default function PotenWordLayout() {
                         </TitleLink>
                         <List>
                             <li>
-                                <ItemLink to="/poten-word/notes" end>
+                                <ItemLink to={`${BASE}/note`} end>
                                     포텐노트
                                 </ItemLink>
                             </li>
                             <li>
-                                <ItemLink to="/poten-word/quiz/home">포텐퀴즈</ItemLink>
+                                <ItemLink to={`${BASE}/quiz/home`}>포텐퀴즈</ItemLink>
                             </li>
                             <li>
-                                <ItemLink to="/poten-word/book">포텐북</ItemLink>
+                                <ItemLink to={`${BASE}/book`}>포텐북</ItemLink>
                             </li>
                         </List>
                     </Side>

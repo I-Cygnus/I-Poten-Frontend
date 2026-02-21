@@ -228,7 +228,7 @@ type RetryWrongRes = {
     id?: number;
     questionType: "CHOICE" | "OX" | "INITIALS";
     questionCount: number;
-    /** 백엔드가 바로 제공하면 이 경로로 보냄(권장) 예: "/poten-word/quiz/ox" */
+    /** 백엔드가 바로 제공하면 이 경로로 보냄(권장) 예: "/learning/quiz/ox" */
     playPath?: string;
 };
 
@@ -260,12 +260,12 @@ export default function DailyQuizResultPage({
         const used = !!onFinish;
         console.debug("[QuizResultPage] finish clicked → using onFinish?", used);
         if (used) return onFinish!();
-        nav("/poten-word/quiz", { replace: true });
+        nav("/learning/quiz", { replace: true });
     }, [onFinish, nav]);
 
     const handleClose = React.useCallback(() => {
         if (onClose) return onClose();
-        nav("/poten-word/quiz", { replace: true });
+        nav("/learning/quiz", { replace: true });
     }, [onClose, nav]);
 
     const LS_LAST_SESSION = "quiz:lastSessionId";
@@ -312,11 +312,11 @@ export default function DailyQuizResultPage({
             try { localStorage.setItem("quiz:lastSessionId", String(nextSid)); } catch {}
 
             const qt = String((data as any)?.questionType || "").toUpperCase();
-            let basePath = (data as any)?.playPath || "/poten-word/quiz/today";
+            let basePath = (data as any)?.playPath || "/learning/quiz/today";
             if (!((data as any)?.playPath)) {
                 const qt = String((data as any)?.questionType || "").toUpperCase();
-                if (qt.includes("OX")) basePath = "/poten-word/quiz/ox";
-                else if (qt.includes("INITIAL")) basePath = "/poten-word/quiz/initials";
+                if (qt.includes("OX")) basePath = "/learning/quiz/ox";
+                else if (qt.includes("INITIAL")) basePath = "/learning/quiz/initials";
             }
             nav(`${basePath}?sessionId=${nextSid}`, { replace: true });
         } catch (e: any) {

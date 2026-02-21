@@ -338,7 +338,7 @@ export async function startQuizUnified(payload: StartQuizSessionUnifiedPayload) 
         quizSetId: Number(d?.quizSetId ?? 0) || undefined,
         questionIds: Array.isArray(d?.questionIds) ? d.questionIds : [],
         items: Array.isArray(d?.items) ? d.items : [],
-        playPath: String(d?.playPath ?? "").trim() || `/poten-word/quiz/play`,
+        playPath: String(d?.playPath ?? "").trim() || `/learning/quiz/play`,
     };
 }
 

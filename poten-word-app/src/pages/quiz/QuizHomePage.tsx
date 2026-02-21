@@ -84,6 +84,11 @@ export default function QuizHomePage() {
     const [dailyPendingKind, setDailyPendingKind] = useState<DailyKind>("CHOICE");
     const [dailyResumeCandidate, setDailyResumeCandidate] =
         useState<DailyStartResponse | null>(null);
+    const [resultKind, setResultKind] = useState<DailyKind | null>(null);
+    const [resultItems, setResultItems] = useState<any[]>([]);
+    const [retryToken, setRetryToken] = useState(0);
+
+
 
     type CarryChoice = "RESUME" | "TODAY";
     const [carryChoice, setCarryChoice] = useState<CarryChoice>("RESUME");
@@ -155,7 +160,7 @@ export default function QuizHomePage() {
 
         setDailyLoading(true);
         try {
-            const res = await startGeneralDaily("TODAY"); // 강제로 오늘 세션 생성
+            const res = await startGeneralDaily("TODAY");
             setDailyData(res);
             setDailyKind(dailyPendingKind);
             setDailyOpen(true);
@@ -174,12 +179,41 @@ export default function QuizHomePage() {
     const [resultProgress, setResultProgress] = useState<(OX | null)[]>([]);
     const [resultSessionId, setResultSessionId] = useState<number | null>(null);
 
+    const retryWrongInDailyModal = useCallback(() => {
+        if (!resultKind || !resultItems?.length) return;
+
+        const wrongIdxs = resultProgress
+            .map((v, i) => ({ v, i }))
+            .filter(x => x.v === "X")
+            .map(x => x.i);
+
+        if (wrongIdxs.length === 0) {
+            openSys({ title: "오답이 없어요", message: "틀린 문제가 없어서 다시 풀 수 없어요." } as any);
+            return;
+        }
+
+        const wrongItems = wrongIdxs.map(i => resultItems[i]).filter(Boolean);
+
+        // 1) 결과 모달 닫기
+        setResultOpen(false);
+
+        // 2) 데일리 모달을 “오답 items”로 시작
+        setDailyKind(resultKind);
+        setDailyOverrideItems(wrongItems);
+
+        // 3) 강제 리마운트
+        setRetryToken(t => t + 1);
+
+        // 4) 데일리 모달 열기
+        setDailyOpen(true);
+    }, [resultKind, resultItems, resultProgress]);
+
     const actions = useMemo(
         () => [
-            { id: "a1", label: "내 포텐노트",        icon: act1, to: "/poten-word/notes" },
-            { id: "a2", label: "내 퀴즈 타임라인",  icon: act2, to: "/poten-word/quiz/timeline" },
-            { id: "a3", label: "오답노트 바로 가기", icon: act3, to: "/poten-word/quiz/wrong-notes" },
-            { id: "a4", label: "명예의 전당",        icon: act4, to: "/poten-word/quiz/hall" },
+            { id: "a1", label: "내 포텐노트",        icon: act1, to: "/learning/note" },
+            { id: "a2", label: "내 퀴즈 타임라인",  icon: act2, to: "/learning/quiz/timeline" },
+            { id: "a3", label: "오답노트 바로 가기", icon: act3, to: "/learning/quiz/wrong-notes" },
+            { id: "a4", label: "명예의 전당",        icon: act4, to: "/learning/quiz/hall" },
         ],
         []
     );
@@ -419,7 +453,7 @@ export default function QuizHomePage() {
         const filter =
             getTopicFilter(topic.id) ||
             getTopicFilter(topic.to) ||                       // topic.to("/quiz/js")를 키로 쓰는 경우 대비
-            getTopicFilter(topic.to.replace("/poten-word", "")); // prefix 바뀐 경우 대비
+            getTopicFilter(topic.to.replace("/learning", "")); // prefix 바뀐 경우 대비
 
         if (!filter) {
             setSetupOpen(false);
@@ -489,7 +523,7 @@ export default function QuizHomePage() {
             const sessionId = Number((started as any)?.sessionId);
             if (!Number.isFinite(sessionId)) throw new Error("sessionId가 응답에 없습니다.");
 
-            const playPath = String((started as any)?.playPath ?? "").trim() || "/poten-word/quiz/play";
+            const playPath = String((started as any)?.playPath ?? "").trim() || "/learning/quiz/play";
 
             nav(playPath, {
                 replace: true,
@@ -542,6 +576,8 @@ export default function QuizHomePage() {
     }, [setupOpen, defaultSessionTitle, titleTouched]);
 
     const session = pickSession(dailyKind);
+
+    const [dailyOverrideItems, setDailyOverrideItems] = useState<any[] | null>(null);
 
     return (
         <PageWrap>
@@ -769,45 +805,74 @@ export default function QuizHomePage() {
 
                 {session && dailyKind === "CHOICE" && (
                     <DailyChoiceModalPlay
-                        key={`choice-${session.sessionId}`}
+                        key={`choice-${session.sessionId}-${retryToken}`}
                         sessionId={session.sessionId}
-                        items={(session.items ?? []) as any}
-                        onClose={() => setDailyOpen(false)}
+                        items={((dailyOverrideItems ?? session.items) ?? []) as any}
+                        onClose={() => {
+                            setDailyOpen(false);
+                            setDailyOverrideItems(null);
+                        }}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
+
+                            const playedItems = (dailyOverrideItems ?? session.items) ?? [];
+
                             setResultSessionId(sessionId);
                             setResultProgress(progress);
+                            setResultKind(dailyKind);
+                            setResultItems(playedItems as any);
                             setResultOpen(true);
+                            setDailyOverrideItems(null);
                         }}
                     />
                 )}
 
                 {session && dailyKind === "OX" && (
                     <DailyOxModalPlay
-                        key={`ox-${session.sessionId}`}
+                        key={`ox-${session.sessionId}-${retryToken}`}
                         sessionId={session.sessionId}
-                        items={(session.items ?? []) as any}
-                        onClose={() => setDailyOpen(false)}
+                        items={((dailyOverrideItems ?? session.items) ?? []) as any}
+                        onClose={() => {
+                            setDailyOpen(false);
+                            setDailyOverrideItems(null);
+                        }}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
+
+                            const playedItems = (dailyOverrideItems ?? session.items) ?? [];
+
                             setResultSessionId(sessionId);
                             setResultProgress(progress);
+                            setResultKind(dailyKind);
+                            setResultItems(playedItems as any);
                             setResultOpen(true);
+
+                            setDailyOverrideItems(null);
                         }}
                     />
                 )}
 
                 {session && dailyKind === "INITIALS" && (
                     <DailyInitialsModalPlay
-                        key={`initials-${session.sessionId}`}
+                        key={`initials-${session.sessionId}-${retryToken}`}
                         sessionId={session.sessionId}
-                        items={session.items ?? []}
-                        onClose={() => setDailyOpen(false)}
+                        items={((dailyOverrideItems ?? session.items) ?? []) as any}
+                        onClose={() => {
+                            setDailyOpen(false);
+                            setDailyOverrideItems(null);
+                        }}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
+
+                            const playedItems = (dailyOverrideItems ?? session.items) ?? [];
+
                             setResultSessionId(sessionId);
                             setResultProgress(progress);
+                            setResultKind(dailyKind);
+                            setResultItems(playedItems as any);
                             setResultOpen(true);
+
+                            setDailyOverrideItems(null);
                         }}
                     />
                 )}
@@ -819,6 +884,7 @@ export default function QuizHomePage() {
                     progress={resultProgress}
                     sessionId={resultSessionId}
                     title="결과 보기"
+                    onRetryWrong={retryWrongInDailyModal}
                     onClose={() => {
                         setResultOpen(false);
                         setResultSessionId(null);
@@ -885,7 +951,7 @@ export default function QuizHomePage() {
                     ))}
 
                     <MoreRow>
-                        <MoreBtn onClick={() => nav('/poten-word/quiz/categories')}>
+                        <MoreBtn onClick={() => nav('/learning/quiz/categories')}>
                             더 많은 직무 카테고리에서 고르기
                         </MoreBtn>
                     </MoreRow>

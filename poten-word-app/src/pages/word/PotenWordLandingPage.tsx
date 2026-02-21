@@ -402,7 +402,7 @@ export default function PotenWordLandingPage() {
     const goSearch = useCallback(() => {
         const q = searchKeyword.trim();
         if (!q) return;
-        navigate(`/poten-word/search?q=${encodeURIComponent(q)}`);
+        navigate(`/learning/search?q=${encodeURIComponent(q)}`);
     }, [searchKeyword, navigate]);
 
     const handleSearchSubmit = useCallback(
@@ -415,7 +415,7 @@ export default function PotenWordLandingPage() {
 
     const handlePopularTermClick = useCallback(
         (term: string) => {
-            navigate(`/poten-word/search?q=${encodeURIComponent(term)}`);
+            navigate(`/learning/search?q=${encodeURIComponent(term)}`);
         },
         [navigate]
     );
@@ -497,7 +497,7 @@ export default function PotenWordLandingPage() {
 
                 {/* 상단 3카드 */}
                 <Cards>
-                    <Card onClick={() => navigate("/poten-word/terms")}>
+                    <Card onClick={() => navigate("/learning/word")}>
                         <CardIcon><IconWord /></CardIcon>
                         <CardTitle>포텐워드</CardTitle>
                         <CardDesc>
@@ -506,7 +506,7 @@ export default function PotenWordLandingPage() {
                         <CardFooter>PotenWord</CardFooter>
                     </Card>
 
-                    <Card onClick={() => navigate("/poten-word/notes")}>
+                    <Card onClick={() => navigate("/learning/note")}>
                         <CardIcon><IconNote /></CardIcon>
                         <CardTitle>포텐노트</CardTitle>
                         <CardDesc>
@@ -515,7 +515,7 @@ export default function PotenWordLandingPage() {
                         <CardFooter>PotenNote</CardFooter>
                     </Card>
 
-                    <Card onClick={() => navigate("/poten-word/quiz")}>
+                    <Card onClick={() => navigate("/learning/quiz")}>
                         <CardIcon><IconQuiz /></CardIcon>
                         <CardTitle>포텐퀴즈</CardTitle>
                         <CardDesc>

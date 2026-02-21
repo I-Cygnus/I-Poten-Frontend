@@ -350,9 +350,9 @@ export default function QuizLandingPage() {
                                 type="button"
                                 onClick={() => {
                                     try {
-                                        navigate("/poten-word/quiz/home");
+                                        navigate("/learning/quiz/home");
                                     } catch {
-                                        window.location.href = "http://localhost/poten-word/quiz/home";
+                                        window.location.href = "http://localhost/learning/quiz/home";
                                     }
                                 }}
                             >

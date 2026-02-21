@@ -270,23 +270,23 @@ export default function App() {
           <Routes>
             {/* 공통 레이아웃 */}
             <Route element={<AppLayout />}>
-              {/* 호스트가 /poten-word/* 에 마운트한다고 가정 */}
+              {/* 호스트가 /learning/* 에 마운트한다고 가정 */}
               <Route path="/*" element={<PotenWordLayout />}>
-                {/* /poten-word → 메인 랜딩 페이지 */}
+                {/* /learning → 메인 랜딩 페이지 */}
                 <Route index element={<PotenWordLandingPage />} />
 
-                {/* /poten-word/terms → 용어 리스트 */}
-                <Route path="terms" element={<SearchPage />} />
+                {/* /learning/word → 용어 리스트 */}
+                <Route path="word" element={<SearchPage />} />
 
-                <Route path="notes" element={<PotenNoteHomePage />} />
+                <Route path="note" element={<PotenNoteHomePage />} />
                 <Route path="search" element={<SearchPage />} />
 
                 {/* 퀴즈 경로 */}
                 <Route path="quiz">
-                  {/* /poten-word/quiz → 랜딩 */}
+                  {/* /learning/quiz → 랜딩 */}
                   <Route index element={<QuizLandingPage />} />
 
-                  {/* /poten-word/quiz/home → 기존 홈 */}
+                  {/* /learning/quiz/home → 기존 홈 */}
                   <Route path="home" element={<QuizHomePage />} />
 
                   {/* 일반 세트 플레이 */}

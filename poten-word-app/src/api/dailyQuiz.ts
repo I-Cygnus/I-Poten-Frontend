@@ -12,6 +12,7 @@ export type StartedItem = {
     questionId: number;
     questionType: DailyQuestionType;
     questionText: string;
+    initialsHint?: string | null;
     explanation?: string | null;
     correctChoiceId?: number | null;
     options: StartedOption[];
@@ -47,4 +48,36 @@ export async function startGeneralDaily(
         { withCredentials: true }
     );
     return data;
+}
+
+export type CheckDailyQuestionRequest = {
+    /** CHOICE용 */
+    choiceId?: number;
+
+    /** OX용 */
+    oxAnswer?: "O" | "X";
+
+    /** INITIALS용 */
+    answerText?: string;
+};
+
+export type CheckDailyQuestionResponse = {
+    correct: boolean;
+    correctChoiceId?: number | null;
+    explanation?: string | null;
+    nextQuestionId?: number | null;
+    submitted?: boolean;
+};
+
+export async function checkDailyQuestion(
+    sessionId: number,
+    questionId: number,
+    payload: CheckDailyQuestionRequest
+): Promise<CheckDailyQuestionResponse> {
+    const { data } = await http.post(
+        `/me/quiz/daily/sessions/${sessionId}/questions/${questionId}/check`,
+        payload,
+        { withCredentials: true }
+    );
+    return data?.data ?? data;
 }
