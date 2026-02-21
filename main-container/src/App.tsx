@@ -11,6 +11,7 @@ import { Helmet, HelmetProvider } from "react-helmet-async";
 import mitt from "mitt";
 
 import Main from "./components/Main.tsx";
+import EventPage from "./event/page/EventPage";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -159,6 +160,7 @@ function InnerApp() {
 
         <Routes>
           <Route path="/" element={<Main />} />
+          <Route path="/event" element={<EventPage />} />
           <Route
             path="/vue-account/*"
             element={<VueAccountAppWrapper eventBus={eventBus} />}

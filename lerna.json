@@ -3,6 +3,7 @@
   "version": "independent",
   "packages": [
     "main-container",
+    "next-seo-app",
     "navigation-bar-app",
     "vue-account-app",
     "vue-ai-interview-app",
