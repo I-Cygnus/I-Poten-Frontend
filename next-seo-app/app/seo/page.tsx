@@ -1,6 +1,3 @@
-'use client';
-
-import { useEffect } from 'react';
 import { Metadata } from 'next';
 
 // SEO 메타데이터 (검색엔진용)
@@ -35,16 +32,15 @@ export const metadata: Metadata = {
 };
 
 export default function SEOLandingPage() {
-  useEffect(() => {
-    // 사용자만 즉시 리다이렉트 (검색엔진은 JavaScript 미실행)
-    if (typeof window !== 'undefined') {
-      window.location.replace('/');
-    }
-  }, []);
-
   // 검색엔진이 크롤링할 내용 (사용자는 안 봄)
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      {/* 사용자만 즉시 리다이렉트 (검색엔진은 JavaScript 미실행) */}
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `window.location.replace('/');`,
+        }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
