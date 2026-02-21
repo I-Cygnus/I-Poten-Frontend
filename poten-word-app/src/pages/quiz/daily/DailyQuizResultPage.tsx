@@ -303,12 +303,35 @@ export default function DailyQuizResultPage({
                 (data as any)?.new_session_id
             );
 
-
             if (!Number.isFinite(nextSid)) {
                 console.error("[retry-wrong] 새 세션 ID 없음:", data);
                 alert("재도전 세션 ID를 받지 못했어요.");
                 return;
             }
+
+            try {
+                const prevKey = `ipoten:daily-choice:session:${sid}`;
+                const nextKey = `ipoten:daily-choice:session:${nextSid}`;
+                const raw = localStorage.getItem(prevKey);
+
+                if (raw) {
+                    const snap = JSON.parse(raw);
+
+                    // next 세션에서 읽히도록 sessionId를 nextSid로 바꿔서 저장
+                    const patched = {
+                        ...snap,
+                        sessionId: nextSid,
+                        initialProgress: Array.isArray(snap?.initialProgress) && snap.initialProgress.length
+                            ? snap.initialProgress
+                            : normalized, // ResultPage에서 이미 만들어둔 OX 배열
+                        savedAt: Date.now(),
+                    };
+
+                    localStorage.setItem(nextKey, JSON.stringify(patched));
+                    console.log("[LS nextKey]", nextKey, JSON.parse(localStorage.getItem(nextKey) || "null"));
+                }
+            } catch {}
+
             try { localStorage.setItem("quiz:lastSessionId", String(nextSid)); } catch {}
 
             const qt = String((data as any)?.questionType || "").toUpperCase();
@@ -327,7 +350,6 @@ export default function DailyQuizResultPage({
             } else if (status === 422) {
                 alert("틀린 문제가 없습니다. 전체 다시 풀기 또는 다른 퀴즈를 선택해 보세요.");
             } else if (status === 400 || status === 409) {
-                // 서버가 '미제출'을 400/409로 줄 수 있으니 동일 메시지 처리
                 alert("먼저 퀴즈를 제출해주세요. 제출 완료된 세션에서만 오답 재도전이 가능합니다.");
             } else {
                 console.error(e);
@@ -336,13 +358,15 @@ export default function DailyQuizResultPage({
         } finally {
             setBusy(false);
         }
-    }, [sid, nav]);
+    }, [sid, nav, normalized]);
 
     const handleRetryWrong = React.useCallback(() => {
+        console.log("[retry] clicked", { canRetry, sid, wrongCount, busy });
+
         if (!canRetry) return;
         if (onRetryWrong) return onRetryWrong();
         return fallbackRetryWrong();
-    }, [canRetry, onRetryWrong, fallbackRetryWrong]);
+    }, [canRetry, sid, wrongCount, busy, onRetryWrong, fallbackRetryWrong]);
 
     React.useEffect(() => {
         const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") handleClose(); };
@@ -375,22 +399,22 @@ export default function DailyQuizResultPage({
                     </Grid>
 
                     <Actions>
-                        <BtnGhost
-                            onClick={handleRetryWrong}
-                            disabled={!canRetry}
-                            aria-busy={busy}
-                            aria-disabled={!canRetry}
-                            title={
-                                !sid
-                                    ? "세션 정보가 없어 재도전을 시작할 수 없어요"
-                                    : wrongCount === 0
-                                        ? "틀린 문제가 없어요"
+                        {wrongCount > 0 && (
+                            <BtnGhost
+                                onClick={handleRetryWrong}
+                                disabled={!canRetry}
+                                aria-busy={busy}
+                                aria-disabled={!canRetry}
+                                title={
+                                    !sid
+                                        ? "세션 정보가 없어 재도전을 시작할 수 없어요"
                                         : "틀린 문제만 다시 풀기"
-                            }
-                        >
-                            <RefreshIcon />
-                            <span>{busy ? "준비 중..." : "틀린 문제 다시 풀기"}</span>
-                        </BtnGhost>
+                                }
+                            >
+                                <RefreshIcon />
+                                <span>{busy ? "준비 중..." : "틀린 문제 다시 풀기"}</span>
+                            </BtnGhost>
+                        )}
 
                         <BtnPrimary onClick={handleFinish}>
                             <ExitIcon />

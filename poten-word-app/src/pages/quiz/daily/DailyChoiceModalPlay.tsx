@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
-import DailyChoiceCard from "../../../components/quiz/DailyChoiceCard.tsx";
-import {checkDailyQuestion} from "../../../api/dailyQuiz.ts";
+import DailyChoiceCard from "../../../components/quiz/DailyChoiceCard";
+import { checkDailyQuestion } from "../../../api/dailyQuiz";
 
 type OX = "O" | "X";
 
@@ -47,28 +47,74 @@ function safeTextOrNull(v: any): string | null {
     return s ? s : null;
 }
 
+const LS_KEY = (sessionId: number) => `ipoten:daily-choice:session:${sessionId}`;
+
+type StoredDailyChoice = {
+    sessionId: number;
+    items: StartedItem[];
+    initialProgress?: (OX | null)[];
+    savedAt: number;
+};
+
+function lsRead(sessionId: number): StoredDailyChoice | null {
+    try {
+        const raw = localStorage.getItem(LS_KEY(sessionId));
+        if (!raw) return null;
+
+        const parsed = JSON.parse(raw) as StoredDailyChoice;
+        if (!parsed || !Array.isArray(parsed.items)) return null;
+
+        return { ...parsed, sessionId };
+    } catch {
+        return null;
+    }
+}
+
+function lsWrite(sessionId: number, payload: StoredDailyChoice) {
+    try {
+        localStorage.setItem(LS_KEY(sessionId), JSON.stringify(payload));
+    } catch {
+        // ignore
+    }
+}
+
 export default function DailyChoiceModalPlay({
                                                  sessionId,
                                                  items,
                                                  onClose,
                                                  onShowResult,
+                                                 retryWrongOnly = false,
+                                                 initialProgress,
                                              }: {
     sessionId: number;
     items: StartedItem[];
     onClose: () => void;
     onShowResult?: (p: { sessionId: number; progress: (OX | null)[] }) => void;
+    retryWrongOnly?: boolean;
+    initialProgress?: (OX | null)[];
 }) {
     const [qs, setQs] = React.useState<ChoiceView[]>([]);
     const [loading, setLoading] = React.useState(true);
-
     const [idx, setIdx] = React.useState(0);
-
-    /** picked는 “선택한 보기 인덱스(0-based)” */
     const [picked, setPicked] = React.useState<(number | null)[]>([]);
-    const [startMs] = React.useState(() => Date.now());
 
-    /** 문항별 check 결과 캐시(중복 호출 방지) */
     const checkedRef = React.useRef(new Map<number, any>());
+    const baseItemsRef = React.useRef<StartedItem[]>(items);
+    const persistProgress = React.useCallback(
+        (p: (OX | null)[]) => {
+            try {
+                lsWrite(sessionId, {
+                    sessionId,
+                    items: baseItemsRef.current,
+                    initialProgress: p,
+                    savedAt: Date.now(),
+                });
+            } catch {}
+        },
+        [sessionId]
+    );
+
+    const originProgressRef = React.useRef<(OX | null)[] | undefined>(undefined);
 
     React.useEffect(() => {
         let mounted = true;
@@ -76,46 +122,91 @@ export default function DailyChoiceModalPlay({
         (async () => {
             setLoading(true);
 
-            const view: ChoiceView[] = items.map((it) => ({
-                id: it.questionId,
-                q: safeTextOrNull(it.questionText) ?? "",
-                choices: (it.options ?? []).map((c) => safeTextOrNull(c.text) ?? ""),
-                explanation: safeTextOrNull(it.explanation) ?? null,
+            const stored = lsRead(sessionId);
 
-                correctIndex: -1,
-                checked: false,
-                isCorrect: null,
-            }));
+        // 재도전이면 "전체 문항"을 localStorage에서 복원 (없으면 어쩔 수 없이 items로)
+            const baseItems: StartedItem[] = retryWrongOnly
+                ? (items?.length ? items : (stored?.items?.length ? stored.items : []))
+                : items;
+
+            baseItemsRef.current = baseItems;
+
+        // 재도전일 때는 이전 결과(OXX)를 "originProgress"로 잡아둠 (Tray용)
+            const originProgress: (OX | null)[] | undefined = retryWrongOnly
+                ? (initialProgress?.length ? initialProgress : stored?.initialProgress?.length ? stored.initialProgress : undefined)
+                : undefined;
+
+            originProgressRef.current = originProgress;
+
+        // 일반 플레이: 시작 스냅샷은 items만 저장 (progress는 저장 금지)
+            if (!retryWrongOnly) {
+                lsWrite(sessionId, { sessionId, items: baseItems, savedAt: Date.now() });
+            }
+
+        // view 생성: 재도전이면 "X였던 문제는 다시 풀도록 unchecked로 초기화"
+            const view: ChoiceView[] = baseItems.map((it, i) => {
+                const prev = originProgress?.[i] ?? null;
+
+                const shouldLockAsCorrect = retryWrongOnly && prev === "O";
+                const shouldRetry = retryWrongOnly && prev === "X";
+
+                return {
+                    id: it.questionId,
+                    q: safeTextOrNull(it.questionText) ?? "",
+                    choices: (it.options ?? []).map((c) => safeTextOrNull(c.text) ?? ""),
+                    explanation: safeTextOrNull(it.explanation) ?? null,
+                    correctIndex: -1,
+                    checked: shouldLockAsCorrect ? true : false,
+                    isCorrect: shouldLockAsCorrect ? true : null,
+                };
+            });
 
             if (!mounted) return;
+
             setQs(view);
             setPicked(Array.from({ length: view.length }, () => null));
-            setIdx(0);
             checkedRef.current.clear();
+
+            if (retryWrongOnly) {
+                const p = originProgressRef.current ?? [];
+                const firstWrong = p.findIndex((v) => v === "X");
+                setIdx(firstWrong >= 0 ? firstWrong : 0);
+            } else {
+                setIdx(0);
+            }
+
             setLoading(false);
         })();
 
         return () => {
             mounted = false;
         };
-    }, [sessionId, items]);
+    }, [sessionId, items, retryWrongOnly, initialProgress]);
 
-    const cur = qs[idx];
+    const liveProgress = React.useMemo<(OX | null)[]>(() => {
+        return qs.map((q) => (q.checked && q.isCorrect != null ? (q.isCorrect ? "O" : "X") : null));
+    }, [qs]);
+
+    const trayProgress = React.useMemo<(OX | null)[]>(() => {
+        if (!retryWrongOnly) return liveProgress;
+        const base = originProgressRef.current ?? [];
+        return qs.map((q, i) => {
+            if (q.checked && q.isCorrect != null) return q.isCorrect ? "O" : "X";
+            return base[i] ?? "X"; // 이전엔 X였던 문제는 X로 보여주기
+        });
+    }, [retryWrongOnly, liveProgress, qs]);
+
     const total = qs.length;
 
-    /** progress는 “체크된 문항만 O/X, 아니면 null” */
     const progress = React.useMemo<(OX | null)[]>(() => {
-        return qs.map((q, i) => {
-            if (!q.checked || q.isCorrect == null) return null;
-            return q.isCorrect ? "O" : "X";
-        });
+        return qs.map((q) => (q.checked && q.isCorrect != null ? (q.isCorrect ? "O" : "X") : null));
     }, [qs]);
 
     const runCheck = async (qIndex: number, pickedIndex: number) => {
         const q = qs[qIndex];
         if (!q) return;
 
-        const it = items[qIndex];
+        const it = baseItemsRef.current[qIndex];
         const selected = it?.options?.[pickedIndex];
         if (!selected?.choiceId) return;
 
@@ -128,7 +219,8 @@ export default function DailyChoiceModalPlay({
 
             const correctChoiceId = res?.correctChoiceId != null ? Number(res.correctChoiceId) : null;
             const correctIndex =
-                correctChoiceId == null ? -1
+                correctChoiceId == null
+                    ? -1
                     : it.options.findIndex((c) => Number(c.choiceId) === correctChoiceId);
 
             setQs((prev) => {
@@ -154,20 +246,40 @@ export default function DailyChoiceModalPlay({
     const goNext = async () => {
         if (!qs[idx]?.checked) return;
 
-        if (idx >= total - 1) {
-            onShowResult?.({ sessionId, progress });
+        if (!retryWrongOnly) {
+            if (idx >= total - 1) {
+                persistProgress(progress);
+                onShowResult?.({ sessionId, progress });
+                return;
+            }
+            setIdx((i) => i + 1);
             return;
         }
-        setIdx((i) => i + 1);
+
+        if (idx >= total - 1) {
+            persistProgress(trayProgress);
+            onShowResult?.({ sessionId, progress: trayProgress });
+            return;
+        }
+
+        const nextWrong = trayProgress.findIndex((v, i) => i > idx && v === "X");
+        if (nextWrong >= 0) return setIdx(nextWrong);
+
+        const firstWrong = trayProgress.findIndex((v) => v === "X");
+        if (firstWrong >= 0 && firstWrong !== idx) return setIdx(firstWrong);
+
+        persistProgress(trayProgress);
+        onShowResult?.({ sessionId, progress: trayProgress });
     };
+
+    const cur = qs[idx];
 
     if (loading) return <Stage>불러오는 중…</Stage>;
     if (!cur) return <Stage>문항이 없습니다.</Stage>;
 
     const selectedIndex = picked[idx];
-
-    /** “선택하면 결과 표시” */
     const showResult = cur.checked && cur.correctIndex >= 0;
+    const currentJudge = progress[idx] ?? null;
 
     return (
         <Stage>
@@ -189,7 +301,9 @@ export default function DailyChoiceModalPlay({
                 showResult={showResult}
                 correct={cur.correctIndex >= 0 ? cur.correctIndex : null}
                 explanation={cur.explanation}
-                progress={progress}
+                progress={trayProgress}
+                retryWrongOnly={retryWrongOnly}
+                currentJudge={currentJudge}
                 onNext={goNext}
                 onGoto={(n) => {
                     const next = Math.max(1, Math.min(total, n)) - 1;

@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import styled, { createGlobalStyle, css } from "styled-components";
 import SoftBlobsBackground from "./SoftBlobsBackground.tsx";
 import emblem from "../../assets/quiz/emblem.png";
@@ -44,6 +44,7 @@ type Props = {
     showResult?: boolean;
     correctAnswer?: string;
     progress?: (OX | null)[];
+    retryWrongOnly?: boolean;
     emblemSrc?: string;
     emblemAlt?: string;
     offsetY?: number | string;
@@ -54,7 +55,7 @@ type Props = {
     explanation?: string | null;
 };
 
-/* ====== 레이아웃 (생략 없이 동일) ====== */
+/* ====== 레이아웃 ====== */
 const Stage = styled.div`
     position: relative;
     isolation: isolate;
@@ -136,11 +137,11 @@ const Header = styled.div`
     margin: 6px 0 18px; min-width: 0;
 `;
 const MeaningfulWrap = css`
-  white-space: pre-wrap;      /* \n, 문장 단위 개행 유지 */
-  word-break: keep-all;       /* 한국어 단어 중간(가나다라) 쪼개짐 방지 */
-  overflow-wrap: break-word;  /* URL/긴영단어/코드 같은 긴 토큰은 줄 넘치면 분해 */
-  line-break: strict;         /* CJK 줄바꿈 품질 개선(지원 브라우저에서만 적용) */
-  hyphens: auto;              /* 영문 하이픈 분할(가능할 때) */
+  white-space: pre-wrap;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  line-break: strict;
+  hyphens: auto;
 `;
 const Title = styled.h2`
     margin: 0; font-size: clamp(18px, 2.4vw, 26px);
@@ -236,8 +237,6 @@ const Tile = styled.div<{ $reveal?: boolean; $ok?: boolean }>`
 
     font-family: "GhanaChocolate", "Pretendard", "Noto Sans KR", system-ui, sans-serif;
     font-weight: 400;
-
-    /* 크기에 비례해서 글자도 같이 줄어듦 */
     font-size: calc(var(--sz) * 0.42);
 
     box-shadow: 0 10px 24px rgba(62, 99, 224, 0.08);
@@ -380,6 +379,7 @@ export default function DailyInitialsCard(props: Props) {
         showResult = false,
         correctAnswer = "",
         progress,
+        retryWrongOnly = false,
         emblemSrc,
         emblemAlt,
         offsetY,
@@ -407,7 +407,6 @@ export default function DailyInitialsCard(props: Props) {
     }, [resetSignal, total]);
 
     React.useEffect(() => {
-        // total 변동 시 길이 맞추기
         setStickyProgress((prev) => {
             const next = Array.from({ length: total }, (_, i) => prev[i] ?? null);
             return next;
@@ -420,7 +419,7 @@ export default function DailyInitialsCard(props: Props) {
         const justRevealed = showResult && !prevShowResultRef.current;
         prevShowResultRef.current = showResult;
 
-        if (!justRevealed) return; // showResult가 false→true로 바뀐 순간만
+        if (!justRevealed) return;
 
         const pos = Math.min(index - 1, total - 1);
         const mark: OX = isCorrect ? "O" : "X";
@@ -443,9 +442,18 @@ export default function DailyInitialsCard(props: Props) {
     }, [progress, stickyProgress, total]);
 
     const isLast = index >= total;
-    const ctaLabel = showResult ? (isLast ? "결과 보기" : "다음 문제") : "제출하기";
+    const judgeHere = displayProgress[Math.max(0, index - 1)] ?? null;
+    const hasOtherWrong = retryWrongOnly
+        ? displayProgress.some((v, i) => i !== Math.max(0, index - 1) && v === "X")
+        : false;
+    const shouldShowResult = isLast || (retryWrongOnly && showResult && judgeHere === "O" && !hasOtherWrong);
+    const ctaLabel = showResult ? (shouldShowResult ? "결과 보기" : "다음 문제") : "제출하기";
 
-    const revealChars = (correctAnswer || "").replace(/\s/g, "");
+    const revealChars = React.useMemo(() => {
+        const revealText =
+            nz(correctAnswer) || (showResult && isCorrect ? nz(value) : "");
+        return revealText.replace(/\s/g, "");
+    }, [correctAnswer, showResult, isCorrect, value]);
 
     const tilesData = React.useMemo(() => {
         return showResult ? [...revealChars] : initials;
@@ -510,27 +518,22 @@ export default function DailyInitialsCard(props: Props) {
             const gap = parseFloat(cs.gap || cs.columnGap || "0") || 0;
             const w = el.clientWidth;
 
-            // single 모드 실제 타일 px: clamp(68, 9vw, 92) * 1.5
             const base = clampNum(68, window.innerWidth * 0.09, 92);
             const singleTilePx = base * 1.5;
 
             const required = singleTilePx * n + gap * (n - 1);
 
-            // 히스테리시스(왕복 스위칭 방지)
-            const H = 14; // 10~20 사이 취향
+            const H = 14;
 
             if (tileMode === "single") {
-                // single에서 two로: 확실히 부족할 때만
                 if (w < required - H) {
                     const two = calcTwo(w, gap, n);
                     applyTwo(two.cols, two.size);
                 }
             } else {
-                // two에서 single로: 확실히 넉넉할 때만
                 if (w > required + H) {
                     applySingle();
                 } else {
-                    // two 유지 중 cols/size는 갱신(폭 바뀐 경우)
                     const two = calcTwo(w, gap, n);
                     applyTwo(two.cols, two.size);
                 }
@@ -567,7 +570,6 @@ export default function DailyInitialsCard(props: Props) {
                 }}
             >
                 <Card data-showresult={showResult}>
-                    {/* 헤더 */}
                     <Header>
                         <QBox>
                             <Dots aria-hidden>
@@ -617,20 +619,17 @@ export default function DailyInitialsCard(props: Props) {
                         </RightCol>
                     </Header>
 
-                    {/* 중앙 타일 */}
                     <Tiles
                         ref={tilesRef}
                         $mode={tileMode}
                         role="list"
                         aria-label={showResult ? "정답 타일" : "초성 타일"}
                         style={{
-                            // single일 때만 크게(1.5배)
                             ["--tile-scale" as any]: tileMode === "single" ? 1.5 : 1,
                             ["--tile-min" as any]: tileMode === "single" ? "74px" : undefined,
                             ["--tile-nudge-y" as any]:
                                 tileMode === "single" ? "clamp(12px, 3.5vh, 36px)" : "0px",
 
-                            // 2줄 모드 변수
                             ["--cols" as any]: tileMode === "two" ? tileCols : undefined,
                             ["--tile-size" as any]:
                                 tileMode === "two" && tileSizePx ? `${tileSizePx}px` : undefined,
@@ -643,7 +642,6 @@ export default function DailyInitialsCard(props: Props) {
                         ))}
                     </Tiles>
 
-                    {/* 하단 도크 */}
                     <InputDockIn>
                         <InputRow onSubmit={handleSubmit} aria-label="정답 입력">
                             <TextInput

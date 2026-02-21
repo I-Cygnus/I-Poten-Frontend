@@ -45,6 +45,8 @@ type Props = {
     explanation?: string | null;
 
     progress?: (OX | null)[];
+    retryWrongOnly?: boolean;
+    currentJudge?: OX | null;
     onNext?: () => void;
     onGoto?: (qNumber1Based: number) => void;
 
@@ -563,8 +565,8 @@ const FloatingNext = styled.div<{ $showDock?: boolean }>`
     right: var(--pad);
     bottom: ${({ $showDock }) =>
             $showDock
-                    ? "calc(var(--pad) + var(--dock-space) - 20px - var(--dock-down))"
-                    : "calc(var(--pad) + 10px - var(--dock-down))"};
+                    ? "calc(var(--pad) + var(--dock-space) - 80px)"
+                    : "var(--pad)"};
     z-index: 6;
     animation: ${fadeInUp} 0.18s ease-out both;
 `;
@@ -695,6 +697,8 @@ export default function DailyOXCard({
                                        correct = "O",
                                        explanation = null,
                                        progress,
+                                       retryWrongOnly = false,
+                                       currentJudge = null,
                                        onNext,
                                        onGoto,
                                        emblemSrc,
@@ -708,6 +712,13 @@ export default function DailyOXCard({
     }, [value]);
 
     const effectiveValue: OX | null = value ?? localValue;
+    const pos = Math.max(0, Math.min(total - 1, index - 1));
+
+    const judgeHere: OX | null =
+        (currentJudge ?? (Array.isArray(progress) ? progress[pos] : null)) ?? null;
+
+    const canPickNow =
+        effectiveValue == null || (retryWrongOnly && judgeHere === "X");
 
     const computedProgress = React.useMemo<(OX | null)[]>(() => {
         // 1) 부모 progress를 먼저 깔기(길이 보정)
@@ -717,13 +728,16 @@ export default function DailyOXCard({
 
         // 2) 현재 문제는 카드가 알고 있는 value/correct로 "무조건" 덮어쓰기
         //    (부모 progress가 아직 업데이트 안 됐어도 즉시 O/X가 뜸)
+        if (base[pos] == null && judgeHere != null) {
+            base[pos] = judgeHere;
+        }
+
         if (effectiveValue != null) {
-            const pos = Math.max(0, Math.min(total - 1, index - 1));
             base[pos] = effectiveValue === correct ? "O" : "X";
         }
 
         return base;
-    }, [progress, total, index, effectiveValue, correct]);
+    }, [progress, total, pos, effectiveValue, correct, judgeHere]);
 
     const stateFor = (choice: OX): "idle" | "correct" | "wrong" => {
         if (!showResult) return "idle";
@@ -735,8 +749,12 @@ export default function DailyOXCard({
     const pristine = effectiveValue == null && !showResult;
     const canGoNext = effectiveValue != null;
     const isLast = index >= total;
-    const ctaLabel = isLast ? "결과 보기" : "다음 문제";
-    const showCTA = canGoNext; // OX는 답 고르면 항상 버튼 노출
+    const hasOtherWrong = retryWrongOnly
+        ? computedProgress.some((v, i) => i !== pos && v === "X")
+        : false;
+    const shouldShowResult = isLast || (retryWrongOnly && !hasOtherWrong);
+    const ctaLabel = shouldShowResult ? "결과 보기" : "다음 문제";
+    const showCTA = canGoNext && (!isLast || showResult);
     const emblemURL = emblemSrc ?? DEFAULT_EMBLEM;
 
     return (
@@ -807,7 +825,11 @@ export default function DailyOXCard({
                                 role="radio"
                                 $active={effectiveValue === "O"}
                                 $state={stateFor("O")}
-                                onClick={() => { setLocalValue("O"); onChange?.("O"); }}
+                                onClick={() => {
+                                    if (!canPickNow) return;
+                                    setLocalValue("O");
+                                    onChange?.("O");
+                                }}
                             >
                                 <OIcon pristine={pristine} />
                                 {effectiveValue === "O" && <SelectedMark />}
@@ -823,7 +845,11 @@ export default function DailyOXCard({
                                 role="radio"
                                 $active={effectiveValue === "X"}
                                 $state={stateFor("X")}
-                                onClick={() => { setLocalValue("X"); onChange?.("X"); }}
+                                onClick={() => {
+                                    if (!canPickNow) return;
+                                    setLocalValue("X");
+                                    onChange?.("X");
+                                }}
                             >
                                 <XIcon />
                                 {effectiveValue === "X" && <SelectedMark />}

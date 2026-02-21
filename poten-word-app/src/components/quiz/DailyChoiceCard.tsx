@@ -57,6 +57,8 @@ type Props = {
     emblemAlt?: string;
     onClose?: () => void;
     closeAriaLabel?: string;
+    retryWrongOnly?: boolean;     // 틀린문제 다시풀기 모드 여부
+    currentJudge?: Judge;         // 현재 문항의 판정(O/X/null) (progress[index-1])
 };
 
 /* ====== 상단 Q 라벨/점 (OX와 동일) ====== */
@@ -565,35 +567,35 @@ const NextButton = styled.button`
 
 /* ====== 컴포넌트 ====== */
 export default function DailyChoiceCard({
-                                           index = 1,
-                                           total = 3,
-                                           question,
-                                           choices = [],
-                                           value = null,
-                                           onChange,
-                                           showResult = false,
-                                           correct = 0,
-                                           explanation = "텍스트를 입력하세요.",
-                                           progress,
-                                           onNext,
-                                           onGoto,
-                                           emblemSrc,
-                                           emblemAlt,
-                                       }: Props) {
+                                            index = 1,
+                                            total = 3,
+                                            question,
+                                            choices = [],
+                                            value = null,
+                                            onChange,
+                                            showResult = false,
+                                            correct = 0,
+                                            explanation = "텍스트를 입력하세요.",
+                                            progress,
+                                            onNext,
+                                            onGoto,
+                                            emblemSrc,
+                                            emblemAlt,
+                                            retryWrongOnly = false,
+                                            currentJudge = null,
+                                        }: Props) {
 
-    /* 내부 즉시 반응용 상태(부분-제어 패턴) */
     const [localValue, setLocalValue] = React.useState<number | null>(value ?? null);
-    const [localShowResult, setLocalShowResult] = React.useState<boolean>(false);
+    const [localShowResult, setLocalShowResult] = React.useState(false);
 
-    // 외부 value 동기화
     React.useEffect(() => {
         if (value !== undefined) setLocalValue(value ?? null);
     }, [value]);
 
     React.useEffect(() => {
-          setLocalValue(value ?? null);
-          setLocalShowResult(false);
-            }, [index, question]);
+        setLocalValue(value ?? null);
+        setLocalShowResult(false);
+    }, [index, question]);
 
     const selected = value ?? localValue;
     const reveal   = showResult || localShowResult;
@@ -603,11 +605,12 @@ export default function DailyChoiceCard({
         () => (Array.isArray(choices) ? choices : []).map(v => String(v ?? "")).slice(0, 4),
         [choices]
     );
+
     const displayChoices = safeChoices.length
         ? safeChoices
         : Array.from({ length: 4 }, (_, i) => `보기 ${i + 1}`);
 
-    // 정답 인덱스 보정
+// 정답 인덱스 보정
     const correctIdx = React.useMemo(() => {
         const c = Number.isInteger(correct as number) ? (correct as number) : -1;
         const len = displayChoices.length;
@@ -617,22 +620,6 @@ export default function DailyChoiceCard({
     const isAnswered = selected != null;
     const isCorrect = isAnswered && correctIdx >= 0 && selected === correctIdx;
 
-    const computedProgress = React.useMemo(() => {
-        const base = Array.from({ length: total }, () => null) as Judge[];
-
-        if (Array.isArray(progress)) {
-            for (let i = 0; i < Math.min(progress.length, total); i++) base[i] = progress[i];
-        }
-
-        const pos = Math.max(0, Math.min(total - 1, index - 1));
-
-        if (base[pos] == null && selected != null && correctIdx >= 0) {
-            base[pos] = selected === correctIdx ? "O" : "X";
-        }
-
-        return base;
-    }, [progress, total, index, selected, correctIdx]);
-
     const stateFor = (i: number): "idle" | "correct" | "wrong" => {
         if (!reveal) return "idle";
         if (i === correctIdx) return "correct";
@@ -640,8 +627,33 @@ export default function DailyChoiceCard({
         return "idle";
     };
 
+    // 현재 문항 판정 (progress or currentJudge)
+    const pos = Math.max(0, Math.min(total - 1, index - 1));
+    const judgeHere: Judge =
+        (currentJudge ?? (Array.isArray(progress) ? progress[pos] : null)) ?? null;
+
+    // retryWrongOnly: X인 경우만 재선택 허용, 그 외엔 잠금
+    const canPickNow =
+        selected == null || (retryWrongOnly && judgeHere === "X");
+
+    // StatusTray용 progress는 "기존 progress"를 우선 사용
+    // (현재 문항에서 선택했는데 progress가 아직 null이면 임시로만 찍어줌)
+    const computedProgress = React.useMemo(() => {
+        const base = Array.from({ length: total }, () => null) as Judge[];
+
+        if (Array.isArray(progress)) {
+            for (let i = 0; i < Math.min(progress.length, total); i++) base[i] = progress[i];
+        }
+
+        // progress가 아직 null인데 선택했고 정답 인덱스가 있으면 임시 표시
+        if (base[pos] == null && selected != null && correctIdx >= 0) {
+            base[pos] = selected === correctIdx ? "O" : "X";
+        }
+        return base;
+    }, [progress, total, pos, selected, correctIdx]);
+
     const handlePick = (i: number) => {
-        if (isAnswered) return;
+        if (!canPickNow) return;
         setLocalValue(i);
         setLocalShowResult(true);
         onChange?.(i);
@@ -657,13 +669,22 @@ export default function DailyChoiceCard({
     };
 
     const goNext = React.useCallback(() => {
-        if (onNext) return onNext();                     // 부모 핸들러 우선
-        if (onGoto) onGoto(Math.min(index + 1, total));  // 폴백: 바로 다음 문제로
+        if (onNext) return onNext();
+        if (onGoto) onGoto(Math.min(index + 1, total));
          }, [onNext, onGoto, index, total]);
 
     const canGoNext = isAnswered;
     const isLast = index >= total;
-    const ctaLabel = isLast ? "결과 보기" : "다음 문제";
+
+    // retryWrongOnly 모드에서 현재 선택을 즉시 반영해 CTA 라벨을 결정
+    const projectedJudgeHere: Judge =
+        selected != null && correctIdx >= 0 ? (selected === correctIdx ? "O" : "X") : computedProgress[pos];
+    const hasOtherWrong = retryWrongOnly
+        ? computedProgress.some((v, i) => i !== pos && v === "X")
+        : false;
+    const shouldShowResult =
+        isLast || (retryWrongOnly && projectedJudgeHere === "O" && !hasOtherWrong);
+    const ctaLabel = shouldShowResult ? "결과 보기" : "다음 문제";
     const showCTA = canGoNext && (!isLast || reveal);
     const emblemURL = emblemSrc ?? DEFAULT_EMBLEM;
 
@@ -741,6 +762,13 @@ export default function DailyChoiceCard({
                                         data-index={i}
                                         $active={active}
                                         $state={state}
+                                        tabIndex={0}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter" || e.key === " ") {
+                                                e.preventDefault();
+                                                handlePick(i);
+                                            }
+                                        }}
                                     >
                                         <PillSlot>
                                                {reveal && isCorrectOption && <AnswerPill aria-live="polite">정답!</AnswerPill>}
@@ -752,7 +780,7 @@ export default function DailyChoiceCard({
                                              aria-checked={active}
                                              aria-label={`${i + 1}번 보기 선택`}
                                              onClick={() => handlePick(i)}
-                                             disabled={isAnswered}
+                                             disabled={!canPickNow}
                                         >
                                              {active ? (
                                                <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
