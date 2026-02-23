@@ -1,6 +1,7 @@
 ﻿import React from "react";
 import styled from "styled-components";
 import DailyOXCard from "../../../components/quiz/DailyOXCard.tsx";
+import http from "../../../utils/http";
 import { checkDailyQuestion } from "../../../api/dailyQuiz.ts";
 
 type OX = "O" | "X";
@@ -151,6 +152,13 @@ export default function DailyOxModalPlay({
 
     const [idx, setIdx] = React.useState(0); // 0-based
     const [picked, setPicked] = React.useState<(OX | null)[]>([]);
+    const pickedRef = React.useRef<(OX | null)[]>([]);
+    const [submitting, setSubmitting] = React.useState(false);
+    const startMsRef = React.useRef<number>(Date.now());
+
+    React.useEffect(() => {
+        pickedRef.current = picked;
+    }, [picked]);
 
     React.useEffect(() => {
         let mounted = true;
@@ -160,7 +168,7 @@ export default function DailyOxModalPlay({
 
             const stored = lsRead(sessionId);
             const baseItems: StartedItem[] = retryWrongOnly
-                ? (items?.length ? items : (stored?.items?.length ? stored.items : []))
+                ? (stored?.items?.length ? stored.items : (items?.length ? items : []))
                 : items;
 
             baseItemsRef.current = baseItems;
@@ -282,8 +290,67 @@ export default function DailyOxModalPlay({
         [sessionId]
     );
 
+    const persistItems = React.useCallback(
+        (nextItems: StartedItem[]) => {
+            try {
+                const stored = lsRead(sessionId);
+                lsWrite(sessionId, {
+                    sessionId,
+                    items: nextItems,
+                    initialProgress: stored?.initialProgress,
+                    savedAt: Date.now(),
+                });
+            } catch {}
+        },
+        [sessionId]
+    );
+
     const LS_KEY_LAST_SESSION = "quiz:lastSessionId";
     const LS_KEY_PROGRESS = "quiz/initials-or-ox/progress";
+
+    function buildSubmitAnswers() {
+        const answers: Array<{ quizQuestionId: number; selectedChoiceId: number }> = [];
+
+        const v = view ?? [];
+        const selected = pickedRef.current ?? [];
+
+        for (let i = 0; i < v.length; i++) {
+            const q = v[i];
+            const pick = selected[i];
+            if (!q || pick == null) continue;
+
+            const choiceId = getSelectedChoiceId(q.qid, pick);
+            if (!Number.isFinite(choiceId)) continue;
+
+            answers.push({
+                quizQuestionId: Number(q.qid),
+                selectedChoiceId: Number(choiceId),
+            });
+        }
+
+        return answers;
+    }
+
+    const submitSession = async () => {
+        if (submitting) return;
+        const answers = buildSubmitAnswers();
+        if (!answers.length) return;
+
+        setSubmitting(true);
+        try {
+            const elapsedMs = Math.max(0, Date.now() - startMsRef.current);
+            await http.post(
+                `/me/quiz/sessions/${sessionId}/submit`,
+                { answers, elapsedMs },
+                { withCredentials: true }
+            );
+        } catch (e: any) {
+            console.error("[daily ox submit] failed:", e?.response?.data ?? e);
+            throw e;
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     const goNext = async () => {
         if (!view[idx]?.checked) return;
@@ -294,6 +361,13 @@ export default function DailyOxModalPlay({
                 try { localStorage.setItem(LS_KEY_PROGRESS, JSON.stringify(progress)); } catch {}
                 persistProgress(progress);
                 onClose?.();
+                try {
+                    await submitSession();
+                } catch (e: any) {
+                    const msg = e?.response?.data?.message ?? e?.message ?? "제출 중 오류가 발생했습니다.";
+                    alert(msg);
+                    return;
+                }
                 onShowResult?.({ sessionId, progress });
                 return;
             }
@@ -307,6 +381,11 @@ export default function DailyOxModalPlay({
             try { localStorage.setItem(LS_KEY_PROGRESS, JSON.stringify(trayProgress)); } catch {}
             persistProgress(trayProgress);
             onClose?.();
+            try {
+                await submitSession();
+            } catch (e: any) {
+                console.error("[daily ox retry submit] failed:", e?.response?.data ?? e);
+            }
             onShowResult?.({ sessionId, progress: trayProgress });
             return;
         }
@@ -345,6 +424,32 @@ export default function DailyOxModalPlay({
 
                     // 2) check 호출
                     const qid = cur.qid;
+                    if (retryWrongOnly) {
+                        const baseItem = baseItemsRef.current[idx];
+                        if (!baseItem) {
+                            alert("정답 정보를 찾을 수 없어 다시풀기를 진행할 수 없습니다. 오늘의 퀴즈를 새로 시작해주세요.");
+                            return;
+                        }
+                        const serverCorrect = deriveCorrectOX(baseItem);
+                        const isCorrect = v === serverCorrect;
+
+                        setView(prev => {
+                            const next = [...prev];
+                            const at = next[idx];
+                            if (!at) return prev;
+
+                            next[idx] = {
+                                ...at,
+                                checked: true,
+                                isCorrect,
+                                correct: serverCorrect,
+                                explanation: safeTextOrNull(baseItem?.explanation) ?? at.explanation,
+                            };
+                            return next;
+                        });
+                        return;
+                    }
+
                     const selectedChoiceId = getSelectedChoiceId(qid, v);
 
                     if (!Number.isFinite(selectedChoiceId)) {
@@ -354,6 +459,20 @@ export default function DailyOxModalPlay({
 
                     try {
                         const res = await checkDailyQuestion(sessionId, qid, { choiceId: selectedChoiceId! });
+
+                        const nextItems = [...baseItemsRef.current];
+                        if (nextItems[idx]) {
+                            nextItems[idx] = {
+                                ...nextItems[idx],
+                                correctChoiceId:
+                                    res?.correctChoiceId != null
+                                        ? Number(res.correctChoiceId)
+                                        : nextItems[idx]?.correctChoiceId,
+                                explanation: safeTextOrNull(res?.explanation) ?? nextItems[idx]?.explanation ?? null,
+                            };
+                            baseItemsRef.current = nextItems;
+                            persistItems(nextItems);
+                        }
 
                         setView(prev => {
                             const next = [...prev];

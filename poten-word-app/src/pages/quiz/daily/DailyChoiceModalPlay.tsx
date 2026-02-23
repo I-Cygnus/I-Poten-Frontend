@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import DailyChoiceCard from "../../../components/quiz/DailyChoiceCard";
+import http from "../../../utils/http";
 import { checkDailyQuestion } from "../../../api/dailyQuiz";
 
 type OX = "O" | "X";
@@ -9,6 +10,8 @@ type StartedChoice = {
     choiceId: number;
     text: string;
     isAnswer?: boolean;
+    id?: number;
+    optionId?: number;
 };
 
 type StartedItem = {
@@ -45,6 +48,18 @@ const Stage = styled.div`
 function safeTextOrNull(v: any): string | null {
     const s = String(v ?? "").trim();
     return s ? s : null;
+}
+
+function getChoiceId(c: any): number | null {
+    const n = Number(c?.choiceId ?? c?.id ?? c?.optionId);
+    return Number.isFinite(n) ? n : null;
+}
+
+function getCorrectChoiceId(it: any): number | null {
+    const direct = Number(it?.correctChoiceId ?? it?.correct_choice_id ?? it?.answerChoiceId);
+    if (Number.isFinite(direct)) return direct;
+    const flagged = (it?.options ?? []).find((c: any) => c?.isAnswer);
+    return getChoiceId(flagged);
 }
 
 const LS_KEY = (sessionId: number) => `ipoten:daily-choice:session:${sessionId}`;
@@ -97,6 +112,13 @@ export default function DailyChoiceModalPlay({
     const [loading, setLoading] = React.useState(true);
     const [idx, setIdx] = React.useState(0);
     const [picked, setPicked] = React.useState<(number | null)[]>([]);
+    const pickedRef = React.useRef<(number | null)[]>([]);
+    const [submitting, setSubmitting] = React.useState(false);
+    const startMsRef = React.useRef<number>(Date.now());
+
+    React.useEffect(() => {
+        pickedRef.current = picked;
+    }, [picked]);
 
     const checkedRef = React.useRef(new Map<number, any>());
     const baseItemsRef = React.useRef<StartedItem[]>(items);
@@ -107,6 +129,21 @@ export default function DailyChoiceModalPlay({
                     sessionId,
                     items: baseItemsRef.current,
                     initialProgress: p,
+                    savedAt: Date.now(),
+                });
+            } catch {}
+        },
+        [sessionId]
+    );
+
+    const persistItems = React.useCallback(
+        (nextItems: StartedItem[]) => {
+            try {
+                const stored = lsRead(sessionId);
+                lsWrite(sessionId, {
+                    sessionId,
+                    items: nextItems,
+                    initialProgress: stored?.initialProgress,
                     savedAt: Date.now(),
                 });
             } catch {}
@@ -126,7 +163,7 @@ export default function DailyChoiceModalPlay({
 
         // 재도전이면 "전체 문항"을 localStorage에서 복원 (없으면 어쩔 수 없이 items로)
             const baseItems: StartedItem[] = retryWrongOnly
-                ? (items?.length ? items : (stored?.items?.length ? stored.items : []))
+                ? (stored?.items?.length ? stored.items : (items?.length ? items : []))
                 : items;
 
             baseItemsRef.current = baseItems;
@@ -192,7 +229,7 @@ export default function DailyChoiceModalPlay({
         const base = originProgressRef.current ?? [];
         return qs.map((q, i) => {
             if (q.checked && q.isCorrect != null) return q.isCorrect ? "O" : "X";
-            return base[i] ?? "X"; // 이전엔 X였던 문제는 X로 보여주기
+            return base[i] ?? null;
         });
     }, [retryWrongOnly, liveProgress, qs]);
 
@@ -202,18 +239,71 @@ export default function DailyChoiceModalPlay({
         return qs.map((q) => (q.checked && q.isCorrect != null ? (q.isCorrect ? "O" : "X") : null));
     }, [qs]);
 
+    const buildTrayProgress = React.useCallback((): (OX | null)[] => {
+        if (!retryWrongOnly) {
+            return qs.map((q) => (q.checked && q.isCorrect != null ? (q.isCorrect ? "O" : "X") : null));
+        }
+        const base = originProgressRef.current ?? [];
+        return qs.map((q, i) => {
+            if (q.checked && q.isCorrect != null) return q.isCorrect ? "O" : "X";
+            return base[i] ?? null;
+        });
+    }, [retryWrongOnly, qs]);
+
     const runCheck = async (qIndex: number, pickedIndex: number) => {
         const q = qs[qIndex];
         if (!q) return;
 
         const it = baseItemsRef.current[qIndex];
         const selected = it?.options?.[pickedIndex];
-        if (!selected?.choiceId) return;
+        const selectedChoiceId = getChoiceId(selected);
+        if (!Number.isFinite(Number(selectedChoiceId))) return;
+
+        if (retryWrongOnly) {
+            const correctChoiceId = getCorrectChoiceId(it);
+            if (!Number.isFinite(Number(correctChoiceId))) {
+                alert("정답 정보를 찾을 수 없어 다시풀기를 진행할 수 없습니다. 오늘의 퀴즈를 새로 시작해주세요.");
+                return;
+            }
+
+            const correctIndex = it.options.findIndex((c) => Number(getChoiceId(c)) === Number(correctChoiceId));
+            const isCorrect = Number(selectedChoiceId) === Number(correctChoiceId);
+
+            setQs((prev) => {
+                const next = [...prev];
+                const prevQ = next[qIndex];
+                if (!prevQ) return prev;
+
+                next[qIndex] = {
+                    ...prevQ,
+                    checked: true,
+                    isCorrect,
+                    correctIndex: correctIndex >= 0 ? correctIndex : -1,
+                    explanation: safeTextOrNull(it?.explanation) ?? prevQ.explanation,
+                };
+                return next;
+            });
+            return;
+        }
 
         try {
             const res = await checkDailyQuestion(sessionId, it.questionId, {
-                choiceId: selected.choiceId,
+                choiceId: Number(selectedChoiceId),
             });
+
+            const nextItems = [...baseItemsRef.current];
+            if (nextItems[qIndex]) {
+                nextItems[qIndex] = {
+                    ...nextItems[qIndex],
+                    correctChoiceId:
+                        res?.correctChoiceId != null
+                            ? Number(res.correctChoiceId)
+                            : nextItems[qIndex]?.correctChoiceId,
+                    explanation: safeTextOrNull(res?.explanation) ?? nextItems[qIndex]?.explanation ?? null,
+                };
+                baseItemsRef.current = nextItems;
+                persistItems(nextItems);
+            }
 
             checkedRef.current.set(q.id, res);
 
@@ -221,7 +311,7 @@ export default function DailyChoiceModalPlay({
             const correctIndex =
                 correctChoiceId == null
                     ? -1
-                    : it.options.findIndex((c) => Number(c.choiceId) === correctChoiceId);
+                    : it.options.findIndex((c) => Number(getChoiceId(c)) === correctChoiceId);
 
             setQs((prev) => {
                 const next = [...prev];
@@ -243,12 +333,64 @@ export default function DailyChoiceModalPlay({
         }
     };
 
+    function buildSubmitAnswers() {
+        const answers: Array<{ quizQuestionId: number; selectedChoiceId: number }> = [];
+        const base = baseItemsRef.current ?? [];
+        const selected = pickedRef.current ?? [];
+
+        for (let i = 0; i < base.length; i++) {
+            const q = base[i];
+            const pickedIndex = selected[i];
+            if (pickedIndex == null) continue;
+
+            const choice = q?.options?.[pickedIndex];
+            const choiceId = Number(getChoiceId(choice));
+            if (!Number.isFinite(choiceId)) continue;
+
+            answers.push({
+                quizQuestionId: Number(q.questionId),
+                selectedChoiceId: choiceId,
+            });
+        }
+
+        return answers;
+    }
+
+    const submitSession = async () => {
+        if (submitting) return;
+        const answers = buildSubmitAnswers();
+        if (!answers.length) return;
+
+        setSubmitting(true);
+        try {
+            const elapsedMs = Math.max(0, Date.now() - startMsRef.current);
+            await http.post(
+                `/me/quiz/sessions/${sessionId}/submit`,
+                { answers, elapsedMs },
+                { withCredentials: true }
+            );
+        } catch (e: any) {
+            console.error("[daily choice submit] failed:", e?.response?.data ?? e);
+            throw e;
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
     const goNext = async () => {
         if (!qs[idx]?.checked) return;
+        const currentTray = buildTrayProgress();
 
         if (!retryWrongOnly) {
             if (idx >= total - 1) {
                 persistProgress(progress);
+                try {
+                    await submitSession();
+                } catch (e: any) {
+                    const msg = e?.response?.data?.message ?? e?.message ?? "제출 중 오류가 발생했습니다.";
+                    alert(msg);
+                    return;
+                }
                 onShowResult?.({ sessionId, progress });
                 return;
             }
@@ -257,19 +399,24 @@ export default function DailyChoiceModalPlay({
         }
 
         if (idx >= total - 1) {
-            persistProgress(trayProgress);
-            onShowResult?.({ sessionId, progress: trayProgress });
+            persistProgress(currentTray);
+            try {
+                await submitSession();
+            } catch (e: any) {
+                console.error("[daily choice retry submit] failed:", e?.response?.data ?? e);
+            }
+            onShowResult?.({ sessionId, progress: currentTray });
             return;
         }
 
-        const nextWrong = trayProgress.findIndex((v, i) => i > idx && v === "X");
+        const nextWrong = currentTray.findIndex((v, i) => i > idx && v === "X");
         if (nextWrong >= 0) return setIdx(nextWrong);
 
-        const firstWrong = trayProgress.findIndex((v) => v === "X");
+        const firstWrong = currentTray.findIndex((v) => v === "X");
         if (firstWrong >= 0 && firstWrong !== idx) return setIdx(firstWrong);
 
-        persistProgress(trayProgress);
-        onShowResult?.({ sessionId, progress: trayProgress });
+        persistProgress(currentTray);
+        onShowResult?.({ sessionId, progress: currentTray });
     };
 
     const cur = qs[idx];
@@ -278,7 +425,7 @@ export default function DailyChoiceModalPlay({
     if (!cur) return <Stage>문항이 없습니다.</Stage>;
 
     const selectedIndex = picked[idx];
-    const showResult = cur.checked && cur.correctIndex >= 0;
+    const showResult = cur.checked;
     const currentJudge = progress[idx] ?? null;
 
     return (
@@ -299,8 +446,8 @@ export default function DailyChoiceModalPlay({
                     runCheck(idx, i);
                 }}
                 showResult={showResult}
-                correct={cur.correctIndex >= 0 ? cur.correctIndex : null}
-                explanation={cur.explanation}
+                correct={cur.correctIndex >= 0 ? cur.correctIndex : undefined}
+                explanation={cur.explanation ?? undefined}
                 progress={trayProgress}
                 retryWrongOnly={retryWrongOnly}
                 currentJudge={currentJudge}

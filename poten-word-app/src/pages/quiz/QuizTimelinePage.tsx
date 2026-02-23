@@ -2164,6 +2164,26 @@ export default function QuizTimelinePage() {
     const [quickDays, setQuickDays] = React.useState<QuickDays>(7);
     const [quickRetryLoading, setQuickRetryLoading] = React.useState(false);
     const quickStartBtnRef = React.useRef<HTMLButtonElement | null>(null);
+    const pickNewSessionId = React.useCallback((res: any): number => {
+        const body = res?.data?.data ?? res?.data ?? {};
+        let sid: any =
+            body?.newSessionId ??
+            body?.sessionId ??
+            body?.new_session_id ??
+            body?.session_id ??
+            body?.id ??
+            body?.session?.id;
+
+        if (!Number.isFinite(Number(sid))) {
+            const loc = String(res?.headers?.location ?? res?.headers?.Location ?? "");
+            const m = /\/sessions\/(\d+)/.exec(loc);
+            if (m) sid = Number(m[1]);
+        }
+
+        const n = Number(sid);
+        if (!Number.isFinite(n)) throw new Error("Invalid new sessionId");
+        return n;
+    }, []);
 
     const openQuickModal = React.useCallback(() => {
         setQuickDays(7);
@@ -2201,9 +2221,8 @@ export default function QuizTimelinePage() {
     const handleRetryAll = React.useCallback(
         async (sessionId: number | string) => {
             try {
-                const { data } = await http.post(`/me/quiz/sessions/${sessionId}/retry-wrong`, null, { headers: authHeader(), withCredentials: true });
-                const newSid = Number(data?.sessionId ?? data?.newSessionId ?? data?.id);
-                if (!Number.isFinite(newSid)) throw new Error("Invalid new sessionId");
+                const res = await http.post(`/me/quiz/sessions/${sessionId}/retry-wrong`, null, { headers: authHeader(), withCredentials: true });
+                const newSid = pickNewSessionId(res);
 
                 nav(`/learning/quiz/play?sessionId=${newSid}`);
             } catch (e) {
@@ -2215,7 +2234,7 @@ export default function QuizTimelinePage() {
                 });
             }
         },
-        [nav, openSys]
+        [nav, openSys, pickNewSessionId]
     );
 
     const quickRetryInFlight = React.useRef(false);
@@ -2227,7 +2246,7 @@ export default function QuizTimelinePage() {
             setQuickRetryLoading(true);
 
             try {
-                const { data } = await http.post(
+                const res = await http.post(
                     "/me/quiz/sessions/quick-retry",
                     null,
                     {
@@ -2238,8 +2257,7 @@ export default function QuizTimelinePage() {
                     }
                 );
 
-                const newSid = Number(data?.sessionId ?? data?.id ?? data?.newSessionId);
-                if (!Number.isFinite(newSid)) throw new Error("Invalid sessionId");
+                const newSid = pickNewSessionId(res);
 
                 setQuickModalOpen(false);
                 nav(`/learning/quiz/play?sessionId=${newSid}`);
@@ -2283,19 +2301,18 @@ export default function QuizTimelinePage() {
                 quickRetryInFlight.current = false;
             }
         },
-        [nav, location.pathname, location.search, openSys]
+        [nav, location.pathname, location.search, openSys, pickNewSessionId]
     );
 
     const handleRetryWrongOnly = React.useCallback(async (sessionId: number | string) => {
         try {
-            const { data } = await http.post(
+            const res = await http.post(
                 `/me/quiz/sessions/${sessionId}/retry-wrong-only`, // ← 백엔드 엔드포인트에 맞게
                 null,
                 { headers: authHeader(), withCredentials: true }
             );
 
-            const newSid = Number(data?.sessionId ?? data?.newSessionId ?? data?.id);
-            if (!Number.isFinite(newSid)) throw new Error("Invalid new sessionId");
+            const newSid = pickNewSessionId(res);
 
             nav(`/learning/quiz/play?sessionId=${newSid}`);
         } catch (e) {
@@ -2306,7 +2323,7 @@ export default function QuizTimelinePage() {
                 description: "잠시 후 다시 시도해주세요.",
             });
         }
-    }, [nav, openSys]);
+    }, [nav, openSys, pickNewSessionId]);
 
     React.useEffect(() => {
         const loggedIn = !!localStorage.getItem("isLoggedIn");

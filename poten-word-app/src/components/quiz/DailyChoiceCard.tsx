@@ -683,7 +683,7 @@ export default function DailyChoiceCard({
         ? computedProgress.some((v, i) => i !== pos && v === "X")
         : false;
     const shouldShowResult =
-        isLast || (retryWrongOnly && projectedJudgeHere === "O" && !hasOtherWrong);
+        isLast || (retryWrongOnly && !hasOtherWrong);
     const ctaLabel = shouldShowResult ? "결과 보기" : "다음 문제";
     const showCTA = canGoNext && (!isLast || reveal);
     const emblemURL = emblemSrc ?? DEFAULT_EMBLEM;
