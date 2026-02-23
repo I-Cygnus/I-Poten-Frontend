@@ -174,15 +174,16 @@ const Card = styled.section`
   --dock-hpad: clamp(22px, 3vw, 40px);
   --dock-vpad: clamp(16px, 2.2vw, 24px);
   --dock-round-top: clamp(28px, 3.2vw, 44px);
-  --dock-lift: clamp(10px, 1.4vw, 18px);
+  --dock-lift-extra: clamp(6px, .9vw, 12px);
   --dock-up: clamp(10px, 1.4vw, 18px);
   --dock-down: clamp(14px, 1.6vw, 20px);
   --dock-reveal: clamp(8px, 1vw, 12px);
   --dock-left-trim: clamp(10px, 1.2vw, 14px);
   --choices-top-gap: clamp(26px, 3vw, 44px);
-
+  --choices-raise: clamp(18px, 2.8vw, 40px);
   --card-top-inset: clamp(18px, 2.8vw, 48px);
   --mark-alpha: 0.75;
+  --cta-raise: clamp(34px, 4vw, 52px);
 
   position: relative;
   background: ${UI.panel};
@@ -389,7 +390,7 @@ const Choices = styled.div`
   gap: clamp(16px, 3vw, 36px);
   align-items: start;
   justify-items: center;
-  margin: var(--choices-top-gap) 0 28px;
+  margin: calc(var(--choices-top-gap) - var(--choices-raise)) 0 28px;
 `;
 
 const circleBase = css`
@@ -563,47 +564,89 @@ const fadeInUp = keyframes`
 const FloatingNext = styled.div<{ $showDock?: boolean }>`
     position: absolute;
     right: var(--pad);
+
     bottom: ${({ $showDock }) =>
             $showDock
-                    ? "calc(var(--pad) + var(--dock-space) - 80px)"
+                    ? `calc(
+          var(--pad) + var(--dock-space)
+          - var(--cta-raise)
+        )`
                     : "var(--pad)"};
+
     z-index: 6;
     animation: ${fadeInUp} 0.18s ease-out both;
 `;
 
 const NextButton = styled.button`
-  appearance: none;
-  border: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: clamp(34px, 4vw, 44px);
-  padding: 0 clamp(12px, 1.6vw, 16px);
-  border-radius: 12px;
-  font-weight: 750;
-  font-size: clamp(14px, 1.6vw, 16px);
-  letter-spacing: -0.02em;
-  color: #fff;
-  background: #3e63e0;
-  cursor: pointer;
-  transition: transform 0.08s ease, filter 0.15s ease, box-shadow 0.2s ease;
+    appearance: none; border: 0;
 
-  &:hover {
-    filter: brightness(1.04);
-    transform: translateY(-1px);
-  }
-  &:active {
-    transform: translateY(0);
-  }
-  &:focus-visible {
-    outline: 3px solid rgba(62, 99, 224, 0.35);
-    outline-offset: 3px;
-  }
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-    transform: none;
-  }
+    display: grid;
+    place-items: center;
+
+    height: clamp(40px, 4.6vw, 50px);
+    padding: 0 clamp(16px, 2.2vw, 22px);
+    min-width: clamp(132px, 12.5vw, 168px);
+
+    border-radius: 14px;
+
+    font-family: 'GhanaChocolate', 'Pretendard', 'Noto Sans KR', system-ui, sans-serif;
+    font-weight: 400;
+    font-size: clamp(16px, 1.85vw, 18px);
+    letter-spacing: -0.02em;
+
+    color: #fff;
+    background: #3E63E0;
+    cursor: pointer;
+    transition: transform .08s ease, filter .15s ease, box-shadow .2s ease;
+
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: auto;
+
+    --optical-y: 0.6px;
+    --optical-x: 4px;
+
+    .inner{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        line-height: 1;
+        margin-left: var(--optical-x);
+    }
+
+    .label{
+        display: inline-flex;
+        align-items: center;
+        line-height: 1;
+    }
+
+    .arrow{
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+    }
+
+    .arrow svg{
+        display: block;
+        width: clamp(16px, 1.9vw, 20px);
+        height: clamp(16px, 1.9vw, 20px);
+    }
+    .arrow svg path{
+        stroke: currentColor;
+        stroke-width: 3.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    &:hover { filter: brightness(1.04); transform: translateY(-1px); }
+    &:active { transform: translateY(0); }
+    &:focus-visible { outline: 3px solid rgba(62,99,224,.35); outline-offset: 3px; }
+    &:disabled{ opacity: .55; cursor: not-allowed; transform: none; }
 `;
 
 const ResultDockIn = styled.section`
@@ -754,7 +797,8 @@ export default function DailyOXCard({
         : false;
     const shouldShowResult = isLast || (retryWrongOnly && !hasOtherWrong);
     const ctaLabel = shouldShowResult ? "결과 보기" : "다음 문제";
-    const showCTA = canGoNext && (!isLast || showResult);
+    const reveal = showResult;
+    const showCTA = canGoNext && (!isLast || reveal);
     const emblemURL = emblemSrc ?? DEFAULT_EMBLEM;
 
     return (
@@ -860,19 +904,19 @@ export default function DailyOXCard({
                     </Choices>
 
                     {showCTA && (
-                        <FloatingNext $showDock={showResult}>
+                        <FloatingNext $showDock={reveal}>
                             <NextButton type="button" onClick={() => onNext?.()} aria-label={ctaLabel}>
-                                {ctaLabel}
-                                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden focusable="false">
-                                    <path
-                                        d="M13 5l7 7-7 7M5 12h14"
-                                        fill="none"
-                                        stroke="white"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
+                              <span className="inner">
+                                <span className="label">{ctaLabel}</span>
+
+                                  {ctaLabel === "다음 문제" && (
+                                      <span className="arrow" aria-hidden>
+                                    <svg viewBox="0 0 24 24" fill="none">
+                                      <path d="M9 6 L15 12 L9 18" />
+                                    </svg>
+                                  </span>
+                                  )}
+                              </span>
                             </NextButton>
                         </FloatingNext>
                     )}

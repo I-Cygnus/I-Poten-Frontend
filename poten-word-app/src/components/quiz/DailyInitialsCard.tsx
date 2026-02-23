@@ -258,16 +258,57 @@ const TextInput = styled.input`
     &:disabled { background: #f7faff; color: #94a3b8; cursor: not-allowed; }
 `;
 const SubmitBtn = styled.button`
-    height: clamp(40px, 4.8vw, 52px); inline-size: var(--cta-w);
-    padding: 0 clamp(14px, 2vw, 18px); border-radius: 12px; border: 0;
-    background: #3E63E0; color: #fff; font-weight: 750; font-size: clamp(14px, 1.6vw, 16px);
-    display: inline-flex; white-space: nowrap; text-align: center; flex-shrink: 0;
-    align-items: center; justify-content: center; gap: 8px; cursor: pointer;
+    height: clamp(40px, 4.8vw, 52px);
+    inline-size: var(--cta-w);
+    padding: 0 clamp(14px, 2vw, 18px);
+    border-radius: 12px;
+    border: 0;
+    background: #3E63E0;
+    color: #fff;
+
+    font-family: 'GhanaChocolate','Pretendard','Noto Sans KR',system-ui,sans-serif;
+    font-weight: 400;
+    font-size: clamp(14px, 1.6vw, 16px);
+    letter-spacing: -0.02em;
+    -webkit-font-smoothing: antialiased;
+
+    position: relative;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    white-space: nowrap;
+    cursor: pointer;
     transition: transform .08s ease, filter .15s ease, box-shadow .2s ease;
     box-shadow: 0 10px 24px rgba(62,99,224,.18);
+
     &:hover { filter: brightness(1.04); transform: translateY(-1px); }
     &:active { transform: translateY(0); }
-    &:disabled { opacity: .55; cursor: not-allowed; }
+    &:disabled { opacity: .55; cursor: not-allowed; transform: none; }
+`;
+const BtnContent = styled.span`
+    display: inline-flex;
+    align-items: center;
+    gap: var(--btn-gap, 0px);
+    transform: translateX(var(--optical-x, 0px));
+`;
+const BtnLabel = styled.span`
+    line-height: 1;
+`;
+
+const BtnSlot = styled.span`
+    width: 18px;
+    height: 18px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+`;
+const BtnIcon = styled.span`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateY(-0.5px);
 `;
 const DockBase = styled.section`
     position: absolute; left: calc(-1 * var(--pad) + var(--dock-reveal));
@@ -557,6 +598,8 @@ export default function DailyInitialsCard(props: Props) {
         };
     }, [tilesLen, showResult, tileMode]);
 
+    const hasNextIcon = ctaLabel === "다음 문제";
+
     return (
         <Stage aria-live="polite">
             <SoftBlobsBackground />
@@ -653,8 +696,35 @@ export default function DailyInitialsCard(props: Props) {
                                 disabled={showResult}
                                 readOnly={showResult}
                             />
-                            <SubmitBtn type="submit" disabled={!showResult && !value.trim()}>
-                                {ctaLabel}
+                            <SubmitBtn
+                                type="submit"
+                                disabled={!showResult && !value.trim()}
+                            >
+                                <BtnContent
+                                    style={{
+                                        ["--btn-gap" as any]: hasNextIcon ? "4px" : "0px",
+                                        ["--optical-x" as any]: hasNextIcon ? "4px" : "0px",
+                                    }}
+                                >
+                                    <BtnLabel>{ctaLabel}</BtnLabel>
+
+                                    {hasNextIcon && (
+                                        <BtnSlot aria-hidden>
+                                            <BtnIcon aria-hidden>
+                                                <svg width="18" height="18" viewBox="0 0 24 24" focusable="false">
+                                                    <path
+                                                        d="M9 6 L15 12 L9 18"
+                                                        fill="none"
+                                                        stroke="white"
+                                                        strokeWidth="3.2"
+                                                        strokeLinecap="round"
+                                                        strokeLinejoin="round"
+                                                    />
+                                                </svg>
+                                            </BtnIcon>
+                                        </BtnSlot>
+                                    )}
+                                </BtnContent>
                             </SubmitBtn>
                         </InputRow>
                     </InputDockIn>

@@ -250,6 +250,11 @@ export default function DailyChoiceModalPlay({
         });
     }, [retryWrongOnly, qs]);
 
+    const hasRemainingWrong = React.useMemo(() => {
+        if (!retryWrongOnly) return undefined;
+        return buildTrayProgress().some((v) => v === "X");
+    }, [retryWrongOnly, buildTrayProgress]);
+
     const runCheck = async (qIndex: number, pickedIndex: number) => {
         const q = qs[qIndex];
         if (!q) return;
@@ -451,6 +456,7 @@ export default function DailyChoiceModalPlay({
                 progress={trayProgress}
                 retryWrongOnly={retryWrongOnly}
                 currentJudge={currentJudge}
+                hasRemainingWrong={hasRemainingWrong}
                 onNext={goNext}
                 onGoto={(n) => {
                     const next = Math.max(1, Math.min(total, n)) - 1;
