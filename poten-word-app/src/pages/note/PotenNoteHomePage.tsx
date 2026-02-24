@@ -147,18 +147,31 @@ const SearchInput = styled.input`
 `;
 
 const Primary = styled.button`
-  height: 38px;
-  padding: 0 14px;
-  border-radius: 8px;
-  border: 1px solid ${UI.color.primary};
-  background: ${UI.color.primary};
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
-  transition: filter .15s ease, transform .08s ease;
-  &:hover{ filter: brightness(.96); }
-  &:active{ transform: translateY(1px); }
-  &:focus-visible{ outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.25); }
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid ${UI.color.primary};
+    background: ${UI.color.primary};
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter .15s ease, transform .08s ease;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+
+    &:hover{ filter: brightness(.96); }
+    &:active{ transform: translateY(1px); }
+    &:focus-visible{ outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.25); }
+
+    & > .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 0;
+    }
 `;
 
 /* ===== 목록 패널 ===== */
@@ -547,6 +560,32 @@ function formatKR(dateIso?: string) {
     }
 }
 
+const FolderIcon = ({ size = 18 }: { size?: number }) => (
+    <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+    >
+        <path
+            d="M3.5 7.5c0-1.1.9-2 2-2h4.6c.5 0 1 .2 1.4.6l1.1 1.1c.3.3.7.4 1.1.4H18.5c1.1 0 2 .9 2 2v8.5c0 1.1-.9 2-2 2H5.5c-1.1 0-2-.9-2-2V7.5Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+        />
+        <path
+            d="M3.5 10h17"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            opacity="0.7"
+        />
+    </svg>
+);
+
 /* ===== Page ===== */
 type SortKey = "title_asc" | "updated_desc" | "updated_asc" | "terms_desc" | "terms_asc" | "studied_desc";
 
@@ -932,7 +971,10 @@ export default function PotenNoteHomePage() {
                             value={q}
                             onChange={(e) => setQ(e.target.value)}
                         />
-                        <Primary onClick={createFolder}>+ 새 폴더</Primary>
+                        <Primary onClick={createFolder}>
+                            <span className="icon"><FolderIcon /></span>
+                            새 폴더
+                        </Primary>
                     </RowFlex>
                 </RowFlex>
             </Toolbar>
@@ -947,7 +989,10 @@ export default function PotenNoteHomePage() {
                         먼저 폴더를 만들고, 검색에서 원하는 용어를 담아두면 포텐퀴즈와도 자연스럽게 연동됩니다.
                     </EmptyDesc>
                     <EmptyActions>
-                        <Primary onClick={createFolder}>+ 새 폴더 만들기</Primary>
+                        <Primary onClick={createFolder}>
+                            <span className="icon"><FolderIcon /></span>
+                            새 폴더
+                        </Primary>
                         <GhostBtn onClick={() => nav("/learning/search")}>용어 탐색하기</GhostBtn>
                     </EmptyActions>
                 </EmptyWrap>
@@ -960,7 +1005,10 @@ export default function PotenNoteHomePage() {
                     </EmptyDesc>
                     <EmptyActions>
                         <Primary onClick={() => setQ("")}>검색 초기화</Primary>
-                        <GhostBtn onClick={createFolder}>+ 새 폴더 만들기</GhostBtn>
+                        <GhostBtn onClick={createFolder}>
+                            <span className="icon"><FolderIcon /></span>
+                            새 폴더 만들기
+                        </GhostBtn>
                     </EmptyActions>
                 </NoResultWrap>
             ) : (
