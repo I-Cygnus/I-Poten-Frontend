@@ -74,6 +74,19 @@ export default function QuizHomePage() {
         []
     );
 
+    // ===== System Message =====
+    const [sysOpen, setSysOpen] = useState(false);
+    const [sysMsg, setSysMsg] = useState<SystemMessage | null>(null);
+
+    const openSys = (m: SystemMessage) => {
+        setSysMsg(m);
+        setSysOpen(true);
+    };
+    const closeSys = () => {
+        setSysOpen(false);
+        setSysMsg(null);
+    };
+
     type DailyKind = "CHOICE" | "OX" | "INITIALS";
 
     const [dailyOpen, setDailyOpen] = useState(false);
@@ -88,7 +101,9 @@ export default function QuizHomePage() {
     const [resultItems, setResultItems] = useState<any[]>([]);
     const [retryToken, setRetryToken] = useState(0);
 
-
+    const closeDailyCarry = useCallback(() => {
+        setDailyCarryOpen(false);
+    }, []);
 
     type CarryChoice = "RESUME" | "TODAY";
     const [carryChoice, setCarryChoice] = useState<CarryChoice>("RESUME");
@@ -141,10 +156,29 @@ export default function QuizHomePage() {
         }
     }, []);
 
-    const closeDailyCarry = () => {
-        setDailyCarryOpen(false);
-        setDailyResumeCandidate(null);
-    };
+
+
+    const closeDaily = useCallback(() => {
+        setDailyOpen(false);
+        setDailyOverrideItems(null);
+        setDailyRetryWrongOnly(false);
+        setDailyRetryInitialProgress(undefined);
+    }, []);
+
+    const requestExitDaily = useCallback(() => {
+        // “풀이 중” 판단이 필요하면 여기서 조건 체크도 가능
+        openSys({
+            tone: "warning",
+            title: "정말 종료할까요?",
+            description: "지금 나가면 진행 중인 풀이가 저장되지 않아요.",
+            actions: [
+                { label: "계속 풀기", tone: "primary", onClick: () => {}, autoClose: true },
+                { label: "나가기", tone: "danger", onClick: closeDaily, autoClose: true },
+            ],
+            closeOnScrim: true,
+            closeOnEsc: true,
+        } as any);
+    }, [openSys, closeDaily]);
 
     const onPickResume = () => {
         if (!dailyResumeCandidate) return;
@@ -362,19 +396,6 @@ export default function QuizHomePage() {
     // ===== Job Quiz Setup state =====
     const [setupOpen, setSetupOpen] = useState(false);
     const [loading, setLoading] = useState(false);
-
-    // ===== System Message =====
-    const [sysOpen, setSysOpen] = useState(false);
-    const [sysMsg, setSysMsg] = useState<SystemMessage | null>(null);
-
-    const openSys = (m: SystemMessage) => {
-        setSysMsg(m);
-        setSysOpen(true);
-    };
-    const closeSys = () => {
-        setSysOpen(false);
-        setSysMsg(null);
-    };
 
     const getApiError = (err: any) => {
         const status = err?.response?.status ?? null;
@@ -796,12 +817,7 @@ export default function QuizHomePage() {
             <DailyQuizModal
                 open={dailyOpen}
                 title={session?.title ?? "오늘의 퀴즈"}
-                onClose={() => {
-                    setDailyOpen(false);
-                    setDailyOverrideItems(null);
-                    setDailyRetryWrongOnly(false);
-                    setDailyRetryInitialProgress(undefined);
-                }}
+                onClose={requestExitDaily}
                 variant="cardOnly"
             >
                 {!session && <div style={{ padding: 12 }}>세션 정보를 찾지 못했어요.</div>}
@@ -813,12 +829,7 @@ export default function QuizHomePage() {
                         items={((dailyOverrideItems ?? session.items) ?? []) as any}
                         retryWrongOnly={dailyRetryWrongOnly}
                         initialProgress={dailyRetryInitialProgress}
-                        onClose={() => {
-                            setDailyOpen(false);
-                            setDailyOverrideItems(null);
-                            setDailyRetryWrongOnly(false);
-                            setDailyRetryInitialProgress(undefined);
-                        }}
+                        onClose={closeDaily}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
 
