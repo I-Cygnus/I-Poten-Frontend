@@ -7,6 +7,7 @@ import { goToAccountLogin } from "../../utils/auth.ts";
 import SystemMessageModal, {SystemMessage} from "../../components/common/SystemMessageModal";
 import { createPortal } from "react-dom";
 import {usePotenDialog} from "../../components/common/PotenDialog.tsx";
+import LearningPageHeader from "../../components/common/LearningPageHeader.tsx";
 
 /* ===== UI tokens ===== */
 const UI = {
@@ -159,29 +160,6 @@ const SearchInput = styled.input`
     &::placeholder {
         color: #9aa4b2;
     }
-`;
-
-/* ===== 상단 타이틀 & 툴바 ===== */
-const Toolbar = styled.div`
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    background: ${UI.color.bg};
-    padding: 12px 8px 6px;
-`;
-
-const TitleRow = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    justify-content: space-between;
-`;
-
-const Title = styled.h2`
-    margin: 0;
-    font-size: ${UI.font.h2};
-    letter-spacing: -0.01em;
-    color: ${UI.color.text};
 `;
 
 /* ===== 필터 칩 ===== */
@@ -650,6 +628,19 @@ const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
     &:active {
         transform: ${({ disabled }) => (disabled ? "none" : "translateY(1px)")};
     }
+`;
+
+const PageEllipsis = styled.span`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 34px;
+    padding: 0 4px;
+    color: rgba(15, 23, 42, 0.5);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    user-select: none;
 `;
 
 const PaginationRow = styled.div`
@@ -2435,6 +2426,34 @@ export default function QuizTimelinePage() {
         });
     }, [clampWindowStart]);
 
+    const goFirstPage = React.useCallback(() => {
+        setPageWindowStart(0);
+        setPage(0);
+    }, []);
+
+    const goLastPage = React.useCallback(() => {
+        const lastPage = pages - 1;
+        const lastWindowStart = clampWindowStart(lastPage - (WINDOW_SIZE - 1));
+
+        setPageWindowStart(lastWindowStart);
+        setPage(lastPage);
+    }, [pages, clampWindowStart]);
+
+    const firstVisiblePage = pageWindow[0] ?? 0;
+    const lastVisiblePage = pageWindow[pageWindow.length - 1] ?? 0;
+
+    const showFirstPage = firstVisiblePage > 0;
+    const showLeadingEllipsis = firstVisiblePage > 1;
+
+    const showTrailingEllipsis = lastVisiblePage < pages - 2;
+    const showLastPage = lastVisiblePage < pages - 1;
+
+    const visiblePages = pageWindow.filter((p) => {
+        if (showFirstPage && p === 0) return false;
+        if (showLastPage && p === pages - 1) return false;
+        return true;
+    });
+
     const [metric] = React.useState<"accuracy" | "sets" | "retryRate">("accuracy");
     const [span, setSpan] = React.useState<"7d" | "30d">("7d");
     const [trend, setTrend] = React.useState<TrendPoint[]>([]);
@@ -2737,11 +2756,11 @@ export default function QuizTimelinePage() {
         <NarrowLeft style={{ padding: "8px 0 24px" }}>
             {/* 상단 */}
             <Reveal $d={0}>
-                <Toolbar>
-                    <TitleRow>
-                        <Title>나의 퀴즈 타임라인</Title>
-                    </TitleRow>
-                </Toolbar>
+                <LearningPageHeader
+                    title="퀴즈 타임라인"
+                    count={`${total}개`}
+                    onBack={() => nav(-1)}
+                />
             </Reveal>
 
             <Screen>
@@ -3052,7 +3071,21 @@ export default function QuizTimelinePage() {
                                     ‹
                                 </PageNavBtn>
 
-                                {pageWindow.map((p) => (
+                                {showFirstPage && (
+                                    <PagePill
+                                        $active={page === 0}
+                                        onClick={goFirstPage}
+                                        aria-current={page === 0 ? "page" : undefined}
+                                        aria-label="1페이지"
+                                        type="button"
+                                    >
+                                        1
+                                    </PagePill>
+                                )}
+
+                                {showLeadingEllipsis && <PageEllipsis aria-hidden="true">...</PageEllipsis>}
+
+                                {visiblePages.map((p) => (
                                     <PagePill
                                         key={p}
                                         $active={p === page}
@@ -3064,6 +3097,20 @@ export default function QuizTimelinePage() {
                                         {p + 1}
                                     </PagePill>
                                 ))}
+
+                                {showTrailingEllipsis && <PageEllipsis aria-hidden="true">...</PageEllipsis>}
+
+                                {showLastPage && (
+                                    <PagePill
+                                        $active={page === pages - 1}
+                                        onClick={goLastPage}
+                                        aria-current={page === pages - 1 ? "page" : undefined}
+                                        aria-label={`${pages}페이지`}
+                                        type="button"
+                                    >
+                                        {pages}
+                                    </PagePill>
+                                )}
 
                                 <PageNavBtn
                                     onClick={goNext}

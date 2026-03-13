@@ -51,6 +51,11 @@ type ApiResponse = {
 };
 type CacheData = { q: string; items: Term[]; total: number; scrollY?: number };
 type Notebook = { id: string; name: string };
+type JobGroup = {
+    key: string;
+    title: string;
+    desc: string;
+};
 
 type NewArrivalItem = {
     id: string;
@@ -185,6 +190,17 @@ async function postWithFallback(urls: string[], body: any) {
         }
     }
     throw lastErr;
+}
+
+async function attachJobRecommendationToFolder(
+    wordbookId: string,
+    jobKey: string
+) {
+    const res = await http.post(
+        `/me/folders/${wordbookId}/recommended-terms/by-job`,
+        { jobKey }
+    );
+    return res.data;
 }
 
 /** 단일/벌크 공용: 항상 :bulk 호출 */
@@ -341,99 +357,216 @@ type PaginationProps = {
     onChange: (nextPageZeroBased: number) => void;
 };
 
-const PaginationNav = styled.nav`
-    margin-top: ${TOKENS.space(16)};
+const PaginationRow = styled.div`
     display: flex;
+    justify-content: center;
+    padding-top: 6px;
+    width: fit-content;
+    margin: 0 auto;
+`;
+
+const PaginationBar = styled.nav`
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: ${TOKENS.space(8)};
+    gap: 6px;
+    padding: 6px;
+`;
+
+const PagePill = styled.button<{ $active?: boolean }>`
+    height: 34px;
+    min-width: 34px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 0;
+
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+
+    color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
+    background: ${({ $active }) => ($active ? UI.color.primaryStrong : "transparent")};
+
+    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+
+    &:hover {
+        background: ${({ $active }) => ($active ? UI.color.primaryStrong : "rgba(255,255,255,0.85)")};
+        color: ${({ $active }) => ($active ? "#fff" : "#0f172a")};
+    }
+
+    &:active {
+        transform: translateY(1px);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(79,118,241,0.22);
+    }
+`;
+
+const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
+    padding: 0 10px;
+    color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
+    cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+
+    &:hover {
+        background: ${({ disabled }) => (disabled ? "transparent" : "rgba(255,255,255,0.85)")};
+        color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "#0f172a")};
+    }
+
+    &:active {
+        transform: ${({ disabled }) => (disabled ? "none" : "translateY(1px)")};
+    }
+`;
+
+const PageEllipsis = styled.span`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 34px;
+    padding: 0 4px;
+    color: rgba(15, 23, 42, 0.5);
+    font-weight: 800;
+    letter-spacing: -0.02em;
     user-select: none;
 `;
 
-const PageNumBtn = styled.button<{ $active: boolean }>`
-    min-width: 34px;
-    height: 34px;
-    padding: 0 10px;
-    border-radius: 999px;
-    border: 1px solid ${({ $active }) => ($active ? TOKENS.color.textBlue : TOKENS.color.border)};
-    background: ${({ $active }) => ($active ? TOKENS.color.textBlue : "#fff")};
-    color: ${({ $active }) => ($active ? "#fff" : TOKENS.color.text)};
-    font-weight: ${({ $active }) => ($active ? 700 : 600)};
-    cursor: pointer;
-`;
-
-const NavBtn = styled.button<{ $disabled: boolean }>`
-    width: 34px;
-    height: 34px;
-    border-radius: 999px;
-    border: 1px solid ${TOKENS.color.border};
-    background: #fff;
-    color: ${({ $disabled }) => ($disabled ? "#c7c7c7" : TOKENS.color.text)};
-    cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
-    display: inline-flex;
-    align-items: center;
+const BottomGrid = styled.div`
+    width: 100%;
+    margin-top: 16px;
+    display: flex;
     justify-content: center;
 `;
 
 const Pagination: React.FC<PaginationProps> = ({ page, size, total, onChange }) => {
     const totalPages = Math.max(1, Math.ceil((total || 0) / (size || 1)));
-    const current = page + 1; // 1-base
-    const maxNumbers = 10;
+    const WINDOW_SIZE = 5;
 
-    let start = Math.max(1, current - Math.floor(maxNumbers / 2));
-    let end = Math.min(totalPages, start + maxNumbers - 1);
-    start = Math.max(1, end - maxNumbers + 1);
+    const current = Math.max(0, Math.min(page, totalPages - 1));
 
-    const nums: number[] = [];
-    for (let i = start; i <= end; i++) nums.push(i);
+    const clampWindowStart = (start: number) => {
+        const maxStart = Math.max(0, totalPages - WINDOW_SIZE);
+        return Math.max(0, Math.min(start, maxStart));
+    };
 
-    const go = (p1: number) => {
-        if (p1 < 1 || p1 > totalPages || p1 === current) return;
-        onChange(p1 - 1);
+    const pageWindowStart = clampWindowStart(
+        Math.floor(current / WINDOW_SIZE) * WINDOW_SIZE
+    );
+
+    const pageWindowEnd = Math.min(totalPages - 1, pageWindowStart + WINDOW_SIZE - 1);
+
+    const pageWindow = Array.from(
+        { length: pageWindowEnd - pageWindowStart + 1 },
+        (_, i) => pageWindowStart + i
+    );
+
+    const firstVisiblePage = pageWindow[0] ?? 0;
+    const lastVisiblePage = pageWindow[pageWindow.length - 1] ?? 0;
+
+    const showFirstPage = firstVisiblePage > 0;
+    const showLeadingEllipsis = firstVisiblePage > 1;
+
+    const showTrailingEllipsis = lastVisiblePage < totalPages - 2;
+    const showLastPage = lastVisiblePage < totalPages - 1;
+
+    const visiblePages = pageWindow.filter((p) => {
+        if (showFirstPage && p === 0) return false;
+        if (showLastPage && p === totalPages - 1) return false;
+        return true;
+    });
+
+    const goFirstPage = () => {
+        if (current === 0) return;
+        onChange(0);
+    };
+
+    const goLastPage = () => {
+        if (current === totalPages - 1) return;
+        onChange(totalPages - 1);
+    };
+
+    const goPrevWindow = () => {
+        const prevStart = clampWindowStart(pageWindowStart - WINDOW_SIZE);
+        if (prevStart === pageWindowStart) return;
+        onChange(prevStart);
+    };
+
+    const goNextWindow = () => {
+        const nextStart = clampWindowStart(pageWindowStart + WINDOW_SIZE);
+        if (nextStart === pageWindowStart) return;
+        onChange(nextStart);
     };
 
     return (
-        <PaginationNav aria-label="페이지네이션">
-            <NavBtn aria-label="처음" onClick={() => go(1)} disabled={current === 1} $disabled={current === 1}>
-                «
-            </NavBtn>
-            <NavBtn
-                aria-label="이전"
-                onClick={() => go(current - 1)}
-                disabled={current === 1}
-                $disabled={current === 1}
-            >
-                ‹
-            </NavBtn>
+        <BottomGrid>
+            <PaginationRow>
+                <PaginationBar aria-label="검색 결과 페이지 이동">
+                    <PageNavBtn
+                        onClick={goPrevWindow}
+                        disabled={pageWindowStart === 0}
+                        aria-label="이전 페이지 묶음"
+                        type="button"
+                    >
+                        ‹
+                    </PageNavBtn>
 
-            {nums.map((n) => (
-                <PageNumBtn
-                    key={n}
-                    onClick={() => go(n)}
-                    aria-current={n === current ? "page" : undefined}
-                    $active={n === current}
-                >
-                    {n}
-                </PageNumBtn>
-            ))}
+                    {showFirstPage && (
+                        <PagePill
+                            $active={current === 0}
+                            onClick={goFirstPage}
+                            aria-current={current === 0 ? "page" : undefined}
+                            aria-label="1페이지"
+                            type="button"
+                        >
+                            1
+                        </PagePill>
+                    )}
 
-            <NavBtn
-                aria-label="다음"
-                onClick={() => go(current + 1)}
-                disabled={current === totalPages}
-                $disabled={current === totalPages}
-            >
-                ›
-            </NavBtn>
-            <NavBtn
-                aria-label="마지막"
-                onClick={() => go(totalPages)}
-                disabled={current === totalPages}
-                $disabled={current === totalPages}
-            >
-                »
-            </NavBtn>
-        </PaginationNav>
+                    {showLeadingEllipsis && (
+                        <PageEllipsis aria-hidden="true">...</PageEllipsis>
+                    )}
+
+                    {visiblePages.map((p) => (
+                        <PagePill
+                            key={p}
+                            $active={p === current}
+                            onClick={() => onChange(p)}
+                            aria-current={p === current ? "page" : undefined}
+                            aria-label={`${p + 1}페이지`}
+                            type="button"
+                        >
+                            {p + 1}
+                        </PagePill>
+                    ))}
+
+                    {showTrailingEllipsis && (
+                        <PageEllipsis aria-hidden="true">...</PageEllipsis>
+                    )}
+
+                    {showLastPage && (
+                        <PagePill
+                            $active={current === totalPages - 1}
+                            onClick={goLastPage}
+                            aria-current={current === totalPages - 1 ? "page" : undefined}
+                            aria-label={`${totalPages}페이지`}
+                            type="button"
+                        >
+                            {totalPages}
+                        </PagePill>
+                    )}
+
+                    <PageNavBtn
+                        onClick={goNextWindow}
+                        disabled={pageWindowEnd >= totalPages - 1}
+                        aria-label="다음 페이지 묶음"
+                        type="button"
+                    >
+                        ›
+                    </PageNavBtn>
+                </PaginationBar>
+            </PaginationRow>
+        </BottomGrid>
     );
 };
 
@@ -516,28 +649,85 @@ const Hollow = styled.span`
     display: block;
 `;
 
-const PrimaryBtn = styled.button`
-    height: 32px;
-    padding: 0 12px;
-    border-radius: ${UI.radius.pill}px;
+const SelectAllBtn = styled.button<{ $on?: boolean }>`
     border: 0;
-    background: ${UI.gradient.brand};
+    background: transparent;
+    padding: 4px 6px;
+    margin: 0;
 
-    appearance: none;
-    color: #fff !important;
-    -webkit-text-fill-color: #fff;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
 
-    font-weight: 700;
-    letter-spacing: 0.01em;
+    color: #0f172a;
+    font-size: 15px;
+
+    font-weight: 600;
+
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: geometricPrecision;
+    font-feature-settings: "kern" 1;
+
     cursor: pointer;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
-    transition: transform 80ms ease, filter 160ms ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 
-    &:hover {
-        filter: brightness(0.98);
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(79, 118, 241, 0.22);
+        border-radius: 10px;
     }
-    &:active {
-        transform: scale(0.98);
+`;
+
+const SelectAllBox = styled.span<{ $on?: boolean }>`
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+
+    line-height: 0;
+    overflow: hidden;
+
+    border: 1.5px solid ${({ $on }) => ($on ? UI.color.primaryStrong : "rgba(15, 23, 42, 0.35)")};
+    background: ${({ $on }) => ($on ? UI.color.primaryStrong : "#fff")};
+    box-shadow: ${({ $on }) =>
+            $on
+                    ? `
+        inset 0 0 0 1px rgba(255,255,255,0.18),
+        inset 0 -1px 0 rgba(0,0,0,0.18)
+      `
+                    : "none"};
+
+    transition: transform 80ms ease, filter 160ms ease, background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+
+    ${({ $on }) =>
+            $on &&
+            css`
+      border: 0;
+      background: ${UI.gradient.brand};
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+
+      contain: paint;
+      backface-visibility: hidden;
+      -webkit-tap-highlight-color: transparent;
+
+      ${SelectAllBtn}:hover & {
+        filter: brightness(0.98);
+      }
+      ${SelectAllBtn}:active & {
+        transform: scale(0.97);
+      }
+    `}
+
+    svg {
+        display: block;
     }
 `;
 
@@ -922,10 +1112,77 @@ export function NewArrivalsMarquee({
     );
 }
 
+const JOB_GROUPS: JobGroup[] = [
+    {
+        key: "FRONTEND",
+        title: "Frontend",
+        desc: "HTML/CSS부터 상태관리까지\n프론트엔드 필수 100",
+    },
+    {
+        key: "BACKEND",
+        title: "Backend",
+        desc: "HTTP부터 트랜잭션까지\n백엔드 필수 100",
+    },
+    {
+        key: "DATABASE",
+        title: "Database",
+        desc: "정규화부터 트랜잭션까지\n데이터베이스 필수 100",
+    },
+    {
+        key: "NETWORK",
+        title: "Network",
+        desc: "OSI 7계층부터 HTTP까지\n네트워크 필수 100",
+    },
+    {
+        key: "OS",
+        title: "Operating System",
+        desc: "프로세스부터 스레드까지\n운영체제 필수 100",
+    },
+    {
+        key: "DSA",
+        title: "Data Structure & Algorithm",
+        desc: "자료구조·알고리즘 필수 100",
+    },
+    {
+        key: "SECURITY",
+        title: "Security",
+        desc: "인증부터 암호화까지\n보안 필수 100",
+    },
+    {
+        key: "SE",
+        title: "Software Engineering",
+        desc: "요구분석부터 테스트까지\n소프트웨어 공학 필수 100",
+    },
+    {
+        key: "DEVOPS",
+        title: "DevOps / Cloud",
+        desc: "CI/CD부터 컨테이너까지\nDevOps·클라우드 필수 100",
+    },
+    {
+        key: "CS",
+        title: "Computer Science",
+        desc: "컴퓨터 구조부터 계산 이론까지\n컴퓨터 공학 필수 100",
+    },
+    {
+        key: "AI",
+        title: "AI / Data / Machine Learning",
+        desc: "회귀부터 딥러닝까지 AI·데이터·머신러닝 필수 100",
+    },
+    {
+        key: "EMBEDDED",
+        title: "Embedded / IoT / System Programming",
+        desc: "임베디드·IoT·시스템 프로그래밍 필수 100",
+    },
+];
+
 export default function SearchPage() {
     const [params] = useSearchParams();
     const navType = useNavigationType();
     const navigate = useNavigate();
+
+    // 직무 추천 포텐워드 저장용 모달 상태
+    const [noteModalOpen, setNoteModalOpen] = useState(false);
+    const [selectedJob, setSelectedJob] = useState<JobGroup | null>(null);
 
     // 시스템 메시지 모달 상태
     const [systemMessage, setSystemMessage] = useState<SystemMessage | null>(null);
@@ -1312,6 +1569,68 @@ export default function SearchPage() {
         [selectedIds, navigate]
     );
 
+    /** 직무 저장 함수 */
+    const handleJobPlusClick = useCallback(
+        async (e: React.MouseEvent, job: JobGroup) => {
+            e.stopPropagation();
+            setSelectedJob(job);
+
+            try {
+                const folders = await fetchUserFolders();
+                setNotebooks(folders);
+            } catch (err: any) {
+                if (err?.response?.status === 401) {
+                    alert("로그인이 필요합니다.");
+                    navigate("/login");
+                    return;
+                }
+                console.error("[fetchUserFolders] 실패:", err);
+                setNotebooks([]);
+            }
+
+            setNoteModalOpen(true);
+        },
+        [navigate]
+    );
+
+    const handleSaveJobToNotebook = useCallback(
+        async (wordbookId: string) => {
+            if (!selectedJob || saving) return;
+
+            try {
+                setSaving(true);
+
+                await attachJobRecommendationToFolder(
+                    wordbookId,
+                    selectedJob.key
+                );
+
+                alert(`'${selectedJob.title}' 직무의 추천 포텐워드가 내 포텐노트에 저장됐어요.`);
+
+                setNoteModalOpen(false);
+                setSelectedJob(null);
+            } catch (err: any) {
+                const s = err?.response?.status;
+
+                if (s === 401) {
+                    alert("로그인이 필요합니다.");
+                    navigate("/login");
+                } else if (s === 403) {
+                    alert("해당 폴더에 저장할 권한이 없습니다.");
+                } else if (s === 404) {
+                    alert("폴더 또는 직무 추천 세트를 찾을 수 없습니다.");
+                } else {
+                    alert("저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+                }
+
+                console.error("[attachJobGroupToFolder] 실패:", err);
+            } finally {
+                setSaving(false);
+            }
+        },
+        [selectedJob, saving, navigate]
+    );
+
     /** 액션바 '내 포텐노트에 저장하기' */
     const openBulkSave = useCallback(async () => {
         const ids = Array.from(selectedIds);
@@ -1551,10 +1870,7 @@ export default function SearchPage() {
                         <HeroWatermarkImg src={potenWordMark} alt="" />
                     </HeroWatermark>
 
-                    <SearchSectionInView
-                        onClick={(e) => e.stopPropagation()}
-                        onVisible={() => setStartTypingPlaceholder(true)}
-                    >
+                    <SearchSectionInView onVisible={() => setStartTypingPlaceholder(true)}>
                     <SearchHeader>
                             <BrandTitle>포텐워드</BrandTitle>
                             <SearchTitle>궁금한 IT 용어를 바로 검색해 보세요.</SearchTitle>
@@ -1604,23 +1920,26 @@ export default function SearchPage() {
                             <ContentInner>
                                 {/* 안내/칩줄 + 로딩/에러 메시지 */}
                                 <InfoRow aria-live="polite">
+                                    {results.length > 0 && (
+                                        <SelectAllBtn
+                                            type="button"
+                                            onClick={toggleAllCurrentPage}
+                                            aria-pressed={allChecked}
+                                            aria-label={allChecked ? "현재 페이지 선택 해제" : "현재 페이지 전체 선택"}
+                                            title={allChecked ? "현재 페이지 선택 해제" : "현재 페이지 전체 선택"}
+                                            $on={allChecked}
+                                        >
+                                            <SelectAllBox $on={allChecked} aria-hidden="true">
+                                                {allChecked ? <CheckIcon /> : null}
+                                            </SelectAllBox> 전체 선택
+                                        </SelectAllBtn>
+                                    )}
+
+                                    <Spacer />
+
                                     <Tail>
                                         총 <InfoStrongNum>{total.toLocaleString()}</InfoStrongNum>개 용어가 검색되었습니다.
                                     </Tail>
-
-                                    {results.length > 0 && (
-                                        <>
-                                            <Spacer />
-                                            <PrimaryBtn
-                                                type="button"
-                                                onClick={toggleAllCurrentPage}
-                                                aria-pressed={allChecked}
-                                                title={allChecked ? "현재 페이지 선택 해제" : "현재 페이지 전체 선택"}
-                                            >
-                                                {allChecked ? "현재 페이지 선택 해제" : "현재 페이지 전체 선택"}
-                                            </PrimaryBtn>
-                                        </>
-                                    )}
                                 </InfoRow>
 
                                 {loading && <LoadingMsg>불러오는 중...</LoadingMsg>}
@@ -1674,8 +1993,13 @@ export default function SearchPage() {
                                 )}
 
                                 {/* 페이지네이션 */}
-                                {!loading && !error && total > 0 && (
-                                    <Pagination page={page} size={size} total={total} onChange={handlePageChange} />
+                                {!loading && !error && results.length > 0 && total > 0 && (
+                                    <Pagination
+                                        page={page}
+                                        size={size}
+                                        total={total}
+                                        onChange={handlePageChange}
+                                    />
                                 )}
 
                                 {/* 결과 없음 */}
@@ -1819,6 +2143,90 @@ export default function SearchPage() {
                             )}
                         </TrendingInner>
                     </TrendingWrap>
+
+                    <TopSection>
+                        <SubTitle>
+                            지금 어느 직무를 준비 중이신가요?
+                        </SubTitle>
+                        <Title>
+                            직무별 추천 <span className="highlight">포텐워드</span>를 나만의 <span className="highlight">포텐노트</span>에 빠르게 저장해 보세요
+                        </Title>
+                    </TopSection>
+
+                    <JobSection>
+                        <JobGridInView>
+                            {JOB_GROUPS.map((job) => (
+                                <JobCard
+                                    key={job.key}
+                                >
+                                    <JobCardHeader>
+                                        <JobTitle>{job.title}</JobTitle>
+                                        <JobPlusCircle
+                                            type="button"
+                                            onClick={(e) => handleJobPlusClick(e, job)}
+                                            aria-label={`${job.title} 직무 추천 포텐워드를 내 포텐노트에 저장`}
+                                        >
+                                            <span>+</span>
+                                        </JobPlusCircle>
+                                    </JobCardHeader>
+                                    <JobDesc>{job.desc}</JobDesc>
+                                </JobCard>
+                            ))}
+                        </JobGridInView>
+                    </JobSection>
+
+                    {/* 직무별 내 포텐노트 저장 모달 */}
+                    <PotenNoteModal
+                        open={noteModalOpen}
+                        notebooks={notebooks}
+                        onClose={() => {
+                            setNoteModalOpen(false);
+                            setSelectedJob(null);
+                        }}
+                        onSave={handleSaveJobToNotebook}
+
+                        onCreate={async (name) => {
+                            // 1) 폴더 생성만
+                            const { data: wb } = await http.post("/me/folders", { wordbookName: name });
+                            const newId = String(wb.id);
+
+                            // 2) UI 갱신
+                            const newName = wb.wordbookName ?? name;
+                            setNotebooks((prev) => [{ id: newId, name: newName }, ...prev]);
+
+                            // 3) 여기서 attach 호출하지 않음
+                            // (저장은 사용자가 "저장하기" 누를 때 onSave에서만)
+
+                            return newId; // 모달이 이 값을 받아서 "선택" 처리할 수 있게
+                        }}
+                        onReorder={async (orderedIds) => {
+                            try {
+                                await patchReorderFolders(orderedIds);
+                                const refreshed = await fetchUserFolders();
+                                setNotebooks(refreshed);
+                            } catch (e) {
+                                console.warn("[folders reorder] 실패", e);
+                            }
+                        }}
+                        onGoToFolder={() => {
+                            setNoteModalOpen(false);
+                        }}
+                        onRename={async (wordbookId, newName) => {
+                            await renameUserFolder(wordbookId, newName);
+                            setNotebooks(prev =>
+                                prev.map(n => n.id === wordbookId ? ({ ...n, name: newName }) : n)
+                            );
+                        }}
+                        onRequestDelete={async (fid) => {
+                            await deleteUserFolder(fid, "purge");
+                            setNotebooks(await fetchUserFolders());
+                        }}
+                        onRequestBulkDelete={async (ids) => {
+                            await deleteUserFoldersBulk(ids, "purge");
+                            setNotebooks(await fetchUserFolders());
+                        }}
+                        onRefresh={async () => await fetchUserFolders()}
+                    />
                 </>
             )}
         </>
@@ -2560,3 +2968,301 @@ const RowTitle = styled.div`
         letter-spacing: -0.03em;
     }
 `;
+
+const TopSection = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 30px;
+    margin-bottom: 60px;
+`;
+
+const SubTitle = styled.div`
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 5px;
+    letter-spacing: -0.02em;
+
+    opacity: 0;
+    animation: ${fadeUp} 0.5s ease forwards;
+    animation-delay: 0.05s;
+`;
+
+const Title = styled.div`
+    font-size: 36px;
+    font-weight: 700;
+    color: #111827;
+    text-align: center;
+    letter-spacing: -0.02em;
+    word-break: keep-all;
+
+    .highlight {
+        background: linear-gradient(90deg, #3a83f3, #11b884);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: 800;
+    }
+
+    opacity: 0;
+    animation: ${fadeUp} 0.55s ease forwards;
+    animation-delay: 0.18s;
+`;
+
+const Cards = styled.div`
+    width: 100%;
+    max-width: 1100px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+
+    @media (max-width: 960px) {
+        grid-template-columns: 1fr;
+    }
+`;
+
+const CardTitle = styled.div`
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #111827;
+    letter-spacing: -.02em;
+    transition: color .25s ease;
+`;
+
+const CardDesc = styled.div`
+    font-size: 15px;
+    color: #6b7280;
+    line-height: 1.5;
+    height: 60px;
+    letter-spacing: -.02em;
+    transition: color .25s ease;
+    word-break: keep-all;
+`;
+
+const CardFooter = styled.div`
+    margin-top: 22px;
+    font-family: "GhanaChocolate", sans-serif;
+    font-size: 30px;
+    color: #4f76f1;
+    letter-spacing: -.02em;
+    transition: color .25s ease;
+`;
+
+const CardIcon = styled.div`
+    width: 58px;
+    height: 58px;
+    border-radius: 50%;
+    margin: 0 auto 20px auto;
+    background: #5174E7;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    color: #ffffff;
+    transition: all .25s ease;
+
+    svg {
+        width: 28px;
+        height: 28px;
+        stroke: currentColor;
+    }
+`;
+
+const Card = styled.div`
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 32px 24px;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+    transition:
+            background .35s ease,
+            transform .35s cubic-bezier(.16,1,.3,1),
+            box-shadow .35s ease,
+            border .35s ease;
+    border: 1px solid rgba(0,0,0,0.05);
+
+    opacity: 0;
+    animation: ${fadeUp} 0.6s ease forwards;
+
+    cursor: pointer;
+
+    &:nth-child(1) { animation-delay: 0.28s; }
+    &:nth-child(2) { animation-delay: 0.43s; }
+    &:nth-child(3) { animation-delay: 0.58s; }
+
+    &:hover {
+        background: #5174E7;
+        transform: translateY(-6px) scale(1.03);
+        border-color: rgba(81, 116, 231, 0.5);
+    }
+
+    &:hover ${CardTitle},
+    &:hover ${CardDesc},
+    &:hover ${CardFooter} {
+        color: #ffffff;
+    }
+
+    &:hover ${CardIcon} {
+        background: #ffffff;
+        color: #5174E7;
+    }
+`;
+
+
+const JobSection = styled.section`
+    width: 100%;
+    max-width: 1100px;
+    margin-top: 24px;
+    margin-bottom: 40px;
+`;
+
+const JobCardGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+
+    @media (max-width: 1024px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+    }
+`;
+
+const JobCard = styled.div<{ $visible?: boolean; $row?: number }>`
+    background: #ffffff;
+    border-radius: 28px;
+    padding: 22px 22px 20px;
+    box-shadow: 0 10px 32px rgba(15, 23, 42, 0.08);
+    border: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+
+    /* 인뷰 등장 애니메이션 (줄 단위 딜레이) */
+    opacity: ${({ $visible }) => ($visible ? 1 : 0)};
+    transform: ${({ $visible }) =>
+    $visible ? "translateY(0px)" : "translateY(18px)"};
+    transition:
+            opacity 0.55s ease,
+            transform 0.55s cubic-bezier(.16,1,.3,1),
+            box-shadow 0.25s ease,
+            border-color 0.25s ease,
+            background 0.25s ease;
+    transition-delay: ${({ $visible, $row }) =>
+    $visible ? `${0.08 * (($row ?? 0))}s` : "0s"};
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 18px 50px rgba(15, 23, 42, 0.14);
+        border-color: rgba(79, 118, 241, 0.7);
+        background: #f9fbff;
+    }
+`;
+
+const JobCardHeader = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 10px;
+`;
+
+const JobTitle = styled.h4`
+    margin: 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.03em;
+    word-break: keep-all;
+`;
+
+const JobPlusCircle = styled.button`
+    width: 34px;
+    height: 34px;
+    border-radius: 999px;
+    background: #4f76f1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    box-shadow: 0 6px 16px rgba(79, 118, 241, 0.18);
+
+    border: 0;
+    padding: 0;
+    cursor: pointer;
+
+    span {
+        color: #ffffff;
+        font-size: 20px;
+        line-height: 1;
+        margin-top: -1px;
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(79, 118, 241, 0.35);
+    }
+`;
+
+const JobDesc = styled.p`
+    margin: 0;
+    margin-top: 4px;
+    font-size: 15px;
+    color: #4b5563;
+    line-height: 1.5;
+    letter-spacing: -0.02em;
+    white-space: pre-line;
+`;
+
+/** 직무 카드 그리드용 인뷰 래퍼 */
+type JobGridInViewProps = {
+    children: React.ReactNode;
+};
+
+const JobGridInView: React.FC<JobGridInViewProps> = ({ children }) => {
+    const ref = useRef<HTMLDivElement | null>(null);
+    const [visible, setVisible] = useState(false);
+
+    useEffect(() => {
+        if (typeof IntersectionObserver === "undefined") {
+            setVisible(true);
+            return;
+        }
+
+        const node = ref.current;
+        if (!node) return;
+
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.target !== node) return;
+                    setVisible(entry.isIntersecting);
+                });
+            },
+            { threshold: 0.2 }
+        );
+
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, []);
+
+    const columnsPerRow = 3;
+
+    return (
+        <JobCardGrid ref={ref}>
+            {React.Children.map(children, (child, index) => {
+                if (!React.isValidElement(child)) return child;
+
+                const row = Math.floor(index / columnsPerRow);
+
+                return React.cloneElement(child as React.ReactElement<any>, {
+                    $visible: visible,
+                    $row: row,
+                });
+            })}
+        </JobCardGrid>
+    );
+};

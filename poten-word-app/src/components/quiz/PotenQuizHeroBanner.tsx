@@ -157,21 +157,22 @@ const Inset = styled.div`
 `;
 
 const HeroInner = styled.div<{ $align: "left" | "center" }>`
-  position: relative;
-  z-index: 2; 
-  display: grid;
-  gap: 8px;
-  justify-items: ${({ $align }) => ($align === "center" ? "center" : "start")};
-  text-align: ${({ $align }) => ($align === "center" ? "center" : "left")};
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    display: grid;
+    gap: 8px;
+    justify-items: ${({ $align }) => ($align === "center" ? "center" : "start")};
+    text-align: ${({ $align }) => ($align === "center" ? "center" : "left")};
 `;
 
 const HeroNarrow = styled.div<{ $narrow: boolean }>`
-  width: 100%;
-  max-width: ${({ $narrow, theme }) =>
-    $narrow
-        ? `${theme?.custom?.layout?.narrowMaxWidth ?? 980}px`
-        : `${theme?.custom?.layout?.containerMaxWidth ?? 1280}px`};
-  margin: 0;
+    width: 100%;
+    max-width: ${({ $narrow, theme }) =>
+            $narrow
+                    ? `${theme?.custom?.layout?.narrowMaxWidth ?? 980}px`
+                    : `${theme?.custom?.layout?.containerMaxWidth ?? 1280}px`};
+    margin: 0 auto;
 `;
 
 const TextWrap = styled.div`
@@ -208,7 +209,7 @@ export default function PotenQuizHeroBanner({
                                                 offsetLeft = 0,
                                                 offsetRight = 0,
                                                 assetHost,
-                                                linkTo = "/learning/quiz",
+                                                linkTo = "/learning/quiz/home",
                                                 floatingIcons,
                                                 iconProps,
                                             }: Props) {

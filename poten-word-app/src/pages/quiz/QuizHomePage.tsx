@@ -251,10 +251,41 @@ export default function QuizHomePage() {
 
     const actions = useMemo(
         () => [
-            { id: "a1", label: "내 포텐노트",        icon: act1, to: "/learning/note" },
-            { id: "a2", label: "내 퀴즈 타임라인",  icon: act2, to: "/learning/quiz/timeline" },
-            { id: "a3", label: "오답노트 바로 가기", icon: act3, to: "/learning/quiz/wrong-notes" },
-            { id: "a4", label: "명예의 전당",        icon: act4, to: "/learning/quiz/hall" },
+            {
+                id: "a1",
+                label: "내 포텐노트",
+                desc: "정리한 용어와 노트를 확인해 보세요",
+                icon: act1,
+                iconSize: 28,
+                to: "/learning/note",
+                tone: "purple" as ActionTone,
+            },
+            {
+                id: "a2",
+                label: "퀴즈 타임라인",
+                desc: "풀이 기록과 학습 흐름을 확인해 보세요",
+                icon: act2,
+                iconSize: 36,
+                to: "/learning/quiz/timeline",
+                tone: "green" as ActionTone,
+            },
+            {
+                id: "a3",
+                label: "오답노트 바로가기",
+                desc: "틀린 문제를 다시 복습해 보세요",
+                icon: act3,
+                iconSize: 36,
+                to: "/learning/quiz/wrong-notes",
+                tone: "peach" as ActionTone,
+            },
+            // {
+            //     id: "a4",
+            //     label: "명예의 전당",
+            //     desc: "주간 랭킹과 우수 학습자를 확인해보세요",
+            //     icon: act4,
+            //     to: "/learning/quiz/hall",
+            //     tone: "purple" as ActionTone,
+            // },
         ],
         []
     );
@@ -659,35 +690,35 @@ export default function QuizHomePage() {
                 <ArrowButton aria-label="다음" onClick={goNext} $side="right">
                     <ArrowSvg viewBox="0 0 24 24"><polyline points="9 4 17 12 9 20" /></ArrowSvg>
                 </ArrowButton>
-                {/*<MiniPager role="region" aria-label="슬라이드 컨트롤">*/}
-                {/*    <IndicatorRow role="tablist" aria-label="슬라이드 선택">*/}
-                {/*        {slides.map((s, i) => (*/}
-                {/*            <IndicatorBtn*/}
-                {/*                key={s.id}*/}
-                {/*                type="button"*/}
-                {/*                $active={i === idx}*/}
-                {/*                style={i === idx ? ({ ["--p" as any]: progress } as any) : undefined}*/}
-                {/*                onClick={() => {*/}
-                {/*                    setProgress(0);*/}
-                {/*                    setIdx(i);*/}
-                {/*                }}*/}
-                {/*                aria-label={`${i + 1}번째 슬라이드로 이동`}*/}
-                {/*                aria-current={i === idx ? "true" : undefined}*/}
-                {/*            >*/}
-                {/*                <span className="shape" />*/}
-                {/*            </IndicatorBtn>*/}
-                {/*        ))}*/}
-                {/*    </IndicatorRow>*/}
+                <MiniPager role="region" aria-label="슬라이드 컨트롤">
+                    <IndicatorRow role="tablist" aria-label="슬라이드 선택">
+                        {slides.map((s, i) => (
+                            <IndicatorBtn
+                                key={s.id}
+                                type="button"
+                                $active={i === idx}
+                                style={i === idx ? ({ ["--p" as any]: progress } as any) : undefined}
+                                onClick={() => {
+                                    setProgress(0);
+                                    setIdx(i);
+                                }}
+                                aria-label={`${i + 1}번째 슬라이드로 이동`}
+                                aria-current={i === idx ? "true" : undefined}
+                            >
+                                <span className="shape" />
+                            </IndicatorBtn>
+                        ))}
+                    </IndicatorRow>
 
-                {/*    <MiniToggle*/}
-                {/*        type="button"*/}
-                {/*        onClick={() => setAuto(a => !a)}*/}
-                {/*        aria-label={auto ? "일시정지" : "재생"}*/}
-                {/*        aria-pressed={!auto}*/}
-                {/*    >*/}
-                {/*        <MiniIcon $mode={auto ? "pause" : "play"} aria-hidden />*/}
-                {/*    </MiniToggle>*/}
-                {/*</MiniPager>*/}
+                    <MiniToggle
+                        type="button"
+                        onClick={() => setAuto(a => !a)}
+                        aria-label={auto ? "일시정지" : "재생"}
+                        aria-pressed={!auto}
+                    >
+                        <MiniIcon $mode={auto ? "pause" : "play"} aria-hidden />
+                    </MiniToggle>
+                </MiniPager>
             </HeroWrap>
 
             {/*<ProgressShell*/}
@@ -937,17 +968,27 @@ export default function QuizHomePage() {
             )}
             <QuickActions>
                 <ActionsGrid role="list">
-                    {actions.map((a, i) => (
+                    {actions.map((a) => (
                         <ActionItem
                             key={a.id}
+                            type="button"
                             role="listitem"
                             onClick={() => nav(a.to)}
                             aria-label={a.label}
                         >
-                            <IconCircle>
-                                <IconImg src={a.icon} alt="" aria-hidden $big={i === 0} />
-                            </IconCircle>
-                            <ActionLabel>{a.label}</ActionLabel>
+                            <ActionHeader>
+                                <ActionIconBadge $tone={a.tone}>
+                                    <ActionIconImg
+                                        src={a.icon}
+                                        alt=""
+                                        aria-hidden
+                                        $size={a.iconSize}
+                                    />
+                                </ActionIconBadge>
+                                <ActionLabel>{a.label}</ActionLabel>
+                            </ActionHeader>
+
+                            <ActionDesc>{a.desc}</ActionDesc>
                         </ActionItem>
                     ))}
                 </ActionsGrid>
@@ -988,11 +1029,11 @@ export default function QuizHomePage() {
                         </JobGroup>
                     ))}
 
-                    <MoreRow>
-                        <MoreBtn onClick={() => nav('/learning/quiz/categories')}>
-                            더 많은 직무 카테고리에서 고르기
-                        </MoreBtn>
-                    </MoreRow>
+                    {/*<MoreRow>*/}
+                    {/*    <MoreBtn onClick={() => nav('/learning/quiz/categories')}>*/}
+                    {/*        더 많은 직무 카테고리에서 고르기*/}
+                    {/*    </MoreBtn>*/}
+                    {/*</MoreRow>*/}
                 </JobsSurface>
             </JobSection>
             {setupOpen && (
@@ -1237,8 +1278,19 @@ const ArtImg = styled.img`
 `;
 
 const Title = styled.h1`
-    margin: 0; font-size: clamp(22px, 3.2vw, 34px);
-    line-height: 1.18; letter-spacing: -0.2px; color: ${UI.text};
+    margin: 0;
+    font-family:
+            "Pretendard Variable",
+            "Pretendard",
+            "Noto Sans KR",
+            "Apple SD Gothic Neo",
+            "Malgun Gothic",
+            sans-serif;
+    font-size: clamp(22px, 3.2vw, 34px);
+    line-height: 1.22;
+    letter-spacing: -0.03em;
+    color: ${UI.text};
+    font-weight: 700;
 `;
 const Em = styled.span` color: ${UI.primaryBlue}; font-weight: 750; letter-spacing: -0.02em `;
 const Subtitle = styled.p`
@@ -1408,7 +1460,40 @@ const QuickActions = styled.section`
     --hero-max: 1240px;
     max-width: var(--hero-max);
     width: 100%;
-    margin: 12px auto 0;
+    margin: 16px auto 0;
+`;
+
+const ActionsGrid = styled.ul`
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+
+    @media (max-width: 900px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+    }
+`;
+
+
+const ActionTop = styled.div`
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+`;
+
+const ActionTextBox = styled.div`
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 2px;
 `;
 
 const Divider = styled.div`
@@ -1435,7 +1520,7 @@ const MiniPager = styled.div`
     gap: 12px;
     margin-top: 6px;
     user-select: none;
-    margin-bottom: -36px;
+    margin-bottom: -12px;
 `;
 
 const IndicatorRow = styled.div`
@@ -1572,59 +1657,97 @@ const IconImg = styled.img<{ $big?: boolean }>`
     transition: transform 160ms ease;
 `;
 
-const ActionsGrid = styled.ul`
-    list-style: none;
-    padding: 0; margin: 0;
-    display: grid;
-    grid-template-columns: repeat(4, minmax(140px, 1fr));
-    gap: 24px 26px;
-    justify-items: center;
-    align-items: start;
-
-    @media (max-width: 820px) {
-        grid-template-columns: repeat(2, minmax(140px, 1fr));
-        row-gap: 22px;
-    }
-`;
-
 const ActionItem = styled.button`
     appearance: none;
-    border: 0;
-    background: transparent;
-    padding: 0;
-    width: auto;
+    width: 100%;
+    min-height: 96px;          /* 기존 110px */
+    padding: 15px 18px 13px;
+    border-radius: 22px;
+    border: 1px solid #d7dbe4;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    transition:
+            transform 180ms cubic-bezier(.22,.61,.36,1),
+            box-shadow 180ms ease,
+            border-color 180ms ease,
+            background-color 180ms ease;
+`;
+
+const ActionHeader = styled.div`
+    display: flex;
     align-items: center;
     gap: 10px;
-    text-align: center;
-    cursor: pointer;
-    box-shadow: none;
-    transition: none;
+    margin-bottom: 7px;
+    min-width: 0;
+`;
 
-    /* 데스크톱에서 아이콘만 살짝 움직이게 */
-    @media (hover:hover) and (pointer:fine) {
-        &:hover ${IconCircle} {
-            transform: translateY(-2px) rotate(-2deg);
-            box-shadow: 0 14px 30px rgba(62,99,224,.12);
-            border-color: rgba(62,99,224,.25);
-        }
-    }
+const actionToneMap = {
+    purple: {
+        bg: "linear-gradient(180deg, #f3edff 0%, #ece5ff 100%)",
+        border: "#ddd1ff",
+    },
+    green: {
+        bg: "linear-gradient(180deg, #e9f9ee 0%, #dff3e6 100%)",
+        border: "#c8e8d1",
+    },
+    peach: {
+        bg: "linear-gradient(180deg, #fff1ea 0%, #ffe5da 100%)",
+        border: "#ffd3c0",
+    },
+} as const;
 
-    /* 접근성: 포커스 시 아이콘에만 링 표시 */
-    &:focus-visible ${IconCircle} {
-        outline: 3px solid rgba(79,118,241,.35);
-        outline-offset: 3px;
-    }
+type ActionTone = keyof typeof actionToneMap;
+
+const ActionIconBadge = styled.span<{ $tone: ActionTone }>`
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: ${({ $tone }) => actionToneMap[$tone].bg};
+    border: 1px solid ${({ $tone }) => actionToneMap[$tone].border};
+`;
+
+const ActionIconImg = styled.img<{ $size?: number }>`
+    width: ${({ $size }) => `${$size ?? 30}px`};
+    height: ${({ $size }) => `${$size ?? 30}px`};
+    object-fit: contain;
+    display: block;
 `;
 
 const ActionLabel = styled.span`
-    font-size: 16px;
-    letter-spacing: -0.02em;
-    color: ${UI.text};
+    display: block;
+    min-width: 0;
+    font-family:
+            "Pretendard Variable",
+            "Pretendard",
+            "Noto Sans KR",
+            "Apple SD Gothic Neo",
+            "Malgun Gothic",
+            sans-serif;
+    font-size: 18px;
+    line-height: 1.22;
+    letter-spacing: -0.015em;
+    color: #111827;
     font-weight: 700;
-    text-align: center;
+    word-break: keep-all;
+`;
+
+const ActionDesc = styled.span`
+    display: block;
+    width: 100%;
+    font-size: 13px;
+    line-height: 1.3;
+    color: #b8bec9;
+    letter-spacing: -0.02em;
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 `;
 
 /* ===== 직무별 퀴즈 영역 ===== */
@@ -1669,7 +1792,17 @@ const JobGroup = styled.section`
 
 const JobGroupTitle = styled.h3`
     margin: 0 0 10px;
-    font-size: 18px; font-weight: 750; letter-spacing: -0.02em;
+    font-family:
+            "Pretendard Variable",
+            "Pretendard",
+            "Noto Sans KR",
+            "Apple SD Gothic Neo",
+            "Malgun Gothic",
+            sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
     color: #121212;
 `;
 
@@ -1791,10 +1924,17 @@ const CardRow = styled.div`
 const CardTitle = styled.h3`
     margin: 0;
     margin-left: 5px;
-    font-size: 18px;
-    line-height: 1.1;
+    font-family:
+            "Pretendard Variable",
+            "Pretendard",
+            "Noto Sans KR",
+            "Apple SD Gothic Neo",
+            "Malgun Gothic",
+            sans-serif;
+    font-size: 17px;
+    line-height: 1.22;
     font-weight: 700;
-    letter-spacing: -.02em;
+    letter-spacing: -0.015em;
     color: ${UI.text};
 
     flex: 1 1 auto;

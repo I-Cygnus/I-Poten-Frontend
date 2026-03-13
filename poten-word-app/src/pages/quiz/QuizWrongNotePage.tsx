@@ -4,6 +4,7 @@ import http, { authHeader } from "../../utils/http.ts";
 import SystemMessageModal, { SystemMessage } from "../../components/common/SystemMessageModal.tsx";
 import { SelectToggleChip } from "../../components/common/SelectToggleChip";
 import {useLocation, useNavigate, useNavigationType} from "react-router-dom";
+import LearningPageHeader from "../../components/common/LearningPageHeader.tsx";
 
 /* ====== UI 토큰 (QuizHomePage 톤 유지) ====== */
 const UI = {
@@ -239,6 +240,28 @@ function fmtDate(iso?: string | null) {
     const hh = String(d.getHours()).padStart(2, "0");
     const mi = String(d.getMinutes()).padStart(2, "0");
     return `${yy}.${mm}.${dd} ${hh}:${mi}`;
+}
+
+function getChoiceDisplayLabel(idx: number) {
+    return String(idx + 1);
+}
+
+function toDisplayedAnswer(
+    answer?: string | null,
+    choices?: Array<{ key: string; text: string }>
+) {
+    const raw = safeStr(answer);
+    if (!raw) return "-";
+    if (!choices?.length) return raw;
+
+    const foundIndex = choices.findIndex((c) => {
+        const key = safeStr(c.key);
+        const text = safeStr(c.text);
+        return raw.toUpperCase() === key.toUpperCase() || raw === text;
+    });
+
+    if (foundIndex >= 0) return String(foundIndex + 1);
+    return raw;
 }
 
 async function apiFetchWrongNotes(params: {
@@ -504,6 +527,38 @@ export default function QuizWrongNotePage() {
 
     const goPrev = useCallback(() => movePage(page - 1), [movePage, page]);
     const goNext = useCallback(() => movePage(page + 1), [movePage, page]);
+
+    const goFirstPage = useCallback(() => {
+        setPageWindowStart(0);
+        setPage(0);
+        window.scrollTo(0, 0);
+        fetchPage(0);
+    }, [fetchPage]);
+
+    const goLastPage = useCallback(() => {
+        const lastPage = pages - 1;
+        const lastWindowStart = clampWindowStart(lastPage - (WINDOW_SIZE - 1));
+
+        setPageWindowStart(lastWindowStart);
+        setPage(lastPage);
+        window.scrollTo(0, 0);
+        fetchPage(lastPage);
+    }, [pages, clampWindowStart, fetchPage]);
+
+    const firstVisiblePage = pageWindow[0] ?? 0;
+    const lastVisiblePage = pageWindow[pageWindow.length - 1] ?? 0;
+
+    const showFirstPage = firstVisiblePage > 0;
+    const showLeadingEllipsis = firstVisiblePage > 1;
+
+    const showTrailingEllipsis = lastVisiblePage < pages - 2;
+    const showLastPage = lastVisiblePage < pages - 1;
+
+    const visiblePages = pageWindow.filter((p) => {
+        if (showFirstPage && p === 0) return false;
+        if (showLastPage && p === pages - 1) return false;
+        return true;
+    });
 
     useEffect(() => {
         if (page > pages - 1) movePage(pages - 1);
@@ -775,17 +830,14 @@ export default function QuizWrongNotePage() {
 
     return (
         <Wrap>
-            <TopBar>
-                <BackBtn onClick={() => nav(-1)} aria-label="뒤로">
-                    ←
-                </BackBtn>
-                <TopTitle>
-                    <h1>오답노트</h1>
-                    <p>내가 틀린 문제만 모아서 빠르게 복습해요.</p>
-                </TopTitle>
-            </TopBar>
+            <LearningPageHeader
+                title="오답노트"
+                count={`${total}개`}
+                onBack={() => nav(-1)}
+            />
 
-            <Panel>
+            <Content>
+                <Panel>
                 <FilterRow>
                     <SearchBox>
                         <SearchInput
@@ -964,12 +1016,12 @@ export default function QuizWrongNotePage() {
                                     <Grid>
                                         <Box>
                                             <BoxTitle>내 답</BoxTitle>
-                                            <BoxValue>{safeStr(it.userAnswer) || "-"}</BoxValue>
+                                            <BoxValue>{toDisplayedAnswer(it.userAnswer, it.choices)}</BoxValue>
                                         </Box>
                                         <Box>
                                             <BoxTitle>정답</BoxTitle>
                                             <BoxValue $accent>
-                                                {safeStr(it.correctAnswer) || "-"}
+                                                {toDisplayedAnswer(it.correctAnswer, it.choices)}
                                             </BoxValue>
                                         </Box>
                                         <Box>
@@ -1000,15 +1052,20 @@ export default function QuizWrongNotePage() {
                                         <Choices>
                                             <ChoicesTitle>보기</ChoicesTitle>
                                             <ChoicesList>
-                                                {it.choices.map((c) => {
+                                                {it.choices.map((c, idx) => {
+                                                    const displayKey = getChoiceDisplayLabel(idx);
+
                                                     const isCorrect =
                                                         safeStr(it.correctAnswer).toUpperCase() ===
                                                         safeStr(c.key).toUpperCase() ||
-                                                        safeStr(it.correctAnswer) === safeStr(c.text);
+                                                        safeStr(it.correctAnswer) === safeStr(c.text) ||
+                                                        safeStr(it.correctAnswer) === displayKey;
+
                                                     const isMine =
                                                         safeStr(it.userAnswer).toUpperCase() ===
                                                         safeStr(c.key).toUpperCase() ||
-                                                        safeStr(it.userAnswer) === safeStr(c.text);
+                                                        safeStr(it.userAnswer) === safeStr(c.text) ||
+                                                        safeStr(it.userAnswer) === displayKey;
 
                                                     return (
                                                         <ChoiceItem
@@ -1016,7 +1073,7 @@ export default function QuizWrongNotePage() {
                                                             $correct={isCorrect}
                                                             $mine={isMine}
                                                         >
-                                                            <span className="k">{c.key}</span>
+                                                            <span className="k">{displayKey}</span>
                                                             <span className="t">{c.text}</span>
                                                             {isCorrect ? (
                                                                 <span className="tag">정답</span>
@@ -1066,45 +1123,78 @@ export default function QuizWrongNotePage() {
 
             </List>
 
-            {items.length > 0 && pages > 1 && (
-                <BottomGrid>
-                    <PaginationRow>
-                        <PaginationBar aria-label="오답노트 페이지 이동">
-                            <PageNavBtn
-                                onClick={goPrevWindow}
-                                disabled={!canPrevWindow}
-                                aria-label="이전 페이지 묶음"
-                                type="button"
-                            >
-                                ‹
-                            </PageNavBtn>
-
-                            {pageWindow.map((p) => (
-                                <PagePill
-                                    key={p}
-                                    $active={p === page}
-                                    onClick={() => movePage(p)}
-                                    aria-current={p === page ? "page" : undefined}
-                                    aria-label={`${p + 1}페이지`}
+                {items.length > 0 && pages > 1 && (
+                    <BottomGrid>
+                        <PaginationRow>
+                            <PaginationBar aria-label="오답노트 페이지 이동">
+                                <PageNavBtn
+                                    onClick={goPrevWindow}
+                                    disabled={!canPrevWindow}
+                                    aria-label="이전 페이지 묶음"
                                     type="button"
                                 >
-                                    {p + 1}
-                                </PagePill>
-                            ))}
+                                    ‹
+                                </PageNavBtn>
 
-                            <PageNavBtn
-                                onClick={goNextWindow}
-                                disabled={!canNextWindow}
-                                aria-label="다음 페이지 묶음"
-                                type="button"
-                            >
-                                ›
-                            </PageNavBtn>
-                        </PaginationBar>
-                    </PaginationRow>
-                </BottomGrid>
-            )}
-            <SystemMessageModal open={sysOpen} message={sysMsg} onClose={closeSys} />
+                                {showFirstPage && (
+                                    <PagePill
+                                        $active={page === 0}
+                                        onClick={goFirstPage}
+                                        aria-current={page === 0 ? "page" : undefined}
+                                        aria-label="1페이지"
+                                        type="button"
+                                    >
+                                        1
+                                    </PagePill>
+                                )}
+
+                                {showLeadingEllipsis && (
+                                    <PageEllipsis aria-hidden="true">...</PageEllipsis>
+                                )}
+
+                                {visiblePages.map((p) => (
+                                    <PagePill
+                                        key={p}
+                                        $active={p === page}
+                                        onClick={() => movePage(p)}
+                                        aria-current={p === page ? "page" : undefined}
+                                        aria-label={`${p + 1}페이지`}
+                                        type="button"
+                                    >
+                                        {p + 1}
+                                    </PagePill>
+                                ))}
+
+                                {showTrailingEllipsis && (
+                                    <PageEllipsis aria-hidden="true">...</PageEllipsis>
+                                )}
+
+                                {showLastPage && (
+                                    <PagePill
+                                        $active={page === pages - 1}
+                                        onClick={goLastPage}
+                                        aria-current={page === pages - 1 ? "page" : undefined}
+                                        aria-label={`${pages}페이지`}
+                                        type="button"
+                                    >
+                                        {pages}
+                                    </PagePill>
+                                )}
+
+                                <PageNavBtn
+                                    onClick={goNextWindow}
+                                    disabled={!canNextWindow}
+                                    aria-label="다음 페이지 묶음"
+                                    type="button"
+                                >
+                                    ›
+                                </PageNavBtn>
+                            </PaginationBar>
+                        </PaginationRow>
+                    </BottomGrid>
+                )}
+                <SystemMessageModal open={sysOpen} message={sysMsg} onClose={closeSys} />
+            </Content>
         </Wrap>
     );
 }
@@ -1113,63 +1203,23 @@ export default function QuizWrongNotePage() {
 const Wrap = styled.div`
     width: 100%;
     min-height: 100%;
-    padding: 0 20px 40px;
     box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
     --hero-max: 1240px;
     max-width: var(--hero-max);
     margin: 0 auto;
 
     color: ${UI.text};
-    letter-spacing: -0.015em;          /* 기본은 살짝만 */
-    font-variant-numeric: tabular-nums; /* 날짜/페이지 정렬감 */
+    letter-spacing: -0.012em;
+    font-variant-numeric: tabular-nums;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 `;
 
-const TopBar = styled.div`
+const Content = styled.div`
+    padding: 0 20px 40px;
     display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-top: 14px;
-`;
-
-const BackBtn = styled.button`
-    appearance: none;
-    border: 1px solid ${UI.panelLineSoft};
-    background: #fff;
-    color: ${UI.text};
-    border-radius: 12px;
-    height: 40px;
-    padding: 0 12px;
-    cursor: pointer;
-    font-weight: 800;
-    &:hover {
-        background: #f9fafb;
-    }
-    &:focus-visible {
-        outline: 3px solid rgba(67, 105, 229, 0.25);
-        outline-offset: 2px;
-    }
-`;
-
-const TopTitle = styled.div`
-    h1 {
-        margin: 0;
-        font-size: 22px;
-        font-weight: 900;
-        letter-spacing: -0.03em;
-        line-height: 1.15;
-        color: ${UI.text};
-    }
-    p {
-        margin: 4px 0 0;
-        font-size: 13px;
-        font-weight: 650;
-        color: ${UI.sub};
-        letter-spacing: -0.012em;
-        line-height: 1.35;
-    }
+    flex-direction: column;
+    gap: 16px;
 `;
 
 const Panel = styled.section`
@@ -1205,13 +1255,13 @@ const SearchInput = styled.input`
     outline: none;
 
     font-size: 14px;
-    font-weight: 650;
-    letter-spacing: -0.015em;
+    font-weight: 500;
+    letter-spacing: -0.01em;
 
     &::placeholder {
         color: rgba(107,114,128,0.85);
-        font-weight: 600;
-        letter-spacing: -0.01em;
+        font-weight: 500;
+        letter-spacing: -0.008em;
     }
 
     &:focus {
@@ -1228,25 +1278,17 @@ const SearchBtn = styled.button`
     border: 1px solid ${UI.primaryBlue};
     background: ${UI.primaryBlue};
     color: #fff;
-    font-weight: 800;
+    font-size: 14px;
+    font-weight: 650;
     cursor: pointer;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
+
     &:hover {
         filter: brightness(0.97);
     }
     &:disabled {
         opacity: 0.6;
         cursor: not-allowed;
-    }
-`;
-
-const Filters = styled.div`
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-    @media (max-width: 920px) {
-        justify-content: flex-start;
     }
 `;
 
@@ -1260,12 +1302,22 @@ const Select = styled.select`
     outline: none;
 
     font-size: 13px;
-    font-weight: 700;
-    letter-spacing: -0.015em;
+    font-weight: 600;
+    letter-spacing: -0.01em;
 
     &:focus {
         border-color: rgba(67, 105, 229, 0.55);
         box-shadow: 0 0 0 3px rgba(67, 105, 229, 0.16);
+    }
+`;
+
+const Filters = styled.div`
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    @media (max-width: 920px) {
+        justify-content: flex-start;
     }
 `;
 
@@ -1276,9 +1328,11 @@ const ToggleBtn = styled.button<{ $on?: boolean }>`
     border: 1px solid ${({ $on }) => ($on ? UI.chipOnLine : UI.chipLine)};
     background: ${({ $on }) => ($on ? UI.chipOnBg : "#fff")};
     color: ${({ $on }) => ($on ? UI.primaryBlue : UI.text)};
-    font-weight: 800;
+    font-size: 13px;
+    font-weight: 650;
     cursor: pointer;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
+
     &:hover {
         background: ${({ $on }) => ($on ? UI.chipOnBg : "#f9fafb")};
     }
@@ -1298,8 +1352,11 @@ const GhostBtn = styled.button`
     border: 1px solid ${UI.chipLine};
     background: #fff;
     color: ${UI.sub};
-    font-weight: 800;
+    font-size: 13px;
+    font-weight: 600;
     cursor: pointer;
+    letter-spacing: -0.01em;
+
     &:hover {
         background: #f9fafb;
         color: ${UI.text};
@@ -1333,17 +1390,20 @@ const CheckAll = styled.div`
     gap: 8px;
     user-select: none;
     color: ${UI.text};
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-size: 14px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
 `;
 
 const BulkInfo = styled.div`
     color: ${UI.sub};
     font-size: 13px;
-    letter-spacing: -0.02em;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+
     strong {
         color: ${UI.text};
-        font-weight: 800;
+        font-weight: 700;
     }
 `;
 
@@ -1359,9 +1419,11 @@ const PrimaryBtn = styled.button`
     border: 1px solid ${UI.primaryBlue};
     background: ${UI.primaryBlue};
     color: #fff;
-    font-weight: 800;
+    font-size: 13px;
+    font-weight: 650;
     cursor: pointer;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.01em;
+
     &:hover {
         filter: brightness(0.97);
     }
@@ -1372,30 +1434,30 @@ const PrimaryBtn = styled.button`
 `;
 
 const DangerBtn = styled.button`
-  height: 40px;
-  padding: 0 14px;
-  border-radius: 12px;
+    height: 40px;
+    padding: 0 14px;
+    border-radius: 12px;
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    background: rgba(239, 68, 68, 0.10);
+    color: ${UI.danger};
 
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  background: rgba(239, 68, 68, 0.10);
-  color: ${UI.danger};
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: -0.01em;
 
-  font-weight: 900;
-  cursor: pointer;
-  letter-spacing: -0.02em;
-
-  &:hover {
-    background: rgba(239, 68, 68, 0.14);
-    border-color: rgba(239, 68, 68, 0.45);
-  }
-  &:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-  }
-  &:focus-visible {
-    outline: 3px solid rgba(239, 68, 68, 0.18);
-    outline-offset: 2px;
-  }
+    &:hover {
+        background: rgba(239, 68, 68, 0.14);
+        border-color: rgba(239, 68, 68, 0.45);
+    }
+    &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+    &:focus-visible {
+        outline: 3px solid rgba(239, 68, 68, 0.18);
+        outline-offset: 2px;
+    }
 `;
 
 const List = styled.div`
@@ -1446,15 +1508,15 @@ const Badges = styled.div`
 `;
 
 const Badge = styled.span<{ $tone: "wrong" | "type" | "diff" | "ok" | "pending" }>`
-    height: 24px;          /* 26 → 24 */
+    height: 24px;
     padding: 0 10px;
     border-radius: 999px;
     display: inline-flex;
     align-items: center;
 
-    font-size: 11.5px;     /* 12 → 11.5 */
-    font-weight: 850;
-    letter-spacing: -0.015em;
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 
     ${({ $tone }) => {
         if ($tone === "wrong")
@@ -1464,7 +1526,6 @@ const Badge = styled.span<{ $tone: "wrong" | "type" | "diff" | "ok" | "pending" 
         color: ${UI.danger};
       `;
 
-        /* 해결 완료: 기존 미해결(파란톤)을 적용 */
         if ($tone === "ok")
             return `
         background: rgba(67, 105, 229, 0.06);
@@ -1472,7 +1533,6 @@ const Badge = styled.span<{ $tone: "wrong" | "type" | "diff" | "ok" | "pending" 
         color: ${UI.primaryBlue};
       `;
 
-        /* 미해결: 회색빛 */
         if ($tone === "pending")
             return `
         background: rgba(107, 114, 128, 0.10);
@@ -1518,8 +1578,8 @@ const TopMeta = styled.div`
 
     color: rgba(107,114,128,0.92);
     font-size: 12px;
-    font-weight: 650;
-    letter-spacing: -0.01em;
+    font-weight: 500;
+    letter-spacing: -0.008em;
 
     min-width: 0;
 
@@ -1563,8 +1623,9 @@ const MiniBtn = styled.button<{ $tone: "ok" | "pending" | "normal" }>`
     align-items: center;
     justify-content: center;
 
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-size: 13px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
     color: ${UI.text};
 
     ${({ $tone }) =>
@@ -1678,9 +1739,9 @@ const IconToggleBtn = styled.button<{ $active?: boolean }>`
 const Prompt = styled.h3`
     margin: 10px 0 0;
     font-size: 15px;
-    line-height: 1.55;
-    letter-spacing: -0.012em;   /* -0.018 → -0.012 (덜 뭉침) */
-    font-weight: 720;           /* 850 → 720 (핵심) */
+    line-height: 1.6;
+    letter-spacing: -0.01em;
+    font-weight: 650;
     color: ${UI.text};
 
     display: -webkit-box;
@@ -1717,16 +1778,17 @@ const Box = styled.div`
 const BoxTitle = styled.div`
     font-size: 12px;
     color: ${UI.sub};
-    font-weight: 750;
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    letter-spacing: -0.01em;
 `;
 
 const BoxValue = styled.div<{ $accent?: boolean }>`
     margin-top: 6px;
     font-size: 14px;
+    line-height: 1.55;
     color: ${({ $accent }) => ($accent ? UI.primaryBlue : UI.text)};
-    font-weight: 700;
-    letter-spacing: -0.012em;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     white-space: pre-wrap;
     word-break: break-word;
 `;
@@ -1739,9 +1801,9 @@ const LinkBtn = styled.button`
     text-align: left;
     cursor: pointer;
     color: ${UI.text};
-    font-weight: 650;           /* 800 → 650 */
-    letter-spacing: -0.01em;
-    line-height: 1.35;
+    font-weight: 600;
+    letter-spacing: -0.008em;
+    line-height: 1.45;
 
     text-decoration: underline;
     text-decoration-color: rgba(67,105,229,0.35);
@@ -1758,8 +1820,8 @@ const Choices = styled.div``;
 const ChoicesTitle = styled.div`
     font-size: 12px;
     color: ${UI.sub};
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     margin-bottom: 8px;
 `;
 
@@ -1792,12 +1854,21 @@ const ChoiceItem = styled.div<{ $correct?: boolean; $mine?: boolean }>`
                             ? "rgba(239, 68, 68, 0.22)"
                             : "#e5e7eb"};
 
-    .k { font-weight: 850; font-size: 13px; }
-    .t { font-size: 16px; line-height: 1.55; letter-spacing: -0.02em; font-weight: 650; }
+    .k {
+        font-weight: 700;
+        font-size: 13px;
+    }
+
+    .t {
+        font-size: 15px;
+        line-height: 1.6;
+        letter-spacing: -0.01em;
+        font-weight: 500;
+    }
 
     .tag {
         font-size: 12px;
-        font-weight: 800;
+        font-weight: 650;
         color: ${UI.success};
         background: rgba(16, 185, 129, 0.1);
         border: 1px solid rgba(16, 185, 129, 0.22);
@@ -1805,6 +1876,7 @@ const ChoiceItem = styled.div<{ $correct?: boolean; $mine?: boolean }>`
         padding: 4px 8px;
         height: fit-content;
     }
+
     .tag.mine {
         color: ${UI.danger};
         background: rgba(239, 68, 68, 0.08);
@@ -1820,16 +1892,17 @@ const Explain = styled.div``;
 const ExplainTitle = styled.div`
     font-size: 12px;
     color: ${UI.sub};
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     margin-bottom: 8px;
 `;
 
 const ExplainBody = styled.p<{ $muted?: boolean }>`
     margin: 0;
     font-size: 14px;
-    line-height: 1.7;         /* 1.6 → 1.7 */
-    letter-spacing: -0.012em; /* -0.02 → -0.012 (장문 피로 감소) */
+    line-height: 1.72;
+    letter-spacing: -0.008em;
+    font-weight: 400;
     color: ${({ $muted }) => ($muted ? "rgba(107,114,128,0.92)" : UI.text)};
     white-space: pre-wrap;
     word-break: break-word;
@@ -1872,18 +1945,21 @@ const Empty = styled.div`
     border-radius: 18px;
     padding: 26px 18px;
     text-align: center;
+
     h3 {
         margin: 0;
         font-size: 16px;
         color: ${UI.text};
-        letter-spacing: -0.02em;
-        font-weight: 800;
+        letter-spacing: -0.01em;
+        font-weight: 650;
     }
+
     p {
         margin: 8px 0 0;
         font-size: 13px;
         color: ${UI.sub};
-        letter-spacing: -0.02em;
+        letter-spacing: -0.008em;
+        font-weight: 500;
     }
 `;
 
@@ -1904,6 +1980,7 @@ const PaginationBar = styled.nav`
     padding: 6px;
 `;
 
+
 const PagePill = styled.button<{ $active?: boolean }>`
     height: 34px;
     min-width: 34px;
@@ -1911,8 +1988,9 @@ const PagePill = styled.button<{ $active?: boolean }>`
     border-radius: 10px;
     border: 0;
 
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-size: 13px;
+    font-weight: 650;
+    letter-spacing: -0.01em;
     cursor: pointer;
 
     color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
@@ -1924,9 +2002,11 @@ const PagePill = styled.button<{ $active?: boolean }>`
         background: ${({ $active }) => ($active ? UI.primaryBlue : "rgba(255,255,255,0.85)")};
         color: ${({ $active }) => ($active ? "#fff" : UI.text)};
     }
+
     &:active {
         transform: translateY(1px);
     }
+
     &:focus-visible {
         outline: none;
         box-shadow: 0 0 0 3px rgba(67, 105, 229, 0.22);
@@ -1945,6 +2025,19 @@ const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
     &:active {
         transform: ${({ disabled }) => (disabled ? "none" : "translateY(1px)")};
     }
+`;
+
+const PageEllipsis = styled.span`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 34px;
+    padding: 0 4px;
+    color: rgba(15, 23, 42, 0.5);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    user-select: none;
 `;
 
 const BottomGrid = styled.div`
