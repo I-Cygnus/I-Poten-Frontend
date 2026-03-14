@@ -49,7 +49,7 @@ export default function QuizHomePage() {
             {
                 id: "today",
                 titlePrefix: "오늘의 ",
-                titleEmphasis: "포텐퀴즈",
+                titleEmphasis: "객관식 퀴즈",
                 subtitle: "하루 10분 투자로 당신의 가치를 만들어 나가세요",
                 ctaLabel: "지금 포텐퀴즈 도전하기",
                 artSrc: quiz1,
@@ -57,8 +57,8 @@ export default function QuizHomePage() {
             {
                 id: "initials",
                 titlePrefix: "오늘의 ",
-                titleEmphasis: "초성퀴즈",
-                subtitle: "AI 면접 준비, 초성퀴즈로 핵심 개념을 빠르게 점검하세요",
+                titleEmphasis: "초성 퀴즈",
+                subtitle: "AI 면접 준비, 초성 퀴즈로 핵심 개념을 빠르게 점검하세요",
                 ctaLabel: "지금 포텐퀴즈 도전하기",
                 artSrc: quiz2,
             },
