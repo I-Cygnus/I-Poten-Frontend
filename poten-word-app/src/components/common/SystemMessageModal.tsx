@@ -27,6 +27,7 @@ export type SystemMessageModalProps = {
     open: boolean;
     message: SystemMessage | null;
     onClose: () => void;
+    zIndexBase?: number;
 };
 
 const TONE_COLORS: Record<SystemMessageTone, string> = {
@@ -99,19 +100,23 @@ const ToneIcon: React.FC<{ tone: SystemMessageTone }> = ({ tone }) => {
     );
 };
 
-const Scrim = styled.div`
+const Scrim = styled.div<{ $zIndex: number }>`
     position: fixed;
     inset: 0;
-    z-index: 2000;
+    z-index: ${({ $zIndex }) => $zIndex};
     background: rgba(15, 23, 42, 0.45);
     backdrop-filter: saturate(120%) blur(2px);
 `;
 
-type SheetProps = { $size: "default" | "wide"; $hasDescription: boolean };
+type SheetProps = {
+    $size: "default" | "wide";
+    $hasDescription: boolean;
+    $zIndex: number;
+};
 
 const Sheet = styled.div<SheetProps>`
     position: fixed;
-    z-index: 2001;
+    z-index: ${({ $zIndex }) => $zIndex + 1};
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -128,7 +133,6 @@ const Sheet = styled.div<SheetProps>`
     max-height: min(80vh, calc(100vh - 48px));
 
     background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
-
     border-radius: 16px;
     border: 1px solid #e5e7eb;
     box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
@@ -378,6 +382,7 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                                                                    open,
                                                                    message,
                                                                    onClose,
+                                                                   zIndexBase = 2000,
                                                                }) => {
     React.useEffect(() => {
         if (!open || !message) return;
@@ -432,13 +437,14 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
 
     return (
         <>
-            <Scrim onClick={closeOnScrim ? onClose : undefined} />
+            <Scrim $zIndex={zIndexBase} onClick={closeOnScrim ? onClose : undefined} />
             <Sheet
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="system-message-title"
                 $size={size}
                 $hasDescription={hasDescription}
+                $zIndex={zIndexBase}
             >
                 <SheetHeader $hasDescription={hasDescription}>
                     <IconBox $tone={tone}>
