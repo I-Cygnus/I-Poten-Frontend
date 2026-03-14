@@ -727,6 +727,24 @@ function MiniAreaChart({
     const [idx, setIdx] = React.useState<number | null>(null);
     const handleLeave = () => setIdx(null);
 
+// hover 중이면 hover 인덱스, 아니면 마지막 점
+    const activeIdx =
+        idx !== null
+            ? idx
+            : safeData.length > 0
+                ? safeData.length - 1
+                : null;
+
+    const i =
+        activeIdx !== null
+            ? Math.max(0, Math.min(activeIdx, safeData.length - 1))
+            : 0;
+
+    const cx = x(i);
+    const cy = y(safeData[i]);
+    const val = safeData[i];
+    const rounded = Number.isFinite(val) ? Math.round(val) : val;
+
     // labels 안전 처리
     const safeLabels =
         Array.isArray(labels) && labels.length === safeData.length ? labels : undefined;
@@ -798,19 +816,12 @@ function MiniAreaChart({
     };
 
     const nearestTick = React.useMemo(() => {
-        if (idx === null) return null;
+        if (activeIdx === null) return null;
         return tickIdx.reduce(
-            (bestK, curK) => (Math.abs(curK - idx) < Math.abs(bestK - idx) ? curK : bestK),
+            (bestK, curK) => (Math.abs(curK - activeIdx) < Math.abs(bestK - activeIdx) ? curK : bestK),
             tickIdx[0]
         );
-    }, [idx, tickIdx]);
-
-    // 현재 포인트 계산
-    const i = Math.max(0, Math.min(idx ?? safeData.length - 1, safeData.length - 1));
-    const cx = x(i);
-    const cy = y(safeData[i]);
-    const val = safeData[i];
-    const rounded = Number.isFinite(val) ? Math.round(val) : val;
+    }, [activeIdx, tickIdx]);
 
     const isPercent =
         valueUnit === "percent" || (valueUnit === "auto" && rawMax <= 100 && rawMin >= 0);
@@ -884,10 +895,9 @@ function MiniAreaChart({
                     fill="none"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    filter="url(#softShadow)"
                 />
 
-                {idx !== null && (
+                {activeIdx !== null && (
                     <>
                         {/* 1) 툴팁까지 이어지는 세로 라인 (점 -> 툴팁 하단) */}
                         <line
@@ -915,7 +925,7 @@ function MiniAreaChart({
                     </>
                 )}
 
-                {idx !== null && (
+                {activeIdx !== null && (
                     <>
                         {/* outer glow ring */}
                         <circle
@@ -937,7 +947,7 @@ function MiniAreaChart({
                     </>
                 )}
 
-                {idx !== null && (
+                {activeIdx !== null && (
                     <g transform={`translate(${tipX}, ${tipY})`}>
                         <rect x={-tipW / 2} y={-tipH} width={tipW} height={tipH} rx="8" fill="rgba(17,24,39,0.92)" />
                         <text x="0" y={-8} textAnchor="middle" fontSize="12" fontWeight="800" fill="#fff">
@@ -1885,15 +1895,30 @@ async function deleteMySession(sessionId: number) {
 
 async function fetchTrend(params: { metric: "accuracy" | "sets" | "retryRate"; span?: string }) {
     const headers = { ...authHeader() };
-    const { data } = await http.get<TrendResponse>("/me/quiz/metrics", {
-        params: { metric: params.metric, span: params.span ?? "30d" },
-        headers,
-    });
+    try {
+        const res = await http.get("/me/quiz/metrics", {
+            params: { metric: params.metric, span: params.span ?? "30d" },
+            headers,
+            withCredentials: true,
+        });
 
-    const points: TrendPoint[] = Array.isArray(data?.points)
-        ? data.points.map((p) => ({ date: String(p.date), value: Number(p.value ?? 0) }))
-        : [];
-    return { ...data, points };
+        console.log("[trend status]", res.status);
+        console.log("[trend raw data]", res.data);
+
+        const body = res.data?.data ?? res.data ?? {};
+        const points: TrendPoint[] = Array.isArray(body?.points)
+            ? body.points.map((p: any) => ({
+                date: String(p.date),
+                value: Number(p.value ?? 0),
+            }))
+            : [];
+
+        return { ...body, points };
+    } catch (e: any) {
+        console.warn("[trend fail status]", e?.response?.status);
+        console.warn("[trend fail data]", e?.response?.data);
+        throw e;
+    }
 }
 
 async function fetchTotalSets() {
