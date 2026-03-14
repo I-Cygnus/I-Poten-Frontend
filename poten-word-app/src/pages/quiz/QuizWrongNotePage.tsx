@@ -86,6 +86,30 @@ const DEFAULT_FILTERS: Filters = {
     sort: "RECENT",
 };
 
+type FilterOption<T extends string> = {
+    value: T;
+    label: string;
+};
+
+const TYPE_OPTIONS: FilterOption<Filters["type"]>[] = [
+    { value: "ALL", label: "유형 전체" },
+    { value: "CHOICE", label: "객관식" },
+    { value: "OX", label: "OX" },
+    { value: "INITIALS", label: "초성" },
+];
+
+const DIFFICULTY_OPTIONS: FilterOption<Filters["difficulty"]>[] = [
+    { value: "ALL", label: "난이도 전체" },
+    { value: "EASY", label: "쉬움" },
+    { value: "MEDIUM", label: "보통" },
+    { value: "HARD", label: "어려움" },
+];
+
+const SORT_OPTIONS: FilterOption<SortKey>[] = [
+    { value: "RECENT", label: "최신순" },
+    { value: "OLDEST", label: "오래된순" },
+];
+
 const readCache = (k: string): WrongNoteCache | null => {
     try {
         const r = sessionStorage.getItem(k);
@@ -262,6 +286,56 @@ function toDisplayedAnswer(
 
     if (foundIndex >= 0) return String(foundIndex + 1);
     return raw;
+}
+
+function FilterDropdown<T extends string>({
+                                              label,
+                                              value,
+                                              options,
+                                              open,
+                                              active,
+                                              onToggle,
+                                              onSelect,
+                                          }: {
+    label: string;
+    value: T;
+    options: Array<{ value: T; label: string }>;
+    open: boolean;
+    active?: boolean;
+    onToggle: () => void;
+    onSelect: (value: T) => void;
+}) {
+    const selected = options.find((opt) => opt.value === value);
+
+    return (
+        <FilterDropdownWrap>
+            <FilterDropdownTrigger
+                type="button"
+                $active={Boolean(active || open)}
+                aria-haspopup="menu"
+                aria-expanded={open}
+                onClick={onToggle}
+                title={label}
+            >
+                <span>{selected?.label ?? label}</span>
+                <FilterCaret $open={open} />
+            </FilterDropdownTrigger>
+
+            <FilterDropdownMenu $open={open} role="menu" aria-label={label}>
+                {options.map((opt) => (
+                    <FilterDropdownOption
+                        key={opt.value}
+                        type="button"
+                        $active={opt.value === value}
+                        onClick={() => onSelect(opt.value)}
+                        role="menuitem"
+                    >
+                        {opt.label}
+                    </FilterDropdownOption>
+                ))}
+            </FilterDropdownMenu>
+        </FilterDropdownWrap>
+    );
 }
 
 async function apiFetchWrongNotes(params: {
@@ -810,6 +884,21 @@ export default function QuizWrongNotePage() {
         fetchPage(0, appliedRef.current);
     }, [fetchPage]);
 
+    const [openFilterMenu, setOpenFilterMenu] = useState<"type" | "difficulty" | "sort" | null>(null);
+    const filtersRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        const onDown = (e: MouseEvent) => {
+            if (!filtersRef.current) return;
+            if (!filtersRef.current.contains(e.target as Node)) {
+                setOpenFilterMenu(null);
+            }
+        };
+
+        document.addEventListener("mousedown", onDown);
+        return () => document.removeEventListener("mousedown", onDown);
+    }, []);
+
     const applyAndSearch = useCallback(
         (next?: Filters) => {
             const f = next ?? draft;
@@ -818,6 +907,7 @@ export default function QuizWrongNotePage() {
 
             setSelected({});
             setExpanded({});
+            setOpenFilterMenu(null);
 
             setPageWindowStart(0);
             setPage(0);
@@ -851,38 +941,74 @@ export default function QuizWrongNotePage() {
                         </SearchBtn>
                     </SearchBox>
 
-                    <Filters>
-                        <Select
+                    <Filters ref={filtersRef}>
+                        <FilterDropdown
+                            label="유형"
                             value={draft.type}
-                            onChange={(e) => setDraft((p) => ({ ...p, type: e.target.value as any }))}
-                        >
-                            <option value="ALL">유형 전체</option>
-                            <option value="CHOICE">객관식</option>
-                            <option value="OX">OX</option>
-                            <option value="INITIALS">초성</option>
-                        </Select>
+                            options={TYPE_OPTIONS}
+                            open={openFilterMenu === "type"}
+                            active={draft.type !== "ALL"}
+                            onToggle={() =>
+                                setOpenFilterMenu((prev) => (prev === "type" ? null : "type"))
+                            }
+                            onSelect={(value) => {
+                                const next = {
+                                    ...draft,
+                                    type: value,
+                                };
+                                setDraft(next);
+                                applyAndSearch(next);
+                            }}
+                        />
 
-                        <Select
+                        <FilterDropdown
+                            label="난이도"
                             value={draft.difficulty}
-                            onChange={(e) => setDraft((p) => ({ ...p, difficulty: e.target.value as any }))}
-                        >
-                            <option value="ALL">난이도 전체</option>
-                            <option value="EASY">쉬움</option>
-                            <option value="MEDIUM">보통</option>
-                            <option value="HARD">어려움</option>
-                        </Select>
+                            options={DIFFICULTY_OPTIONS}
+                            open={openFilterMenu === "difficulty"}
+                            active={draft.difficulty !== "ALL"}
+                            onToggle={() =>
+                                setOpenFilterMenu((prev) => (prev === "difficulty" ? null : "difficulty"))
+                            }
+                            onSelect={(value) => {
+                                const next = {
+                                    ...draft,
+                                    difficulty: value,
+                                };
+                                setDraft(next);
+                                applyAndSearch(next);
+                            }}
+                        />
 
-                        <Select
+                        <FilterDropdown
+                            label="정렬"
                             value={draft.sort}
-                            onChange={(e) => setDraft((p) => ({ ...p, sort: e.target.value as any }))}
-                        >
-                            <option value="RECENT">최신순</option>
-                            <option value="OLDEST">오래된순</option>
-                        </Select>
+                            options={SORT_OPTIONS}
+                            open={openFilterMenu === "sort"}
+                            active={draft.sort !== "RECENT"}
+                            onToggle={() =>
+                                setOpenFilterMenu((prev) => (prev === "sort" ? null : "sort"))
+                            }
+                            onSelect={(value) => {
+                                const next = {
+                                    ...draft,
+                                    sort: value,
+                                };
+                                setDraft(next);
+                                applyAndSearch(next);
+                            }}
+                        />
 
                         <ToggleBtn
                             $on={draft.unresolvedOnly}
-                            onClick={() => setDraft((p) => ({ ...p, unresolvedOnly: !p.unresolvedOnly }))}
+                            onClick={() => {
+                                const next = {
+                                    ...draft,
+                                    unresolvedOnly: !draft.unresolvedOnly,
+                                };
+                                setDraft(next);
+                                applyAndSearch(next);
+                            }}
                             aria-pressed={draft.unresolvedOnly}
                         >
                             미해결만
@@ -1292,32 +1418,135 @@ const SearchBtn = styled.button`
     }
 `;
 
-const Select = styled.select`
-    height: 42px;
-    border-radius: 14px;
-    border: 1px solid ${UI.chipLine};
-    background: #fff;
-    padding: 0 12px;
-    color: ${UI.text};
-    outline: none;
-
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: -0.01em;
-
-    &:focus {
-        border-color: rgba(67, 105, 229, 0.55);
-        box-shadow: 0 0 0 3px rgba(67, 105, 229, 0.16);
-    }
-`;
-
 const Filters = styled.div`
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
     justify-content: flex-end;
+    align-items: center;
+    overflow: visible;
+
     @media (max-width: 920px) {
         justify-content: flex-start;
+    }
+`;
+
+const FilterDropdownWrap = styled.div`
+    position: relative;
+`;
+
+const FilterDropdownTrigger = styled.button<{ $active?: boolean }>`
+    appearance: none;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+
+    height: 42px;
+    padding: 0 14px;
+    border-radius: 14px;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+
+    color: ${({ $active }) => ($active ? "#1a1a1a" : "#666666")};
+    font-size: 13px;
+    font-weight: ${({ $active }) => ($active ? 700 : 600)};
+
+    background: ${({ $active }) =>
+            $active
+                    ? "linear-gradient(180deg, rgba(67, 105, 229, 0.12) 0%, rgba(67, 105, 229, 0.07) 100%)"
+                    : "#fff"};
+
+    border: 1px solid
+    ${({ $active }) =>
+            $active ? "rgba(67, 105, 229, 0.22)" : UI.chipLine};
+
+    box-shadow: none;
+
+    transition:
+            background 0.18s ease,
+            color 0.18s ease,
+            transform 0.18s ease,
+            border-color 0.18s ease;
+
+    &:hover {
+        color: #1a1a1a;
+        background: ${({ $active }) =>
+                $active
+                        ? "linear-gradient(180deg, rgba(67, 105, 229, 0.16) 0%, rgba(67, 105, 229, 0.10) 100%)"
+                        : "rgba(255, 255, 255, 0.96)"};
+        transform: translateY(-1px);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(67, 105, 229, 0.16);
+    }
+`;
+
+const FilterCaret = styled.span<{ $open: boolean }>`
+    width: 0;
+    height: 0;
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    border-top: 6px solid currentColor;
+    transform: ${({ $open }) => ($open ? "rotate(180deg)" : "rotate(0deg)")};
+    transition: transform 0.18s ease;
+    opacity: 0.9;
+`;
+
+const FilterDropdownMenu = styled.div<{ $open: boolean }>`
+    position: absolute;
+    top: calc(100% + 10px);
+    left: 0;
+    min-width: 160px;
+    padding: 8px;
+    border-radius: 14px;
+
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 18px 60px rgba(0, 0, 0, 0.12);
+
+    opacity: ${({ $open }) => ($open ? 1 : 0)};
+    transform: ${({ $open }) =>
+    $open ? "translateY(0)" : "translateY(-6px)"};
+    pointer-events: ${({ $open }) => ($open ? "auto" : "none")};
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    z-index: 50;
+`;
+
+const FilterDropdownOption = styled.button<{ $active?: boolean }>`
+    width: 100%;
+    appearance: none;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+
+    display: flex;
+    align-items: center;
+    text-align: left;
+
+    padding: 10px 12px;
+    border-radius: 12px;
+
+    color: ${({ $active }) => ($active ? "#111827" : "#334155")};
+    font-weight: ${({ $active }) => ($active ? 700 : 600)};
+    font-size: 14px;
+    letter-spacing: -0.01em;
+
+    background: ${({ $active }) =>
+    $active ? "rgba(0, 0, 0, 0.04)" : "transparent"};
+
+    transition: background 0.16s ease, transform 0.16s ease;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.05);
+        transform: translateY(-1px);
     }
 `;
 
@@ -1989,8 +2218,8 @@ const PagePill = styled.button<{ $active?: boolean }>`
     border: 0;
 
     font-size: 13px;
-    font-weight: 650;
-    letter-spacing: -0.01em;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     cursor: pointer;
 
     color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
@@ -2035,8 +2264,8 @@ const PageEllipsis = styled.span`
     height: 34px;
     padding: 0 4px;
     color: rgba(15, 23, 42, 0.5);
-    font-weight: 600;
-    letter-spacing: -0.01em;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     user-select: none;
 `;
 
