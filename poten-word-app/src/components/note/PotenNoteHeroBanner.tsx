@@ -38,9 +38,8 @@ const HeroWrap = styled.section`
     position: relative;
     isolation: isolate;
 
-    /* blob은 공백 구분(r g b), 텍스트/배경은 변수로 통일 */
     --blob-blue: 170 185 255;
-    --blob-pink: 255 165 190;
+    --blob-pink: 255 190 210; /* 기존보다 더 연한 핑크 */
     --bg-top: #f9fbff;
     --bg-bottom: #ffffff;
     --title-color: #0f172a;
@@ -53,37 +52,36 @@ const HeroWrap = styled.section`
             rgb(var(--blob-blue) / 0.10) 38%,
             rgb(var(--blob-blue) / 0.00) 62%),
             radial-gradient(700px 620px at 74% 30%,
-            rgb(var(--blob-pink) / 0.60) 0%,
-            rgb(var(--blob-pink) / 0.26) 32%,
-            rgb(var(--blob-pink) / 0.08) 52%,
+            rgb(var(--blob-pink) / 0.34) 0%,
+            rgb(var(--blob-pink) / 0.16) 32%,
+            rgb(var(--blob-pink) / 0.05) 52%,
             rgb(var(--blob-pink) / 0.00) 66%),
             linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
     background-repeat: no-repeat;
 
-    /* 시스템 다크 선호(옵션) — 변수만 바꿔서 안전하게 */
     @media (prefers-color-scheme: dark) {
         --blob-blue: 120 150 255;
-        --blob-pink: 255 110 190;
+        --blob-pink: 255 150 205; /* 다크에서도 너무 튀지 않게 완화 */
         --bg-top: #0b1222;
         --bg-bottom: #0a0f1c;
         --title-color: #e5e7eb;
         --sub-color: #9aa4b2;
     }
 
-    /* 명시 오버라이드: <html data-theme="light|dark"> 로 강제 가능 */
     :root[data-theme='light'] &,
     body[data-theme='light'] & {
         --blob-blue: 170 185 255;
-        --blob-pink: 255 165 190;
+        --blob-pink: 255 190 210;
         --bg-top: #f9fbff;
         --bg-bottom: #ffffff;
         --title-color: #0f172a;
         --sub-color: #334155;
     }
+
     :root[data-theme='dark'] &,
     body[data-theme='dark'] & {
         --blob-blue: 120 150 255;
-        --blob-pink: 255 110 190;
+        --blob-pink: 255 150 205;
         --bg-top: #0b1222;
         --bg-bottom: #0a0f1c;
         --title-color: #e5e7eb;
@@ -115,6 +113,7 @@ const Inset = styled.div`
 `;
 
 const HeroInner = styled.div<{ $align: "left" | "center" }>`
+    width: 100%;
     display: grid;
     gap: 8px;
     justify-items: ${({ $align }) => ($align === "center" ? "center" : "start")};
@@ -124,10 +123,10 @@ const HeroInner = styled.div<{ $align: "left" | "center" }>`
 const HeroNarrow = styled.div<{ $narrow: boolean }>`
     width: 100%;
     max-width: ${({ $narrow, theme }) =>
-        $narrow
-            ? `${theme?.custom?.layout?.narrowMaxWidth ?? 980}px`
-            : `${theme?.custom?.layout?.containerMaxWidth ?? 1280}px`};
-    margin: 0;
+            $narrow
+                    ? `${theme?.custom?.layout?.narrowMaxWidth ?? 980}px`
+                    : `${theme?.custom?.layout?.containerMaxWidth ?? 1280}px`};
+    margin: 0 auto;
 `;
 
 const HeroTitle = styled.h1`
@@ -152,7 +151,7 @@ const TextWrap = styled.div`
     z-index: 2; /* 아이콘 레이어(1) 위로 */
 `;
 
-export default function SpoonNoteHeroBanner({
+export default function PotenNoteHeroBanner({
                                                 title = "포텐노트",
                                                 subtitle = "필요한 개념만, 필요한 순간에 — 나만의 맞춤 학습 노트",
                                                 className,

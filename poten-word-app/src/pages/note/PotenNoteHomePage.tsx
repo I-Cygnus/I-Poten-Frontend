@@ -147,18 +147,31 @@ const SearchInput = styled.input`
 `;
 
 const Primary = styled.button`
-  height: 38px;
-  padding: 0 14px;
-  border-radius: 8px;
-  border: 1px solid ${UI.color.primary};
-  background: ${UI.color.primary};
-  color: #fff;
-  font-weight: 700;
-  cursor: pointer;
-  transition: filter .15s ease, transform .08s ease;
-  &:hover{ filter: brightness(.96); }
-  &:active{ transform: translateY(1px); }
-  &:focus-visible{ outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.25); }
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid ${UI.color.primary};
+    background: ${UI.color.primary};
+    color: #fff;
+    font-weight: 700;
+    cursor: pointer;
+    transition: filter .15s ease, transform .08s ease;
+
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+
+    &:hover{ filter: brightness(.96); }
+    &:active{ transform: translateY(1px); }
+    &:focus-visible{ outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.25); }
+
+    & > .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 0;
+    }
 `;
 
 /* ===== 목록 패널 ===== */
@@ -310,61 +323,222 @@ const Kebab = styled.button`
 
 /* ---------- Pagination (WordbookFolderPage 스타일) ---------- */
 type PaginationProps = {
-    page: number; size: number; total: number;
+    page: number;
+    size: number;
+    total: number;
     onChange: (nextPageZeroBased: number) => void;
 };
 
-const PaginationNav = styled.nav`
-  margin-top: 16px;
-  display: flex; align-items: center; justify-content: center;
-  gap: 8px; user-select: none;
+const PaginationRow = styled.div`
+    display: flex;
+    justify-content: center;
+    padding-top: 6px;
+    width: fit-content;
+    margin: 0 auto;
 `;
 
-const PageNumBtn = styled.button<{ $active: boolean }>`
-  min-width: 34px; height: 34px; padding: 0 10px; border-radius: 999px;
-  border: 1px solid ${({ $active }) => ($active ? UI.color.primary : UI.color.line)};
-  background: ${({ $active }) => ($active ? UI.color.primary : "#fff")};
-  color: ${({ $active }) => ($active ? "#fff" : UI.color.text)};
-  font-weight: ${({ $active }) => ($active ? 700 : 600)};
-  cursor: pointer;
+const PaginationBar = styled.nav`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px;
 `;
 
-const NavBtn = styled.button<{ $disabled: boolean }>`
-  width: 34px; height: 34px; border-radius: 999px; border: 1px solid ${UI.color.line};
-  background: #fff; color: ${({ $disabled }) => ($disabled ? "#c7c7c7" : UI.color.text)};
-  cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
-  display: inline-flex; align-items: center; justify-content: center;
+const PagePill = styled.button<{ $active?: boolean }>`
+    height: 34px;
+    min-width: 34px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 0;
+
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+
+    color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
+    background: ${({ $active }) => ($active ? UI.color.primary : "transparent")};
+
+    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+
+    &:hover {
+        background: ${({ $active }) => ($active ? UI.color.primary : "rgba(255,255,255,0.85)")};
+        color: ${({ $active }) => ($active ? "#fff" : UI.color.text)};
+    }
+
+    &:active {
+        transform: translateY(1px);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(79,118,241,0.22);
+    }
+`;
+
+const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
+    padding: 0 10px;
+    color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
+    cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+
+    &:hover {
+        background: ${({ disabled }) => (disabled ? "transparent" : "rgba(255,255,255,0.85)")};
+        color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.color.text)};
+    }
+
+    &:active {
+        transform: ${({ disabled }) => (disabled ? "none" : "translateY(1px)")};
+    }
+`;
+
+const PageEllipsis = styled.span`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 34px;
+    padding: 0 4px;
+    color: rgba(15, 23, 42, 0.5);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    user-select: none;
+`;
+
+const BottomGrid = styled.div`
+    width: 100%;
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
 `;
 
 const Pagination: React.FC<PaginationProps> = ({ page, size, total, onChange }) => {
     const totalPages = Math.max(1, Math.ceil((total || 0) / (size || 1)));
-    const current = page + 1; // 1-base
-    const maxNumbers = 10;
+    const WINDOW_SIZE = 5;
 
-    let start = Math.max(1, current - Math.floor(maxNumbers / 2));
-    let end = Math.min(totalPages, start + maxNumbers - 1);
-    start = Math.max(1, end - maxNumbers + 1);
+    const current = Math.max(0, Math.min(page, totalPages - 1));
 
-    const nums: number[] = [];
-    for (let i = start; i <= end; i++) nums.push(i);
+    const clampWindowStart = (start: number) => {
+        const maxStart = Math.max(0, totalPages - WINDOW_SIZE);
+        return Math.max(0, Math.min(start, maxStart));
+    };
 
-    const go = (p1: number) => {
-        if (p1 < 1 || p1 > totalPages || p1 === current) return;
-        onChange(p1 - 1);
+    const pageWindowStart = clampWindowStart(
+        Math.floor(current / WINDOW_SIZE) * WINDOW_SIZE
+    );
+
+    const pageWindowEnd = Math.min(totalPages - 1, pageWindowStart + WINDOW_SIZE - 1);
+
+    const pageWindow = Array.from(
+        { length: pageWindowEnd - pageWindowStart + 1 },
+        (_, i) => pageWindowStart + i
+    );
+
+    const firstVisiblePage = pageWindow[0] ?? 0;
+    const lastVisiblePage = pageWindow[pageWindow.length - 1] ?? 0;
+
+    const showFirstPage = firstVisiblePage > 0;
+    const showLeadingEllipsis = firstVisiblePage > 1;
+
+    const showTrailingEllipsis = lastVisiblePage < totalPages - 2;
+    const showLastPage = lastVisiblePage < totalPages - 1;
+
+    const visiblePages = pageWindow.filter((p) => {
+        if (showFirstPage && p === 0) return false;
+        if (showLastPage && p === totalPages - 1) return false;
+        return true;
+    });
+
+    const goFirstPage = () => {
+        if (current === 0) return;
+        onChange(0);
+    };
+
+    const goLastPage = () => {
+        if (current === totalPages - 1) return;
+        onChange(totalPages - 1);
+    };
+
+    const goPrevWindow = () => {
+        const prevStart = clampWindowStart(pageWindowStart - WINDOW_SIZE);
+        if (prevStart === pageWindowStart) return;
+        onChange(prevStart);
+    };
+
+    const goNextWindow = () => {
+        const nextStart = clampWindowStart(pageWindowStart + WINDOW_SIZE);
+        if (nextStart === pageWindowStart) return;
+        onChange(nextStart);
     };
 
     return (
-        <PaginationNav aria-label="페이지네이션">
-            <NavBtn aria-label="처음" onClick={() => go(1)} disabled={current === 1} $disabled={current === 1}>«</NavBtn>
-            <NavBtn aria-label="이전" onClick={() => go(current - 1)} disabled={current === 1} $disabled={current === 1}>‹</NavBtn>
-            {nums.map((n) => (
-                <PageNumBtn key={n} onClick={() => go(n)} aria-current={n === current ? "page" : undefined} $active={n === current}>
-                    {n}
-                </PageNumBtn>
-            ))}
-            <NavBtn aria-label="다음" onClick={() => go(current + 1)} disabled={current === totalPages} $disabled={current === totalPages}>›</NavBtn>
-            <NavBtn aria-label="마지막" onClick={() => go(totalPages)} disabled={current === totalPages} $disabled={current === totalPages}>»</NavBtn>
-        </PaginationNav>
+        <BottomGrid>
+            <PaginationRow>
+                <PaginationBar aria-label="포텐노트 페이지 이동">
+                    <PageNavBtn
+                        onClick={goPrevWindow}
+                        disabled={pageWindowStart === 0}
+                        aria-label="이전 페이지 묶음"
+                        type="button"
+                    >
+                        ‹
+                    </PageNavBtn>
+
+                    {showFirstPage && (
+                        <PagePill
+                            $active={current === 0}
+                            onClick={goFirstPage}
+                            aria-current={current === 0 ? "page" : undefined}
+                            aria-label="1페이지"
+                            type="button"
+                        >
+                            1
+                        </PagePill>
+                    )}
+
+                    {showLeadingEllipsis && (
+                        <PageEllipsis aria-hidden="true">...</PageEllipsis>
+                    )}
+
+                    {visiblePages.map((p) => (
+                        <PagePill
+                            key={p}
+                            $active={p === current}
+                            onClick={() => onChange(p)}
+                            aria-current={p === current ? "page" : undefined}
+                            aria-label={`${p + 1}페이지`}
+                            type="button"
+                        >
+                            {p + 1}
+                        </PagePill>
+                    ))}
+
+                    {showTrailingEllipsis && (
+                        <PageEllipsis aria-hidden="true">...</PageEllipsis>
+                    )}
+
+                    {showLastPage && (
+                        <PagePill
+                            $active={current === totalPages - 1}
+                            onClick={goLastPage}
+                            aria-current={current === totalPages - 1 ? "page" : undefined}
+                            aria-label={`${totalPages}페이지`}
+                            type="button"
+                        >
+                            {totalPages}
+                        </PagePill>
+                    )}
+
+                    <PageNavBtn
+                        onClick={goNextWindow}
+                        disabled={pageWindowEnd >= totalPages - 1}
+                        aria-label="다음 페이지 묶음"
+                        type="button"
+                    >
+                        ›
+                    </PageNavBtn>
+                </PaginationBar>
+            </PaginationRow>
+        </BottomGrid>
     );
 };
 
@@ -546,6 +720,32 @@ function formatKR(dateIso?: string) {
         return "-";
     }
 }
+
+const FolderIcon = ({ size = 18 }: { size?: number }) => (
+    <svg
+        width={size}
+        height={size}
+        viewBox="0 0 24 24"
+        aria-hidden="true"
+        focusable="false"
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+    >
+        <path
+            d="M3.5 7.5c0-1.1.9-2 2-2h4.6c.5 0 1 .2 1.4.6l1.1 1.1c.3.3.7.4 1.1.4H18.5c1.1 0 2 .9 2 2v8.5c0 1.1-.9 2-2 2H5.5c-1.1 0-2-.9-2-2V7.5Z"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinejoin="round"
+        />
+        <path
+            d="M3.5 10h17"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            opacity="0.7"
+        />
+    </svg>
+);
 
 /* ===== Page ===== */
 type SortKey = "title_asc" | "updated_desc" | "updated_asc" | "terms_desc" | "terms_asc" | "studied_desc";
@@ -932,7 +1132,10 @@ export default function PotenNoteHomePage() {
                             value={q}
                             onChange={(e) => setQ(e.target.value)}
                         />
-                        <Primary onClick={createFolder}>+ 새 폴더</Primary>
+                        <Primary onClick={createFolder}>
+                            <span className="icon"><FolderIcon /></span>
+                            새 폴더
+                        </Primary>
                     </RowFlex>
                 </RowFlex>
             </Toolbar>
@@ -947,7 +1150,10 @@ export default function PotenNoteHomePage() {
                         먼저 폴더를 만들고, 검색에서 원하는 용어를 담아두면 포텐퀴즈와도 자연스럽게 연동됩니다.
                     </EmptyDesc>
                     <EmptyActions>
-                        <Primary onClick={createFolder}>+ 새 폴더 만들기</Primary>
+                        <Primary onClick={createFolder}>
+                            <span className="icon"><FolderIcon /></span>
+                            새 폴더
+                        </Primary>
                         <GhostBtn onClick={() => nav("/learning/search")}>용어 탐색하기</GhostBtn>
                     </EmptyActions>
                 </EmptyWrap>
@@ -960,7 +1166,10 @@ export default function PotenNoteHomePage() {
                     </EmptyDesc>
                     <EmptyActions>
                         <Primary onClick={() => setQ("")}>검색 초기화</Primary>
-                        <GhostBtn onClick={createFolder}>+ 새 폴더 만들기</GhostBtn>
+                        <GhostBtn onClick={createFolder}>
+                            <span className="icon"><FolderIcon /></span>
+                            새 폴더 만들기
+                        </GhostBtn>
                     </EmptyActions>
                 </NoResultWrap>
             ) : (
