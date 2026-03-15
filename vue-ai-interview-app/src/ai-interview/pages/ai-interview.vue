@@ -246,7 +246,7 @@ const selectRandomVideo = () => {
 
 
 useHead({
-  title: "AI 모의 면접 시작 | 잡스틱(JobStick)",
+  title: "AI 모의 면접 시작 | I-Poten",
   meta: [
     { name: "description", content: "AI 기반 모의 면접을 진행하고, 원하는 기업, 직무에 대한 기술 면접을 대비해보세요." },
     { name: "keywords", content: "AI 면접, 모의 면접, 기술 면접, AI 기반 모의 면접, 카메라 테스트, 면접 준비, 온라인 면접, 비대면 면접, 인공지능 면접, JobStick, job-stick, 잡스틱, 개발자 플랫폼, 개발자 취업" },

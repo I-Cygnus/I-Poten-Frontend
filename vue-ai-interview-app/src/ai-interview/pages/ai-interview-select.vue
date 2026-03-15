@@ -8,49 +8,59 @@
     <!-- Credit Confirmation Modal -->
     <div v-if="showCreditModal" :style="modalOverlayStyle" @click="closeCreditModal">
       <div :style="creditModalContentStyle" @click.stop>
-        <!-- 상단 아이콘 -->
-        <div :style="creditModalIconWrapStyle">
-          <div :style="creditModalIconCircleStyle">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
-              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
-            </svg>
+        <!-- 상단 라벨 -->
+        <div :style="creditModalHeaderLabelStyle">{{ pendingTypeName }}</div>
+        
+        <!-- 메인 타이틀 -->
+        <h2 :style="creditModalMainTitleStyle">면접을 시작할까요?</h2>
+        
+        <!-- 서비스 요약 리스트 -->
+        <div :style="creditFeatureBoxStyle">
+          <div :style="creditFeatureItemStyle">
+            <v-icon size="16" color="#3b82f6" style="margin-right: 10px">mdi-check-circle-outline</v-icon>
+            <span>직무 맞춤형 핵심 질문 6개 생성</span>
           </div>
-          <div :style="creditModalBadgeStyle">CREDIT</div>
+          <div :style="creditFeatureItemStyle">
+            <v-icon size="16" color="#3b82f6" style="margin-right: 10px">mdi-check-circle-outline</v-icon>
+            <span>실시간 음성 인식 및 답변 분석</span>
+          </div>
+          <div :style="creditFeatureItemStyle">
+            <v-icon size="16" color="#3b82f6" style="margin-right: 10px">mdi-check-circle-outline</v-icon>
+            <span>강약점 분석 및 피드백 리포트</span>
+          </div>
         </div>
 
-        <!-- 타이틀 -->
-        <h2 :style="creditModalTitleStyle">
-          크레딧 <span :style="creditModalAmountStyle">{{ pendingCreditCost }}</span>개가 소모됩니다
-        </h2>
-        <p :style="creditModalDescStyle">
-          <strong>{{ pendingTypeName }}</strong> 면접을 시작하면<br/>
-          보유 크레딧에서 차감됩니다.
+        <!-- 크레딧 상태 정보 -->
+        <div :style="creditStatusCardStyle">
+          <div :style="creditStatusRowStyle">
+            <span :style="creditStatusLabelStyle">필요 크레딧</span>
+            <span :style="creditCostValueStyle">{{ pendingCreditCost }}</span>
+          </div>
+          <div :style="creditStatusDividerStyle"></div>
+          <div :style="creditStatusRowStyle">
+            <span :style="creditStatusLabelStyle">잔여 크레딧</span>
+            <span v-if="isCreditLoading" :style="creditBalanceValueStyle">...</span>
+            <span v-else :style="{ ...creditBalanceValueStyle, color: afterDeductCredit < 0 ? '#ef4444' : '#1e293b' }">
+              {{ currentCredit ?? 0 }} → {{ afterDeductCredit ?? 0 }}
+            </span>
+          </div>
+        </div>
+
+        <!-- 경고 메시지 -->
+        <p v-if="!isCreditLoading && currentCredit !== null && afterDeductCredit < 0" :style="creditWarningTextStyle">
+          보유하신 크레딧이 부족합니다.
         </p>
 
-        <!-- 크레딧 소모 표시 -->
-        <div :style="creditInfoBoxStyle">
-          <div :style="creditInfoRowStyle">
-            <span :style="creditInfoLabelStyle">면접 유형</span>
-            <span :style="creditInfoValueStyle">{{ pendingTypeName }}</span>
-          </div>
-          <div :style="creditInfoDividerStyle"></div>
-          <div :style="creditInfoRowStyle">
-            <span :style="creditInfoLabelStyle">소모 크레딧</span>
-            <div :style="creditInfoCostStyle">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
-                  fill="#f59e0b" stroke="#f59e0b" stroke-width="0.5" stroke-linejoin="round"/>
-              </svg>
-              <span>{{ pendingCreditCost }}개</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 버튼 -->
+        <!-- 버튼 영역 -->
         <div :style="modalButtonGroupStyle">
           <button :style="modalCancelButtonStyle" @click="closeCreditModal">취소</button>
-          <button :style="creditConfirmButtonStyle" @click="confirmCreditAndProceed">시작하기</button>
+          <button 
+            :style="isCreditConfirmDisabled ? creditConfirmDisabledButtonStyle : creditConfirmButtonStyle" 
+            :disabled="isCreditConfirmDisabled"
+            @click="confirmCreditAndProceed"
+          >
+            시작하기
+          </button>
         </div>
       </div>
     </div>
@@ -501,6 +511,8 @@
 
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
+import * as axiosUtility from "../utility/axiosInstance";
+import { createInterviewSessionToken } from '@/utils/sessionToken';
 import { useRouter } from "vue-router";
 import { useHead } from '@vueuse/head'
 import JImg from '@/assets/J.png';
@@ -510,7 +522,7 @@ import Logo from '@/assets/Logo.png';
 
 // ✅ SEO 메타 정보
 useHead({
-  title: 'AI 모의 면접 선택 | 잡스푼(JobSpoon) Tech-Interview',
+  title: 'AI 모의 면접 선택 | I-Poten',
   meta: [
     {
       name: 'description',
@@ -555,10 +567,41 @@ const TYPE_NAMES = { '전형별': '전형별 면접', '기업별': '기업별 �
 
 const getCreditCost = (type) => CREDIT_COSTS[type] || 0;
 
-const closeCreditModal = () => { showCreditModal.value = false; pendingType.value = ''; };
+const currentCredit = ref(null);
+const isCreditLoading = ref(false);
+
+const afterDeductCredit = computed(() =>
+  currentCredit.value !== null ? currentCredit.value - pendingCreditCost.value : null
+);
+const isCreditConfirmDisabled = computed(() =>
+  isCreditLoading.value || currentCredit.value === null || afterDeductCredit.value < 0
+);
+
+const fetchCredit = async () => {
+  isCreditLoading.value = true;
+  currentCredit.value = null;
+  try {
+    const { springAxiosInstance } = axiosUtility.createAxiosInstances();
+    const res = await springAxiosInstance.get('/credit/account');
+    currentCredit.value = res.data.credit ?? null;
+  } catch (e) {
+    console.error('크레딧 조회 실패:', e);
+    currentCredit.value = null;
+  } finally {
+    isCreditLoading.value = false;
+  }
+};
+
+const closeCreditModal = () => {
+  showCreditModal.value = false;
+  pendingType.value = '';
+  currentCredit.value = null;
+};
 
 const confirmCreditAndProceed = () => {
+  if (isCreditConfirmDisabled.value) return;
   showCreditModal.value = false;
+  createInterviewSessionToken();
   const type = pendingType.value;
   selectedInterviewType.value = type;
   router.push({ name: 'ai-interview-detail', params: { type } });
@@ -750,6 +793,7 @@ const selectInterviewType = async (type) => {
     pendingCreditCost.value = CREDIT_COSTS[type];
     pendingTypeName.value = TYPE_NAMES[type] || type;
     showCreditModal.value = true;
+    fetchCredit();
     return;
   }
 
@@ -1300,124 +1344,110 @@ const creditBadgeStyle = {
 // ========== 크레딧 확인 모달 ========== //
 const creditModalContentStyle = {
   background: '#ffffff',
-  borderRadius: '32px',
-  padding: '56px 40px 40px',
-  maxWidth: '440px',
+  borderRadius: '28px',
+  padding: '40px 32px 32px',
+  maxWidth: '360px',
   width: '100%',
-  boxShadow: '0 40px 100px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(15, 23, 42, 0.03)',
+  boxShadow: '0 20px 50px rgba(0, 0, 0, 0.12)',
   textAlign: 'center',
   position: 'relative',
-  animation: 'slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
+  animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
 };
 
-const creditModalIconWrapStyle = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  gap: '12px',
+// 상단 크레딧 pill
+const creditCostPillStyle = {
+  background: '#eef2ff',
+  borderRadius: '14px',
+  padding: '14px 32px',
+  display: 'inline-block',
   marginBottom: '32px',
 };
+const creditCostPillTextStyle = {
+  fontSize: '1.5rem',
+  fontWeight: '800',
+  color: '#0f172a',
+  letterSpacing: '-0.02em',
+};
 
-const creditModalIconCircleStyle = {
-  width: '80px',
-  height: '80px',
-  borderRadius: '24px',
-  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+// 보유↔차감 비교 행
+const creditCompareRowStyle = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  boxShadow: '0 12px 32px rgba(245, 158, 11, 0.3)',
+  gap: '24px',
+  marginBottom: '20px',
 };
-
-const creditModalBadgeStyle = {
-  padding: '4px 14px',
-  background: '#fff7ed',
-  color: '#d97706',
-  fontSize: '11px',
-  fontWeight: '800',
-  borderRadius: '50px',
-  letterSpacing: '1.2px',
-  border: '1px solid #ffedd5',
-};
-
-const creditModalTitleStyle = {
-  fontSize: '1.75rem',
-  fontWeight: '900',
-  color: '#0f172a',
-  marginBottom: '14px',
-  letterSpacing: '-0.04em',
-  lineHeight: '1.25',
-};
-
-const creditModalAmountStyle = {
-  color: '#f59e0b',
-  position: 'relative',
-  zIndex: 1,
-};
-
-const creditModalDescStyle = {
-  fontSize: '1.05rem',
-  color: '#64748b',
-  lineHeight: '1.75',
-  marginBottom: '36px',
-  fontWeight: '500',
-};
-
-const creditInfoBoxStyle = {
-  background: '#f8fafc',
-  border: '1px solid #f1f5f9',
-  borderRadius: '20px',
-  padding: '24px',
-  marginBottom: '36px',
-  textAlign: 'left',
-};
-
-const creditInfoRowStyle = {
+const creditCompareColStyle = {
   display: 'flex',
+  flexDirection: 'column',
   alignItems: 'center',
-  justifyContent: 'space-between',
+  gap: '8px',
+  minWidth: '80px',
 };
-
-const creditInfoDividerStyle = {
-  height: '1px',
-  background: '#e2e8f0',
-  margin: '16px 0',
-  opacity: 0.5,
-};
-
-const creditInfoLabelStyle = {
-  fontSize: '0.9rem',
+const creditCompareLabelStyle = {
+  fontSize: '0.8rem',
   color: '#94a3b8',
   fontWeight: '600',
 };
-
-const creditInfoValueStyle = {
-  fontSize: '1rem',
-  color: '#1e293b',
-  fontWeight: '700',
-};
-
-const creditInfoCostStyle = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '6px',
-  fontSize: '1.1rem',
-  color: '#f59e0b',
+const creditCompareValueStyle = {
+  fontSize: '2rem',
   fontWeight: '800',
+  color: '#0f172a',
+  letterSpacing: '-0.03em',
+};
+const creditCompareArrowStyle = {
+  fontSize: '1.2rem',
+  color: '#94a3b8',
+  marginTop: '20px',
 };
 
+// 확인 / 취소 버튼
 const creditConfirmButtonStyle = {
-  padding: '16px 40px',
+  display: 'block',
+  width: '100%',
+  padding: '16px',
   borderRadius: '16px',
   border: 'none',
   background: '#0f172a',
   color: '#ffffff',
-  fontSize: '1.05rem',
+  fontSize: '1.1rem',
   fontWeight: '700',
   cursor: 'pointer',
-  transition: 'all 0.25s ease',
-  boxShadow: '0 10px 25px rgba(15, 23, 42, 0.25)',
-  minWidth: '160px',
+  marginTop: '28px',
+  transition: 'opacity 0.2s ease',
+};
+const creditConfirmDisabledButtonStyle = {
+  display: 'block',
+  width: '100%',
+  padding: '16px',
+  borderRadius: '16px',
+  border: 'none',
+  background: '#e2e8f0',
+  color: '#94a3b8',
+  fontSize: '1.1rem',
+  fontWeight: '700',
+  cursor: 'not-allowed',
+  marginTop: '28px',
+};
+const creditCancelTextButtonStyle = {
+  display: 'block',
+  width: '100%',
+  padding: '12px',
+  border: 'none',
+  background: 'transparent',
+  color: '#94a3b8',
+  fontSize: '0.9rem',
+  fontWeight: '600',
+  cursor: 'pointer',
+  marginTop: '8px',
+};
+const creditInsufficientStyle = {
+  fontSize: '0.88rem',
+  color: '#ef4444',
+  fontWeight: '600',
+  textAlign: 'center',
+  marginTop: '4px',
+  marginBottom: '0',
 };
 
 // ========== 로그인 모달 스타일 ========== //

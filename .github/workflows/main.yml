@@ -6,7 +6,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: [ self-hosted, i-poten-front ]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -44,14 +44,14 @@ jobs:
           username: i-cygnus
           password: ${{ secrets.GHCR_TOKEN }}
       
-      - name: Build and push Docker image (Multi-arch)
+      - name: Build and push Docker image (Native ARM64)
         uses: docker/build-push-action@v4
         with:
           context: .
           file: Dockerfile
           push: true
           tags: ghcr.io/i-cygnus/i-poten-frontend:latest
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/arm64
           build-args: |
             REACT_POTEN_WORD_APP=https://i-poten.com/poten-word-app
             REACT_NAVIGATION_APP=https://i-poten.com/navigation-bar-app

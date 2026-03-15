@@ -21,36 +21,41 @@ ENV MFE_PUBLIC_SERVICE=${MFE_PUBLIC_SERVICE}
 ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=4096"}
 
 # -------------------------
-# workspace에 있지만 실제 폴더 없는 경우 방어
+# 의존성 설치 최적화 (Layer Caching)
 # -------------------------
-RUN test -d studyroom-app || \
-  (mkdir -p studyroom-app && \
-   printf '{"name":"studyroom-app","version":"0.0.0","private":true}' > studyroom-app/package.json)
-RUN test -d packages/app-state || \
-  (mkdir -p packages/app-state && \
-   printf '{"name":"@jobspoon/app-state","version":"0.1.0","private":true}' > packages/app-state/package.json)
-RUN test -d packages/theme-bridge || \
-  (mkdir -p packages/theme-bridge && \
-   printf '{"name":"@jobspoon/theme-bridge","version":"0.1.0","private":true}' > packages/theme-bridge/package.json)
+# 루트 및 각 워크스페이스의 package.json만 먼저 복사
+COPY package.json package-lock.json* ./
+COPY main-container/package.json main-container/
+COPY next-seo-app/package.json next-seo-app/
+COPY navigation-bar-app/package.json navigation-bar-app/
+COPY vue-account-app/package.json vue-account-app/
+COPY vue-ai-interview-app/package.json vue-ai-interview-app/
+COPY studyroom-app/package.json studyroom-app/
+COPY mypage-app/package.json mypage-app/
+COPY poten-word-app/package.json poten-word-app/
+COPY sveltekit-review-app/package.json sveltekit-review-app/
+COPY packages/app-state/package.json packages/app-state/
+COPY packages/theme-bridge/package.json packages/theme-bridge/
 
 # -------------------------
-# 전체 소스 복사
+# workspace 방어 로직 (폴더가 없는 경우 대비)
+# -------------------------
+RUN mkdir -p studyroom-app packages/app-state packages/theme-bridge
+
+# workspace: 프로토콜 변환 및 의존성 설치
+RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {} \;
+RUN npm install --legacy-peer-deps
+
+# -------------------------
+# 전체 소스 복사 및 빌드
 # -------------------------
 COPY . .
-
-# workspace: 프로토콜 변환
-RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {} \;
-
-# 의존성 설치
-RUN rm -f package-lock.json && npm install --legacy-peer-deps
 
 # 공통 패키지 빌드
 RUN npm -ws run build -w @jobspoon/theme-bridge -w @jobspoon/app-state
 
-# next-seo-app 빌드
+# 각 앱 빌드
 RUN npm run build:next-seo
-
-# sveltekit-review-app 제외하고 빌드
 RUN npm run build:remotes && npm run build:host
 
 # 2단계: Nginx

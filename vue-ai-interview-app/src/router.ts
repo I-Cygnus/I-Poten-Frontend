@@ -72,7 +72,9 @@ const router = createRouter({
 // 면접 세션 토큰이 필요한 경로들
 const protectedRoutes = [
     '/ai-test',
-    '/ai-interview/end'
+    '/ai-interview/end',
+    '/ai-interview/detail/',
+    '/ai-interview/form/',
 ];
 
 // 라우트 가드: 면접 세션 토큰 검증

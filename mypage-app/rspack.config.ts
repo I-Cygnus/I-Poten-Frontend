@@ -26,6 +26,7 @@ export default defineConfig({
     port: 3020,
     historyApiFallback: true,
     watchFiles: [path.resolve(__dirname, "src")],
+    static: { directory: path.resolve(__dirname, "public") },
   },
   output: {
     // You need to set a unique value that is not equal to other applications
@@ -87,6 +88,9 @@ export default defineConfig({
   plugins: [
     new rspack.HtmlRspackPlugin({
       template: "./index.html",
+    }),
+    new rspack.CopyRspackPlugin({
+      patterns: [{ from: "public", to: "." }],
     }),
     new DefinePlugin({
 
