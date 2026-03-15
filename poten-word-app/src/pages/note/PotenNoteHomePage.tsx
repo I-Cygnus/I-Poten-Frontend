@@ -693,14 +693,39 @@ const EmptyActions = styled.div`
 `;
 
 const GhostBtn = styled.button`
-  height: 38px; padding: 0 14px;
-  border-radius: 8px; border: 1px solid ${UI.color.line};
-  background: #fff; color: ${UI.color.text};
-  font-weight: 700; cursor: pointer;
-  transition: background .15s ease, transform .08s ease, filter .15s ease;
-  &:hover { background: #f9fafb; }
-  &:active { transform: translateY(1px); }
-  &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.25); }
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 8px;
+    border: 1px solid ${UI.color.line};
+    background: #fff;
+    color: ${UI.color.text};
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .15s ease, transform .08s ease, filter .15s ease;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+
+    &:hover { background: #f9fafb; }
+    &:active { transform: translateY(1px); }
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(79,118,241,.25);
+    }
+
+    & > .icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 0;
+    }
+
+    & svg {
+        display: block;
+    }
 `;
 
 const NoResultWrap = styled(EmptyWrap)`

@@ -1712,10 +1712,11 @@ export default function WordbookPage() {
                 return "title,asc";
             case "title_desc":
                 return "title,desc";
-            case "createdAt_desc":
-                return "createdAt,desc";
             case "status_asc":
+                return "status,asc";
             case "status_desc":
+                return "status,desc";
+            case "createdAt_desc":
             default:
                 return "createdAt,desc";
         }
@@ -2430,24 +2431,18 @@ export default function WordbookPage() {
             return Number.isFinite(t) ? t : -Infinity;
         };
 
-        if (sortKey === "status_asc" || sortKey === "status_desc") {
-            const rank = (id: string) => (learn[id] ?? "unmemorized") === "memorized" ? 1 : 0;
-            return arr.sort((a, b) => {
-                const diff = (sortKey === "status_asc" ? 1 : -1) * (rank(a.uwtId) - rank(b.uwtId));
-                return diff || compareTitle(a, b);
-            });
-        }
-
         switch (sortKey) {
             case "title_asc":
                 return arr.sort(compareTitle);
             case "title_desc":
                 return arr.sort((a, b) => compareTitle(b, a));
             case "createdAt_desc":
+            case "status_asc":
+            case "status_desc":
             default:
                 return arr.sort((a, b) => (safeDate(b) - safeDate(a)) || compareTitle(a, b));
         }
-    }, [items, learn, sortKey]);
+    }, [items, sortKey]);
 
     /** 카드 1장씩 떠오르는 애니메이션 (검색페이지와 동일 패턴) */
     React.useEffect(() => {

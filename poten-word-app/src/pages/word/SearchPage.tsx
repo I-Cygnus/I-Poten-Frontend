@@ -1184,12 +1184,53 @@ export default function SearchPage() {
     const [noteModalOpen, setNoteModalOpen] = useState(false);
     const [selectedJob, setSelectedJob] = useState<JobGroup | null>(null);
 
-    // 시스템 메시지 모달 상태
+// 모달 상태
+    const [moveOpen, setMoveOpen] = useState(false);
+    const [notebooks, setNotebooks] = useState<Notebook[]>([]);
+    const [selectedTermId, setSelectedTermId] = useState<number | null>(null);
+    const [pendingTermIds, setPendingTermIds] = useState<number[] | null>(null);
+    const [saving, setSaving] = useState(false);
+    const [savedEver, setSavedEver] = useState<Set<number>>(new Set());
+
+// 시스템 메시지 모달 상태
     const [systemMessage, setSystemMessage] = useState<SystemMessage | null>(null);
     const [systemOpen, setSystemOpen] = useState(false);
-    const showMessage = useCallback((msg: SystemMessage) => {
-        setSystemMessage(msg);
-        setSystemOpen(true);
+    const systemTimerRef = useRef<number | null>(null);
+
+    const showMessage = useCallback(
+        (msg: SystemMessage) => {
+            if (systemTimerRef.current) {
+                window.clearTimeout(systemTimerRef.current);
+                systemTimerRef.current = null;
+            }
+
+            const hasBlockingModal = moveOpen || noteModalOpen;
+
+            if (hasBlockingModal) {
+                setMoveOpen(false);
+                setNoteModalOpen(false);
+
+                systemTimerRef.current = window.setTimeout(() => {
+                    setSystemMessage(msg);
+                    setSystemOpen(true);
+                    systemTimerRef.current = null;
+                }, 220);
+
+                return;
+            }
+
+            setSystemMessage(msg);
+            setSystemOpen(true);
+        },
+        [moveOpen, noteModalOpen]
+    );
+
+    useEffect(() => {
+        return () => {
+            if (systemTimerRef.current) {
+                window.clearTimeout(systemTimerRef.current);
+            }
+        };
     }, []);
 
     /** URL params */
@@ -1331,14 +1372,6 @@ export default function SearchPage() {
     useEffect(() => {
         if (selectedCount > 0) setShowTray(true);
     }, [selectedCount]);
-
-    /** 모달 상태 */
-    const [moveOpen, setMoveOpen] = useState(false);
-    const [notebooks, setNotebooks] = useState<Notebook[]>([]);
-    const [selectedTermId, setSelectedTermId] = useState<number | null>(null); // 단일
-    const [pendingTermIds, setPendingTermIds] = useState<number[] | null>(null); // 벌크
-    const [saving, setSaving] = useState(false);
-    const [savedEver, setSavedEver] = useState<Set<number>>(new Set());
 
     /** 캐시 키 */
     const cacheKey = useMemo(() => {
@@ -1600,27 +1633,85 @@ export default function SearchPage() {
             try {
                 setSaving(true);
 
-                await attachJobRecommendationToFolder(
+                const jobTitle = selectedJob.title;
+
+                const resData = await attachJobRecommendationToFolder(
                     wordbookId,
                     selectedJob.key
                 );
 
-                alert(`'${selectedJob.title}' 직무의 추천 포텐워드가 내 포텐노트에 저장됐어요.`);
+                const {
+                    addedCount,
+                    duplicateCount,
+                    failedCount,
+                } = parseBulkResult(resData);
 
-                setNoteModalOpen(false);
+                const addN = addedCount;
+                const dupN = duplicateCount;
+                const failN = failedCount;
+
                 setSelectedJob(null);
+
+                if (failN > 0) {
+                    showMessage({
+                        tone: "warning",
+                        title: "일부만 저장되었어요",
+                        description: `${addN}개 저장, ${dupN}개는 이미 저장됨, ${failN}개는 실패했어요. 잠시 후 다시 시도해 주세요.`,
+                    });
+                } else if (addN === 0 && dupN > 0) {
+                    showMessage({
+                        tone: "info",
+                        title: "이미 저장된 용어예요",
+                        description: `'${jobTitle}' 직무 추천 용어는 이미 내 포텐노트에 저장되어 있었어요.`,
+                    });
+                } else if (addN > 0 && dupN > 0) {
+                    showMessage({
+                        tone: "success",
+                        title: "저장 완료",
+                        description: `${addN}개 용어를 저장했고, ${dupN}개는 이미 저장된 항목이었어요.`,
+                    });
+                } else if (addN > 0) {
+                    showMessage({
+                        tone: "success",
+                        title: "저장 완료",
+                        description: `'${jobTitle}' 직무 추천 포텐워드를 ${addN}개 저장했어요.`,
+                    });
+                } else {
+                    showMessage({
+                        tone: "warning",
+                        title: "저장된 항목이 없어요",
+                        description: "이미 저장되어 있거나 처리할 수 없었어요.",
+                    });
+                    console.debug("[job-save] unexpected response:", resData);
+                }
             } catch (err: any) {
                 const s = err?.response?.status;
 
                 if (s === 401) {
-                    alert("로그인이 필요합니다.");
+                    showMessage({
+                        tone: "warning",
+                        title: "로그인이 필요합니다",
+                        description: "로그인 후 다시 시도해 주세요.",
+                    });
                     navigate("/login");
                 } else if (s === 403) {
-                    alert("해당 폴더에 저장할 권한이 없습니다.");
+                    showMessage({
+                        tone: "warning",
+                        title: "접근 권한이 없어요",
+                        description: "해당 포텐노트에 저장할 권한이 없습니다.",
+                    });
                 } else if (s === 404) {
-                    alert("폴더 또는 직무 추천 세트를 찾을 수 없습니다.");
+                    showMessage({
+                        tone: "warning",
+                        title: "대상을 찾을 수 없어요",
+                        description: "폴더 또는 직무 추천 세트를 찾을 수 없습니다.",
+                    });
                 } else {
-                    alert("저장 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+                    showMessage({
+                        tone: "error",
+                        title: "저장 중 오류가 발생했어요",
+                        description: "잠시 후 다시 시도해 주세요.",
+                    });
                 }
 
                 console.error("[attachJobGroupToFolder] 실패:", err);
@@ -1628,7 +1719,7 @@ export default function SearchPage() {
                 setSaving(false);
             }
         },
-        [selectedJob, saving, navigate]
+        [selectedJob, saving, navigate, showMessage]
     );
 
     /** 액션바 '내 포텐노트에 저장하기' */
@@ -2064,16 +2155,6 @@ export default function SearchPage() {
                         }}
                         onRefresh={async () => await fetchUserFolders()}
                     />
-
-                    {/* 시스템 메시지 모달 */}
-                    <SystemMessageModal
-                        open={systemOpen}
-                        message={systemMessage}
-                        onClose={() => {
-                            setSystemOpen(false);
-                            setSystemMessage(null);
-                        }}
-                    />
                 </WhiteStageInner>
             </WhiteStage>
             {/* 필터/검색 없을 때: 새로 도착한 포텐워드 */}
@@ -2229,6 +2310,15 @@ export default function SearchPage() {
                     />
                 </>
             )}
+            {/* 시스템 메시지 모달 */}
+            <SystemMessageModal
+                open={systemOpen}
+                message={systemMessage}
+                onClose={() => {
+                    setSystemOpen(false);
+                    setSystemMessage(null);
+                }}
+            />
         </>
     );
 }
