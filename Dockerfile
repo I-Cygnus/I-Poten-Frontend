@@ -23,24 +23,22 @@ ENV NODE_OPTIONS=${NODE_OPTIONS:-"--max-old-space-size=4096"}
 # -------------------------
 # 의존성 설치 최적화 (Layer Caching)
 # -------------------------
-# 루트 및 각 워크스페이스의 package.json만 먼저 복사
+# 루트 및 사용 중인 워크스페이스의 package.json만 먼저 복사
 COPY package.json package-lock.json* ./
 COPY main-container/package.json main-container/
 COPY next-seo-app/package.json next-seo-app/
 COPY navigation-bar-app/package.json navigation-bar-app/
 COPY vue-account-app/package.json vue-account-app/
 COPY vue-ai-interview-app/package.json vue-ai-interview-app/
-COPY studyroom-app/package.json studyroom-app/
 COPY mypage-app/package.json mypage-app/
 COPY poten-word-app/package.json poten-word-app/
-COPY sveltekit-review-app/package.json sveltekit-review-app/
 COPY packages/app-state/package.json packages/app-state/
 COPY packages/theme-bridge/package.json packages/theme-bridge/
 
 # -------------------------
-# workspace 방어 로직 (폴더가 없는 경우 대비)
+# workspace 방어 로직 (공통 패키지용)
 # -------------------------
-RUN mkdir -p studyroom-app packages/app-state packages/theme-bridge
+RUN mkdir -p packages/app-state packages/theme-bridge
 
 # workspace: 프로토콜 변환 및 의존성 설치
 RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {} \;
