@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-// API imports removed - using mock data
+
 type InterviewSummary = {
     interviewId: number;
     interviewType: string;
@@ -8,6 +8,15 @@ type InterviewSummary = {
     sender: string;
     finished: boolean;
 };
+
+const INTERVIEW_TYPE_MAP: Record<string, string> = {
+    TECHNICAL: "기술 면접",
+    COMPANY: "기업 면접",
+    PERSONAL: "인성 면접",
+};
+
+const API_BASE = process.env.REACT_APP_API_BASE_URL ?? "";
+
 import {FaRobot, FaRegClock, FaSearch, FaLock} from "react-icons/fa";
 import Spinner from "../components/common/Spinner.tsx";
 import {notifyError, notifyInfo} from "../utils/toast.ts";
@@ -20,25 +29,33 @@ export default function InterviewResultPage() {
     const [sortOption, setSortOption] = useState<"latest" | "oldest" | "status">("latest");
 
     useEffect(() => {
-        // Mock data for UI display
-        const mockData: InterviewSummary[] = [
-            {
-                interviewId: 1,
-                interviewType: "백엔드 기술 면접",
-                createdAt: new Date().toISOString(),
-                sender: "AI",
-                finished: true
-            },
-            {
-                interviewId: 2,
-                interviewType: "프론트엔드 기술 면접",
-                createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-                sender: "AI",
-                finished: false
+        const fetchInterviewList = async () => {
+            try {
+                const res = await fetch(`${API_BASE}/api/interview/result/list`, {
+                    credentials: "include",
+                });
+                if (!res.ok) {
+                    notifyError("면접 목록을 불러오지 못했습니다.");
+                    return;
+                }
+                const data = await res.json();
+                // 백엔드 응답: { list: [...] } 또는 배열 직접
+                const raw: any[] = Array.isArray(data) ? data : (data.list ?? data.interviewResultList ?? []);
+                const mapped: InterviewSummary[] = raw.map((item) => ({
+                    interviewId: item.interviewId,
+                    interviewType: INTERVIEW_TYPE_MAP[item.interviewType] ?? item.interviewType,
+                    createdAt: item.createdAt,
+                    sender: item.sender ?? "AI",
+                    finished: item.finished ?? item.isFinished ?? false,
+                }));
+                setList(mapped);
+            } catch (e) {
+                notifyError("네트워크 오류가 발생했습니다.");
+            } finally {
+                setLoading(false);
             }
-        ];
-        setList(mockData);
-        setLoading(false);
+        };
+        fetchInterviewList();
     }, []);
 
     if (loading) return <Spinner />;

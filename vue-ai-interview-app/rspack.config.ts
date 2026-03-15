@@ -88,6 +88,10 @@ export default defineConfig({
             type: "asset", // 또는 type: 'asset/resource'
           },
           {
+            test: /\.(mp4|webm|ogg|mp3|wav|flac|aac)$/i,
+            type: "asset/resource",
+          },
+          {
             test: /\.vue$/,
             loader: "vue-loader",
             options: {

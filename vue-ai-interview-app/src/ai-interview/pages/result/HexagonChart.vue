@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, onBeforeUnmount, watch } from "vue";
 import Chart from "chart.js/auto";
 
 const props = defineProps<{
@@ -15,79 +15,94 @@ const props = defineProps<{
 const chartCanvas = ref<HTMLCanvasElement | null>(null);
 let radarChart: Chart | null = null;
 
-// ⬇️ 스타일 객체 상수화
 const chartWrapperStyle = {
   width: "100%",
-  maxWidth: "350px",
-  height: "250px",
-  margin: "auto"
+  maxWidth: "360px",
+  height: "280px",
+  margin: "auto",
 };
+
 const canvasStyle = {
   width: "100%",
   height: "100%",
-  display: "block"
+  display: "block",
 };
 
 const drawChart = () => {
-  if (!chartCanvas.value || !props.scoreList || !Array.isArray(props.scoreList))
-    return;
-  if (props.scoreList.length === 0) return;
+  if (!chartCanvas.value || !props.scoreList?.length) return;
 
-  const labels = props.scoreList.map((item) => item.type);
-  const data = props.scoreList.map((item) => item.score);
-
-  if (radarChart) radarChart.destroy();
+  if (radarChart) {
+    radarChart.destroy();
+    radarChart = null;
+  }
 
   radarChart = new Chart(chartCanvas.value, {
     type: "radar",
     data: {
-      labels,
+      labels: props.scoreList.map((item) => item.type),
       datasets: [
         {
-          label: "면접 점수",
-          data,
+          data: props.scoreList.map((item) => item.score),
           fill: true,
-          backgroundColor: "rgba(54, 162, 235, 0.2)",
-          borderColor: "rgba(54, 162, 235, 1)",
-          pointBackgroundColor: "rgba(54, 162, 235, 1)",
-          pointBorderColor: "#fff",
+          backgroundColor: "rgba(16, 185, 129, 0.08)",
+          borderColor: "#4F9CF9",
+          borderWidth: 2,
+          pointBackgroundColor: "#4F9CF9",
+          pointBorderColor: "#ffffff",
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+          pointHoverBackgroundColor: "#10b981",
+          pointHoverBorderColor: "#ffffff",
         },
       ],
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      layout: {
-        padding: 20,
+      animation: {
+        duration: 1000,
+        easing: "easeInOutQuart",
       },
+      layout: { padding: 8 },
       scales: {
         r: {
           min: 0,
           max: 10,
           ticks: {
             stepSize: 2,
-            color: "#444",
+            color: "#c0c0c0",
+            font: { size: 9 },
+            backdropColor: "transparent",
           },
+          grid: { color: "rgba(0, 0, 0, 0.05)" },
+          angleLines: { color: "rgba(0, 0, 0, 0.07)" },
           pointLabels: {
-            font: {
-              size: 14,
-            },
-            color: "#222",
+            font: { size: 12, weight: "600" },
+            color: "#374151",
           },
         },
       },
       plugins: {
-        legend: {
-          display: false,
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: "rgba(15, 23, 42, 0.88)",
+          titleColor: "#ffffff",
+          bodyColor: "rgba(255,255,255,0.75)",
+          padding: 10,
+          cornerRadius: 8,
+          callbacks: {
+            label: (ctx) => ` ${ctx.raw}점 / 10점`,
+          },
         },
       },
     },
   });
 };
 
-watch(() => props.scoreList, drawChart);
-
-onMounted(() => {
-  drawChart();
+watch(() => props.scoreList, drawChart, { deep: true });
+onMounted(() => drawChart());
+onBeforeUnmount(() => {
+  if (radarChart) radarChart.destroy();
 });
 </script>
