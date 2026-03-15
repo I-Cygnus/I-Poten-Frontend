@@ -1,0 +1,13 @@
+**/node_modules
+.git
+.idea
+.DS_Store
+*.log
+**/dist
+**/out
+**/.next
+**/.svelte-kit
+**/build
+.npm
+.yarn
+.pnpm-store

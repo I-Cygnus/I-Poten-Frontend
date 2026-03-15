@@ -111,6 +111,7 @@ function InnerApp() {
         // 네비게이션바 숨길 경로
         const hiddenLayouts = [
             "/vue-account/account/login",
+            "/vue-account/account/privacy",
             "/vue-ai-interview/ai-interview/select",
             "/vue-ai-interview/ai-interview/result",
             "/vue-ai-interview/ai-interview/form/",
@@ -124,6 +125,7 @@ function InnerApp() {
             "/mypage/",
             "/mypage",
             "/vue-account/account/login",
+            "/vue-account/account/privacy",
             "/vue-ai-interview/ai-interview/select",
             "/vue-ai-interview/ai-interview/result",
             "/vue-ai-interview/ai-interview/form/",

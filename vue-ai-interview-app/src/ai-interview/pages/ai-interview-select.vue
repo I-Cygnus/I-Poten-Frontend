@@ -583,10 +583,16 @@ const fetchCredit = async () => {
   try {
     const { springAxiosInstance } = axiosUtility.createAxiosInstances();
     const res = await springAxiosInstance.get('/credit/account');
+    
+    // API 응답이 성공하면 로그인 된 것으로 간주
     currentCredit.value = res.data.credit ?? null;
   } catch (e) {
-    console.error('크레딧 조회 실패:', e);
+    console.error('크레딧 조회 실패 (로그인 필요 가능성):', e);
     currentCredit.value = null;
+    
+    // API 호출 실패 시 로그인 모달을 띄우고 크레딧 모달은 닫습니다.
+    showCreditModal.value = false;
+    showLoginModal.value = true;
   } finally {
     isCreditLoading.value = false;
   }
@@ -732,31 +738,7 @@ const isCompanyFormValid = computed(() => {
   );
 });
 
-// 로그인 확인 함수 (httponly 쿠키는 직접 접근 불가하므로 API 호출로 확인)
-const checkLoginStatus = async () => {
-  try {
-    // HttpOnly 쿠키는 JavaScript로 직접 접근할 수 없으므로
-    // API 엔드포인트를 통해 인증 상태를 확인하거나
-    // 서버에서 설정한 별도의 클라이언트 접근 가능 토큰을 확인해야 합니다.
-    // 여기서는 쿠키가 자동으로 전송되는 API 호출로 확인합니다.
-    
-    // 방법 1: API 엔드포인트로 인증 확인
-    const response = await fetch('/api/auth/check', {
-      method: 'GET',
-      credentials: 'include' // httponly 쿠키 포함
-    });
-    
-    if (response.ok) {
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error('Login check failed:', error);
-    // API 호출 실패 시 localStorage 백업 체크 (있다면)
-    const userToken = localStorage.getItem('userToken');
-    return !!userToken;
-  }
-};
+
 
 // 로그인 모달 닫기
 const closeLoginModal = () => {
@@ -771,13 +753,6 @@ const goToLogin = () => {
 
 // 선택 핸들러
 const selectInterviewType = async (type) => {
-  // 로그인 확인
-  const isLoggedIn = await checkLoginStatus();
-  if (!isLoggedIn) {
-    showLoginModal.value = true;
-    return;
-  }
-  
   // 준비중인 옵션은 선택 불가
   const option = interviewTypes.find(opt => opt.type === type);
   if (option && option.status === 'preparing') {
@@ -793,6 +768,8 @@ const selectInterviewType = async (type) => {
     pendingCreditCost.value = CREDIT_COSTS[type];
     pendingTypeName.value = TYPE_NAMES[type] || type;
     showCreditModal.value = true;
+    
+    // fetchCredit() 호출 시 내부에서 로그인 여부(API 성공 여부)를 함께 체크합니다.
     fetchCredit();
     return;
   }

@@ -214,6 +214,8 @@
       </div>
     </div>
   </div>
+
+  <AlertPopup v-model="alertVisible" :message="alertMessage" />
 </template>
 
 
@@ -226,11 +228,16 @@ import { useRouter, onBeforeRouteLeave } from "vue-router";
 import "@mdi/font/css/materialdesignicons.css";
 import { useHead } from '@vueuse/head'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import AlertPopup from '@/components/common/AlertPopup.vue';
 import { clearInterviewSessionToken } from '@/utils/sessionToken';
-import interview1Video from '@/assets/interview1.mp4';
-import interview2Video from '@/assets/interview2.mp4';
-import interview3Video from '@/assets/interview3.mp4';
-import interview4Video from '@/assets/interview4.mp4';
+
+const alertVisible = ref(false);
+const alertMessage = ref('');
+const showAlert = (msg) => { alertMessage.value = msg; alertVisible.value = true; };
+const interview1Video = 'https://cdn.i-poten.com/interview/interview1.mp4';
+const interview2Video = 'https://cdn.i-poten.com/interview/interview2.mp4';
+const interview3Video = 'https://cdn.i-poten.com/interview/interview3.mp4';
+const interview4Video = 'https://cdn.i-poten.com/interview/interview4.mp4';
 
 const answerVideoSources = [interview2Video, interview3Video, interview4Video];
 const currentQuestionVideo = ref(interview2Video);
@@ -410,7 +417,7 @@ const checkMediaReady = async () => {
       audio: true,
     });
     mediaChecked.value = true;
-    alert("마이크와 카메라가 정상적으로 작동합니다.");
+    showAlert("마이크와 카메라가 정상적으로 작동합니다.");
     mediaStream.value = stream;
     if (previewVideo.value) previewVideo.value.srcObject = stream;
     
@@ -418,7 +425,7 @@ const checkMediaReady = async () => {
     await nextTick();
     if (smallPreview.value) smallPreview.value.srcObject = stream;
   } catch (err) {
-    alert("마이크 또는 카메라에 접근할 수 없습니다. 브라우저 권한을 확인하세요.");
+    showAlert("마이크 또는 카메라에 접근할 수 없습니다. 브라우저 권한을 확인하세요.");
     mediaChecked.value = false;
   }
 };
@@ -459,10 +466,10 @@ const startRecording = async () => {
       }
     };
     recorder.start();
-    alert("녹화를 시작합니다");
+    showAlert("녹화를 시작합니다");
   } catch (err) {
     console.error("🎥 녹화 시작 실패:", err);
-    alert("녹화 시작 중 오류가 발생했습니다.");
+    showAlert("녹화 시작 중 오류가 발생했습니다.");
   }
 };
 const stopRecording = () => {
@@ -471,7 +478,7 @@ const stopRecording = () => {
     if (recordingStream) {
       recordingStream.getTracks().forEach((track) => track.stop());
     }
-    alert("녹화 종료됨");
+    showAlert("녹화 종료됨");
   }
 };
 
@@ -499,7 +506,7 @@ onMounted(async () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("이 브라우저는 음성 인식을 지원하지 않습니다.");
+      showAlert("이 브라우저는 음성 인식을 지원하지 않습니다.");
       return;
     }
 
@@ -573,6 +580,7 @@ const replayQuestion = () => {
 };
 
 const handleBeforeUnload = (event) => {
+  clearInterviewSessionToken();
   if (start.value && !finished.value) {
     event.preventDefault();
     event.returnValue = "면접이 진행 중입니다. 페이지를 나가시겠습니까?";
@@ -655,7 +663,7 @@ const handleStartInterview = async () => {
   console.log(JSON.stringify(info, null, 2));
 
   if (!info.job || !info.career) {
-    alert("면접 정보를 찾을 수 없습니다. 처음으로 돌아갑니다.");
+    showAlert("면접 정보를 찾을 수 없습니다. 처음으로 돌아갑니다.");
     router.push("/ai-interview");
     return;
   }
@@ -718,7 +726,7 @@ const onAnswerComplete = async () => {
   const finalAnswer = (sttLog.value + " " + textAnswer.value).trim();
 
   if (!finalAnswer) {
-    alert("답변 내용이 없습니다. 음성 또는 텍스트로 답변을 입력해주세요.");
+    showAlert("답변 내용이 없습니다. 음성 또는 텍스트로 답변을 입력해주세요.");
     isGenerating.value = false;
     videoSequenceState.value = 'idle';
     visible.value = false;
@@ -816,7 +824,7 @@ const onAnswerComplete = async () => {
 
 
     if (!questionRes.interviewQuestion || !questionRes.interviewQAId) {
-      alert("다음 질문을 불러오지 못했습니다.");
+      showAlert("다음 질문을 불러오지 못했습니다.");
       isGenerating.value = false;
       return;
     }

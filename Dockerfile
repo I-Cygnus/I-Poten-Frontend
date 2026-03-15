@@ -41,10 +41,12 @@ COPY packages/theme-bridge/package.json packages/theme-bridge/
 RUN mkdir -p packages/app-state packages/theme-bridge
 
 # workspace: 프로토콜 변환 및 의존성 설치
-# package-lock.json을 제거해 Linux ARM64 환경에서 플랫폼 네이티브 바이너리를 새로 resolve
-RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {} \; && \
-    rm -f package-lock.json && \
-    npm install --legacy-peer-deps
+RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {} \;
+RUN npm install --legacy-peer-deps
+# macOS lockfile에 누락된 Linux ARM64 네이티브 바이너리 보완 설치
+RUN node -e "require('@rspack/binding')" 2>/dev/null || \
+    npm install --no-save --legacy-peer-deps \
+    "@rspack/binding-linux-arm64-gnu@$(node -e "console.log(require('./node_modules/@rspack/binding/package.json').version)")"
 
 # -------------------------
 # 전체 소스 복사 및 빌드
