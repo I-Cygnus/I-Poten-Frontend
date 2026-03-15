@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import event1 from "../../assets/event/thumbnail/01.png";
-import event2 from "../../assets/event/thumbnail/02.png";
-import event3 from "../../assets/event/thumbnail/03.png";
+import event1 from "../../assets/event/thumbnail/01.jpg";
+import event2 from "../../assets/event/thumbnail/02.jpg";
+import reviewer1 from "../../assets/event/reviewer/01.jpg";
+import reviewer2 from "../../assets/event/reviewer/02.jpg";
+import reviewer3 from "../../assets/event/reviewer/03.jpg";
+import reviewer4 from "../../assets/event/reviewer/04.jpg";
 
 type EventStatus = "ALL" | "ONGOING" | "ENDED" | "WINNER";
 
@@ -12,16 +15,18 @@ type EventItem = {
     id: number;
     title: string;
     isNew?: boolean;
-    startDate: string; // YYYY-MM-DD
-    endDate: string;   // YYYY-MM-DD
+    startDate: string;
+    endDate: string;
     imageUrl: string;
     status: EventStatus;
-
-    // 좌상단 원형 배지
     badge: {
         type: BadgeType;
-        text: string; // "종료" | "상시진행" | "D-30"
+        text: string;
     };
+    author?: string;
+    createdAt?: string;
+    contentHtml?: string;
+    detailImages?: string[];
 };
 
 type WinnerPost = {
@@ -257,37 +262,30 @@ const TABS: { key: EventStatus; label: string }[] = [
     { key: "ALL", label: "전체" },
     { key: "ONGOING", label: "진행중" },
     { key: "ENDED", label: "종료" },
-    { key: "WINNER", label: "당첨자발표" },
+//     { key: "WINNER", label: "당첨자발표" },
 ];
 
 const DUMMY: EventItem[] = [
     {
         id: 1,
-        title: "가입 축하 면접권 증정",
-        startDate: "2026-03-08",
-        endDate: "2026-03-15",
+        title: "오픈베타 이벤트",
+        isNew: true,
+        startDate: "2026-03-15",
+        endDate: "2026-04-15",
         imageUrl: event1,
-        status: "ENDED",
-        badge: { type: "ENDED", text: "종료" },
+        status: "ONGOING",
+        badge: { type: "DDAY", text: "" },
     },
     {
         id: 2,
-        title: "오픈베타 이벤트",
+        title: "포텐 리뷰어 이벤트",
         isNew: true,
-        startDate: "2026-03-08",
-        endDate: "2026-03-31",
+        startDate: "2026-03-15",
+        endDate: "2026-04-15",
         imageUrl: event2,
         status: "ONGOING",
-        badge: { type: "DDAY", text: "D-30" },
-    },
-    {
-        id: 3,
-        title: "출석체크 이벤트",
-        startDate: "2026-03-08",
-        endDate: "2026-03-31",
-        imageUrl: event3,
-        status: "ONGOING",
-        badge: { type: "ALWAYS", text: "상시진행" },
+        badge: { type: "DDAY", text: "" },
+        detailImages: [reviewer1, reviewer2, reviewer3, reviewer4],
     },
 ];
 
@@ -376,6 +374,18 @@ const WinnerDate = styled.div`
 
 const WinnerFooter = styled.div`
   padding: 22px 0 0;
+`;
+
+const StackedImages = styled.div`
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-right: calc(50% - 50vw);
+
+    img {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
 `;
 
 const Pagination = styled.div`
@@ -488,6 +498,46 @@ const SearchButton = styled.button`
     color: rgba(0,0,0,0.8);
   }
 `;
+
+function parseLocalDate(dateStr: string) {
+    const [year, month, day] = dateStr.split("-").map(Number);
+    return new Date(year, month - 1, day);
+}
+
+function startOfDay(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function diffDays(from: Date, to: Date) {
+    const ms = startOfDay(to).getTime() - startOfDay(from).getTime();
+    return Math.ceil(ms / (1000 * 60 * 60 * 24));
+}
+
+function getEventBadge(endDate: string, always?: boolean) {
+    if (always) {
+        return { type: "ALWAYS" as const, text: "상시진행" };
+    }
+
+    const today = new Date();
+    const end = parseLocalDate(endDate);
+    const dday = diffDays(today, end);
+
+    if (dday < 0) {
+        return { type: "ENDED" as const, text: "종료" };
+    }
+
+    return { type: "DDAY" as const, text: `D-${dday}` };
+}
+
+function getEventStatus(startDate: string, endDate: string): EventStatus {
+    const today = startOfDay(new Date());
+    const start = parseLocalDate(startDate);
+    const end = parseLocalDate(endDate);
+
+    if (today < start) return "ALL"; // 필요하면 UPCOMING 같은 상태 따로 추가
+    if (today > end) return "ENDED";
+    return "ONGOING";
+}
 
 const NewEventPage: React.FC = () => {
     const [active, setActive] = useState<EventStatus>("ONGOING");
@@ -708,22 +758,26 @@ const NewEventPage: React.FC = () => {
                 ) : (
                     <>
                         <Grid>
-                            {eventPageItems.map((e) => (
-                                <Card key={e.id} href={`/news/event/${e.id}`}>
-                                    <ThumbWrap>
-                                        <Thumb src={e.imageUrl} alt={e.title} />
-                                        <Badge $type={e.badge.type}>{e.badge.text}</Badge>
-                                    </ThumbWrap>
+                            {eventPageItems.map((e) => {
+                                const badge = getEventBadge(e.endDate);
 
-                                    <Meta>
-                                        <TitleRow>
-                                            <EventTitle>{e.title}</EventTitle>
-                                            {e.isNew && <NewPill>N</NewPill>}
-                                        </TitleRow>
-                                        <Dates>{formatRange(e.startDate, e.endDate)}</Dates>
-                                    </Meta>
-                                </Card>
-                            ))}
+                                return (
+                                    <Card key={e.id} href={`/news/event/${e.id}`}>
+                                        <ThumbWrap>
+                                            <Thumb src={e.imageUrl} alt={e.title} />
+                                            <Badge $type={badge.type}>{badge.text}</Badge>
+                                        </ThumbWrap>
+
+                                        <Meta>
+                                            <TitleRow>
+                                                <EventTitle>{e.title}</EventTitle>
+                                                {e.isNew && <NewPill>N</NewPill>}
+                                            </TitleRow>
+                                            <Dates>{formatRange(e.startDate, e.endDate)}</Dates>
+                                        </Meta>
+                                    </Card>
+                                );
+                            })}
                         </Grid>
 
                         {/* EVENT pagination + search */}
