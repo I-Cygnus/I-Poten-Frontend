@@ -158,7 +158,7 @@ import { useHead } from '@vueuse/head'
 
 // ✅ SEO 메타 정보
 useHead({
-  title: 'AI 모의 면접 시작 | 잡스틱(JobStick) Tech-Interview',
+  title: 'AI 모의 면접 시작 | I-Poten',
   meta: [
     {
       name: 'description',

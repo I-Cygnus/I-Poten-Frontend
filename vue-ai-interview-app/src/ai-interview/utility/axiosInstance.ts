@@ -11,6 +11,7 @@ export function createAxiosInstances() {
         springAxiosInstance = axios.create({
             baseURL: mainApiUrl,
             timeout: 80000,
+            withCredentials: true,
             headers: {
                 "Content-Type": "application/json",
             },

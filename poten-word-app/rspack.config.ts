@@ -112,6 +112,9 @@ module.exports = defineConfig({
     new rspack.HtmlRspackPlugin({
       template: "./index.html",
     }),
+    new rspack.CopyRspackPlugin({
+      patterns: [{ from: "public", to: "." }],
+    }),
     new DefinePlugin({
       "process.env.REACT_APP_API_BASE_URL": JSON.stringify(process.env.REACT_APP_API_BASE_URL ?? ""),
       "process.env.MFE_PUBLIC_SERVICE": JSON.stringify(process.env.MFE_PUBLIC_SERVICE ?? "http://localhost:3006"),

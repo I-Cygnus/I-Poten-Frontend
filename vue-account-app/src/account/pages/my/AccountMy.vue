@@ -124,7 +124,7 @@ import { useHead } from '@vueuse/head'
 
 // SEO meta는 동일하게 사용
 useHead({
-  title: "내 정보 | 잡스틱(JobStick)",
+  title: "내 정보 | I-Poten",
   meta: [
     { name: "description", content: "내 계정 정보를 확인하고 수정할 수 있는 페이지입니다." },
     { name: "keywords", content: "내 정보, 계정, 프로필, JobStick, 개발자 플랫폼, 개발자 취업, 모의 면접, AI 면접" },

@@ -256,7 +256,7 @@ const route = useRoute();
 const interviewId = ref(route.params.interviewId || "");
 
 useHead({
-  title: "AI 면접 결과 보기 | 잡스틱(JobStick)",
+  title: "AI 면접 결과 보기 | I-Poten",
   meta: [
     { name: "description", content: "AI 기반 모의 면접 결과를 확인하고, 나의 강점과 개선점을 분석해보세요." },
     { name: "keywords", content: "AI 면접, 면접 결과, 자기 분석, 모의 면접, AI 분석, 잡스틱, 개발자 취업" },

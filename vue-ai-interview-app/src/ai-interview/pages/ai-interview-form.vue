@@ -286,7 +286,7 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
-import { createInterviewSessionToken } from '@/utils/sessionToken';
+import * as axiosUtility from "../utility/axiosInstance";
 
 const router = useRouter();
 const route = useRoute();
@@ -395,7 +395,9 @@ const isFormValid = computed(() => {
   return basicValid;
 });
 
-const startInterview = () => {
+const CREDIT_COSTS = { '전형별': 2, '기업별': 6 };
+
+const startInterview = async () => {
   if (!isFormValid.value) { alert("모든 필수 항목을 선택해 주세요."); return; }
 
   const jobstorage = {
@@ -427,8 +429,22 @@ ${selectedCompany.value ? '선택한 회사: ' + selectedCompany.value : ''}
   }
   if (!confirm(message + "\n\n면접을 시작하시겠습니까?")) return;
 
-  // 면접 세션 토큰 생성 (TTL: 1시간)
-  createInterviewSessionToken();
+  // 크레딧 차감
+  const price = CREDIT_COSTS[interviewType.value] ?? 0;
+  if (price > 0) {
+    try {
+      const { springAxiosInstance } = axiosUtility.createAxiosInstances();
+      await springAxiosInstance.post('/credit/pay', { price });
+    } catch (e) {
+      const status = e?.response?.status;
+      if (status === 402 || status === 400) {
+        alert('크레딧이 부족합니다. 크레딧을 충전 후 이용해 주세요.');
+      } else {
+        alert('크레딧 차감 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+      }
+      return;
+    }
+  }
 
   localStorage.setItem("interviewInfo", JSON.stringify(jobstorage));
   router.push("/ai-test");

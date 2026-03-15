@@ -68,7 +68,7 @@ import { useAuthenticationStore } from '@/auth/stores/authenticationStore'
 
 // ✅ SEO 메타 정보 5
 useHead({
-  title: "회원 탈퇴 | 잡스틱(JobStick)",
+  title: "회원 탈퇴 | I-Poten",
   meta: [
     { name: "description", content: "잡스틱(JobStick) 계정을 탈퇴하고자 하는 이유를 선택하고, 계정 삭제 절차를 진행할 수 있습니다." },
     { name: "keywords", content: "회원 탈퇴, 계정 삭제, JobStick, 서비스 해지, 탈퇴, 개발자 플랫폼, 개발자 취업, 모의 면접, AI 면접" },

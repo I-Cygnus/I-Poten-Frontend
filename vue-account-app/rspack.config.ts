@@ -31,6 +31,7 @@ export default defineConfig({
     port: 3000,
     historyApiFallback: true,
     watchFiles: [path.resolve(__dirname, "src")],
+    static: { directory: path.resolve(__dirname, "public") },
 
     setupMiddlewares: (middlewares, devServer) => {
       const envOrigins = process.env.MFE_CORS_ORIGIN ?? "";
@@ -122,6 +123,9 @@ export default defineConfig({
     new VueLoaderPlugin(),
     new rspack.HtmlRspackPlugin({
       template: "./index.html",
+    }),
+    new rspack.CopyRspackPlugin({
+      patterns: [{ from: "public", to: "." }],
     }),
     new DefinePlugin({
       "process.env.VUE_APP_BASE_URL": JSON.stringify(
