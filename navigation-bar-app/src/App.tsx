@@ -129,9 +129,10 @@ const Header = styled.header<{ $scrolled?: boolean; $hidden?: boolean }>`
   width: 100%;
   height: ${({ $hidden }) => ($hidden ? "0px" : "72px")};
   background: ${({ $scrolled }) => 
-    $scrolled 
-      ? "rgba(255, 255, 255, 0.95)" 
-      : "transparent"
+    $scrolled ? "rgba(255, 255, 255, 0.95)" : "transparent"
+  };
+  background-color: ${({ $scrolled }) => 
+    $scrolled ? "rgba(255, 255, 255, 0.95)" : "transparent"
   };
   backdrop-filter: ${({ $scrolled }) => $scrolled ? "blur(20px)" : "none"};
   -webkit-backdrop-filter: ${({ $scrolled }) => $scrolled ? "blur(20px)" : "none"};
@@ -139,7 +140,7 @@ const Header = styled.header<{ $scrolled?: boolean; $hidden?: boolean }>`
   border-bottom: ${({ $scrolled }) => 
     $scrolled
       ? "1px solid rgba(0, 0, 0, 0.08)" 
-      : "1px solid transparent"
+      : "none"
   };
   box-shadow: ${({ $scrolled }) => 
     $scrolled
@@ -391,16 +392,30 @@ const App: React.FC = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
+    const getScrollY = () => {
+      const w = window.scrollY ?? 0;
+      const d = document.documentElement?.scrollTop ?? 0;
+      const b = document.body?.scrollTop ?? 0;
+      return Math.max(w, d, b);
     };
 
-    // 초기 로드 시 스크롤 위치 확인
-    handleScroll();
+    const handleScroll = () => {
+      const scrollY = getScrollY();
+      const currentPath = window.location.pathname;
+      const threshold = currentPath === "/" ? 250 : 80;
+      setIsScrolled(scrollY > threshold);
+    };
 
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    handleScroll();
+    requestAnimationFrame(handleScroll);
+    setTimeout(handleScroll, 100);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    window.addEventListener("load", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("load", handleScroll);
+    };
+  }, [location.pathname]);
 
   useEffect(() => {
     if (location.pathname !== "/") {
@@ -576,7 +591,9 @@ const App: React.FC = () => {
             <NavLink to="/vue-ai-interview/ai-interview/landing" $active={isActive("/vue-ai-interview")}>
               AI 인터뷰
             </NavLink>
-            <NavLink to="/poten-word" $active={isActive("/poten-word")}>포텐워드</NavLink>
+            <NavLink to="/learning/word" $active={isActive("/learning/word")}>포텐워드</NavLink>
+            <NavLink to="/learning/note" $active={isActive("/learning/note")}>포텐노트</NavLink>
+            <NavLink to="/learning/quiz/home" $active={isActive("/learning/quiz/home")}>포텐퀴즈</NavLink>
             <NavLink to="/mypage" $active={isActive("/mypage")}>MyPage</NavLink>
             {!isLoggedIn ? (
               <NavLink to="/vue-account/account/login" $active={isActive("/vue-account")}>
@@ -608,8 +625,14 @@ const App: React.FC = () => {
             >
               AI 인터뷰
             </BottomNavLink>
-            <BottomNavLink to="/spoon-word" $active={isActive("/spoon-word")}>
-              스푼워드
+            <BottomNavLink to="/learning/word" $active={isActive("/learning/word")}>
+              포텐워드
+            </BottomNavLink>
+            <BottomNavLink to="/learning/note" $active={isActive("/learning/note")}>
+              포텐노트
+            </BottomNavLink>
+            <BottomNavLink to="/learning/quiz/home" $active={isActive("/learning/quiz/home")}>
+              포텐퀴즈
             </BottomNavLink>
             <BottomNavLink to="/mypage" $active={isActive("/mypage")}>
               MyPage
@@ -631,8 +654,14 @@ const App: React.FC = () => {
           AI 인터뷰
         </MobileNavLink>
 
-        <MobileNavLink to="/poten-word" $active={isActive("/poten-word")}>
+        <MobileNavLink to="/learning/word" $active={isActive("/learning/word")}>
           포텐워드
+        </MobileNavLink>
+        <MobileNavLink to="/learning/note" $active={isActive("/learning/note")}>
+          포텐노트
+        </MobileNavLink>
+        <MobileNavLink to="/learning/quiz/home" $active={isActive("/learning/quiz/home")}>
+          포텐퀴즈
         </MobileNavLink>
         <MobileNavLink to="/mypage" $active={isActive("/mypage")}>
           MyPage

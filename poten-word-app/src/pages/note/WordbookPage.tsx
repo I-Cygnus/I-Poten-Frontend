@@ -15,6 +15,7 @@ import { saveBlob } from "../../utils/download.ts";
 import { sanitizeFilename } from "../../utils/cdFilename.ts";
 import { goToAccountLogin } from "../../utils/auth.ts";
 import SystemMessageModal, { SystemMessage } from "../../components/common/SystemMessageModal.tsx";
+import LearningPageHeader from "../../components/common/LearningPageHeader.tsx";
 // import { startQuizUnified } from "../api/quiz";
 
 /** 서버 응답에서 안전하게 뽑아둘 필드들 */
@@ -65,25 +66,7 @@ const UI = {
 };
 
 /* ---------- 상단 툴바 ---------- */
-const Toolbar = styled.div`
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    background: ${UI.color.bg};
-    //border-bottom: 1px solid ${UI.color.line};
-    padding: 12px 8px;
-    margin-bottom: 16px;
-    // box-shadow: ${UI.shadow.bar};
-`;
-
 const ChipRow = styled.div` display:flex; flex-wrap:wrap; gap:10px; align-items:center; `;
-
-const Title = styled.h2`
-    margin: 0;
-    font-size: ${UI.font.h2};
-    letter-spacing: -0.01em;
-    color: ${UI.color.text};
-`;
 
 const Count = styled.span`
     margin-left: 8px;
@@ -91,11 +74,14 @@ const Count = styled.span`
     font-weight: 400;
     letter-spacing: -0.02em;
     color: ${UI.color.muted};
-    line-height: 1;           /* 라인 높이 통일 */
+    line-height: 1;
 `;
 
-const Spacer = styled.div`
-    flex: 1 1 auto;
+const HeaderMeta = styled.div`
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
 `;
 
 /* ---------- 설정 버튼 + 메뉴 ---------- */
@@ -387,28 +373,224 @@ const Tray = styled.div`
 
 /* ---------- Pagination ---------- */
 type PaginationProps = {
-    page: number; size: number; total: number;
+    page: number;
+    size: number;
+    total: number;
     onChange: (nextPageZeroBased: number) => void;
 };
-const PaginationNav = styled.nav`
-    margin-top: ${UI.space(16)};
-    display: flex; align-items: center; justify-content: center;
-    gap: ${UI.space(8)}; user-select: none;
+
+const PaginationRow = styled.div`
+    display: flex;
+    justify-content: center;
+    padding-top: 6px;
+    width: fit-content;
+    margin: 0 auto;
 `;
-const PageNumBtn = styled.button<{ $active: boolean }>`
-    min-width: 34px; height: 34px; padding: 0 10px; border-radius: 999px;
-    border: 1px solid ${({ $active }) => ($active ? UI.color.primary : UI.color.line)};
-    background: ${({ $active }) => ($active ? UI.color.primary : "#fff")};
-    color: ${({ $active }) => ($active ? "#fff" : UI.color.text)};
-    font-weight: ${({ $active }) => ($active ? 700 : 600)};
+
+const PaginationBar = styled.nav`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px;
+`;
+
+const PagePill = styled.button<{ $active?: boolean }>`
+    height: 34px;
+    min-width: 34px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 0;
+
+    font-weight: 800;
+    letter-spacing: -0.02em;
     cursor: pointer;
+
+    color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
+    background: ${({ $active }) => ($active ? UI.color.primary : "transparent")};
+
+    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+
+    &:hover {
+        background: ${({ $active }) => ($active ? UI.color.primary : "rgba(255,255,255,0.85)")};
+        color: ${({ $active }) => ($active ? "#fff" : UI.color.text)};
+    }
+
+    &:active {
+        transform: translateY(1px);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(79,118,241,0.22);
+    }
 `;
-const NavBtn = styled.button<{ $disabled: boolean }>`
-    width: 34px; height: 34px; border-radius: 999px; border: 1px solid ${UI.color.line};
-    background: #fff; color: ${({ $disabled }) => ($disabled ? "#c7c7c7" : UI.color.text)};
-    cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
-    display: inline-flex; align-items: center; justify-content: center;
+
+const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
+    padding: 0 10px;
+    color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
+    cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+
+    &:hover {
+        background: ${({ disabled }) => (disabled ? "transparent" : "rgba(255,255,255,0.85)")};
+        color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.color.text)};
+    }
+
+    &:active {
+        transform: ${({ disabled }) => (disabled ? "none" : "translateY(1px)")};
+    }
 `;
+
+const PageEllipsis = styled.span`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 34px;
+    padding: 0 4px;
+    color: rgba(15, 23, 42, 0.5);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    user-select: none;
+`;
+
+const BottomGrid = styled.div`
+    width: 100%;
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+`;
+
+const Pagination: React.FC<PaginationProps> = ({ page, size, total, onChange }) => {
+    const totalPages = Math.max(1, Math.ceil((total || 0) / (size || 1)));
+    const WINDOW_SIZE = 5;
+
+    const current = Math.max(0, Math.min(page, totalPages - 1));
+
+    const clampWindowStart = (start: number) => {
+        const maxStart = Math.max(0, totalPages - WINDOW_SIZE);
+        return Math.max(0, Math.min(start, maxStart));
+    };
+
+    const pageWindowStart = clampWindowStart(
+        Math.floor(current / WINDOW_SIZE) * WINDOW_SIZE
+    );
+
+    const pageWindowEnd = Math.min(totalPages - 1, pageWindowStart + WINDOW_SIZE - 1);
+
+    const pageWindow = Array.from(
+        { length: pageWindowEnd - pageWindowStart + 1 },
+        (_, i) => pageWindowStart + i
+    );
+
+    const firstVisiblePage = pageWindow[0] ?? 0;
+    const lastVisiblePage = pageWindow[pageWindow.length - 1] ?? 0;
+
+    const showFirstPage = firstVisiblePage > 0;
+    const showLeadingEllipsis = firstVisiblePage > 1;
+
+    const showTrailingEllipsis = lastVisiblePage < totalPages - 2;
+    const showLastPage = lastVisiblePage < totalPages - 1;
+
+    const visiblePages = pageWindow.filter((p) => {
+        if (showFirstPage && p === 0) return false;
+        if (showLastPage && p === totalPages - 1) return false;
+        return true;
+    });
+
+    const goFirstPage = () => {
+        if (current === 0) return;
+        onChange(0);
+    };
+
+    const goLastPage = () => {
+        if (current === totalPages - 1) return;
+        onChange(totalPages - 1);
+    };
+
+    const goPrevWindow = () => {
+        const prevStart = clampWindowStart(pageWindowStart - WINDOW_SIZE);
+        if (prevStart === pageWindowStart) return;
+        onChange(prevStart);
+    };
+
+    const goNextWindow = () => {
+        const nextStart = clampWindowStart(pageWindowStart + WINDOW_SIZE);
+        if (nextStart === pageWindowStart) return;
+        onChange(nextStart);
+    };
+
+    return (
+        <BottomGrid>
+            <PaginationRow>
+                <PaginationBar aria-label="포텐노트 상세 페이지 이동">
+                    <PageNavBtn
+                        onClick={goPrevWindow}
+                        disabled={pageWindowStart === 0}
+                        aria-label="이전 페이지 묶음"
+                        type="button"
+                    >
+                        ‹
+                    </PageNavBtn>
+
+                    {showFirstPage && (
+                        <PagePill
+                            $active={current === 0}
+                            onClick={goFirstPage}
+                            aria-current={current === 0 ? "page" : undefined}
+                            aria-label="1페이지"
+                            type="button"
+                        >
+                            1
+                        </PagePill>
+                    )}
+
+                    {showLeadingEllipsis && (
+                        <PageEllipsis aria-hidden="true">...</PageEllipsis>
+                    )}
+
+                    {visiblePages.map((p) => (
+                        <PagePill
+                            key={p}
+                            $active={p === current}
+                            onClick={() => onChange(p)}
+                            aria-current={p === current ? "page" : undefined}
+                            aria-label={`${p + 1}페이지`}
+                            type="button"
+                        >
+                            {p + 1}
+                        </PagePill>
+                    ))}
+
+                    {showTrailingEllipsis && (
+                        <PageEllipsis aria-hidden="true">...</PageEllipsis>
+                    )}
+
+                    {showLastPage && (
+                        <PagePill
+                            $active={current === totalPages - 1}
+                            onClick={goLastPage}
+                            aria-current={current === totalPages - 1 ? "page" : undefined}
+                            aria-label={`${totalPages}페이지`}
+                            type="button"
+                        >
+                            {totalPages}
+                        </PagePill>
+                    )}
+
+                    <PageNavBtn
+                        onClick={goNextWindow}
+                        disabled={pageWindowEnd >= totalPages - 1}
+                        aria-label="다음 페이지 묶음"
+                        type="button"
+                    >
+                        ›
+                    </PageNavBtn>
+                </PaginationBar>
+            </PaginationRow>
+        </BottomGrid>
+    );
+};
 
 /* ---------- Option Popup ---------- */
 const MetaSep = styled.span`
@@ -540,39 +722,6 @@ const PlusDot = () => (
         <path d="M12 5v14M5 12h14" stroke="#fff" strokeWidth="2.5" strokeLinecap="round"/>
     </svg>
 );
-
-
-const Pagination: React.FC<PaginationProps> = ({ page, size, total, onChange }) => {
-    const totalPages = Math.max(1, Math.ceil((total || 0) / (size || 1)));
-    const current = page + 1; // 1-base
-    const maxNumbers = 10;
-
-    let start = Math.max(1, current - Math.floor(maxNumbers / 2));
-    let end = Math.min(totalPages, start + maxNumbers - 1);
-    start = Math.max(1, end - maxNumbers + 1);
-
-    const nums: number[] = [];
-    for (let i = start; i <= end; i++) nums.push(i);
-
-    const go = (p1: number) => {
-        if (p1 < 1 || p1 > totalPages || p1 === current) return;
-        onChange(p1 - 1);
-    };
-
-    return (
-        <PaginationNav aria-label="페이지네이션">
-            <NavBtn aria-label="처음" onClick={() => go(1)} disabled={current === 1} $disabled={current === 1}>«</NavBtn>
-            <NavBtn aria-label="이전" onClick={() => go(current - 1)} disabled={current === 1} $disabled={current === 1}>‹</NavBtn>
-            {nums.map((n) => (
-                <PageNumBtn key={n} onClick={() => go(n)} aria-current={n === current ? "page" : undefined} $active={n === current}>
-                    {n}
-                </PageNumBtn>
-            ))}
-            <NavBtn aria-label="다음" onClick={() => go(current + 1)} disabled={current === totalPages} $disabled={current === totalPages}>›</NavBtn>
-            <NavBtn aria-label="마지막" onClick={() => go(totalPages)} disabled={current === totalPages} $disabled={current === totalPages}>»</NavBtn>
-        </PaginationNav>
-    );
-};
 
 /* ---------- Quiz Setup Modal ---------- */
 const Scrim = styled.div`
@@ -1563,10 +1712,11 @@ export default function WordbookPage() {
                 return "title,asc";
             case "title_desc":
                 return "title,desc";
-            case "createdAt_desc":
-                return "createdAt,desc";
             case "status_asc":
+                return "status,asc";
             case "status_desc":
+                return "status,desc";
+            case "createdAt_desc":
             default:
                 return "createdAt,desc";
         }
@@ -2281,24 +2431,18 @@ export default function WordbookPage() {
             return Number.isFinite(t) ? t : -Infinity;
         };
 
-        if (sortKey === "status_asc" || sortKey === "status_desc") {
-            const rank = (id: string) => (learn[id] ?? "unmemorized") === "memorized" ? 1 : 0;
-            return arr.sort((a, b) => {
-                const diff = (sortKey === "status_asc" ? 1 : -1) * (rank(a.uwtId) - rank(b.uwtId));
-                return diff || compareTitle(a, b);
-            });
-        }
-
         switch (sortKey) {
             case "title_asc":
                 return arr.sort(compareTitle);
             case "title_desc":
                 return arr.sort((a, b) => compareTitle(b, a));
             case "createdAt_desc":
+            case "status_asc":
+            case "status_desc":
             default:
                 return arr.sort((a, b) => (safeDate(b) - safeDate(a)) || compareTitle(a, b));
         }
-    }, [items, learn, sortKey]);
+    }, [items, sortKey]);
 
     /** 카드 1장씩 떠오르는 애니메이션 (검색페이지와 동일 패턴) */
     React.useEffect(() => {
@@ -2588,79 +2732,71 @@ export default function WordbookPage() {
 
     return (
         <NarrowLeft style={{ padding: "8px 0 24px" }}>  {/* SearchBar와 동일 폭/정렬 */}
-            {/* 상단 툴바 */}
-            <Toolbar>
-                <ChipRow>
-                    <button
-                        type="button"
-                        onClick={goToNotes}
-                        aria-label="이전으로"
-                        style={{ border: 0, background: "transparent", cursor: "pointer" }}
-                    >
-                        ←
-                    </button>
+            {/* 상단 */}
+            <LearningPageHeader
+                title={wordbookName}
+                count={`${(count ?? total).toLocaleString()}개`}
+                onBack={goToNotes}
+                meta={
+                    <HeaderMeta>
+                        <MetaSep aria-hidden="true">|</MetaSep>
 
-                    <Title>{wordbookName}</Title>
-                    <Count>{(count ?? total).toLocaleString()}개</Count>
-                    <MetaSep aria-hidden="true">|</MetaSep>
+                        <SortInlineWrap ref={inlineSortRef}>
+                            <SortInlineBtn
+                                type="button"
+                                aria-haspopup="menu"
+                                aria-expanded={sortInlineOpen}
+                                onClick={() => {
+                                    setSortInlineOpen((v) => !v);
+                                    setMenuOpen(false);
+                                    setPdfMenuOpen(false);
+                                }}
+                            >
+                                {sortLabel}
+                            </SortInlineBtn>
 
-                    <SortInlineWrap ref={inlineSortRef}>
-                        <SortInlineBtn
-                            type="button"
-                            aria-haspopup="menu"
-                            aria-expanded={sortInlineOpen}
-                            onClick={() => {
-                                setSortInlineOpen((v) => !v);
-                                // 설정 메뉴는 닫기
-                                setMenuOpen(false);
-                                setPdfMenuOpen(false);
-                            }}
-                        >
-                            {sortLabel}
-                        </SortInlineBtn>
+                            {sortInlineOpen && (
+                                <SortPopup role="menu" aria-label="정렬하기">
+                                    <RadioItem
+                                        $checked={sortKey === "createdAt_desc"}
+                                        onClick={() => applySort("createdAt_desc")}
+                                    >
+                                        <span /> 최신 등록순
+                                    </RadioItem>
+                                    <RadioItem
+                                        $checked={sortKey === "title_asc"}
+                                        onClick={() => applySort("title_asc")}
+                                    >
+                                        <span /> 제목순
+                                    </RadioItem>
+                                    <RadioItem
+                                        $checked={sortKey === "title_desc"}
+                                        onClick={() => applySort("title_desc")}
+                                    >
+                                        <span /> 제목역순
+                                    </RadioItem>
+                                    <RadioItem
+                                        $checked={sortKey === "status_asc"}
+                                        onClick={() => applySort("status_asc")}
+                                    >
+                                        <span /> 상태: 학습 중 → 학습 완료
+                                    </RadioItem>
+                                    <RadioItem
+                                        $checked={sortKey === "status_desc"}
+                                        onClick={() => applySort("status_desc")}
+                                    >
+                                        <span /> 상태: 학습 완료 → 학습 중
+                                    </RadioItem>
+                                </SortPopup>
+                            )}
+                        </SortInlineWrap>
 
-                        {sortInlineOpen && (
-                            <SortPopup role="menu" aria-label="정렬하기">
-                                <RadioItem
-                                    $checked={sortKey === "createdAt_desc"}
-                                    onClick={() => applySort("createdAt_desc")}
-                                >
-                                    <span /> 최신 등록순
-                                </RadioItem>
-                                <RadioItem
-                                    $checked={sortKey === "title_asc"}
-                                    onClick={() => applySort("title_asc")}
-                                >
-                                    <span /> 제목순
-                                </RadioItem>
-                                <RadioItem
-                                    $checked={sortKey === "title_desc"}
-                                    onClick={() => applySort("title_desc")}
-                                >
-                                    <span /> 제목역순
-                                </RadioItem>
-                                <RadioItem
-                                    $checked={sortKey === "status_asc"}
-                                    onClick={() => applySort("status_asc")}
-                                >
-                                    <span /> 상태: 학습 중 → 학습 완료
-                                </RadioItem>
-                                <RadioItem
-                                    $checked={sortKey === "status_desc"}
-                                    onClick={() => applySort("status_desc")}
-                                >
-                                    <span /> 상태: 학습 완료 → 학습 중
-                                </RadioItem>
-                            </SortPopup>
+                        {selectedTermIds.size > 0 && (
+                            <Count>{`· 선택 ${fmt(selectedTermIds.size)}`}</Count>
                         )}
-                    </SortInlineWrap>
-                    <Count>
-                        {selectedTermIds.size > 0 ? ` · 선택 ${fmt(selectedTermIds.size)}` : ""}
-                    </Count>
-
-                    <Spacer />
-
-                    {/* 설정 버튼 + 메뉴 */}
+                    </HeaderMeta>
+                }
+                right={
                     <div
                         ref={actionsRef}
                         style={{
@@ -2679,13 +2815,7 @@ export default function WordbookPage() {
                             aria-haspopup="menu"
                             aria-expanded={menuOpen}
                         >
-                            {/* 간단한 톱니바퀴 아이콘 */}
-                            <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                aria-hidden="true"
-                            >
+                            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true">
                                 <path
                                     d="M12 9.5A2.5 2.5 0 1 0 12 14.5 2.5 2.5 0 0 0 12 9.5Zm7.5 2a1 1 0 0 0-.8-.98l-1.39-.27a5.9 5.9 0 0 0-.56-1.34l.8-1.17a1 1 0 0 0-.12-1.25l-1.1-1.1a1 1 0 0 0-1.25-.12l-1.17.8c-.43-.24-.88-.43-1.35-.57L12.5 4.3a1 1 0 0 0-1-.8h-1.5a1 1 0 0 0-.98.8l-.27 1.39c-.47.14-.92.33-1.35.57l-1.17-.8a1 1 0 0 0-1.25.12l-1.1 1.1a1 1 0 0 0-.12 1.25l.8 1.17c-.24.43-.43.88-.57 1.34L2.3 11.5a1 1 0 0 0-.8.98v1.5a1 1 0 0 0 .8.98l1.39.27c.14.47.33.92.57 1.35l-.8 1.17a1 1 0 0 0 .12 1.25l1.1 1.1a1 1 0 0 0 1.25.12l1.17-.8c.43.24.88.43 1.35.57l.27 1.39a1 1 0 0 0 .98.8h1.5a1 1 0 0 0 .98-.8l.27-1.39c.47-.14.92-.33 1.35-.57l1.17.8a1 1 0 0 0 1.25-.12l1.1-1.1a1 1 0 0 0 .12-1.25l-.8-1.17c.24-.43.43-.88.57-1.35l1.39-.27a1 1 0 0 0 .8-.98v-1.5Z"
                                     fill="currentColor"
@@ -2696,103 +2826,100 @@ export default function WordbookPage() {
 
                         {menuOpen && (
                             <PdfSubMenu role="menu" aria-label="폴더 설정">
-                                {/* 섹션: 보기 설정 */}
-                                <div
-                                    style={{
-                                        padding: "4px 4px 2px",
-                                        fontSize: 12,
-                                        fontWeight: 700,
-                                        color: UI.color.muted,
-                                    }}
-                                >
-                                    보기 설정
-                                </div>
-                                <RadioItem onClick={cycleTitleMode}>
-                                    <span />
-                                    {titleMode === "allHidden"
-                                        ? "단어 전체 보이기"
-                                        : "단어 전체 숨기기"}
-                                </RadioItem>
-                                <RadioItem onClick={cycleDescMode}>
-                                    <span />
-                                    {descMode === "allHidden"
-                                        ? "뜻 전체 보이기"
-                                        : "뜻 전체 숨기기"}
-                                </RadioItem>
-
-                                <div
-                                    style={{
-                                        borderTop: `1px solid ${UI.color.line}`,
-                                        margin: "6px 0",
-                                    }}
-                                />
-
-                                {/* 섹션: 선택/이동 */}
-                                <div
-                                    style={{
-                                        padding: "2px 4px 2px",
-                                        fontSize: 12,
-                                        fontWeight: 700,
-                                        color: UI.color.muted,
-                                    }}
-                                >
-                                    선택/이동
-                                </div>
-                                <RadioItem onClick={() => toggleAll(!allOn)}>
-                                    <span />
-                                    {allOn
-                                        ? "현재 페이지 전체 선택 해제"
-                                        : "현재 페이지 전체 선택"}
-                                </RadioItem>
-                                <RadioItem onClick={openMove}>
-                                    <span />
-                                    선택 항목 다른 폴더로 이동
-                                </RadioItem>
-                                <RadioItem onClick={handleDeleteSelected}>
-                                    <span />
-                                    선택 항목 삭제
-                                </RadioItem>
-
-                                <div
-                                    style={{
-                                        borderTop: `1px solid ${UI.color.line}`,
-                                        margin: "6px 0",
-                                    }}
-                                />
-
-                                {/* 섹션: PDF 내보내기 */}
-                                <div
-                                    style={{
-                                        padding: "2px 4px 2px",
-                                        fontSize: 12,
-                                        fontWeight: 700,
-                                        color: UI.color.muted,
-                                    }}
-                                >
-                                    PDF 내보내기
-                                </div>
-                                <RadioItem onClick={() => setPdfMenuOpen((v) => !v)}>
-                                    <span />
-                                    PDF 내보내기 옵션
-                                </RadioItem>
-
-                                {pdfMenuOpen && (
-                                    <div style={{ marginTop: 4, paddingLeft: 18 }}>
-                                        <RadioItem onClick={handleExportSelectedPdf}>
-                                            <span />
-                                            선택 항목만 PDF로 내보내기
-                                        </RadioItem>
-                                        <RadioItem onClick={handleExportWholeFolderPdf}>
-                                            <span />
-                                            폴더 전체를 PDF로 내보내기
-                                        </RadioItem>
+                                    <div
+                                        style={{
+                                            padding: "4px 4px 2px",
+                                            fontSize: 12,
+                                            fontWeight: 700,
+                                            color: UI.color.muted,
+                                        }}
+                                    >
+                                        보기 설정
                                     </div>
-                                )}
-                            </PdfSubMenu>
-                        )}
-                    </div>
-                </ChipRow>
-            </Toolbar>
+                                    <RadioItem onClick={cycleTitleMode}>
+                                        <span />
+                                        {titleMode === "allHidden"
+                                            ? "단어 전체 보이기"
+                                            : "단어 전체 숨기기"}
+                                    </RadioItem>
+                                    <RadioItem onClick={cycleDescMode}>
+                                        <span />
+                                        {descMode === "allHidden"
+                                            ? "뜻 전체 보이기"
+                                            : "뜻 전체 숨기기"}
+                                    </RadioItem>
+
+                                    <div
+                                        style={{
+                                            borderTop: `1px solid ${UI.color.line}`,
+                                            margin: "6px 0",
+                                        }}
+                                    />
+
+                                    <div
+                                        style={{
+                                            padding: "2px 4px 2px",
+                                            fontSize: 12,
+                                            fontWeight: 700,
+                                            color: UI.color.muted,
+                                        }}
+                                    >
+                                        선택/이동
+                                    </div>
+                                    <RadioItem onClick={() => toggleAll(!allOn)}>
+                                        <span />
+                                        {allOn
+                                            ? "현재 페이지 전체 선택 해제"
+                                            : "현재 페이지 전체 선택"}
+                                    </RadioItem>
+                                    <RadioItem onClick={openMove}>
+                                        <span />
+                                        선택 항목 다른 폴더로 이동
+                                    </RadioItem>
+                                    <RadioItem onClick={handleDeleteSelected}>
+                                        <span />
+                                        선택 항목 삭제
+                                    </RadioItem>
+
+                                    <div
+                                        style={{
+                                            borderTop: `1px solid ${UI.color.line}`,
+                                            margin: "6px 0",
+                                        }}
+                                    />
+
+                                    <div
+                                        style={{
+                                            padding: "2px 4px 2px",
+                                            fontSize: 12,
+                                            fontWeight: 700,
+                                            color: UI.color.muted,
+                                        }}
+                                    >
+                                        PDF 내보내기
+                                    </div>
+                                    <RadioItem onClick={() => setPdfMenuOpen((v) => !v)}>
+                                        <span />
+                                        PDF 내보내기 옵션
+                                    </RadioItem>
+
+                                    {pdfMenuOpen && (
+                                        <div style={{ marginTop: 4, paddingLeft: 18 }}>
+                                            <RadioItem onClick={handleExportSelectedPdf}>
+                                                <span />
+                                                선택 항목만 PDF로 내보내기
+                                            </RadioItem>
+                                            <RadioItem onClick={handleExportWholeFolderPdf}>
+                                                <span />
+                                                폴더 전체를 PDF로 내보내기
+                                            </RadioItem>
+                                        </div>
+                                    )}
+                                </PdfSubMenu>
+                            )}
+                        </div>
+                }
+            />
 
             {/* 본문 */}
             {error ? (

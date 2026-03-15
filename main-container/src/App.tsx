@@ -12,6 +12,7 @@ import mitt from "mitt";
 
 import Main from "./components/Main.tsx";
 import EventPage from "./event/page/EventPage";
+import NewEventPage from "./event/page/NewEventPage.tsx";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -24,6 +25,9 @@ import ThemeToggleButton from "./ThemeToggleButton";
 import { themeAtom } from "@jobspoon/app-state";
 import Logo from "./assets/img_1.png";
 import RequireLogin from "./RequireLogin.tsx";
+import NewEventDetailPage from "./event/page/NewEventDetailPage.tsx";
+import NewWinnerDetailPage from "./event/page/NewWinnerDetailPage.tsx";
+import ReviewSurveyPage from "./survey/page/ReviewSurveyPage.tsx";
 
 const eventBus = mitt();
 
@@ -160,7 +164,12 @@ function InnerApp() {
 
         <Routes>
           <Route path="/" element={<Main />} />
+          <Route path="/review-survey" element={<ReviewSurveyPage />} />
           <Route path="/event" element={<EventPage />} />
+          <Route path="/news/event/list" element={<NewEventPage />} />
+            <Route path="/news/event" element={<NewEventPage />} />
+            <Route path="/news/event/:id" element={<NewEventDetailPage />} />
+            <Route path="/news/event/winner/:id" element={<NewWinnerDetailPage />} />
           <Route
             path="/vue-account/*"
             element={<VueAccountAppWrapper eventBus={eventBus} />}

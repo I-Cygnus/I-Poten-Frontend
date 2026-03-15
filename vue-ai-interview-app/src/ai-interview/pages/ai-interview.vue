@@ -1,258 +1,219 @@
 <template>
-  <!--  로딩  -->
+  <!-- 로딩 -->
   <LoadingSpinner v-if="isLoading"/>
 
-
-  <v-container v-else-if="!start" :style="interviewStartContainerStyle" fluid>
-    <!-- 배경 텍스트 -->
-    <div :style="backgroundTextStyle">
-      AI INTERVIEW
-    </div>
-
-
+  <!-- 면접 준비 화면 -->
+  <div v-else-if="!start" :style="interviewStartContainerStyle">
+    <div :style="bgDecoStyle"></div>
+    <div :style="backgroundTextStyle">AI INTERVIEW</div>
 
     <div :style="interviewStartWrapperStyle">
-      <!-- 큰 카메라 화면 -->
+      <!-- 진행 표시 헤더 -->
+      <div :style="progressHeaderStyle">
+        <span :style="progressLabelStyle">면접 준비</span>
+        <div :style="progressBarWrapStyle">
+          <div :style="progressBarFillStyle(mediaChecked ? 100 : 20)"></div>
+        </div>
+        <span :style="progressStatusStyle">{{ mediaChecked ? '준비 완료' : '확인 필요' }}</span>
+      </div>
+
+      <!-- 메인 카메라 영역 -->
       <div :style="mainCameraContainerStyle">
-        <video
-          ref="previewVideo"
-          autoplay
-          playsinline
-          muted
-          :style="mainVideoStyle"
-        />
+        <video ref="previewVideo" autoplay playsinline muted :style="mainVideoStyle" />
+
+        <!-- 카메라 비활성화 오버레이 -->
         <div :style="videoOverlayStyle" v-if="!mediaChecked">
-          <v-icon size="80" color="white">mdi-video-outline</v-icon>
+          <v-icon size="56" color="rgba(255,255,255,0.25)">mdi-video-outline</v-icon>
           <p :style="overlayTextStyle">카메라를 활성화하세요</p>
         </div>
 
-        <!-- 우측 상단 작은 프리뷰 (선택사항) -->
+        <!-- PiP (확인 후) -->
         <div :style="smallPreviewStyle" v-if="mediaChecked">
-          <video
-            ref="smallPreview"
-            autoplay
-            playsinline
-            muted
-            :style="smallVideoStyle"
-          />
+          <video ref="smallPreview" autoplay playsinline muted :style="smallVideoStyle" />
         </div>
 
-        <!-- 좌측 상단 타이머 -->
+        <!-- 상태 뱃지 (좌측 상단) -->
         <div :style="topLeftBadgeStyle">
-          <v-icon size="16" color="white">mdi-circle</v-icon>
-          <span>03:00</span>
+          <v-icon size="11" :color="mediaChecked ? '#10b981' : 'rgba(255,255,255,0.4)'">mdi-circle</v-icon>
+          <span>{{ mediaChecked ? '준비 완료' : '카메라 확인 필요' }}</span>
         </div>
-      </div>
 
-      <!-- 하단 컨트롤 카드 -->
-      <v-card :style="bottomControlCardStyle" class="interview-card">
-        <v-card-text :style="controlCardTextStyle">
-          <!-- 질문 표시 영역 -->
-          <div :style="questionDisplayStyle">
-            <div :style="questionBadgeStyle">Q1</div>
-            <p :style="questionTextDisplayStyle">
-              {{ mediaChecked ? '카메라와 마이크가 정상적으로 작동합니다. 면접을 시작하세요.' : '카메라와 마이크를 확인해주세요' }}
+        <!-- 하단 오버레이 -->
+        <div :style="videoBottomOverlayStyle">
+          <div :style="qBadgeStyle">PREP</div>
+          <div :style="questionScrollContainerStyle" class="question-scroll">
+            <p :style="videoQuestionTextStyle">
+              {{ mediaChecked
+                ? '카메라와 마이크가 정상 작동합니다. 면접을 시작하세요.'
+                : '카메라와 마이크를 확인하고 면접을 준비해주세요.' }}
             </p>
           </div>
-
-          <!-- 컨트롤 버튼 -->
-          <div :style="bottomButtonsStyle">
-            <v-btn
-              v-if="!mediaChecked"
-              color="primary"
-              :style="mainActionBtnStyle"
-              elevation="0"
-              rounded
-              large
-              @click="checkMediaReady"
-            >
-              확인
-            </v-btn>
-
-            <template v-else>
-              <v-btn
-                color="primary"
-                :style="secondaryActionBtnStyle"
-                elevation="0"
-                rounded
-                @click="startRecording"
-                :disabled="!mediaChecked"
-              >
-                <v-icon>mdi-waveform</v-icon>
-              </v-btn>
-
-              <v-btn
-                color="primary"
-                :style="mainActionBtnStyle"
-                elevation="0"
-                rounded
-                large
-                @click="handleStartInterview"
-              >
-                <v-icon left size="20">mdi-play-circle</v-icon>
-                면접 시작
-              </v-btn>
-
-              <v-btn
-                color="default"
-                :style="secondaryActionBtnStyle"
-                elevation="0"
-                rounded
-                @click="playRecording"
-                :disabled="!recordedBlob"
-              </v-btn>
-            </template>
-          </div>
-        </v-card-text>
-      </v-card>
-    </div>
-  </v-container>
-
-
-
-  <v-container v-else fluid :style="interviewActiveContainerStyle">
-    <div :style="interviewStartWrapperStyle">
-      <!-- 큰 이미지 화면 (카메라 자리) -->
-      <div :style="mainCameraContainerStyle">
-        <!-- 면접관 이미지 -->
-        <img :src="hhImage" alt="면접관" :style="interviewerImageInCameraStyle" />
-
-        <!-- 우측 상단: 사용자 비디오 (작은 화면) -->
-        <div :style="smallPreviewStyle">
-          <video
-            ref="userVideo"
-            v-show="start"
-            autoplay
-            playsinline
-            muted
-            :style="smallVideoStyle"
-          ></video>
-        </div>
-
-        <!-- 좌측 상단: 타이머 -->
-        <div :style="topLeftBadgeStyle">
-          <v-icon size="16" color="white">mdi-clock-outline</v-icon>
-          <span>{{ Math.floor(remainingTime / 60) }}:{{ (remainingTime % 60).toString().padStart(2, "0") }}</span>
         </div>
       </div>
 
-      <!-- 하단 컨트롤 카드 (질문 + 버튼) -->
-      <v-card :style="bottomControlCardStyle" class="interview-card">
-      <v-card-text :style="controlCardTextStyle">
-        <!-- 질문 표시 -->
-        <div v-if="visible" :style="questionLoadingBoxStyle">
-          <v-icon size="32" color="primary">mdi-loading mdi-spin</v-icon>
-          <p :style="questionLoadingTextStyle">면접 질문을 준비 중입니다...</p>
+      <!-- 컨트롤 버튼 -->
+      <div :style="controlsRowStyle">
+        <template v-if="!mediaChecked">
+          <v-btn :style="primaryControlBtnStyle" elevation="0" @click="checkMediaReady">
+            <v-icon left size="18">mdi-camera-check</v-icon>
+            카메라 / 마이크 확인
+          </v-btn>
+        </template>
+        <template v-else>
+          <div :style="iconControlBtnStyle" @click="startRecording" style="cursor:pointer">
+            <v-icon color="rgba(255,255,255,0.7)" size="22">mdi-waveform</v-icon>
+          </div>
+          <v-btn :style="primaryControlBtnStyle" elevation="0" @click="handleStartInterview">
+            <v-icon left size="18">mdi-play-circle</v-icon>
+            면접 시작
+          </v-btn>
+          <div :style="iconControlBtnStyle" @click="playRecording" style="cursor:pointer">
+            <v-icon color="rgba(255,255,255,0.7)" size="22">mdi-play</v-icon>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- 면접 진행 화면 -->
+  <div v-else :style="interviewActiveContainerStyle">
+    <!-- 카운트다운 오버레이 -->
+    <div v-if="isStartingCountdown" :style="countdownOverlayStyle">
+      <div :style="countdownContentStyle">
+        <div :style="countdownLabelStyle">PREPARING</div>
+        <h2 :style="countdownTitleStyle">잠시 후 면접이 시작됩니다</h2>
+        <div :style="countdownNumberStyle">{{ countdownValue }}</div>
+        <div :style="countdownProgressStyle">
+          <div :style="countdownBarFillStyle"></div>
+        </div>
+      </div>
+    </div>
+
+    <div :style="interviewStartWrapperStyle">
+      <!-- 진행 헤더 -->
+      <div :style="progressHeaderStyle">
+        <span :style="progressLabelStyle">{{ interviewSequence }} / 6</span>
+        <div :style="progressBarWrapStyle">
+          <div :style="progressBarFillStyle(interviewSequence / 6 * 100)"></div>
+        </div>
+        <span :style="progressTimerStyle">
+          {{ Math.floor(remainingTime / 60) }}:{{ (remainingTime % 60).toString().padStart(2, '0') }}
+        </span>
+      </div>
+
+      <!-- 메인 영상 영역 -->
+      <div :style="mainCameraContainerStyle">
+        <!-- 면접관 비디오 -->
+        <video 
+          ref="interviewerVideo" 
+          :style="interviewerVideoStyle" 
+          playsinline 
+          muted
+          autoplay
+          @ended="onInterviewerVideoEnded"
+        ></video>
+
+        <!-- 사용자 PiP (우측 상단) -->
+        <div :style="smallPreviewStyle">
+          <video ref="userVideo" v-show="start" autoplay playsinline muted :style="smallVideoStyle"></video>
         </div>
 
-        <div v-else :style="questionBoxStyle">
-          <div :style="questionBoxHeaderStyle">
-            <div :style="questionNumberBadgeStyle">Q{{ interviewSequence + 1 }}</div>
-            <div :style="questionProgressTextStyle">{{ interviewSequence + 1 }} / 6</div>
-          </div>
-          <p :style="questionBoxTextStyle" v-html="formattedAIMessage"></p>
+        <!-- 타이머 (좌측 상단) -->
+        <div :style="topLeftBadgeStyle">
+          <v-icon size="11" color="rgba(255,255,255,0.6)">mdi-clock-outline</v-icon>
+          <span>{{ Math.floor(remainingTime / 60) }}:{{ (remainingTime % 60).toString().padStart(2, '0') }}</span>
         </div>
 
-        <!-- 답변 버튼 영역 -->
-        <div v-if="!visible" :style="answerButtonAreaStyle">
-          <!-- STT 결과 미리보기 (간단하게) -->
-          <div v-if="sttLog !== ''" :style="sttPreviewStyle">
-            <v-icon size="16" color="#3b82f6">mdi-text-to-speech</v-icon>
-            <span :style="sttPreviewTextStyle">{{ sttLog.substring(0, 50) }}{{ sttLog.length > 50 ? '...' : '' }}</span>
-          </div>
-
-          <!-- 답변 버튼 영역 -->
-          <div v-if="!visible" :style="answerButtonAreaStyle">
-            <!-- 텍스트 입력 필드 추가 -->
-<!--            <div :style="textInputContainerStyle">-->
-<!--              <v-textarea-->
-<!--                  v-model="textAnswer"-->
-<!--                  :style="textInputFieldStyle"-->
-<!--                  placeholder="음성 인식이 어려운 경우 여기에 직접 입력하세요"-->
-<!--                  rows="2"-->
-<!--                  outlined-->
-<!--                  dense-->
-<!--                  hide-details-->
-<!--                  :disabled="recognizing"-->
-<!--              ></v-textarea>-->
-<!--            </div>-->
-
-
-            <!-- 버튼 그룹 -->
-            <div :style="interviewActionButtonsStyle">
-              <!-- 기존 버튼들... -->
+        <!-- 하단 오버레이: 질문 표시 -->
+        <div :style="videoBottomOverlayStyle">
+          <div :style="qBadgeStyle">Q{{ interviewSequence }}</div>
+          <div v-if="visible" :style="questionLoadingInlineStyle">
+            <p :style="videoQuestionTextStyle">{{ isGenerating ? '답변 준비중입니다' : '면접 질문을 준비 중입니다' }}</p>
+            <div :style="loadingDotsInlineStyle">
+              <div :style="loadingDotStyle"></div>
+              <div :style="loadingDotStyle"></div>
+              <div :style="loadingDotStyle"></div>
             </div>
           </div>
-
-          <!-- 버튼 그룹 -->
-          <div :style="interviewActionButtonsStyle">
-            <v-btn
-              v-if="!recognizing"
-              color="primary"
-              :style="startAnswerBtnStyle"
-              elevation="0"
-              rounded
-              large
-              @click="startSTT"
-              :disabled="isGenerating"
-            >
-              <v-icon left size="20">mdi-microphone</v-icon>
-              답변 시작
-            </v-btn>
-
-            <v-btn
-              v-else
-              color="error"
-              :style="stopAnswerBtnStyle"
-              elevation="0"
-              rounded
-              large
-              @click="startSTT"
-            >
-              <v-icon left size="20">mdi-stop-circle</v-icon>
-              답변 중지
-            </v-btn>
-
-            <v-btn
-              color="default"
-              :style="replayBtnStyle"
-              elevation="0"
-              rounded
-              @click="replayQuestion"
-              :disabled="isGenerating"
-            >
-              <v-icon>mdi-volume-high</v-icon>
-            </v-btn>
-
-            <v-btn
-                color="success"
-                :style="completeBtnStyle"
-                elevation="0"
-                rounded
-                @click="onAnswerComplete"
-                :disabled="isGenerating || (sttLog === '' && textAnswer === '')"
-            >
-              <v-icon left size="18">{{ isGenerating ? 'mdi-loading mdi-spin' : 'mdi-check-circle' }}</v-icon>
-              {{ isGenerating ? '처리중...' : '답변 완료' }}
-            </v-btn>
+          <div v-else :style="questionScrollContainerStyle" class="question-scroll">
+            <p :style="videoQuestionTextStyle" v-html="formattedAIMessage"></p>
           </div>
         </div>
-      </v-card-text>
-    </v-card>
-    </div>
-  </v-container>
+      </div>
 
-  <!-- 맨 위로 올리기 버튼 -->
-  <v-btn
-    :style="scrollTopBtnStyle"
-    @click="scrollToTop"
-    fab
-    color="primary"
-    elevation="8"
-    class="scroll-top-btn"
-  >
-    <v-icon size="28" color="white">mdi-chevron-up</v-icon>
-  </v-btn>
+      <!-- 내 답변 표시 카드 -->
+      <div v-if="!visible" :style="dynamicSttAnswerCardStyle">
+        <div :style="sttAnswerHeaderStyle">
+          <v-icon size="13" color="#5B6BFF">mdi-text-to-speech</v-icon>
+          <span :style="dynamicSttAnswerLabelStyle">내 답변</span>
+          <div v-if="recognizing" :style="recordingPillStyle">
+            <div :style="recordingDotAnimStyle"></div>
+            <span>녹음 중</span>
+          </div>
+          <!-- 다크/라이트 토글 -->
+          <div :style="answerThemeToggleStyle" @click="answerCardDark = !answerCardDark">
+            <v-icon size="13" :color="answerCardDark ? 'rgba(255,255,255,0.7)' : '#64748b'">
+              {{ answerCardDark ? 'mdi-weather-night' : 'mdi-weather-sunny' }}
+            </v-icon>
+          </div>
+        </div>
+        <div class="question-scroll" :style="dynamicSttAnswerScrollStyle">
+          <textarea
+            v-if="textMode"
+            v-model="textAnswer"
+            :style="textAnswerInputStyle"
+            placeholder="답변을 직접 입력하세요..."
+            @keydown.stop
+          />
+          <p v-else :style="dynamicSttAnswerTextStyle">
+            {{ sttLog || '음성 답변 버튼을 눌러 답변을 시작하세요.' }}
+          </p>
+        </div>
+      </div>
+
+      <!-- 컨트롤 버튼 (한 줄) -->
+      <div :style="controlsRowStyle">
+        <div :style="iconControlBtnStyle" @click="replayQuestion" style="cursor:pointer">
+          <v-icon color="rgba(255,255,255,0.7)" size="20">mdi-volume-high</v-icon>
+        </div>
+
+        <v-btn
+          v-if="!recognizing"
+          :style="primaryVoiceBtnStyle"
+          @click="startSTT"
+          :disabled="isGenerating || visible"
+          elevation="0"
+        >
+          <v-icon left size="17">mdi-microphone</v-icon>
+          음성 답변
+        </v-btn>
+        <v-btn
+          v-else
+          :style="stopVoiceBtnStyle"
+          @click="startSTT"
+          elevation="0"
+        >
+          <v-icon left size="17">mdi-stop-circle</v-icon>
+          답변 중지
+        </v-btn>
+
+        <v-btn
+          v-if="!visible"
+          :style="nextQuestionBtnInlineStyle"
+          @click="onAnswerComplete"
+          :disabled="isGenerating || (sttLog === '' && textAnswer === '')"
+          elevation="0"
+        >
+          <v-icon left size="16">{{ isGenerating ? 'mdi-loading mdi-spin' : 'mdi-arrow-right-circle' }}</v-icon>
+          {{ isGenerating ? '처리 중...' : (interviewSequence === 6 ? '면접 종료' : '다음 질문') }}
+        </v-btn>
+
+        <div :style="keyboardBtnStyle" @click="textMode = !textMode" style="cursor:pointer">
+          <v-icon :color="textMode ? '#5B6BFF' : 'rgba(255,255,255,0.5)'" size="20">mdi-keyboard-outline</v-icon>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 
@@ -263,9 +224,22 @@ import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useAiInterviewStore } from "../stores/aiInterviewStore";
 import { useRouter, onBeforeRouteLeave } from "vue-router";
 import "@mdi/font/css/materialdesignicons.css";
-import hhImage from "@/assets/images/fixed/aiai.png";
 import { useHead } from '@vueuse/head'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import { clearInterviewSessionToken } from '@/utils/sessionToken';
+import interview1Video from '@/assets/interview1.mp4';
+import interview2Video from '@/assets/interview2.mp4';
+import interview3Video from '@/assets/interview3.mp4';
+import interview4Video from '@/assets/interview4.mp4';
+
+const answerVideoSources = [interview2Video, interview3Video, interview4Video];
+const currentQuestionVideo = ref(interview2Video);
+
+// 랜덤 영상 선택 함수 (신규 질문 시 호출)
+const selectRandomVideo = () => {
+  const randomIndex = Math.floor(Math.random() * answerVideoSources.length);
+  currentQuestionVideo.value = answerVideoSources[randomIndex];
+};
 
 
 
@@ -290,6 +264,8 @@ const router = useRouter();
 const aiInterviewStore = useAiInterviewStore();
 
 const textAnswer = ref(""); // 텍스트 입력용 변수 추가
+const answerCardDark = ref(true); // 내 답변 카드 다크/라이트 모드
+const textMode = ref(false); // 키보드 텍스트 입력 모드
 
 const start = ref(false);
 const visible = ref(true);
@@ -311,6 +287,15 @@ const previewVideo = ref(null);
 const mediaStream = ref(null);
 const isGenerating = ref(false);
 const isEnded = ref(false);
+const interviewerVideo = ref(null);
+const currentAudioUrl = ref('');
+const audioPlayer = ref(null);
+const videoSequenceState = ref('idle'); // 'idle', 'interview2', 'interview1', 'loading'
+
+// 카운트다운 관련 refs
+const isStartingCountdown = ref(false);
+const countdownValue = ref(3);
+let countdownTimer = null;
 
 // 맨 위로 스크롤
 const scrollToTop = () => {
@@ -330,6 +315,94 @@ const mapCompanyName = (original) => {
   return mapping[original] || original.toLowerCase().replace(/[\s-]+/g, "_");
 };
 
+// 비디오 재생 종료 시 처리
+const onInterviewerVideoEnded = async () => {
+  console.log('Video ended, current state:', videoSequenceState.value);
+  if (videoSequenceState.value === 'loading') {
+    // loading 비디오는 반복 재생
+    if (interviewerVideo.value) {
+      interviewerVideo.value.currentTime = 0;
+      try {
+        await interviewerVideo.value.play();
+      } catch (err) {
+        console.error('로딩 비디오 재생 실패:', err);
+      }
+    }
+  }
+};
+
+// 오디오 재생 및 비디오 시퀀스 시작
+const playQuestionAudio = async (audioUrl) => {
+  console.log('Playing question audio:', audioUrl);
+  if (!audioUrl) return;
+  
+  // 로딩 비디오 중지
+  if (videoSequenceState.value === 'loading' && interviewerVideo.value) {
+    interviewerVideo.value.pause();
+  }
+  
+  // 선택된 랜덤 면접관 답변 영상 재생 시작 (음성 재생 시에만)
+  videoSequenceState.value = 'interview2';
+  if (interviewerVideo.value) {
+    console.log('Playing answering animation:', currentQuestionVideo.value);
+    interviewerVideo.value.loop = true; // 음성 길이에 맞춰 루프 재생
+    interviewerVideo.value.src = currentQuestionVideo.value;
+    try {
+      await interviewerVideo.value.play();
+    } catch (err) {
+      console.error('비디오 재생 실패:', err);
+    }
+  }
+  
+  // 오디오 재생
+  if (!audioPlayer.value) {
+    audioPlayer.value = new Audio();
+  }
+  
+  audioPlayer.value.src = audioUrl;
+  try {
+    await audioPlayer.value.play();
+  } catch (err) {
+    console.error('오디오 재생 실패:', err);
+  }
+  
+  // 오디오 종료 시 처리
+  audioPlayer.value.onended = async () => {
+    console.log('Audio ended, switching to idle (interview1)');
+    
+    // 다시 기본 대기 상태(interview1)로 전환
+    videoSequenceState.value = 'interview1';
+    if (interviewerVideo.value) {
+      interviewerVideo.value.src = interview1Video;
+      interviewerVideo.value.loop = true;
+      try {
+        await interviewerVideo.value.play();
+      } catch (err) {
+        console.error('interview1 재생 실패:', err);
+      }
+    }
+
+    clearInterval(timer.value);
+    remainingTime.value = 90;
+    startTimer();
+  };
+};
+
+// 로딩 비디오 시작
+const startLoadingVideo = async () => {
+  console.log('Starting loading video');
+  videoSequenceState.value = 'loading';
+  if (interviewerVideo.value) {
+    interviewerVideo.value.loop = true;
+    interviewerVideo.value.src = interview1Video; // "나머지는 interview1" 이라는 요청에 따라 interview1 사용
+    try {
+      await interviewerVideo.value.play();
+    } catch (err) {
+      console.error('로딩 비디오 재생 실패:', err);
+    }
+  }
+};
+
 const checkMediaReady = async () => {
   try {
     const stream = await navigator.mediaDevices.getUserMedia({
@@ -340,6 +413,10 @@ const checkMediaReady = async () => {
     alert("마이크와 카메라가 정상적으로 작동합니다.");
     mediaStream.value = stream;
     if (previewVideo.value) previewVideo.value.srcObject = stream;
+    
+    // smallPreview가 있는 경우에도 스트림 연결
+    await nextTick();
+    if (smallPreview.value) smallPreview.value.srcObject = stream;
   } catch (err) {
     alert("마이크 또는 카메라에 접근할 수 없습니다. 브라우저 권한을 확인하세요.");
     mediaChecked.value = false;
@@ -348,6 +425,7 @@ const checkMediaReady = async () => {
 
 const recordedVideo = ref(null);
 const recordedBlob = ref(null);
+const smallPreview = ref(null);
 let recordingStream = null;
 let recorder = null;
 let chunks = [];
@@ -358,6 +436,7 @@ const startRecording = async () => {
       audio: true,
     });
     if (previewVideo.value) previewVideo.value.srcObject = recordingStream;
+    if (smallPreview.value) smallPreview.value.srcObject = recordingStream;
 
     chunks = [];
     recorder = new MediaRecorder(recordingStream, { mimeType: "video/webm" });
@@ -380,7 +459,7 @@ const startRecording = async () => {
       }
     };
     recorder.start();
-    alert("녹화를 시작합니다다");
+    alert("녹화를 시작합니다");
   } catch (err) {
     console.error("🎥 녹화 시작 실패:", err);
     alert("녹화 시작 중 오류가 발생했습니다.");
@@ -397,10 +476,11 @@ const stopRecording = () => {
 };
 
 let recognition;
-const synth = typeof window !== "undefined" ? window.speechSynthesis : null;
-let currentUtteance = null;
 
 onMounted(async () => {
+  // 초기 비디오 설정 (interview1.mp4를 기본으로 표시)
+  // start가 false일 때는 interviewerVideo가 없으므로 handleStartInterview에서 처리하도록 함
+  
   try {
     const videoOnlyStream = await navigator.mediaDevices.getUserMedia({
       video: true,
@@ -487,14 +567,9 @@ const formattedAIMessage = computed(() => {
 });
 
 const replayQuestion = () => {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  const synth = window.speechSynthesis;
-  if (synth?.speaking) synth.cancel();
-  const utterance = new SpeechSynthesisUtterance(currentAIMessage.value);
-  utterance.lang = "ko-KR";
-  utterance.rate = 0.85;
-  utterance.pitch = 1.0;
-  setTimeout(() => synth?.speak(utterance), 100);
+  if (currentAudioUrl.value) {
+    playQuestionAudio(currentAudioUrl.value);
+  }
 };
 
 const handleBeforeUnload = (event) => {
@@ -505,16 +580,9 @@ const handleBeforeUnload = (event) => {
 };
 
 const speakCurrentMessage = () => {
-  if (typeof window === "undefined" || !window.speechSynthesis) return;
-  const synth = window.speechSynthesis;
-  clearInterval(timer.value);
-  remainingTime.value = 90;
-  currentUtteance = new SpeechSynthesisUtterance(currentAIMessage.value);
-  currentUtteance.lang = "ko-KR";
-  currentUtteance.rate = 0.85;
-  currentUtteance.pitch = 1.0;
-  currentUtteance.onend = () => startTimer();
-  synth?.speak(currentUtteance);
+  if (currentAudioUrl.value) {
+    playQuestionAudio(currentAudioUrl.value);
+  }
 };
 
 const showStartMessage = () => {
@@ -586,56 +654,74 @@ const handleStartInterview = async () => {
   const processedCompanyName = mapCompanyName(info.company);
   console.log(JSON.stringify(info, null, 2));
 
-
-
-
   if (!info.job || !info.career) {
     alert("면접 정보를 찾을 수 없습니다. 처음으로 돌아갑니다.");
     router.push("/ai-interview");
     return;
   }
+  
   start.value = true;
+  isStartingCountdown.value = true;
+  countdownValue.value = 3;
+  
+  await nextTick(); // DOM 업데이트 대기 (비디오 엘리먼트 생성)
+
+  // 초기 면접관 비디오 설정
+  if (interviewerVideo.value) {
+    interviewerVideo.value.src = interview1Video;
+    interviewerVideo.value.loop = true;
+    try {
+      await interviewerVideo.value.play();
+    } catch (err) {
+      console.error('면접관 비디오 초기 재생 실패:', err);
+    }
+  }
+
   await startRecordingAuto();
 
   showWarning.value = false;
   speakStartMessage();
 
-  // 첫 번째 질문을 고정으로 설정
-  interviewSequence.value = 1; // 1번은 자기소개 질문
-  currentAIMessage.value = "안녕하세요 자기소개 부탁드립니다.";
-
-  const utterance = new SpeechSynthesisUtterance(
-      "AI 모의 면접이 곧 시작됩니다. 면접 질문이 화면에 표시되며, 자동으로 음성으로 읽어드립니다."
-  );
-  utterance.lang = "ko-KR";
-  utterance.rate = 1;
-  utterance.pitch = 1;
-  utterance.onend = () => showStartMessage();
-  if (typeof window !== "undefined" && window.speechSynthesis) {
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utterance);
-  }
+  // 3초 카운트다운 시작
+  countdownTimer = setInterval(() => {
+    if (countdownValue.value > 1) {
+      countdownValue.value--;
+    } else {
+      clearInterval(countdownTimer);
+      isStartingCountdown.value = false;
+      
+      // 첫 번째 질문 시작
+      interviewSequence.value = 1; 
+      currentAIMessage.value = "안녕하세요 자기소개 부탁드립니다.";
+      // 지정해주신 첫 번째 질문 오디오 URL
+      currentAudioUrl.value = "https://cdn.i-poten.com/questions/v1/6b1f8915-8dde-47a2-8f15-49668a67139e.mp3";
+      
+      selectRandomVideo(); // 랜덤 영상 선택
+      showStartMessage();
+    }
+  }, 1000);
 };
 
 
 
 const onAnswerComplete = async () => {
   isGenerating.value = true;
+  textMode.value = false;
+
+  // 로딩 비디오 시작
+  startLoadingVideo();
+  visible.value = true; // 질문 로딩 메시지 표시
 
   clearInterval(timer.value);
   if (recognition && recognizing.value) recognition.stop();
-
-  // if (!sttLog.value.trim()) {
-  //   alert("음성 인식 결과가 없습니다.");
-  //   isGenerating.value = false;
-  //   return;
-  // }
 
   const finalAnswer = (sttLog.value + " " + textAnswer.value).trim();
 
   if (!finalAnswer) {
     alert("답변 내용이 없습니다. 음성 또는 텍스트로 답변을 입력해주세요.");
     isGenerating.value = false;
+    videoSequenceState.value = 'idle';
+    visible.value = false;
     return;
   }
 
@@ -672,17 +758,22 @@ const onAnswerComplete = async () => {
 
     currentInterviewId.value = Number(res.interviewId);
     currentQuestionId.value = res.interviewQAId;
-    currentAIMessage.value = res.interviewQuestion;
+    
+    // API 응답에서 오디오 URL과 텍스트 분리
+    currentAudioUrl.value = res.interviewQuestion || ''; // 오디오 URL
+    currentAIMessage.value = res.interviewQuestionText || res.interviewQuestion || ''; // 텍스트
     
     // localStorage에 interviewId 저장 (결과 페이지에서 사용)
     localStorage.setItem("currentInterviewId", String(res.interviewId));
 
     sttLog.value = "";
     textAnswer.value = "";
+    visible.value = false; // 로딩 메시지 숨기기
     isGenerating.value = false;
-    remainingTime.value = 90;
-    startTimer();
-    replayQuestion();
+    
+    // 랜덤 영상 선택 후 재생 및 비디오 시퀀스 시작
+    selectRandomVideo();
+    playQuestionAudio(currentAudioUrl.value);
 
   } else{
     // 이후 질문들에 대한 처리
@@ -731,10 +822,18 @@ const onAnswerComplete = async () => {
     }
 
     currentQuestionId.value = questionRes.interviewQAId;
-    currentAIMessage.value = questionRes.interviewQuestion;
+    
+    // API 응답에서 오디오 URL과 텍스트 분리
+    currentAudioUrl.value = questionRes.interviewQuestion || ''; // 오디오 URL
+    currentAIMessage.value = questionRes.interviewQuestionText || questionRes.interviewQuestion || ''; // 텍스트
+    
     sttLog.value = "";
     textAnswer.value = "";
-    speakCurrentMessage();
+    visible.value = false; // 로딩 메시지 숨기기
+    
+    // 랜덤 영상 선택 후 재생 및 비디오 시퀀스 시작
+    selectRandomVideo();
+    playQuestionAudio(currentAudioUrl.value);
 
     isGenerating.value = false;
   }
@@ -744,13 +843,17 @@ const onAnswerComplete = async () => {
 
 
 onBeforeUnmount(() => {
-  if (
-      typeof window !== "undefined" &&
-      window.speechSynthesis &&
-      window.speechSynthesis.speaking
-  ) {
-    window.speechSynthesis.cancel();
+  // 면접이 완료되지 않은 상태로 페이지를 떠나는 경우 세션 토큰 삭제
+  if (start.value && !finished.value) {
+    clearInterviewSessionToken();
   }
+  
+  // 오디오 재생 중지
+  if (audioPlayer.value) {
+    audioPlayer.value.pause();
+    audioPlayer.value = null;
+  }
+  
   localStorage.removeItem("interviewInfo");
   clearInterval(timer.value);
   window.removeEventListener("beforeunload", handleBeforeUnload);
@@ -763,7 +866,13 @@ onBeforeRouteLeave((to, from, next) => {
       const answer = window.confirm(
           "면접이 진행 중입니다. 페이지를 나가시겠습니까?"
       );
-      answer ? next() : next(false);
+      if (answer) {
+        // 사용자가 나가기를 확인한 경우 세션 토큰 삭제
+        clearInterviewSessionToken();
+        next();
+      } else {
+        next(false);
+      }
     } else {
       next();
     }
@@ -1261,30 +1370,30 @@ if (typeof window !== "undefined") {
 
 // 스타일 객체 정의
 const interviewStartContainerStyle = {
-  padding: "3vh 20px",
+  padding: "0",
   maxWidth: "100%",
-  margin: "0 auto",
   minHeight: "100vh",
-  maxHeight: "100vh",
-  background: "linear-gradient(180deg, #ffffff 0%, #f0f9ff 40%, #e0f2fe 100%)",
+  background: "#0D0D0F",
   position: "relative",
   overflow: "hidden",
   display: "flex",
   alignItems: "center",
-  justifyContent: "center"
+  justifyContent: "center",
 };
 
 const interviewStartWrapperStyle = {
-  maxWidth: "1200px",
-  width: "100%",
+  width: "80%",
+  maxWidth: "1400px",
   margin: "0 auto",
   display: "flex",
   flexDirection: "column",
-  animation: "fadeIn 0.8s ease-out",
   alignItems: "center",
   position: "relative",
   zIndex: 1,
-  gap: "2vh"
+  gap: "16px",
+  height: "100vh",
+  padding: "28px 0",
+  boxSizing: "border-box",
 };
 
 const interviewHeaderStyle = {
@@ -1310,19 +1419,18 @@ const heroTagStyle = {
 };
 
 const backgroundTextStyle = {
-  position: "fixed",
-  fontSize: "clamp(80px, 12vw, 140px)",
+  position: "absolute",
+  fontSize: "clamp(80px, 14vw, 180px)",
   fontWeight: "900",
-  color: "rgba(200, 230, 255, 0.25)",
+  color: "rgba(255,255,255,0.025)",
   whiteSpace: "nowrap",
   left: "50%",
   top: "50%",
   transform: "translate(-50%, -50%)",
   pointerEvents: "none",
   zIndex: 0,
-  letterSpacing: "0.05em",
-  opacity: 1,
-  transition: "opacity 0.5s ease"
+  letterSpacing: "0.1em",
+  userSelect: "none",
 };
 
 const interviewLogoTextStyle = {
@@ -1354,13 +1462,14 @@ const interviewSubtitleStyle = {
 const mainCameraContainerStyle = {
   position: "relative",
   width: "100%",
-  maxWidth: "1200px",
-  height: "65vh",
-  background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
-  borderRadius: "24px",
+  aspectRatio: "16 / 9", // 16:9 비율로 고정
+  background: "#111118",
+  borderRadius: "20px",
   overflow: "hidden",
-  boxShadow: "0 20px 60px rgba(0, 0, 0, 0.3)",
-  border: "3px solid rgba(59, 130, 246, 0.2)"
+  boxShadow: "0 24px 64px rgba(0,0,0,0.6)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center"
 };
 
 const mainVideoStyle = {
@@ -1369,20 +1478,31 @@ const mainVideoStyle = {
   left: "0",
   width: "100%",
   height: "100%",
-  objectFit: "cover"
+  objectFit: "cover", // 비율에 맞춰 꽉 채움
+  display: "block"
+};
+
+const interviewerVideoStyle = {
+  position: "absolute",
+  top: "0",
+  left: "0",
+  width: "100%",
+  height: "100%",
+  objectFit: "cover", // 면접관 영상도 꽉 채움
+  display: "block"
 };
 
 const smallPreviewStyle = {
   position: "absolute",
-  top: "20px",
-  right: "20px",
-  width: "180px",
-  height: "135px",
+  top: "16px",
+  right: "16px",
+  width: "120px",
+  height: "88px",
   borderRadius: "12px",
   overflow: "hidden",
-  border: "3px solid rgba(255, 255, 255, 0.3)",
-  boxShadow: "0 8px 24px rgba(0, 0, 0, 0.4)",
-  background: "#000"
+  border: "2px solid rgba(255,255,255,0.2)",
+  boxShadow: "0 4px 16px rgba(0,0,0,0.6)",
+  background: "#000",
 };
 
 const smallVideoStyle = {
@@ -1393,42 +1513,38 @@ const smallVideoStyle = {
 
 const topLeftBadgeStyle = {
   position: "absolute",
-  top: "20px",
-  left: "20px",
+  top: "16px",
+  left: "16px",
   display: "flex",
   alignItems: "center",
-  gap: "8px",
-  padding: "8px 16px",
-  background: "rgba(0, 0, 0, 0.6)",
-  borderRadius: "20px",
-  color: "white",
-  fontSize: "14px",
+  gap: "6px",
+  padding: "6px 12px",
+  background: "rgba(0,0,0,0.55)",
+  borderRadius: "100px",
+  color: "rgba(255,255,255,0.85)",
+  fontSize: "12px",
   fontWeight: "600",
-  backdropFilter: "blur(10px)"
+  backdropFilter: "blur(8px)",
+  WebkitBackdropFilter: "blur(8px)",
 };
 
 const videoOverlayStyle = {
   position: "absolute",
-  top: "0",
-  left: "0",
-  width: "100%",
-  height: "100%",
+  inset: "0",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  background: "rgba(30, 41, 59, 0.95)",
-  color: "white",
-  backdropFilter: "blur(10px)"
+  background: "rgba(0,0,0,0.75)",
+  backdropFilter: "blur(8px)",
+  WebkitBackdropFilter: "blur(8px)",
 };
 
 const overlayTextStyle = {
-  marginTop: "24px",
-  fontSize: "20px",
+  marginTop: "16px",
+  fontSize: "15px",
   fontWeight: "600",
-  textShadow: "0 2px 8px rgba(0, 0, 0, 0.5)",
-  letterSpacing: "0.3px",
-  opacity: 0.95
+  color: "rgba(255,255,255,0.45)",
 };
 
 // 하단 컨트롤 카드
@@ -1611,19 +1727,79 @@ const tipsItemStyle = {
   paddingLeft: "4px"
 };
 
+// 카운트다운 오버레이 스타일
+const countdownOverlayStyle = {
+  position: "absolute",
+  inset: "0",
+  background: "rgba(13, 13, 15, 0.9)",
+  backdropFilter: "blur(15px)",
+  WebkitBackdropFilter: "blur(15px)",
+  zIndex: 1000,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  textAlign: "center",
+};
+
+const countdownContentStyle = {
+  animation: "fadeIn 0.8s ease-out",
+};
+
+const countdownLabelStyle = {
+  fontSize: "14px",
+  fontWeight: "800",
+  color: "#5B6BFF",
+  letterSpacing: "0.3em",
+  marginBottom: "16px",
+};
+
+const countdownTitleStyle = {
+  fontSize: "24px",
+  fontWeight: "700",
+  color: "white",
+  marginBottom: "40px",
+  letterSpacing: "-0.02em",
+};
+
+const countdownNumberStyle = {
+  fontSize: "120px",
+  fontWeight: "900",
+  color: "white",
+  lineHeight: "1",
+  marginBottom: "40px",
+  fontFamily: "Pretendard, sans-serif",
+  textShadow: "0 0 30px rgba(91, 107, 255, 0.3)",
+};
+
+const countdownProgressStyle = {
+  width: "200px",
+  height: "2px",
+  background: "rgba(255,255,255,0.1)",
+  margin: "0 auto",
+  borderRadius: "2px",
+  overflow: "hidden",
+};
+
+const countdownBarFillStyle = {
+  width: "100%",
+  height: "100%",
+  background: "#5B6BFF",
+  animation: "shimmer 2s infinite linear",
+};
+
 // 면접 진행 화면 스타일
 const interviewActiveContainerStyle = {
   padding: "0",
   margin: "0",
   maxWidth: "100%",
-  background: "linear-gradient(180deg, #ffffff 0%, #f0f9ff 40%, #e0f2fe 100%)",
+  background: "#0D0D0F",
   height: "100vh",
   position: "relative",
   overflow: "hidden",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
-  justifyContent: "center"
+  justifyContent: "center",
 };
 
 const interviewHeaderBarStyle = {
@@ -1804,12 +1980,11 @@ const loadingDotsStyle = {
 };
 
 const loadingDotStyle = {
-  width: "10px",
-  height: "10px",
+  width: "7px",
+  height: "7px",
   borderRadius: "50%",
-  backgroundColor: "#3f51b5",
-  opacity: 0.8,
-  animation: "dot-blink 1.4s infinite both"
+  backgroundColor: "rgba(255,255,255,0.7)",
+  animation: "dot-blink 1.4s infinite both",
 };
 
 const questionHeaderStyle = {
@@ -1980,14 +2155,6 @@ const devTextFieldStyle = {
 
 // ===== 새로운 면접 진행 화면 스타일 =====
 
-// 카메라 자리에 들어갈 이미지 스타일
-const interviewerImageInCameraStyle = {
-  width: "100%",
-  height: "100%",
-  objectFit: "cover",
-  borderRadius: "24px"
-};
-
 const userVideoSmallStyle = {
   width: "100%",
   height: "100%",
@@ -2060,23 +2227,25 @@ const answerButtonAreaStyle = {
 
 // STT 미리보기
 const sttPreviewStyle = {
+  width: "100%",
   display: "flex",
   alignItems: "center",
   gap: "10px",
-  padding: "10px 14px",
-  background: "rgba(59, 130, 246, 0.05)",
-  borderRadius: "10px",
-  border: "1px solid rgba(59, 130, 246, 0.1)"
+  padding: "10px 16px",
+  background: "rgba(91,107,255,0.1)",
+  borderRadius: "12px",
+  border: "1px solid rgba(91,107,255,0.2)",
+  flexShrink: 0,
 };
 
 const sttPreviewTextStyle = {
-  fontSize: "14px",
-  color: "#475569",
+  fontSize: "13px",
+  color: "rgba(255,255,255,0.65)",
   fontWeight: "400",
   flex: 1,
   overflow: "hidden",
   textOverflow: "ellipsis",
-  whiteSpace: "nowrap"
+  whiteSpace: "nowrap",
 };
 
 // 면접 액션 버튼들
@@ -2172,12 +2341,368 @@ const textInputFieldStyle = {
   borderRadius: "10px"
 };
 
+// ===== 재설계된 UI 스타일 =====
+
+const bgDecoStyle = {
+  position: "absolute",
+  inset: "0",
+  background: "radial-gradient(ellipse at 20% 50%, rgba(91,107,255,0.08) 0%, transparent 60%), radial-gradient(ellipse at 80% 30%, rgba(16,185,129,0.06) 0%, transparent 60%)",
+  pointerEvents: "none",
+  zIndex: 0,
+};
+
+const progressHeaderStyle = {
+  width: "100%",
+  display: "flex",
+  alignItems: "center",
+  gap: "14px",
+  flexShrink: 0,
+};
+
+const progressLabelStyle = {
+  fontSize: "13px",
+  fontWeight: "700",
+  color: "rgba(255,255,255,0.5)",
+  whiteSpace: "nowrap",
+  letterSpacing: "0.05em",
+};
+
+const progressBarWrapStyle = {
+  flex: 1,
+  height: "2px",
+  background: "rgba(255,255,255,0.12)",
+  borderRadius: "100px",
+  overflow: "hidden",
+};
+
+const progressBarFillStyle = (pct = 0) => ({
+  height: "100%",
+  width: `${pct}%`,
+  background: "linear-gradient(90deg, #5B6BFF, #8B5CF6)",
+  borderRadius: "100px",
+  transition: "width 0.6s ease",
+});
+
+const progressStatusStyle = {
+  fontSize: "12px",
+  fontWeight: "600",
+  color: "rgba(255,255,255,0.4)",
+  whiteSpace: "nowrap",
+};
+
+const progressTimerStyle = {
+  fontSize: "13px",
+  fontWeight: "700",
+  color: "rgba(255,255,255,0.6)",
+  whiteSpace: "nowrap",
+  fontVariantNumeric: "tabular-nums",
+};
+
+const videoBottomOverlayStyle = {
+  position: "absolute",
+  bottom: "0",
+  left: "0",
+  right: "0",
+  maxHeight: "62%",
+  padding: "52px 32px 28px",
+  background: "linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.55) 72%, transparent 100%)",
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+  overflow: "hidden",
+};
+
+const questionScrollContainerStyle = {
+  overflowY: "auto",
+  maxHeight: "28vh",
+  paddingRight: "6px",
+  scrollbarWidth: "thin",
+  scrollbarColor: "rgba(255,255,255,0.2) transparent",
+};
+
+const qBadgeStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  padding: "5px 14px",
+  borderRadius: "100px",
+  background: "rgba(91,107,255,0.9)",
+  backdropFilter: "blur(8px)",
+  color: "white",
+  fontSize: "12px",
+  fontWeight: "800",
+  letterSpacing: "0.08em",
+  alignSelf: "flex-start",
+};
+
+const videoQuestionTextStyle = {
+  fontSize: "clamp(14px, 1.4vw, 17px)",
+  fontWeight: "500",
+  color: "rgba(255,255,255,0.95)",
+  lineHeight: "1.75",
+  margin: "0",
+  letterSpacing: "-0.01em",
+  textShadow: "0 1px 8px rgba(0,0,0,0.6)",
+  wordBreak: "keep-all",
+};
+
+const controlsRowStyle = {
+  width: "100%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "14px",
+  flexShrink: 0,
+};
+
+const iconControlBtnStyle = {
+  width: "52px",
+  height: "52px",
+  borderRadius: "50%",
+  background: "rgba(255,255,255,0.08)",
+  border: "1px solid rgba(255,255,255,0.1)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  transition: "background 0.2s ease",
+};
+
+const keyboardBtnStyle = computed(() => ({
+  width: "52px",
+  height: "52px",
+  borderRadius: "50%",
+  background: textMode.value ? "rgba(91,107,255,0.18)" : "rgba(255,255,255,0.08)",
+  border: textMode.value ? "1px solid rgba(91,107,255,0.5)" : "1px solid rgba(255,255,255,0.1)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  transition: "background 0.2s ease, border 0.2s ease",
+}));
+
+const textAnswerInputStyle = computed(() => ({
+  width: "100%",
+  minHeight: "60px",
+  background: "transparent",
+  border: "none",
+  outline: "none",
+  resize: "none",
+  fontSize: "14px",
+  fontWeight: "500",
+  lineHeight: "1.6",
+  color: answerCardDark.value ? "rgba(255,255,255,0.9)" : "#1e293b",
+  fontFamily: "inherit",
+  padding: "0",
+}));
+
+const primaryControlBtnStyle = {
+  flex: "1",
+  maxWidth: "340px",
+  height: "54px",
+  borderRadius: "100px",
+  background: "#5B6BFF",
+  color: "white",
+  fontSize: "15px",
+  fontWeight: "700",
+  textTransform: "none",
+  letterSpacing: "0.02em",
+  boxShadow: "0 8px 28px rgba(91,107,255,0.45)",
+};
+
+const primaryVoiceBtnStyle = {
+  flex: "1",
+  maxWidth: "340px",
+  height: "54px",
+  borderRadius: "100px",
+  background: "rgba(255,255,255,0.1)",
+  border: "1px solid rgba(255,255,255,0.15)",
+  color: "white",
+  fontSize: "15px",
+  fontWeight: "700",
+  textTransform: "none",
+  letterSpacing: "0.02em",
+};
+
+const stopVoiceBtnStyle = {
+  flex: "1",
+  maxWidth: "340px",
+  height: "54px",
+  borderRadius: "100px",
+  background: "rgba(239,68,68,0.85)",
+  border: "1px solid rgba(239,68,68,0.4)",
+  color: "white",
+  fontSize: "15px",
+  fontWeight: "700",
+  textTransform: "none",
+  letterSpacing: "0.02em",
+  boxShadow: "0 6px 20px rgba(239,68,68,0.35)",
+};
+
+const nextQuestionBtnStyle = {
+  width: "100%",
+  height: "50px",
+  borderRadius: "100px",
+  background: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.1)",
+  color: "rgba(255,255,255,0.65)",
+  fontSize: "14px",
+  fontWeight: "600",
+  textTransform: "none",
+  letterSpacing: "0.02em",
+  flexShrink: 0,
+};
+
+const questionLoadingInlineStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: "14px",
+};
+
+const loadingDotsInlineStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: "4px",
+  flexShrink: 0,
+};
+
+// ===== 내 답변 카드 (다크/라이트 동적) =====
+const dynamicSttAnswerCardStyle = computed(() => ({
+  width: "100%",
+  background: answerCardDark.value ? "rgba(255,255,255,0.09)" : "rgba(255,255,255,0.96)",
+  border: answerCardDark.value ? "1px solid rgba(255,255,255,0.18)" : "1px solid rgba(0,0,0,0.09)",
+  borderRadius: "16px",
+  padding: "14px 18px",
+  flexShrink: 0,
+  transition: "all 0.25s ease",
+  boxShadow: answerCardDark.value ? "none" : "0 4px 20px rgba(0,0,0,0.15)",
+}));
+
+const sttAnswerHeaderStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: "7px",
+  marginBottom: "10px",
+};
+
+const dynamicSttAnswerLabelStyle = computed(() => ({
+  fontSize: "11px",
+  fontWeight: "700",
+  color: answerCardDark.value ? "rgba(255,255,255,0.4)" : "#94a3b8",
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  flex: 1,
+  transition: "color 0.25s ease",
+}));
+
+const answerThemeToggleStyle = computed(() => ({
+  width: "26px",
+  height: "26px",
+  borderRadius: "50%",
+  background: answerCardDark.value ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.06)",
+  border: answerCardDark.value ? "1px solid rgba(255,255,255,0.2)" : "1px solid rgba(0,0,0,0.1)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  transition: "all 0.25s ease",
+  flexShrink: 0,
+}));
+
+// 하위 호환을 위해 유지 (unused)
+const sttAnswerLabelStyle = {
+  fontSize: "11px",
+  fontWeight: "700",
+  color: "rgba(255,255,255,0.4)",
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  flex: 1,
+};
+
+const recordingPillStyle = {
+  display: "flex",
+  alignItems: "center",
+  gap: "5px",
+  padding: "3px 10px",
+  background: "rgba(239,68,68,0.12)",
+  border: "1px solid rgba(239,68,68,0.3)",
+  borderRadius: "100px",
+  fontSize: "11px",
+  fontWeight: "600",
+  color: "rgba(239,68,68,0.85)",
+};
+
+const recordingDotAnimStyle = {
+  width: "5px",
+  height: "5px",
+  borderRadius: "50%",
+  background: "#ef4444",
+  animation: "recording-pulse 1.5s infinite",
+  flexShrink: 0,
+};
+
+const sttAnswerScrollStyle = {
+  maxHeight: "68px",
+  overflowY: "auto",
+  scrollbarWidth: "thin",
+  scrollbarColor: "rgba(255,255,255,0.15) transparent",
+};
+
+const dynamicSttAnswerTextStyle = computed(() => ({
+  fontSize: "14px",
+  fontWeight: "500",
+  color: answerCardDark.value ? "rgba(255,255,255,0.95)" : "#1e293b",
+  lineHeight: "1.7",
+  margin: "0",
+  wordBreak: "keep-all",
+  transition: "color 0.25s ease",
+}));
+
+const dynamicSttAnswerScrollStyle = computed(() => ({
+  maxHeight: "68px",
+  overflowY: "auto",
+  scrollbarWidth: "thin",
+  scrollbarColor: answerCardDark.value ? "rgba(255,255,255,0.15) transparent" : "rgba(0,0,0,0.15) transparent",
+}));
+
+const nextQuestionBtnInlineStyle = {
+  flex: "1",
+  maxWidth: "340px",
+  height: "54px",
+  borderRadius: "100px",
+  background: "rgba(91,107,255,0.15)",
+  border: "1px solid rgba(91,107,255,0.35)",
+  color: "rgba(255,255,255,0.9)",
+  fontSize: "15px",
+  fontWeight: "700",
+  textTransform: "none",
+  letterSpacing: "0.02em",
+};
+
 
 </script>
 
 <style scoped>
 .scroll-top-btn {
   animation: fadeInUp 0.3s ease-out;
+}
+
+/* 질문 스크롤 컨테이너 스크롤바 */
+.question-scroll::-webkit-scrollbar {
+  width: 3px;
+}
+
+.question-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.question-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 100px;
+}
+
+.question-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 .scroll-top-btn:hover {

@@ -7,6 +7,7 @@ import { goToAccountLogin } from "../../utils/auth.ts";
 import SystemMessageModal, {SystemMessage} from "../../components/common/SystemMessageModal";
 import { createPortal } from "react-dom";
 import {usePotenDialog} from "../../components/common/PotenDialog.tsx";
+import LearningPageHeader from "../../components/common/LearningPageHeader.tsx";
 
 /* ===== UI tokens ===== */
 const UI = {
@@ -159,29 +160,6 @@ const SearchInput = styled.input`
     &::placeholder {
         color: #9aa4b2;
     }
-`;
-
-/* ===== 상단 타이틀 & 툴바 ===== */
-const Toolbar = styled.div`
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    background: ${UI.color.bg};
-    padding: 12px 8px 6px;
-`;
-
-const TitleRow = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    justify-content: space-between;
-`;
-
-const Title = styled.h2`
-    margin: 0;
-    font-size: ${UI.font.h2};
-    letter-spacing: -0.01em;
-    color: ${UI.color.text};
 `;
 
 /* ===== 필터 칩 ===== */
@@ -652,6 +630,19 @@ const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
     }
 `;
 
+const PageEllipsis = styled.span`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 34px;
+    padding: 0 4px;
+    color: rgba(15, 23, 42, 0.5);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    user-select: none;
+`;
+
 const PaginationRow = styled.div`
     width: 100%;
     display: flex;
@@ -736,6 +727,24 @@ function MiniAreaChart({
     const [idx, setIdx] = React.useState<number | null>(null);
     const handleLeave = () => setIdx(null);
 
+// hover 중이면 hover 인덱스, 아니면 마지막 점
+    const activeIdx =
+        idx !== null
+            ? idx
+            : safeData.length > 0
+                ? safeData.length - 1
+                : null;
+
+    const i =
+        activeIdx !== null
+            ? Math.max(0, Math.min(activeIdx, safeData.length - 1))
+            : 0;
+
+    const cx = x(i);
+    const cy = y(safeData[i]);
+    const val = safeData[i];
+    const rounded = Number.isFinite(val) ? Math.round(val) : val;
+
     // labels 안전 처리
     const safeLabels =
         Array.isArray(labels) && labels.length === safeData.length ? labels : undefined;
@@ -807,19 +816,12 @@ function MiniAreaChart({
     };
 
     const nearestTick = React.useMemo(() => {
-        if (idx === null) return null;
+        if (activeIdx === null) return null;
         return tickIdx.reduce(
-            (bestK, curK) => (Math.abs(curK - idx) < Math.abs(bestK - idx) ? curK : bestK),
+            (bestK, curK) => (Math.abs(curK - activeIdx) < Math.abs(bestK - activeIdx) ? curK : bestK),
             tickIdx[0]
         );
-    }, [idx, tickIdx]);
-
-    // 현재 포인트 계산
-    const i = Math.max(0, Math.min(idx ?? safeData.length - 1, safeData.length - 1));
-    const cx = x(i);
-    const cy = y(safeData[i]);
-    const val = safeData[i];
-    const rounded = Number.isFinite(val) ? Math.round(val) : val;
+    }, [activeIdx, tickIdx]);
 
     const isPercent =
         valueUnit === "percent" || (valueUnit === "auto" && rawMax <= 100 && rawMin >= 0);
@@ -893,10 +895,9 @@ function MiniAreaChart({
                     fill="none"
                     strokeLinecap="round"
                     strokeLinejoin="round"
-                    filter="url(#softShadow)"
                 />
 
-                {idx !== null && (
+                {activeIdx !== null && (
                     <>
                         {/* 1) 툴팁까지 이어지는 세로 라인 (점 -> 툴팁 하단) */}
                         <line
@@ -924,7 +925,7 @@ function MiniAreaChart({
                     </>
                 )}
 
-                {idx !== null && (
+                {activeIdx !== null && (
                     <>
                         {/* outer glow ring */}
                         <circle
@@ -946,7 +947,7 @@ function MiniAreaChart({
                     </>
                 )}
 
-                {idx !== null && (
+                {activeIdx !== null && (
                     <g transform={`translate(${tipX}, ${tipY})`}>
                         <rect x={-tipW / 2} y={-tipH} width={tipW} height={tipH} rx="8" fill="rgba(17,24,39,0.92)" />
                         <text x="0" y={-8} textAnchor="middle" fontSize="12" fontWeight="800" fill="#fff">
@@ -1894,15 +1895,30 @@ async function deleteMySession(sessionId: number) {
 
 async function fetchTrend(params: { metric: "accuracy" | "sets" | "retryRate"; span?: string }) {
     const headers = { ...authHeader() };
-    const { data } = await http.get<TrendResponse>("/me/quiz/metrics", {
-        params: { metric: params.metric, span: params.span ?? "30d" },
-        headers,
-    });
+    try {
+        const res = await http.get("/me/quiz/metrics", {
+            params: { metric: params.metric, span: params.span ?? "30d" },
+            headers,
+            withCredentials: true,
+        });
 
-    const points: TrendPoint[] = Array.isArray(data?.points)
-        ? data.points.map((p) => ({ date: String(p.date), value: Number(p.value ?? 0) }))
-        : [];
-    return { ...data, points };
+        console.log("[trend status]", res.status);
+        console.log("[trend raw data]", res.data);
+
+        const body = res.data?.data ?? res.data ?? {};
+        const points: TrendPoint[] = Array.isArray(body?.points)
+            ? body.points.map((p: any) => ({
+                date: String(p.date),
+                value: Number(p.value ?? 0),
+            }))
+            : [];
+
+        return { ...body, points };
+    } catch (e: any) {
+        console.warn("[trend fail status]", e?.response?.status);
+        console.warn("[trend fail data]", e?.response?.data);
+        throw e;
+    }
 }
 
 async function fetchTotalSets() {
@@ -2164,6 +2180,26 @@ export default function QuizTimelinePage() {
     const [quickDays, setQuickDays] = React.useState<QuickDays>(7);
     const [quickRetryLoading, setQuickRetryLoading] = React.useState(false);
     const quickStartBtnRef = React.useRef<HTMLButtonElement | null>(null);
+    const pickNewSessionId = React.useCallback((res: any): number => {
+        const body = res?.data?.data ?? res?.data ?? {};
+        let sid: any =
+            body?.newSessionId ??
+            body?.sessionId ??
+            body?.new_session_id ??
+            body?.session_id ??
+            body?.id ??
+            body?.session?.id;
+
+        if (!Number.isFinite(Number(sid))) {
+            const loc = String(res?.headers?.location ?? res?.headers?.Location ?? "");
+            const m = /\/sessions\/(\d+)/.exec(loc);
+            if (m) sid = Number(m[1]);
+        }
+
+        const n = Number(sid);
+        if (!Number.isFinite(n)) throw new Error("Invalid new sessionId");
+        return n;
+    }, []);
 
     const openQuickModal = React.useCallback(() => {
         setQuickDays(7);
@@ -2201,9 +2237,8 @@ export default function QuizTimelinePage() {
     const handleRetryAll = React.useCallback(
         async (sessionId: number | string) => {
             try {
-                const { data } = await http.post(`/me/quiz/sessions/${sessionId}/retry-wrong`, null, { headers: authHeader(), withCredentials: true });
-                const newSid = Number(data?.sessionId ?? data?.newSessionId ?? data?.id);
-                if (!Number.isFinite(newSid)) throw new Error("Invalid new sessionId");
+                const res = await http.post(`/me/quiz/sessions/${sessionId}/retry-wrong`, null, { headers: authHeader(), withCredentials: true });
+                const newSid = pickNewSessionId(res);
 
                 nav(`/learning/quiz/play?sessionId=${newSid}`);
             } catch (e) {
@@ -2215,7 +2250,7 @@ export default function QuizTimelinePage() {
                 });
             }
         },
-        [nav, openSys]
+        [nav, openSys, pickNewSessionId]
     );
 
     const quickRetryInFlight = React.useRef(false);
@@ -2227,7 +2262,7 @@ export default function QuizTimelinePage() {
             setQuickRetryLoading(true);
 
             try {
-                const { data } = await http.post(
+                const res = await http.post(
                     "/me/quiz/sessions/quick-retry",
                     null,
                     {
@@ -2238,8 +2273,7 @@ export default function QuizTimelinePage() {
                     }
                 );
 
-                const newSid = Number(data?.sessionId ?? data?.id ?? data?.newSessionId);
-                if (!Number.isFinite(newSid)) throw new Error("Invalid sessionId");
+                const newSid = pickNewSessionId(res);
 
                 setQuickModalOpen(false);
                 nav(`/learning/quiz/play?sessionId=${newSid}`);
@@ -2283,19 +2317,18 @@ export default function QuizTimelinePage() {
                 quickRetryInFlight.current = false;
             }
         },
-        [nav, location.pathname, location.search, openSys]
+        [nav, location.pathname, location.search, openSys, pickNewSessionId]
     );
 
     const handleRetryWrongOnly = React.useCallback(async (sessionId: number | string) => {
         try {
-            const { data } = await http.post(
+            const res = await http.post(
                 `/me/quiz/sessions/${sessionId}/retry-wrong-only`, // ← 백엔드 엔드포인트에 맞게
                 null,
                 { headers: authHeader(), withCredentials: true }
             );
 
-            const newSid = Number(data?.sessionId ?? data?.newSessionId ?? data?.id);
-            if (!Number.isFinite(newSid)) throw new Error("Invalid new sessionId");
+            const newSid = pickNewSessionId(res);
 
             nav(`/learning/quiz/play?sessionId=${newSid}`);
         } catch (e) {
@@ -2306,7 +2339,7 @@ export default function QuizTimelinePage() {
                 description: "잠시 후 다시 시도해주세요.",
             });
         }
-    }, [nav, openSys]);
+    }, [nav, openSys, pickNewSessionId]);
 
     React.useEffect(() => {
         const loggedIn = !!localStorage.getItem("isLoggedIn");
@@ -2417,6 +2450,34 @@ export default function QuizTimelinePage() {
             return nextStart;
         });
     }, [clampWindowStart]);
+
+    const goFirstPage = React.useCallback(() => {
+        setPageWindowStart(0);
+        setPage(0);
+    }, []);
+
+    const goLastPage = React.useCallback(() => {
+        const lastPage = pages - 1;
+        const lastWindowStart = clampWindowStart(lastPage - (WINDOW_SIZE - 1));
+
+        setPageWindowStart(lastWindowStart);
+        setPage(lastPage);
+    }, [pages, clampWindowStart]);
+
+    const firstVisiblePage = pageWindow[0] ?? 0;
+    const lastVisiblePage = pageWindow[pageWindow.length - 1] ?? 0;
+
+    const showFirstPage = firstVisiblePage > 0;
+    const showLeadingEllipsis = firstVisiblePage > 1;
+
+    const showTrailingEllipsis = lastVisiblePage < pages - 2;
+    const showLastPage = lastVisiblePage < pages - 1;
+
+    const visiblePages = pageWindow.filter((p) => {
+        if (showFirstPage && p === 0) return false;
+        if (showLastPage && p === pages - 1) return false;
+        return true;
+    });
 
     const [metric] = React.useState<"accuracy" | "sets" | "retryRate">("accuracy");
     const [span, setSpan] = React.useState<"7d" | "30d">("7d");
@@ -2720,11 +2781,11 @@ export default function QuizTimelinePage() {
         <NarrowLeft style={{ padding: "8px 0 24px" }}>
             {/* 상단 */}
             <Reveal $d={0}>
-                <Toolbar>
-                    <TitleRow>
-                        <Title>나의 퀴즈 타임라인</Title>
-                    </TitleRow>
-                </Toolbar>
+                <LearningPageHeader
+                    title="퀴즈 타임라인"
+                    count={`${total}개`}
+                    onBack={() => nav(-1)}
+                />
             </Reveal>
 
             <Screen>
@@ -3035,7 +3096,21 @@ export default function QuizTimelinePage() {
                                     ‹
                                 </PageNavBtn>
 
-                                {pageWindow.map((p) => (
+                                {showFirstPage && (
+                                    <PagePill
+                                        $active={page === 0}
+                                        onClick={goFirstPage}
+                                        aria-current={page === 0 ? "page" : undefined}
+                                        aria-label="1페이지"
+                                        type="button"
+                                    >
+                                        1
+                                    </PagePill>
+                                )}
+
+                                {showLeadingEllipsis && <PageEllipsis aria-hidden="true">...</PageEllipsis>}
+
+                                {visiblePages.map((p) => (
                                     <PagePill
                                         key={p}
                                         $active={p === page}
@@ -3047,6 +3122,20 @@ export default function QuizTimelinePage() {
                                         {p + 1}
                                     </PagePill>
                                 ))}
+
+                                {showTrailingEllipsis && <PageEllipsis aria-hidden="true">...</PageEllipsis>}
+
+                                {showLastPage && (
+                                    <PagePill
+                                        $active={page === pages - 1}
+                                        onClick={goLastPage}
+                                        aria-current={page === pages - 1 ? "page" : undefined}
+                                        aria-label={`${pages}페이지`}
+                                        type="button"
+                                    >
+                                        {pages}
+                                    </PagePill>
+                                )}
 
                                 <PageNavBtn
                                     onClick={goNext}

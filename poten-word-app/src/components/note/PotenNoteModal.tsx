@@ -1,6 +1,9 @@
 import React from "react";
 import { createPortal } from "react-dom";
 import styled, { keyframes } from "styled-components";
+import SystemMessageModal, {
+    SystemMessage,
+} from "../../components/common/SystemMessageModal.tsx";
 
 type Notebook = { id: string; name: string };
 
@@ -177,16 +180,6 @@ const Name = styled.span`
     white-space: nowrap;
 `;
 
-const hexToRgb = (hex: string) => {
-    const m = hex.replace("#", "");
-    const bigint = parseInt(m.length === 3 ? m.split("").map((c) => c + c).join("") : m, 16);
-    return { r: (bigint >> 16) & 255, g: (bigint >> 8) & 255, b: bigint & 255 };
-};
-const alpha = (hex: string, a: number) => {
-    const { r, g, b } = hexToRgb(hex);
-    return `rgba(${r}, ${g}, ${b}, ${a})`;
-};
-
 const ChevronIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true" {...props}>
         <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -251,47 +244,154 @@ const SettingsBtn = styled(ArrowBtn)`
 const RefreshBtn = styled(ArrowBtn)``;
 
 const TipWrap = styled.span`
-    position: relative;
     display: inline-flex;
     align-items: center;
 `;
 
-const TipBubble = styled.span`
-    position: absolute;
-    bottom: 100%;
-    left: 50%;
-    transform: translate(-50%, -6px);
+const FloatingTipBubble = styled.span<{
+    $top: number;
+    $left: number;
+    $placement: "top" | "bottom";
+}>`
+    position: fixed;
+    top: ${({ $top }) => `${$top}px`};
+    left: ${({ $left }) => `${$left}px`};
+    transform: ${({ $placement }) =>
+    $placement === "top"
+        ? "translate(-50%, calc(-100% - 8px))"
+        : "translate(-50%, 8px)"};
+
     padding: 6px 10px;
     background: rgba(17, 24, 39, 0.92);
     color: #fff;
     border-radius: 8px;
     font-size: 12px;
     font-weight: 600;
-    white-space: nowrap;
+    line-height: 1.35;
+    text-align: center;
+
+    max-width: min(260px, calc(100vw - 24px));
+    white-space: normal;
+    word-break: keep-all;
+
     pointer-events: none;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
-    opacity: 0;
-    transition: opacity 160ms ease, transform 160ms ease;
-    transition-delay: 60ms;
-    z-index: 3;
+    z-index: 2147483650;
+    opacity: 1;
+
     &::after {
         content: "";
         position: absolute;
-        top: 100%;
         left: 50%;
         transform: translateX(-50%);
         border: 6px solid transparent;
-        border-top-color: rgba(17, 24, 39, 0.92);
-    }
-    ${TipWrap}:hover &, ${TipWrap}:focus-within & {
-        opacity: 1;
-        transform: translate(-50%, -8px);
-        transition-delay: 140ms;
-    }
-    @media (pointer: coarse) {
-        display: none;
+
+        ${({ $placement }) =>
+    $placement === "top"
+        ? `
+            top: 100%;
+            border-top-color: rgba(17, 24, 39, 0.92);
+        `
+        : `
+            bottom: 100%;
+            border-bottom-color: rgba(17, 24, 39, 0.92);
+        `}
     }
 `;
+
+type TooltipAnchorProps = {
+    label: React.ReactNode;
+    children: React.ReactNode;
+    disabled?: boolean;
+};
+
+const TooltipAnchor: React.FC<TooltipAnchorProps> = ({ label, children, disabled }) => {
+    const anchorRef = React.useRef<HTMLSpanElement | null>(null);
+    const [open, setOpen] = React.useState(false);
+    const [pos, setPos] = React.useState({ top: 0, left: 0 });
+    const [placement, setPlacement] = React.useState<"top" | "bottom">("top");
+
+    const isCoarsePointer = React.useCallback(() => {
+        if (typeof window === "undefined" || !window.matchMedia) return false;
+        return window.matchMedia("(pointer: coarse)").matches;
+    }, []);
+
+    const updatePosition = React.useCallback(() => {
+        const el = anchorRef.current;
+        if (!el) return;
+
+        const rect = el.getBoundingClientRect();
+        const margin = 12;
+
+        const nextLeft = Math.min(
+            window.innerWidth - margin,
+            Math.max(margin, rect.left + rect.width / 2)
+        );
+
+        const topSpace = rect.top;
+        const bottomSpace = window.innerHeight - rect.bottom;
+
+        const nextPlacement: "top" | "bottom" =
+            topSpace >= 56 || topSpace >= bottomSpace ? "top" : "bottom";
+
+        setPlacement(nextPlacement);
+        setPos({
+            left: nextLeft,
+            top: nextPlacement === "top" ? rect.top : rect.bottom,
+        });
+    }, []);
+
+    const openTip = React.useCallback(() => {
+        if (disabled || isCoarsePointer()) return;
+        updatePosition();
+        setOpen(true);
+    }, [disabled, isCoarsePointer, updatePosition]);
+
+    const closeTip = React.useCallback(() => {
+        setOpen(false);
+    }, []);
+
+    React.useEffect(() => {
+        if (!open) return;
+
+        const handle = () => updatePosition();
+
+        window.addEventListener("scroll", handle, true);
+        window.addEventListener("resize", handle);
+
+        return () => {
+            window.removeEventListener("scroll", handle, true);
+            window.removeEventListener("resize", handle);
+        };
+    }, [open, updatePosition]);
+
+    return (
+        <TipWrap
+            ref={anchorRef}
+            onMouseEnter={openTip}
+            onMouseLeave={closeTip}
+            onFocusCapture={openTip}
+            onBlurCapture={(e) => {
+                const next = e.relatedTarget as Node | null;
+                if (!anchorRef.current?.contains(next)) closeTip();
+            }}
+        >
+            {children}
+            {open &&
+                createPortal(
+                    <FloatingTipBubble
+                        role="tooltip"
+                        $top={pos.top}
+                        $left={pos.left}
+                        $placement={placement}
+                    >
+                        {label}
+                    </FloatingTipBubble>,
+                    document.body
+                )}
+        </TipWrap>
+    );
+};
 
 const MenuRoot = styled.span`
     position: relative;
@@ -437,26 +537,6 @@ const Divider = styled.div`
     margin: ${TOKENS.space(12)} 0;
 `;
 
-/** 기존 배지(미사용) */
-const SavedBadge = styled.div<{ $show: boolean }>`
-    position: absolute;
-    top: 8px;
-    right: 12px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    padding: 6px 10px;
-    background: #ecfdf5;
-    border: 1px solid #d1fae5;
-    color: ${TOKENS.color.success};
-    border-radius: 999px;
-    font-size: 12px;
-    font-weight: 700;
-    opacity: ${({ $show }) => ($show ? 1 : 0)};
-    transform: translateY(${({ $show }) => ($show ? "0px" : "-6px")});
-    transition: all 240ms ease;
-`;
-
 /** ========= 확인 다이얼로그 ========= */
 const ConfirmBackdrop = styled.div`
     position: fixed;
@@ -513,129 +593,6 @@ const Notice = styled.div<{ $tone?: "info" | "warn" }>`
     background: ${({ $tone }) => ($tone === "warn" ? TOKENS.color.dangerBg : "#f3f4f6")};
     border: 1px solid ${TOKENS.color.line};
 `;
-/** ================================= */
-
-/** ====== Saved Toast Animation (3D) ====== */
-const pop3d = keyframes`
-    0%   { transform: translate3d(-50%, -46%, -60px) rotateX(10deg) scale(0.92); opacity: 0; }
-    60%  { transform: translate3d(-50%, -50%,  10px) rotateX(-6deg) scale(1.03); opacity: 1; }
-    100% { transform: translate3d(-50%, -50%,   0px) rotateX(0deg)  scale(1);   opacity: 1; }
-`;
-const ring3d = keyframes`
-    0%   { transform: translateZ(-6px) scale(0.7);  opacity: 0.35; }
-    80%  { transform: translateZ(-6px) scale(1.35); opacity: 0; }
-    100% { transform: translateZ(-6px) scale(1.55); opacity: 0; }
-`;
-const draw = keyframes` to { stroke-dashoffset: 0; } `;
-const pulse = keyframes`
-    0%, 100% { box-shadow: 0 0 0 rgba(0,0,0,0); }
-    50% { box-shadow: 0 0 0 10px var(--pulse-color); }
-`;
-
-const SavedToast = styled.div<{ $show: boolean }>`
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    z-index: 5;
-
-    --toast: 112px;
-
-    width: var(--toast);
-    height: var(--toast);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    /* 3D 컨텍스트 유지 */
-    transform-style: preserve-3d;
-
-    transform: ${({ $show }) =>
-            $show ? "translate3d(-50%, -50%, 0) scale(1)" : "translate3d(-50%, -48%, -10px) scale(0.9)"};
-    opacity: ${({ $show }) => ($show ? 1 : 0)};
-    transition: opacity 200ms ease, transform 260ms ease;
-    animation: ${({ $show }) => ($show ? pop3d : "none")} 420ms cubic-bezier(.2,.8,.2,1) both;
-    pointer-events: none;
-
-    background: ${(p) => alpha(TOKENS.color.primary, 0.1)};
-    border-radius: 999px;
-    border: 1px solid ${(p) => alpha(TOKENS.color.primary, 0.18)};
-    box-shadow:
-            0 12px 28px rgba(0,0,0,0.18),
-            inset 0 -8px 14px rgba(0,0,0,0.06);
-
-    /* 뒤쪽 확산 링(약간 뒤로) */
-    &::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: 999px;
-        border: 2px solid ${(p) => alpha(TOKENS.color.primary, 0.26)};
-        opacity: 0;
-        transform: translateZ(-6px);
-        animation: ${({ $show }) => ($show ? ring3d : "none")} 560ms ease-out 80ms;
-        pointer-events: none;
-    }
-
-    /* 바닥 그림자(더 깊이감) */
-    &::before {
-        content: "";
-        position: absolute;
-        width: 70%;
-        height: 18%;
-        bottom: -14px;
-        left: 50%;
-        transform: translateX(-50%) translateZ(-20px);
-        filter: blur(12px);
-        background: radial-gradient(50% 50% at 50% 50%, rgba(0,0,0,0.22), rgba(0,0,0,0) 70%);
-        opacity: ${({ $show }) => ($show ? 1 : 0)};
-        transition: opacity 240ms ease;
-        border-radius: 999px;
-        pointer-events: none;
-    }
-`;
-
-const CheckWrap = styled.span`
-    position: relative;
-    --check: calc(var(--toast) - 20px);
-    width: var(--check);
-    height: var(--check);
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background: ${TOKENS.color.primary};
-    color: #fff;
-    border-radius: 999px;
-    box-shadow: 0 10px 22px ${(p) => alpha(TOKENS.color.primary, 0.35)};
-    --pulse-color: ${(p) => alpha(TOKENS.color.primary, 0.18)};
-    animation: ${pulse} 720ms ease-out 60ms 1;
-
-    /* 체크 원판을 살짝 앞으로 */
-    transform: translateZ(12px);
-    transform-style: preserve-3d;
-
-    svg { display: block; }
-    .check {
-        fill: none;
-        stroke: #fff;
-        stroke-width: 4;
-        stroke-linecap: round;
-        stroke-linejoin: round;
-        stroke-dasharray: 40;
-        stroke-dashoffset: 40;
-        animation: ${draw} 460ms ease forwards 140ms;
-    }
-`;
-
-const SavedToastView: React.FC<{ show: boolean; tick: number }> = ({ show, tick }) => (
-    <SavedToast key={tick} $show={show} role="status" aria-label="완료">
-        <CheckWrap aria-hidden="true">
-            <svg width="44" height="44" viewBox="0 0 24 24">
-                <path className="check" d="M20 6L9 17l-5-5" />
-            </svg>
-        </CheckWrap>
-    </SavedToast>
-);
-/** ==================================== */
 
 /** 폴더 링크 a태그(컴포넌트 밖에 정의) */
 const ArrowLink = styled.a`
@@ -696,13 +653,12 @@ export default function PotenNoteModal({
     const [dragOver, setDragOver] = React.useState<{ id: string; edge: "top" | "bottom" } | null>(null);
     const [savingOrder, setSavingOrder] = React.useState(false);
 
-    // 저장 토스트 상태
-    const [showSaved, setShowSaved] = React.useState(false);
-    const [savedTick, setSavedTick] = React.useState(0);
-    const triggerSaved = React.useCallback(() => {
-        setShowSaved(true);
-        setSavedTick((t) => t + 1);
-        window.setTimeout(() => setShowSaved(false), 1200);
+    const [systemOpen, setSystemOpen] = React.useState(false);
+    const [systemMessage, setSystemMessage] = React.useState<SystemMessage | null>(null);
+
+    const openSystemMessage = React.useCallback((msg: SystemMessage) => {
+        setSystemMessage(msg);
+        setSystemOpen(true);
     }, []);
 
     const lastStableRef = React.useRef<Notebook[]>([]);
@@ -776,12 +732,17 @@ export default function PotenNoteModal({
             await Promise.resolve(onRename(renameTarget.id, nextName));
             setList((prev) => prev.map((n) => (n.id === renameTarget.id ? { ...n, name: nextName } : n)));
             closeRename();
-            triggerSaved();
+
+            openSystemMessage({
+                tone: "success",
+                title: "이름 변경 완료",
+                description: "포텐노트 이름을 변경했어요.",
+            });
         } catch (e) {
             setRenameError("이름 변경에 실패했습니다. 잠시 후 다시 시도해 주세요.");
             console.error("[rename modal] failed:", e);
         }
-    }, [renameTarget, renameValue, validateRename, onRename, closeRename, triggerSaved]);
+    }, [renameTarget, renameValue, validateRename, onRename, closeRename]);
 
     const getRenameSelection = React.useCallback(() => {
         if (bulkMode) {
@@ -800,15 +761,16 @@ export default function PotenNoteModal({
             setDraggingId(null);
             setDragOver(null);
             setSavingOrder(false);
-            setShowSaved(false);
             setMenuOpen(false);
             setBulkMode(false);
             setDeleteIds(new Set());
             setConfirmOpen(false);
             setHint(null);
+            setSystemOpen(false);
+            setSystemMessage(null);
             closeRename();
         }
-    }, [internalOpen]);
+    }, [internalOpen, closeRename]);
 
     React.useEffect(() => {
         if (!internalOpen) return;
@@ -904,14 +866,13 @@ export default function PotenNoteModal({
             setCreating(false);
             setNewName("");
             setError("");
-            triggerSaved();
         } catch (e: any) {
             const status = e?.response?.status;
             if (e?.message === "DUPLICATE_LOCAL" || status === 409) setError("중복되는 이름입니다.");
             else if (e?.message === "EMPTY_NAME" || status === 400) setError("공백만 입력할 수 없어요.");
             else setError("폴더 생성에 실패했습니다. 잠시 후 다시 시도해 주세요.");
         }
-    }, [newName, error, onCreate, showHint, triggerSaved]);
+    }, [newName, error, onCreate, showHint]);
 
     const handleSave = React.useCallback(async () => {
         if (!selectedId) return;
@@ -940,11 +901,16 @@ export default function PotenNoteModal({
             setConfirmOpen(false);
             setBulkMode(false);
             setDeleteIds(new Set());
-            triggerSaved();
+
+            openSystemMessage({
+                tone: "success",
+                title: "삭제 완료",
+                description: `포텐노트 ${ids.length}개를 삭제했어요.`,
+            });
         } finally {
             setMenuOpen(false);
         }
-    }, [deleteIds, onRequestBulkDelete, onRequestDelete, list, triggerSaved]);
+    }, [deleteIds, onRequestBulkDelete, onRequestDelete, list]);
 
     // ESC 한 번에 닫기 (내부 상태 즉시 false + 부모 onClose)
     React.useEffect(() => {
@@ -1061,7 +1027,6 @@ export default function PotenNoteModal({
         try {
             lastStableRef.current = prev;
             if (onReorder) await Promise.resolve(onReorder(next.map((n) => n.id)));
-            triggerSaved();
             lastStableRef.current = next;
         } catch (err) {
             console.error("[folders reorder] PATCH failed:", err);
@@ -1090,7 +1055,6 @@ export default function PotenNoteModal({
                 setList(next);
                 lastStableRef.current = next;
                 setSelectedId((prev) => (prev && next.some((n) => n.id === prev) ? prev : next[0]?.id ?? null));
-                triggerSaved(); // 3D 체크 모션
             }
         } catch (e) {
             console.error("[folders refresh] failed:", e);
@@ -1190,9 +1154,6 @@ export default function PotenNoteModal({
     const modal = (
         <Overlay role="dialog" aria-modal="true" aria-label="내 포텐노트에 저장하기">
             <Panel>
-                {/* 저장 체크 토스트 (3D) */}
-                <SavedToastView show={showSaved} tick={savedTick} />
-
                 <Header ref={headerRef}>
                     <HeaderTitle>내 포텐노트에 저장하기</HeaderTitle>
                     <HeaderRight>
@@ -1204,7 +1165,7 @@ export default function PotenNoteModal({
             </span>
 
                         {/* 새로고침 버튼 */}
-                        <TipWrap data-tip>
+                        <TooltipAnchor label={refreshing ? "동기화 중..." : "서버와 동기화"}>
                             <RefreshBtn
                                 type="button"
                                 aria-label="새로고침"
@@ -1219,16 +1180,14 @@ export default function PotenNoteModal({
                             >
                                 <RefreshIcon />
                             </RefreshBtn>
-                            <TipBubble>{refreshing ? "동기화 중..." : "서버와 동기화"}</TipBubble>
-                        </TipWrap>
+                        </TooltipAnchor>
 
                         <MenuRoot>
-                            <TipWrap data-tip>
+                            <TooltipAnchor label="설정">
                                 <SettingsBtn type="button" aria-label="설정 열기" onClick={() => setMenuOpen((v) => !v)}>
                                     <GearIcon />
                                 </SettingsBtn>
-                                <TipBubble>설정</TipBubble>
-                            </TipWrap>
+                            </TooltipAnchor>
                             {menuOpen && menu}
                         </MenuRoot>
                     </HeaderRight>
@@ -1333,7 +1292,7 @@ export default function PotenNoteModal({
                                     $bulk={bulkMode}
                                 >
                                     <Left>
-                                        <TipWrap data-tip>
+                                        <TooltipAnchor label={bulkMode ? "삭제 대상으로 선택" : "저장할 단어장 선택하기"}>
                                             <Checkbox
                                                 draggable={false}
                                                 onMouseDown={(e) => e.stopPropagation()}
@@ -1343,14 +1302,13 @@ export default function PotenNoteModal({
                                                 aria-label={bulkMode ? `${nb.name} 삭제 대상으로 선택` : `${nb.name} 선택`}
                                                 disabled={refreshing}
                                             />
-                                            <TipBubble>{bulkMode ? "삭제 대상으로 선택" : "저장할 단어장 선택하기"}</TipBubble>
-                                        </TipWrap>
+                                        </TooltipAnchor>
 
                                         <Name>{nb.name}</Name>
                                     </Left>
 
                                     {showArrow && (
-                                        <TipWrap data-tip>
+                                        <TooltipAnchor label="해당 단어장으로 이동하기">
                                             <ArrowLink
                                                 href={getFolderHref(nb.id)}
                                                 aria-label={`${nb.name} 폴더로 이동`}
@@ -1369,8 +1327,7 @@ export default function PotenNoteModal({
                                             >
                                                 <ChevronIcon />
                                             </ArrowLink>
-                                            <TipBubble>해당 단어장으로 이동하기</TipBubble>
-                                        </TipWrap>
+                                        </TooltipAnchor>
                                     )}
                                 </Row>
                             );
@@ -1502,6 +1459,15 @@ export default function PotenNoteModal({
                     </ConfirmCard>
                 </ConfirmBackdrop>
             )}
+            <SystemMessageModal
+                open={systemOpen}
+                message={systemMessage}
+                onClose={() => {
+                    setSystemOpen(false);
+                    setSystemMessage(null);
+                }}
+                zIndexBase={2147483650}
+            />
             {/* ==================================== */}
         </Overlay>
     );

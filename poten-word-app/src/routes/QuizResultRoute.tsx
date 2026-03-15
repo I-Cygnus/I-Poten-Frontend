@@ -77,7 +77,7 @@ export default function QuizResultRoute() {
     }, [sessionId]);
 
     const progress: (OX | null)[] =
-        serverProgress ?? state?.progress ?? stored ?? Array.from({ length: QUIZ_LEN }, () => null);
+        state?.progress ?? serverProgress ?? stored ?? Array.from({ length: QUIZ_LEN }, () => null);
 
     const handleRetryWrong = async () => {
         if (!sessionId) return;

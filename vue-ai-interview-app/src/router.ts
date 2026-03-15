@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from "vue-router";
+import { validateInterviewSessionToken } from "@/utils/sessionToken";
 
 // 페이지 컴포넌트 import
 import AiInterview from '../src/ai-interview/pages/ai-interview.vue';
@@ -66,6 +67,36 @@ const routes: Array<RouteRecordRaw> = [
 const router = createRouter({
     history: createWebHistory("/vue-ai-interview"), // hash 모드면 createWebHashHistory()
     routes,
+});
+
+// 면접 세션 토큰이 필요한 경로들
+const protectedRoutes = [
+    '/ai-test',
+    '/ai-interview/end'
+];
+
+// 라우트 가드: 면접 세션 토큰 검증
+router.beforeEach((to, from, next) => {
+    // 보호된 경로인지 확인
+    const isProtectedRoute = protectedRoutes.some(route => to.path.startsWith(route));
+    
+    if (isProtectedRoute) {
+        // 세션 토큰 검증
+        const hasValidToken = validateInterviewSessionToken();
+        
+        if (!hasValidToken) {
+            // 토큰이 없거나 만료된 경우 메인 페이지로 리다이렉션
+            console.warn('Invalid or expired interview session token. Redirecting to home.');
+            window.location.href = '/';
+            return;
+        }
+    }
+    
+    next();
+});
+
+router.afterEach(() => {
+    window.dispatchEvent(new CustomEvent("vue-route-change"));
 });
 
 export default router;

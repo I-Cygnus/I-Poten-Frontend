@@ -49,7 +49,7 @@ export default function QuizHomePage() {
             {
                 id: "today",
                 titlePrefix: "오늘의 ",
-                titleEmphasis: "포텐퀴즈",
+                titleEmphasis: "객관식 퀴즈",
                 subtitle: "하루 10분 투자로 당신의 가치를 만들어 나가세요",
                 ctaLabel: "지금 포텐퀴즈 도전하기",
                 artSrc: quiz1,
@@ -57,8 +57,8 @@ export default function QuizHomePage() {
             {
                 id: "initials",
                 titlePrefix: "오늘의 ",
-                titleEmphasis: "초성퀴즈",
-                subtitle: "AI 면접 준비, 초성퀴즈로 핵심 개념을 빠르게 점검하세요",
+                titleEmphasis: "초성 퀴즈",
+                subtitle: "AI 면접 준비, 초성 퀴즈로 핵심 개념을 빠르게 점검하세요",
                 ctaLabel: "지금 포텐퀴즈 도전하기",
                 artSrc: quiz2,
             },
@@ -74,6 +74,19 @@ export default function QuizHomePage() {
         []
     );
 
+    // ===== System Message =====
+    const [sysOpen, setSysOpen] = useState(false);
+    const [sysMsg, setSysMsg] = useState<SystemMessage | null>(null);
+
+    const openSys = (m: SystemMessage) => {
+        setSysMsg(m);
+        setSysOpen(true);
+    };
+    const closeSys = () => {
+        setSysOpen(false);
+        setSysMsg(null);
+    };
+
     type DailyKind = "CHOICE" | "OX" | "INITIALS";
 
     const [dailyOpen, setDailyOpen] = useState(false);
@@ -88,7 +101,9 @@ export default function QuizHomePage() {
     const [resultItems, setResultItems] = useState<any[]>([]);
     const [retryToken, setRetryToken] = useState(0);
 
-
+    const closeDailyCarry = useCallback(() => {
+        setDailyCarryOpen(false);
+    }, []);
 
     type CarryChoice = "RESUME" | "TODAY";
     const [carryChoice, setCarryChoice] = useState<CarryChoice>("RESUME");
@@ -141,15 +156,37 @@ export default function QuizHomePage() {
         }
     }, []);
 
-    const closeDailyCarry = () => {
-        setDailyCarryOpen(false);
-        setDailyResumeCandidate(null);
-    };
+
+
+    const closeDaily = useCallback(() => {
+        setDailyOpen(false);
+        setDailyOverrideItems(null);
+        setDailyRetryWrongOnly(false);
+        setDailyRetryInitialProgress(undefined);
+    }, []);
+
+    const requestExitDaily = useCallback(() => {
+        // “풀이 중” 판단이 필요하면 여기서 조건 체크도 가능
+        openSys({
+            tone: "warning",
+            title: "정말 종료할까요?",
+            description: "지금 나가면 진행 중인 풀이가 저장되지 않아요.",
+            actions: [
+                { label: "계속 풀기", tone: "primary", onClick: () => {}, autoClose: true },
+                { label: "나가기", tone: "danger", onClick: closeDaily, autoClose: true },
+            ],
+            closeOnScrim: true,
+            closeOnEsc: true,
+        } as any);
+    }, [openSys, closeDaily]);
 
     const onPickResume = () => {
         if (!dailyResumeCandidate) return;
         setDailyData(dailyResumeCandidate);
         setDailyKind(dailyPendingKind);
+        setDailyRetryWrongOnly(false);
+        setDailyRetryInitialProgress(undefined);
+        setDailyOverrideItems(null);
         setDailyOpen(true);
         closeDailyCarry();
     };
@@ -163,6 +200,9 @@ export default function QuizHomePage() {
             const res = await startGeneralDaily("TODAY");
             setDailyData(res);
             setDailyKind(dailyPendingKind);
+            setDailyRetryWrongOnly(false);
+            setDailyRetryInitialProgress(undefined);
+            setDailyOverrideItems(null);
             setDailyOpen(true);
             closeDailyCarry();
         } catch (e: any) {
@@ -178,6 +218,8 @@ export default function QuizHomePage() {
     const [resultOpen, setResultOpen] = useState(false);
     const [resultProgress, setResultProgress] = useState<(OX | null)[]>([]);
     const [resultSessionId, setResultSessionId] = useState<number | null>(null);
+    const [dailyRetryWrongOnly, setDailyRetryWrongOnly] = useState(false);
+    const [dailyRetryInitialProgress, setDailyRetryInitialProgress] = useState<(OX | null)[] | undefined>(undefined);
 
     const retryWrongInDailyModal = useCallback(() => {
         if (!resultKind || !resultItems?.length) return;
@@ -192,28 +234,58 @@ export default function QuizHomePage() {
             return;
         }
 
-        const wrongItems = wrongIdxs.map(i => resultItems[i]).filter(Boolean);
-
-        // 1) 결과 모달 닫기
         setResultOpen(false);
 
-        // 2) 데일리 모달을 “오답 items”로 시작
+        const fullProgress: (OX | null)[] = Array.from(
+            { length: resultItems.length },
+            (_, i) => resultProgress[i] ?? null
+        );
+
         setDailyKind(resultKind);
-        setDailyOverrideItems(wrongItems);
-
-        // 3) 강제 리마운트
+        setDailyOverrideItems(resultItems);
+        setDailyRetryWrongOnly(true);
+        setDailyRetryInitialProgress(fullProgress);
         setRetryToken(t => t + 1);
-
-        // 4) 데일리 모달 열기
         setDailyOpen(true);
     }, [resultKind, resultItems, resultProgress]);
 
     const actions = useMemo(
         () => [
-            { id: "a1", label: "내 포텐노트",        icon: act1, to: "/learning/note" },
-            { id: "a2", label: "내 퀴즈 타임라인",  icon: act2, to: "/learning/quiz/timeline" },
-            { id: "a3", label: "오답노트 바로 가기", icon: act3, to: "/learning/quiz/wrong-notes" },
-            { id: "a4", label: "명예의 전당",        icon: act4, to: "/learning/quiz/hall" },
+            {
+                id: "a1",
+                label: "내 포텐노트",
+                desc: "정리한 용어와 노트를 확인해 보세요",
+                icon: act1,
+                iconSize: 28,
+                to: "/learning/note",
+                tone: "purple" as ActionTone,
+            },
+            {
+                id: "a2",
+                label: "퀴즈 타임라인",
+                desc: "풀이 기록과 학습 흐름을 확인해 보세요",
+                icon: act2,
+                iconSize: 36,
+                to: "/learning/quiz/timeline",
+                tone: "green" as ActionTone,
+            },
+            {
+                id: "a3",
+                label: "오답노트 바로가기",
+                desc: "틀린 문제를 다시 복습해 보세요",
+                icon: act3,
+                iconSize: 36,
+                to: "/learning/quiz/wrong-notes",
+                tone: "peach" as ActionTone,
+            },
+            // {
+            //     id: "a4",
+            //     label: "명예의 전당",
+            //     desc: "주간 랭킹과 우수 학습자를 확인해보세요",
+            //     icon: act4,
+            //     to: "/learning/quiz/hall",
+            //     tone: "purple" as ActionTone,
+            // },
         ],
         []
     );
@@ -238,17 +310,15 @@ export default function QuizHomePage() {
         if (id === "ox") return openDaily("OX");
         if (id === "initials") return openDaily("INITIALS");
 
-        // fallback
         return openDaily("CHOICE");
     }, [slides, idx, openDaily]);
 
-    const AUTO_MS = 5000;               // 한 슬라이드 유지 시간(5초)
+    const AUTO_MS = 5000;
     const [auto, setAuto] = useState(true);
-    const [progress, setProgress] = useState(0); // 0~1
+    const [progress, setProgress] = useState(0);
 
-    // 자동 진행 + 프로그레스 업데이트
     useEffect(() => {
-        if (!auto) return;                       // 정지 상태면 멈춤
+        if (!auto) return;
         let raf: number;
         let start = performance.now();
 
@@ -358,19 +428,6 @@ export default function QuizHomePage() {
     const [setupOpen, setSetupOpen] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    // ===== System Message =====
-    const [sysOpen, setSysOpen] = useState(false);
-    const [sysMsg, setSysMsg] = useState<SystemMessage | null>(null);
-
-    const openSys = (m: SystemMessage) => {
-        setSysMsg(m);
-        setSysOpen(true);
-    };
-    const closeSys = () => {
-        setSysOpen(false);
-        setSysMsg(null);
-    };
-
     const getApiError = (err: any) => {
         const status = err?.response?.status ?? null;
         const data = err?.response?.data ?? null;
@@ -474,7 +531,6 @@ export default function QuizHomePage() {
         const inputTitle = normalizeTitle(sessionTitle);
         const finalTitle = inputTitle ?? builtTitle;
 
-        // 공통 베이스
         const basePayload = {
             title: finalTitle,
             count: qCount,
@@ -568,7 +624,6 @@ export default function QuizHomePage() {
         return `${topic.label} · ${qCount}문항 · ${toTypeLabel(qType)} · ${toLevelLabel(qLevel)}`;
     }, [topic, qCount, qType, qLevel]);
 
-    // 모달 열렸을 때 / 토픽 바뀌었을 때 기본값 세팅 (단, 사용자가 이미 수정했다면 덮어쓰지 않음)
     useEffect(() => {
         if (!setupOpen) return;
         if (titleTouched) return;
@@ -593,18 +648,15 @@ export default function QuizHomePage() {
                           if (e.key === "ArrowRight") goNext();
                       }}
             >
-                {/* ◀ 이전 */}
                 <ArrowButton aria-label="이전" onClick={goPrev} $side="left">
                     <ArrowSvg viewBox="0 0 24 24"><polyline points="15 4 7 12 15 20" /></ArrowSvg>
                 </ArrowButton>
 
                 <HeroPanel data-slide={slides[idx].id}>
-                    {/* 슬라이더 */}
                     <Slider aria-live="polite">
                         <Track $index={idx}>
                             {slides.map(slide => (
                                 <SlideItem key={slide.id}>
-                                    {/* 왼쪽: 텍스트 */}
                                     <SlideContent>
                                         <Title>
                                             {slide.titlePrefix}
@@ -630,45 +682,43 @@ export default function QuizHomePage() {
                             ))}
                         </Track>
                     </Slider>
-                    {/* 슬라이더와 독립된 절대배치 아트 (잘림 방지) */}
                     <HeroArt aria-hidden="true">
                         <ArtImg key={slides[idx].artSrc} src={slides[idx].artSrc} alt="" />
                     </HeroArt>
                 </HeroPanel>
 
-                {/* ▶ 다음 */}
                 <ArrowButton aria-label="다음" onClick={goNext} $side="right">
                     <ArrowSvg viewBox="0 0 24 24"><polyline points="9 4 17 12 9 20" /></ArrowSvg>
                 </ArrowButton>
-                {/*<MiniPager role="region" aria-label="슬라이드 컨트롤">*/}
-                {/*    <IndicatorRow role="tablist" aria-label="슬라이드 선택">*/}
-                {/*        {slides.map((s, i) => (*/}
-                {/*            <IndicatorBtn*/}
-                {/*                key={s.id}*/}
-                {/*                type="button"*/}
-                {/*                $active={i === idx}*/}
-                {/*                style={i === idx ? ({ ["--p" as any]: progress } as any) : undefined}*/}
-                {/*                onClick={() => {*/}
-                {/*                    setProgress(0);*/}
-                {/*                    setIdx(i);*/}
-                {/*                }}*/}
-                {/*                aria-label={`${i + 1}번째 슬라이드로 이동`}*/}
-                {/*                aria-current={i === idx ? "true" : undefined}*/}
-                {/*            >*/}
-                {/*                <span className="shape" />*/}
-                {/*            </IndicatorBtn>*/}
-                {/*        ))}*/}
-                {/*    </IndicatorRow>*/}
+                <MiniPager role="region" aria-label="슬라이드 컨트롤">
+                    <IndicatorRow role="tablist" aria-label="슬라이드 선택">
+                        {slides.map((s, i) => (
+                            <IndicatorBtn
+                                key={s.id}
+                                type="button"
+                                $active={i === idx}
+                                style={i === idx ? ({ ["--p" as any]: progress } as any) : undefined}
+                                onClick={() => {
+                                    setProgress(0);
+                                    setIdx(i);
+                                }}
+                                aria-label={`${i + 1}번째 슬라이드로 이동`}
+                                aria-current={i === idx ? "true" : undefined}
+                            >
+                                <span className="shape" />
+                            </IndicatorBtn>
+                        ))}
+                    </IndicatorRow>
 
-                {/*    <MiniToggle*/}
-                {/*        type="button"*/}
-                {/*        onClick={() => setAuto(a => !a)}*/}
-                {/*        aria-label={auto ? "일시정지" : "재생"}*/}
-                {/*        aria-pressed={!auto}*/}
-                {/*    >*/}
-                {/*        <MiniIcon $mode={auto ? "pause" : "play"} aria-hidden />*/}
-                {/*    </MiniToggle>*/}
-                {/*</MiniPager>*/}
+                    <MiniToggle
+                        type="button"
+                        onClick={() => setAuto(a => !a)}
+                        aria-label={auto ? "일시정지" : "재생"}
+                        aria-pressed={!auto}
+                    >
+                        <MiniIcon $mode={auto ? "pause" : "play"} aria-hidden />
+                    </MiniToggle>
+                </MiniPager>
             </HeroWrap>
 
             {/*<ProgressShell*/}
@@ -798,7 +848,7 @@ export default function QuizHomePage() {
             <DailyQuizModal
                 open={dailyOpen}
                 title={session?.title ?? "오늘의 퀴즈"}
-                onClose={() => setDailyOpen(false)}
+                onClose={requestExitDaily}
                 variant="cardOnly"
             >
                 {!session && <div style={{ padding: 12 }}>세션 정보를 찾지 못했어요.</div>}
@@ -808,10 +858,9 @@ export default function QuizHomePage() {
                         key={`choice-${session.sessionId}-${retryToken}`}
                         sessionId={session.sessionId}
                         items={((dailyOverrideItems ?? session.items) ?? []) as any}
-                        onClose={() => {
-                            setDailyOpen(false);
-                            setDailyOverrideItems(null);
-                        }}
+                        retryWrongOnly={dailyRetryWrongOnly}
+                        initialProgress={dailyRetryInitialProgress}
+                        onClose={closeDaily}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
 
@@ -823,6 +872,8 @@ export default function QuizHomePage() {
                             setResultItems(playedItems as any);
                             setResultOpen(true);
                             setDailyOverrideItems(null);
+                            setDailyRetryWrongOnly(false);
+                            setDailyRetryInitialProgress(undefined);
                         }}
                     />
                 )}
@@ -832,9 +883,13 @@ export default function QuizHomePage() {
                         key={`ox-${session.sessionId}-${retryToken}`}
                         sessionId={session.sessionId}
                         items={((dailyOverrideItems ?? session.items) ?? []) as any}
+                        retryWrongOnly={dailyRetryWrongOnly}
+                        initialProgress={dailyRetryInitialProgress}
                         onClose={() => {
                             setDailyOpen(false);
                             setDailyOverrideItems(null);
+                            setDailyRetryWrongOnly(false);
+                            setDailyRetryInitialProgress(undefined);
                         }}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
@@ -848,6 +903,8 @@ export default function QuizHomePage() {
                             setResultOpen(true);
 
                             setDailyOverrideItems(null);
+                            setDailyRetryWrongOnly(false);
+                            setDailyRetryInitialProgress(undefined);
                         }}
                     />
                 )}
@@ -857,9 +914,13 @@ export default function QuizHomePage() {
                         key={`initials-${session.sessionId}-${retryToken}`}
                         sessionId={session.sessionId}
                         items={((dailyOverrideItems ?? session.items) ?? []) as any}
+                        retryWrongOnly={dailyRetryWrongOnly}
+                        initialProgress={dailyRetryInitialProgress}
                         onClose={() => {
                             setDailyOpen(false);
                             setDailyOverrideItems(null);
+                            setDailyRetryWrongOnly(false);
+                            setDailyRetryInitialProgress(undefined);
                         }}
                         onShowResult={({ sessionId, progress }) => {
                             setDailyOpen(false);
@@ -873,6 +934,8 @@ export default function QuizHomePage() {
                             setResultOpen(true);
 
                             setDailyOverrideItems(null);
+                            setDailyRetryWrongOnly(false);
+                            setDailyRetryInitialProgress(undefined);
                         }}
                     />
                 )}
@@ -889,27 +952,43 @@ export default function QuizHomePage() {
                         setResultOpen(false);
                         setResultSessionId(null);
                         setResultProgress([]);
+                        setDailyRetryWrongOnly(false);
+                        setDailyRetryInitialProgress(undefined);
+                        setDailyOverrideItems(null);
                     }}
                     onFinish={() => {
                         setResultOpen(false);
                         setResultSessionId(null);
                         setResultProgress([]);
+                        setDailyRetryWrongOnly(false);
+                        setDailyRetryInitialProgress(undefined);
+                        setDailyOverrideItems(null);
                     }}
                 />
             )}
             <QuickActions>
                 <ActionsGrid role="list">
-                    {actions.map((a, i) => (
+                    {actions.map((a) => (
                         <ActionItem
                             key={a.id}
+                            type="button"
                             role="listitem"
                             onClick={() => nav(a.to)}
                             aria-label={a.label}
                         >
-                            <IconCircle>
-                                <IconImg src={a.icon} alt="" aria-hidden $big={i === 0} />
-                            </IconCircle>
-                            <ActionLabel>{a.label}</ActionLabel>
+                            <ActionHeader>
+                                <ActionIconBadge $tone={a.tone}>
+                                    <ActionIconImg
+                                        src={a.icon}
+                                        alt=""
+                                        aria-hidden
+                                        $size={a.iconSize}
+                                    />
+                                </ActionIconBadge>
+                                <ActionLabel>{a.label}</ActionLabel>
+                            </ActionHeader>
+
+                            <ActionDesc>{a.desc}</ActionDesc>
                         </ActionItem>
                     ))}
                 </ActionsGrid>
@@ -950,11 +1029,11 @@ export default function QuizHomePage() {
                         </JobGroup>
                     ))}
 
-                    <MoreRow>
-                        <MoreBtn onClick={() => nav('/learning/quiz/categories')}>
-                            더 많은 직무 카테고리에서 고르기
-                        </MoreBtn>
-                    </MoreRow>
+                    {/*<MoreRow>*/}
+                    {/*    <MoreBtn onClick={() => nav('/learning/quiz/categories')}>*/}
+                    {/*        더 많은 직무 카테고리에서 고르기*/}
+                    {/*    </MoreBtn>*/}
+                    {/*</MoreRow>*/}
                 </JobsSurface>
             </JobSection>
             {setupOpen && (
@@ -983,57 +1062,57 @@ export default function QuizHomePage() {
                         </SheetHeader>
 
 
-                            <SheetBody>
-                                {/* 세션 제목 */}
-                                <Section>
-                                    <h4>퀴즈 제목</h4>
-                                    <TitleInputRow>
-                                        <TitleInput
-                                            value={sessionTitle}
-                                            onChange={(e) => {
-                                                setSessionTitle(e.target.value);
-                                                setTitleTouched(true);
-                                            }}
-                                            placeholder={defaultSessionTitle}
-                                            maxLength={40}
-                                        />
-                                        <TitleCounter>{(sessionTitle?.length ?? 0)}/40</TitleCounter>
-                                    </TitleInputRow>
-                                    <HintText>퀴즈 제목을 입력하세요.</HintText>
-                                </Section>
-                                {/* 문항 수 */}
-                                <Section>
-                                    <h4>문항 수</h4>
-                                    <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
-                                        {[5,10,15,20].map(n => (
-                                            <CountChip key={n} $on={qCount===n} onClick={()=>setQCount(n)}>
-                                                {n}문항
-                                            </CountChip>
-                                        ))}
-                                    </div>
-                                </Section>
+                        <SheetBody>
+                            {/* 세션 제목 */}
+                            <Section>
+                                <h4>퀴즈 제목</h4>
+                                <TitleInputRow>
+                                    <TitleInput
+                                        value={sessionTitle}
+                                        onChange={(e) => {
+                                            setSessionTitle(e.target.value);
+                                            setTitleTouched(true);
+                                        }}
+                                        placeholder={defaultSessionTitle}
+                                        maxLength={40}
+                                    />
+                                    <TitleCounter>{(sessionTitle?.length ?? 0)}/40</TitleCounter>
+                                </TitleInputRow>
+                                <HintText>퀴즈 제목을 입력하세요.</HintText>
+                            </Section>
+                            {/* 문항 수 */}
+                            <Section>
+                                <h4>문항 수</h4>
+                                <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+                                    {[5,10,15,20].map(n => (
+                                        <CountChip key={n} $on={qCount===n} onClick={()=>setQCount(n)}>
+                                            {n}문항
+                                        </CountChip>
+                                    ))}
+                                </div>
+                            </Section>
 
-                                {/* 문제 유형 */}
-                                <Section>
-                                    <h4>문제 유형</h4>
-                                    <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
-                                        <Chip $on={qType==="mix"}      onClick={()=>setQType("mix")}>유형 섞기</Chip>
-                                        <Chip $on={qType==="choice"}   onClick={()=>setQType("choice")}>객관식</Chip>
-                                        <Chip $on={qType==="ox"}       onClick={()=>setQType("ox")}>OX</Chip>
-                                        <Chip $on={qType==="initials"} onClick={()=>setQType("initials")}>초성</Chip>
-                                    </div>
-                                </Section>
+                            {/* 문제 유형 */}
+                            <Section>
+                                <h4>문제 유형</h4>
+                                <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+                                    <Chip $on={qType==="mix"}      onClick={()=>setQType("mix")}>유형 섞기</Chip>
+                                    <Chip $on={qType==="choice"}   onClick={()=>setQType("choice")}>객관식</Chip>
+                                    <Chip $on={qType==="ox"}       onClick={()=>setQType("ox")}>OX</Chip>
+                                    <Chip $on={qType==="initials"} onClick={()=>setQType("initials")}>초성</Chip>
+                                </div>
+                            </Section>
 
-                                {/* 난이도 */}
-                                <Section>
-                                    <h4>문제 난이도</h4>
-                                    <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
-                                        <Chip $on={qLevel==="mix"}    onClick={()=>setQLevel("mix")}>혼합</Chip>
-                                        <Chip $on={qLevel==="easy"}   onClick={()=>setQLevel("easy")}>쉬움</Chip>
-                                        <Chip $on={qLevel==="medium"} onClick={()=>setQLevel("medium")}>보통</Chip>
-                                        <Chip $on={qLevel==="hard"}   onClick={()=>setQLevel("hard")}>어려움</Chip>
-                                    </div>
-                                </Section>
+                            {/* 난이도 */}
+                            <Section>
+                                <h4>문제 난이도</h4>
+                                <div style={{display:"flex", gap:8, flexWrap:"wrap"}}>
+                                    <Chip $on={qLevel==="mix"}    onClick={()=>setQLevel("mix")}>혼합</Chip>
+                                    <Chip $on={qLevel==="easy"}   onClick={()=>setQLevel("easy")}>쉬움</Chip>
+                                    <Chip $on={qLevel==="medium"} onClick={()=>setQLevel("medium")}>보통</Chip>
+                                    <Chip $on={qLevel==="hard"}   onClick={()=>setQLevel("hard")}>어려움</Chip>
+                                </div>
+                            </Section>
                         </SheetBody>
 
                         <SheetFooter>
@@ -1156,51 +1235,62 @@ const SlideItem = styled.div`
 
 /* 왼쪽 텍스트 열 */
 const SlideContent = styled.div`
-  display: flex; flex-direction: column; gap: 14px;
-  max-width: 680px;  /* 문장 줄 길이 컨트롤 */
+    display: flex; flex-direction: column; gap: 14px;
+    max-width: 680px;  /* 문장 줄 길이 컨트롤 */
 `;
 
 /* 오른쪽 아트 열 */
 const HeroArt = styled.div`
 
-  position: absolute;
-  inset-inline-end: var(--art-right);
-  inset-block-start: 50%;
-  --art-scale: 0.85;
+    position: absolute;
+    inset-inline-end: var(--art-right);
+    inset-block-start: 50%;
+    --art-scale: 0.85;
     --art-nudge-x: 0px; /* 기본값: 이동 없음 */
     transform: translateY(calc(-50% + var(--art-pop))) translateX(var(--art-nudge-x)) scale(var(--art-scale));
-  transform-origin: bottom right;
-  width: var(--art-w);
-  aspect-ratio: 1 / 1;
-  pointer-events: none;
-  z-index: 2;
-  filter: drop-shadow(0 18px 30px rgba(67,105,229,.18));
+    transform-origin: bottom right;
+    width: var(--art-w);
+    aspect-ratio: 1 / 1;
+    pointer-events: none;
+    z-index: 2;
+    filter: drop-shadow(0 18px 30px rgba(67,105,229,.18));
 
-  @media (max-width: 980px)  { --art-w: min(240px, 32vw); }
-  @media (max-width: 760px)  { display: none; }
+    @media (max-width: 980px)  { --art-w: min(240px, 32vw); }
+    @media (max-width: 760px)  { display: none; }
 `;
 
 /* 이미지 자체 */
 const ArtImg = styled.img`
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  object-fit: contain; user-select: none;
-  animation: fade .24s ease;
-  @keyframes fade { from { opacity: .01; transform: translateY(4px) } to { opacity: 1; transform: none } }
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    object-fit: contain; user-select: none;
+    animation: fade .24s ease;
+    @keyframes fade { from { opacity: .01; transform: translateY(4px) } to { opacity: 1; transform: none } }
 
-  /* 살짝 둥실 애니메이션 (선택) */
-  //animation: bob 4.5s ease-in-out infinite;
-  //@keyframes bob {
-  //  0%   { transform: translateY(0) rotate(-2deg); }
-  //  50%  { transform: translateY(-6px) rotate(0deg); }
-  //  100% { transform: translateY(0) rotate(-2deg); }
-  //}
-  //@media (prefers-reduced-motion: reduce) { animation: none; }
+    /* 살짝 둥실 애니메이션 (선택) */
+    //animation: bob 4.5s ease-in-out infinite;
+    //@keyframes bob {
+    //  0%   { transform: translateY(0) rotate(-2deg); }
+    //  50%  { transform: translateY(-6px) rotate(0deg); }
+    //  100% { transform: translateY(0) rotate(-2deg); }
+    //}
+    //@media (prefers-reduced-motion: reduce) { animation: none; }
 `;
 
 const Title = styled.h1`
-    margin: 0; font-size: clamp(22px, 3.2vw, 34px);
-    line-height: 1.18; letter-spacing: -0.2px; color: ${UI.text};
+    margin: 0;
+    font-family:
+            "Pretendard Variable",
+            "Pretendard",
+            "Noto Sans KR",
+            "Apple SD Gothic Neo",
+            "Malgun Gothic",
+            sans-serif;
+    font-size: clamp(22px, 3.2vw, 34px);
+    line-height: 1.22;
+    letter-spacing: -0.03em;
+    color: ${UI.text};
+    font-weight: 700;
 `;
 const Em = styled.span` color: ${UI.primaryBlue}; font-weight: 750; letter-spacing: -0.02em `;
 const Subtitle = styled.p`
@@ -1221,7 +1311,7 @@ const CTA = styled.button<{ $size?: "sm" | "md" }>`
     width: var(--cta-w);
     max-width: 100%;
     text-align: left;
-    
+
     margin-top: 15px;
 
     position: relative;
@@ -1267,13 +1357,13 @@ const CTA = styled.button<{ $size?: "sm" | "md" }>`
 `;
 
 const CtaIcon = styled.span`
-  width: var(--cta-ic);
-  height: var(--cta-ic);
-  flex: 0 0 auto;           /* 아이콘은 줄어들지 않게 고정 */
-  border-radius: 999px;
-  background: #ffffff;
-  display: inline-grid; place-items: center;
-  svg path { fill: ${UI.primaryBlue}; }
+    width: var(--cta-ic);
+    height: var(--cta-ic);
+    flex: 0 0 auto;           /* 아이콘은 줄어들지 않게 고정 */
+    border-radius: 999px;
+    background: #ffffff;
+    display: inline-grid; place-items: center;
+    svg path { fill: ${UI.primaryBlue}; }
 `;
 
 
@@ -1310,83 +1400,116 @@ const ArrowSvg = styled.svg`
 const Spacer = styled.div` height: 4px; `;
 
 const ProgressShell = styled.div`
-  --hero-max: 1240px;
-  max-width: var(--hero-max);
-  width: 100%;
-  margin: 8px auto 0;                 /* HeroWrap과의 간격 */
-  display: grid;
-  grid-template-columns: 1fr auto auto;
-  align-items: center;
-  gap: 8px 18px;
-  user-select: none;
+    --hero-max: 1240px;
+    max-width: var(--hero-max);
+    width: 100%;
+    margin: 8px auto 0;                 /* HeroWrap과의 간격 */
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 8px 18px;
+    user-select: none;
 `;
 
 const Bar = styled.div`
-  position: relative;
-  height: 2px;
-  background: #e5e7eb;               /* 트랙 */
-  border-radius: 2px;
-  overflow: hidden;
+    position: relative;
+    height: 2px;
+    background: #e5e7eb;               /* 트랙 */
+    border-radius: 2px;
+    overflow: hidden;
 `;
 
 const Fill = styled.div`
-  position: absolute; inset: 0 auto 0 0;
-  width: 100%;
-  background: #0f172a;               /* 진행 바 색 */
-  transform-origin: left center;
-  transform: scaleX(var(--p, 0));    /* 0→1 로 자연스럽게 차오름 */
-  transition: transform 120ms linear;
-  will-change: transform;
-  @media (prefers-reduced-motion: reduce) {
-    transition: none;
-  }
+    position: absolute; inset: 0 auto 0 0;
+    width: 100%;
+    background: #0f172a;               /* 진행 바 색 */
+    transform-origin: left center;
+    transform: scaleX(var(--p, 0));    /* 0→1 로 자연스럽게 차오름 */
+    transition: transform 120ms linear;
+    will-change: transform;
+    @media (prefers-reduced-motion: reduce) {
+        transition: none;
+    }
 `;
 
 const Counter = styled.div`
-  font-size: 14px;
-  color: ${UI.text};
-  white-space: nowrap;
-  strong { font-weight: 750; }
-  span { color: ${UI.sub}; }
+    font-size: 14px;
+    color: ${UI.text};
+    white-space: nowrap;
+    strong { font-weight: 750; }
+    span { color: ${UI.sub}; }
 `;
 
 const Controls = styled.div`
-  display: inline-flex; align-items: center; gap: 14px;
+    display: inline-flex; align-items: center; gap: 14px;
 `;
 
 const CtrlBtn = styled.button`
-  appearance: none;
-  border: 0; background: transparent;
-  font-size: 16px; line-height: 1;
-  color: ${UI.text};
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 6px;
-  &:hover { background: #f3f4f6; }
-  &:focus-visible { outline: 2px solid rgba(79,118,241,.35); outline-offset: 2px; }
+    appearance: none;
+    border: 0; background: transparent;
+    font-size: 16px; line-height: 1;
+    color: ${UI.text};
+    cursor: pointer;
+    padding: 2px 4px;
+    border-radius: 6px;
+    &:hover { background: #f3f4f6; }
+    &:focus-visible { outline: 2px solid rgba(79,118,241,.35); outline-offset: 2px; }
 `;
 
 const QuickActions = styled.section`
-  --hero-max: 1240px;
-  max-width: var(--hero-max);
-  width: 100%;
-  margin: 12px auto 0;
+    --hero-max: 1240px;
+    max-width: var(--hero-max);
+    width: 100%;
+    margin: 16px auto 0;
+`;
+
+const ActionsGrid = styled.ul`
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+
+    @media (max-width: 900px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+    }
+`;
+
+
+const ActionTop = styled.div`
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+`;
+
+const ActionTextBox = styled.div`
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    padding-top: 2px;
 `;
 
 const Divider = styled.div`
-  height: 1px;
-  background: #111827;
-  opacity: .75;
-  margin: 8px 0 22px;
-  position: relative;
-  display: none;
-
-  &::after{
-    content: "";
-    position: absolute; left: 24px; top: 0;
-    width: 92px; height: 2px;
+    height: 1px;
     background: #111827;
-  }
+    opacity: .75;
+    margin: 8px 0 22px;
+    position: relative;
+    display: none;
+
+    &::after{
+        content: "";
+        position: absolute; left: 24px; top: 0;
+        width: 92px; height: 2px;
+        background: #111827;
+    }
 `;
 
 const MiniPager = styled.div`
@@ -1397,41 +1520,40 @@ const MiniPager = styled.div`
     gap: 12px;
     margin-top: 6px;
     user-select: none;
-    margin-bottom: -36px;
+    margin-bottom: -12px;
 `;
 
 const IndicatorRow = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
 `;
 
 const IndicatorBtn = styled.button<{ $active?: boolean }>`
-  appearance: none;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-  border-radius: 999px;
-
-  /* “대시(활성)” vs “도트(비활성)” */
-  width: ${({ $active }) => ($active ? "26px" : "8px")};
-  height: 8px;
-  display: grid;
-  place-items: center;
-
-  .shape{
-    width: 100%;
-    height: 100%;
+    appearance: none;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
     border-radius: 999px;
-    background: ${({ $active }) => ($active ? "#e5e7eb" : "#9ca3af")};
-    position: relative;
-    overflow: hidden;
-  }
 
-  ${({ $active }) =>
-    $active &&
-    `
+    width: ${({ $active }) => ($active ? "26px" : "8px")};
+    height: 8px;
+    display: grid;
+    place-items: center;
+
+    .shape{
+        width: 100%;
+        height: 100%;
+        border-radius: 999px;
+        background: ${({ $active }) => ($active ? "#e5e7eb" : "#9ca3af")};
+        position: relative;
+        overflow: hidden;
+    }
+
+    ${({ $active }) =>
+            $active &&
+            `
     .shape::after{
       content:"";
       position:absolute;
@@ -1444,47 +1566,47 @@ const IndicatorBtn = styled.button<{ $active?: boolean }>`
     }
   `}
 
-  &:hover .shape{
-    background: ${({ $active }) => ($active ? "#e5e7eb" : "#6b7280")};
-  }
+    &:hover .shape{
+        background: ${({ $active }) => ($active ? "#e5e7eb" : "#6b7280")};
+    }
 
-  &:focus-visible{
-    outline: 2px solid rgba(79,118,241,.35);
-    outline-offset: 3px;
-  }
+    &:focus-visible{
+        outline: 2px solid rgba(79,118,241,.35);
+        outline-offset: 3px;
+    }
 
-  @media (prefers-reduced-motion: reduce) {
-    ${({ $active }) => $active && `.shape::after{ transition: none; }`}
-  }
+    @media (prefers-reduced-motion: reduce) {
+        ${({ $active }) => $active && `.shape::after{ transition: none; }`}
+    }
 `;
 
 const MiniToggle = styled.button`
-  appearance: none;
-  border: 0;
-  background: transparent;
-  width: 30px;
-  height: 30px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
+    appearance: none;
+    border: 0;
+    background: transparent;
+    width: 30px;
+    height: 30px;
+    border-radius: 10px;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
 
-  &:hover { background: #f3f4f6; }
-  &:focus-visible {
-    outline: 2px solid rgba(79,118,241,.35);
-    outline-offset: 2px;
-  }
+    &:hover { background: #f3f4f6; }
+    &:focus-visible {
+        outline: 2px solid rgba(79,118,241,.35);
+        outline-offset: 2px;
+    }
 `;
 
 const MiniIcon = styled.span<{ $mode: "pause" | "play" }>`
-  position: relative;
-  width: 14px;
-  height: 14px;
-  display: inline-block;
+    position: relative;
+    width: 14px;
+    height: 14px;
+    display: inline-block;
 
-  ${({ $mode }) =>
-    $mode === "pause"
-        ? `
+    ${({ $mode }) =>
+            $mode === "pause"
+                    ? `
     &::before,&::after{
       content:"";
       position:absolute;
@@ -1496,7 +1618,7 @@ const MiniIcon = styled.span<{ $mode: "pause" | "play" }>`
     &::before{ left:3px; }
     &::after{ right:3px; }
   `
-        : `
+                    : `
     &::before{
       content:"";
       position:absolute;
@@ -1535,113 +1657,161 @@ const IconImg = styled.img<{ $big?: boolean }>`
     transition: transform 160ms ease;
 `;
 
-const ActionsGrid = styled.ul`
-  list-style: none;
-  padding: 0; margin: 0;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(140px, 1fr));
-  gap: 24px 26px;
-  justify-items: center;
-  align-items: start;
-
-  @media (max-width: 820px) {
-    grid-template-columns: repeat(2, minmax(140px, 1fr));
-    row-gap: 22px;
-  }
-`;
-
 const ActionItem = styled.button`
     appearance: none;
-    border: 0;
-    background: transparent;
-    padding: 0;
-    width: auto;
+    width: 100%;
+    min-height: 96px;          /* 기존 110px */
+    padding: 15px 18px 13px;
+    border-radius: 22px;
+    border: 1px solid #d7dbe4;
+    background: #fff;
+    text-align: left;
+    cursor: pointer;
     display: flex;
     flex-direction: column;
+    justify-content: center;
+    transition:
+            transform 180ms cubic-bezier(.22,.61,.36,1),
+            box-shadow 180ms ease,
+            border-color 180ms ease,
+            background-color 180ms ease;
+`;
+
+const ActionHeader = styled.div`
+    display: flex;
     align-items: center;
     gap: 10px;
-    text-align: center;
-    cursor: pointer;
-    box-shadow: none;
-    transition: none;
+    margin-bottom: 7px;
+    min-width: 0;
+`;
 
-    /* 데스크톱에서 아이콘만 살짝 움직이게 */
-    @media (hover:hover) and (pointer:fine) {
-        &:hover ${IconCircle} {
-            transform: translateY(-2px) rotate(-2deg);
-            box-shadow: 0 14px 30px rgba(62,99,224,.12);
-            border-color: rgba(62,99,224,.25);
-        }
-    }
+const actionToneMap = {
+    purple: {
+        bg: "linear-gradient(180deg, #f3edff 0%, #ece5ff 100%)",
+        border: "#ddd1ff",
+    },
+    green: {
+        bg: "linear-gradient(180deg, #e9f9ee 0%, #dff3e6 100%)",
+        border: "#c8e8d1",
+    },
+    peach: {
+        bg: "linear-gradient(180deg, #fff1ea 0%, #ffe5da 100%)",
+        border: "#ffd3c0",
+    },
+} as const;
 
-    /* 접근성: 포커스 시 아이콘에만 링 표시 */
-    &:focus-visible ${IconCircle} {
-        outline: 3px solid rgba(79,118,241,.35);
-        outline-offset: 3px;
-    }
+type ActionTone = keyof typeof actionToneMap;
+
+const ActionIconBadge = styled.span<{ $tone: ActionTone }>`
+    width: 36px;
+    height: 36px;
+    flex: 0 0 auto;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    background: ${({ $tone }) => actionToneMap[$tone].bg};
+    border: 1px solid ${({ $tone }) => actionToneMap[$tone].border};
+`;
+
+const ActionIconImg = styled.img<{ $size?: number }>`
+    width: ${({ $size }) => `${$size ?? 30}px`};
+    height: ${({ $size }) => `${$size ?? 30}px`};
+    object-fit: contain;
+    display: block;
 `;
 
 const ActionLabel = styled.span`
-  font-size: 16px;
-  letter-spacing: -0.02em;
-  color: ${UI.text};
-  font-weight: 700;
-  text-align: center;
-  white-space: nowrap;
+    display: block;
+    min-width: 0;
+    font-family:
+            "Pretendard Variable",
+            "Pretendard",
+            "Noto Sans KR",
+            "Apple SD Gothic Neo",
+            "Malgun Gothic",
+            sans-serif;
+    font-size: 18px;
+    line-height: 1.22;
+    letter-spacing: -0.015em;
+    color: #111827;
+    font-weight: 700;
+    word-break: keep-all;
+`;
+
+const ActionDesc = styled.span`
+    display: block;
+    width: 100%;
+    font-size: 13px;
+    line-height: 1.3;
+    color: #b8bec9;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 `;
 
 /* ===== 직무별 퀴즈 영역 ===== */
 const JobSection = styled.section`
-  --hero-max: 1240px;
-  max-width: var(--hero-max);
-  width: 100%;
-  margin: 28px auto 0;
+    --hero-max: 1240px;
+    max-width: var(--hero-max);
+    width: 100%;
+    margin: 28px auto 0;
 `;
 
 const JobsHeading = styled.header`
-  display: flex;
-  align-items: baseline;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
 
-  strong {
-    font-size: 24px;
-    color: ${UI.text};
-    letter-spacing: -0.02em;
-    white-space: nowrap;
-  }
-  em { color: ${UI.primaryBlue}; font-style: normal; }
+    strong {
+        font-size: 24px;
+        color: ${UI.text};
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+    }
+    em { color: ${UI.primaryBlue}; font-style: normal; }
 
-  small {
-    font-size: 14px;
-    color: ${UI.sub};
-    margin-top: 0;
-    white-space: nowrap;
-  }
+    small {
+        font-size: 14px;
+        color: ${UI.sub};
+        margin-top: 0;
+        white-space: nowrap;
+    }
 
-  @media (max-width: 640px) {
-    align-items: flex-start;
-    gap: 6px;
-  }
+    @media (max-width: 640px) {
+        align-items: flex-start;
+        gap: 6px;
+    }
 `;
 
 const JobGroup = styled.section`
-  &:not(:first-of-type){ margin-top: 22px; }
+    &:not(:first-of-type){ margin-top: 22px; }
 `;
 
 const JobGroupTitle = styled.h3`
-  margin: 0 0 10px;
-  font-size: 18px; font-weight: 750; letter-spacing: -0.02em;
-  color: #121212;
+    margin: 0 0 10px;
+    font-family:
+            "Pretendard Variable",
+            "Pretendard",
+            "Noto Sans KR",
+            "Apple SD Gothic Neo",
+            "Malgun Gothic",
+            sans-serif;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.3;
+    color: #121212;
 `;
 
 const JobsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(240px, 1fr));
-  gap: 12px;
-  @media (max-width: 980px){ grid-template-columns: repeat(2, minmax(220px, 1fr)); }
-  @media (max-width: 640px){ grid-template-columns: 1fr; }
+    display: grid;
+    grid-template-columns: repeat(3, minmax(240px, 1fr));
+    gap: 12px;
+    @media (max-width: 980px){ grid-template-columns: repeat(2, minmax(220px, 1fr)); }
+    @media (max-width: 640px){ grid-template-columns: 1fr; }
 `;
 
 /* 톤 팔레트 */
@@ -1661,12 +1831,12 @@ const tones = {
 type ToneKey = keyof typeof tones;
 
 const StartBtn = styled.span<{ $tone: ToneKey }>`
-  padding: 6px 10px;
-  font-size: 13px; font-weight: 800;
-  border-radius: 8px;
-  background: ${p => tones[p.$tone].startBg};
-  color: ${p => tones[p.$tone].tag};
-  border: 1px solid rgba(0,0,0,.04);
+    padding: 6px 10px;
+    font-size: 13px; font-weight: 800;
+    border-radius: 8px;
+    background: ${p => tones[p.$tone].startBg};
+    color: ${p => tones[p.$tone].tag};
+    border: 1px solid rgba(0,0,0,.04);
 `;
 
 const JobCard = styled.button<{ $tone: ToneKey }>`
@@ -1715,30 +1885,30 @@ const JobCard = styled.button<{ $tone: ToneKey }>`
 `;
 
 const TagPill = styled.span<{ $tone: ToneKey }>`
-  display: inline-flex; align-items: center;
-  height: 30px; padding: 0 14px;
-  border-radius: 999px;
-  font-size: 14px; font-weight: 700; letter-spacing: -.01em;
-  color: ${p => tones[p.$tone].tag};
-  background: ${p => tones[p.$tone].tagBg};
-  border: 1.5px solid ${p => tones[p.$tone].tag};
+    display: inline-flex; align-items: center;
+    height: 30px; padding: 0 14px;
+    border-radius: 999px;
+    font-size: 14px; font-weight: 700; letter-spacing: -.01em;
+    color: ${p => tones[p.$tone].tag};
+    background: ${p => tones[p.$tone].tagBg};
+    border: 1.5px solid ${p => tones[p.$tone].tag};
 `;
 
 const StartPill = styled.span<{ $tone: ToneKey }>`
-  display: inline-flex; align-items: center; justify-content: center;
-  height: 32px; padding: 0 14px;
-  border-radius: 10px;
-  background: ${p => tones[p.$tone].startBg};
-  color: #fff; font-weight: 750; font-size: 15px; letter-spacing: -.01em;
-  box-shadow: 0 6px 14px ${p => tones[p.$tone].shadow};
-  user-select: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    height: 32px; padding: 0 14px;
+    border-radius: 10px;
+    background: ${p => tones[p.$tone].startBg};
+    color: #fff; font-weight: 750; font-size: 15px; letter-spacing: -.01em;
+    box-shadow: 0 6px 14px ${p => tones[p.$tone].shadow};
+    user-select: none;
 
-  white-space: nowrap;   /* “시작” 절대 줄바꿈 안 되게 */
-  flex: 0 0 auto;        /* 줄어들지 않도록 고정 */
+    white-space: nowrap;   /* “시작” 절대 줄바꿈 안 되게 */
+    flex: 0 0 auto;        /* 줄어들지 않도록 고정 */
 
-  @media (hover:hover) and (pointer:fine) {
-    &:hover { background: ${p => tones[p.$tone].startHover}; }
-  }
+    @media (hover:hover) and (pointer:fine) {
+        &:hover { background: ${p => tones[p.$tone].startHover}; }
+    }
 `;
 
 /* 제목 + 시작 pill 한 줄 */
@@ -1754,10 +1924,17 @@ const CardRow = styled.div`
 const CardTitle = styled.h3`
     margin: 0;
     margin-left: 5px;
-    font-size: 18px;
-    line-height: 1.1;
+    font-family:
+            "Pretendard Variable",
+            "Pretendard",
+            "Noto Sans KR",
+            "Apple SD Gothic Neo",
+            "Malgun Gothic",
+            sans-serif;
+    font-size: 17px;
+    line-height: 1.22;
     font-weight: 700;
-    letter-spacing: -.02em;
+    letter-spacing: -0.015em;
     color: ${UI.text};
 
     flex: 1 1 auto;
@@ -1773,57 +1950,57 @@ const CardTitle = styled.h3`
 `;
 
 const MoreRow = styled.div`
-  display: flex; justify-content: center;
-  margin-top: 18px;
+    display: flex; justify-content: center;
+    margin-top: 18px;
 `;
 
 const MoreBtn = styled.button`
-  appearance: none; border: 0; background: transparent;
-  color: ${UI.sub}; font-size: 14px; cursor: pointer;
-  padding: 8px 10px; border-radius: 8px;
-  &:hover{ color: ${UI.primaryBlue}; background: #f3f4f6; }
+    appearance: none; border: 0; background: transparent;
+    color: ${UI.sub}; font-size: 14px; cursor: pointer;
+    padding: 8px 10px; border-radius: 8px;
+    &:hover{ color: ${UI.primaryBlue}; background: #f3f4f6; }
 `;
 
 /* 직무별 퀴즈 섹션 배경 */
 const JobsSurface = styled.div`
-  /* 이미지처럼 아주 은은한 수직 그라데이션 */
-  background: #f4f8ff;
-  border-radius: 18px;      /* 모서리 둥글게 */
-  padding: clamp(16px, 2.6vw, 24px);
-  overflow: hidden;         /* 라운드 밖 내용 숨김 */
+    /* 이미지처럼 아주 은은한 수직 그라데이션 */
+    background: #f4f8ff;
+    border-radius: 18px;      /* 모서리 둥글게 */
+    padding: clamp(16px, 2.6vw, 24px);
+    overflow: hidden;         /* 라운드 밖 내용 숨김 */
 
-  /* 박스 느낌 제거: 테두리/그림자 없음 */
-  border: none;
-  box-shadow: none;
+    /* 박스 느낌 제거: 테두리/그림자 없음 */
+    border: none;
+    box-shadow: none;
 `;
 
 /* 게시판 공유 */
 const ShareSection = styled.section`
-  --hero-max: 1240px;
-  max-width: var(--hero-max);
-  width: 100%;
-  margin: 5px auto 0;
+    --hero-max: 1240px;
+    max-width: var(--hero-max);
+    width: 100%;
+    margin: 5px auto 0;
 `;
 
 const ShareWrap = styled.div`
-  text-align: center;
-  padding: clamp(20px, 3.6vw, 32px) 10px clamp(28px, 4.2vw, 36px);
+    text-align: center;
+    padding: clamp(20px, 3.6vw, 32px) 10px clamp(28px, 4.2vw, 36px);
 `;
 
 const ShareHeading = styled.div`
-  strong{
-    display:block;
-      font-size: clamp(18px, 3.0vw, 34px);
-      line-height: 1.18;
-    font-weight: 750;
-    letter-spacing: -0.02em;
-    color: ${UI.text};
-  }
-  p{
-    margin: 10px 0 0;
-    font-size: clamp(14px, 1.8vw, 18px);
-    color: ${UI.sub};
-  }
+    strong{
+        display:block;
+        font-size: clamp(18px, 3.0vw, 34px);
+        line-height: 1.18;
+        font-weight: 750;
+        letter-spacing: -0.02em;
+        color: ${UI.text};
+    }
+    p{
+        margin: 10px 0 0;
+        font-size: clamp(14px, 1.8vw, 18px);
+        color: ${UI.sub};
+    }
 `;
 
 const ShareButton = styled.button`
@@ -1847,8 +2024,8 @@ const ShareButton = styled.button`
 `;
 
 const ShareAccent = styled.em`
-  color: ${UI.primaryBlue};
-  font-style: normal;
+    color: ${UI.primaryBlue};
+    font-style: normal;
 `;
 
 const MODAL = {
@@ -1894,9 +2071,9 @@ const SheetHeader = styled.div`
 `;
 
 const TitleWrap = styled.div`
-  display:flex; flex-direction:column; gap:4px;
-  h3{ margin:0; font-size:18px; letter-spacing:-0.02em; color:${UI.text}; }
-  small{ color:${UI.sub}; font-weight:400; }
+    display:flex; flex-direction:column; gap:4px;
+    h3{ margin:0; font-size:18px; letter-spacing:-0.02em; color:${UI.text}; }
+    small{ color:${UI.sub}; font-weight:400; }
 `;
 
 const CloseX = styled.button`
@@ -1919,34 +2096,34 @@ const CloseX = styled.button`
     &:focus-visible { outline: 3px solid rgba(79,118,241,.25); outline-offset: 2px; }
 `;
 const SheetBody = styled.div`
-  padding: 16px 20px 8px;
-  overflow: auto; scrollbar-gutter: stable;
+    padding: 16px 20px 8px;
+    overflow: auto; scrollbar-gutter: stable;
 `;
 const Section = styled.section`
-  &:not(:first-child){ margin-top: 16px; }
-  h4{ margin:0 0 10px; font-size:14px; color:#0f172a; letter-spacing:-0.02em; }
+    &:not(:first-child){ margin-top: 16px; }
+    h4{ margin:0 0 10px; font-size:14px; color:#0f172a; letter-spacing:-0.02em; }
 `;
 const IconBox = styled.span`
-  width:36px; height:36px; border-radius:10px;
-  display:grid; place-items:center;
-  background: linear-gradient(135deg, rgba(79,118,241,0.12) 0%, rgba(62,99,224,0.12) 100%);
-  color: ${UI.color?.primaryStrong ?? UI.primaryBlue};
-  flex: 0 0 auto;
+    width:36px; height:36px; border-radius:10px;
+    display:grid; place-items:center;
+    background: linear-gradient(135deg, rgba(79,118,241,0.12) 0%, rgba(62,99,224,0.12) 100%);
+    color: ${UI.color?.primaryStrong ?? UI.primaryBlue};
+    flex: 0 0 auto;
 `;
 const Chip = styled.button<{ $on?: boolean }>`
-  height: 34px; padding: 0 14px; border-radius: 999px; font-weight:700; letter-spacing:-0.02em;
-  border:1px solid ${({$on}) => $on ? "#c7d2fe" : "#e5e7eb"};
-  background: ${({$on}) => $on ? "#eef2ff" : "#fff"};
-  color: ${({$on}) => $on ? UI.primaryBlue : UI.text};
-  cursor:pointer; &:hover{ background:#f9fafb; }
+    height: 34px; padding: 0 14px; border-radius: 999px; font-weight:700; letter-spacing:-0.02em;
+    border:1px solid ${({$on}) => $on ? "#c7d2fe" : "#e5e7eb"};
+    background: ${({$on}) => $on ? "#eef2ff" : "#fff"};
+    color: ${({$on}) => $on ? UI.primaryBlue : UI.text};
+    cursor:pointer; &:hover{ background:#f9fafb; }
 `;
 const CountChip = styled(Chip)``;
 const Select = styled.select`
-  box-sizing: border-box;
-  height: 38px; width: 100%;
-  padding: 0 12px;
-  border-radius: 12px; border:1px solid #e5e7eb;
-  background:#fff; color:#374151; letter-spacing: -0.02em;
+    box-sizing: border-box;
+    height: 38px; width: 100%;
+    padding: 0 12px;
+    border-radius: 12px; border:1px solid #e5e7eb;
+    background:#fff; color:#374151; letter-spacing: -0.02em;
 `;
 
 const SheetFooter = styled.div`
@@ -1994,42 +2171,42 @@ const Primary = styled.button`
 `;
 
 const TitleInputRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 `;
 
 const TitleInput = styled.input`
-  flex: 1 1 auto;
-  height: 38px;
-  padding: 0 12px;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
-  background: #fff;
-  color: #0f172a;
-  letter-spacing: -0.02em;
-  outline: none;
+    flex: 1 1 auto;
+    height: 38px;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    background: #fff;
+    color: #0f172a;
+    letter-spacing: -0.02em;
+    outline: none;
 
-  &:focus {
-    border-color: rgba(67,105,229,.55);
-    box-shadow: 0 0 0 3px rgba(79,118,241,.18);
-  }
+    &:focus {
+        border-color: rgba(67,105,229,.55);
+        box-shadow: 0 0 0 3px rgba(79,118,241,.18);
+    }
 `;
 
 const TitleCounter = styled.span`
-  flex: 0 0 auto;
-  font-size: 12px;
-  color: #6b7280;
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
+    flex: 0 0 auto;
+    font-size: 12px;
+    color: #6b7280;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    border: 1px solid #e5e7eb;
 `;
 
 const HintText = styled.p`
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: #6b7280;
+    margin: 8px 0 0;
+    font-size: 12px;
+    color: #6b7280;
 `;
 
 const CarryScrim = styled.div`
@@ -2219,10 +2396,10 @@ const CarryOptionText = styled.div`
 `;
 
 const CarryOptionTitleRow = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
 `;
 
 const CarryCheckMark = styled.span<{ $on?: boolean }>`

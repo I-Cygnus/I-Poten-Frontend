@@ -6,18 +6,17 @@
   <div class="w-full overflow-hidden flex items-center justify-center min-h-screen bg-white">
 
 
-    <!-- 왼쪽 로그인 영역 -->
 
       <div :style="backgroundTextContainerStyle">
         <div :style="backgroundTextStyle">
-          <span>JOB SPOON · JOB SPOON · JOB SPOON · JOB SPOON · JOB SPOON · JOB SPOON · </span>
-          <span>JOB SPOON · JOB SPOON · JOB SPOON · JOB SPOON · JOB SPOON · JOB SPOON · </span>
+          <span> I-POTEN · I-POTEN · I-POTEN · I-POTEN · I-POTEN· I-POTEN · I-POTEN · I-POTEN · </span>
+          <span> I-POTEN · I-POTEN · I-POTEN · I-POTEN · I-POTEN· I-POTEN · I-POTEN · I-POTEN · </span>
         </div>
       </div>
       <!-- 컨테이너 전체 -->
       <div :style="loginBoxStyle" @mouseenter="Object.assign(loginBoxStyle, loginBoxHoverStyle)" @mouseleave="loginBoxStyle.boxShadow = '0 10px 30px rgba(31, 38, 135, 0.4)'">
         <div style="display: flex; justify-content: center; height: 100px; margin-bottom: 30px" @click="goHome">
-          <img :src="logoBlack" :style="{ width: 'auto', height: '100%', marginLeft:'30px', marginBottom: '60px' }" alt="Logo" />
+          <img :src="logoBlack" :style="{ width: 'auto', height: '75%', marginLeft:'10px', marginTop: '30px' }" alt="Logo" />
         </div>
 
 
@@ -26,7 +25,7 @@
           <span :style="titleSpanStyle">로그인</span>
         </div>
         <div :style="subtitleStyle">
-          클릭 한번으로 Job-spoon과 함께 하세요
+          클릭 한번으로 I-Poten과 함께 하세요
         </div>
         <div :style="subtitleLastStyle">
           클릭하여 <span :style="registerLinkStyle">간편 회원가입!</span>

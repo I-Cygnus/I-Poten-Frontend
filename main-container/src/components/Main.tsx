@@ -1,24 +1,60 @@
 // src/components/Main.tsx
+
+/* ====== Mulmaru Font ====== */
+const injectMulmaruFont = () => {
+  const style = document.createElement('style');
+  style.textContent = `
+    @font-face {
+        font-family: 'InkLiquid';
+        src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/InkLipquid.woff') format('woff2');
+        font-weight: normal;
+        font-display: swap;
+    }
+  `;
+  document.head.appendChild(style);
+};
+
+/*
+@font-face {
+  font-family: 'Mulmaru';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2601-4@1.1/Mulmaru.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+font-display: swap;*/
+
 import React, { useEffect, useState, useRef, useId } from "react";
 import styled, { keyframes } from "styled-components";
 import image from "../assets/nugule.png";
 import confetti from "canvas-confetti";
 import word1 from "../assets/word3.png";
 import word2 from "../assets/word4.png";
+import wordA from "../assets/wordA.png";
 import interview1 from "../assets/interview1.png";
+import InterviewA from "../assets/InterviewA.png";
 import interview2 from "../assets/interview2.png";
 import interview3 from "../assets/interview3.png";
 import interview4 from "../assets/interview4.png";
 import interview5 from "../assets/interview5.png";
+import backgr from "../assets/backgr.png";
+import backgr2 from "../assets/backgr2.png";
+import back7 from "../assets/back7.png";
+import Review from "../review/page/Review";
+import OpenEvent from "../event/page/OpenEvent";
+
 
 /* ====== 로고 이미지 ====== */
 import logoDanggeun from "../assets/d1.png";
 import logoToss from "../assets/t2.png";
 import logoEncore from "../assets/e1.png";
 import logoKT from "../assets/3.png";
-import backFont from "../assets/Back-Font.png";
-import imageLogo from "../assets/logo.png";
-import imageLogo2 from "../assets/Logo2.png";
+
+/* ====== Hero 페이지 전용 이미지 ====== */
+import pageLogo from "../assets/pageLogo.png";
+import pageAI from "../assets/pageAI.png";
+import pageImg2 from "../assets/pageImg.png";
+import pageImg from "../assets/pagimg2.png";
+
 
 const BRAND = {
   blue: "#3b82f6",
@@ -46,10 +82,10 @@ const BackgroundCirclesContainer = styled.div<{ $opacity?: number }>`
   transition: opacity 0.3s ease;
 `;
 
-const BackgroundCircle = styled.div<{ 
-  $size: number; 
-  $top: string; 
-  $left: string; 
+const BackgroundCircle = styled.div<{
+  $size: number;
+  $top: string;
+  $left: string;
   $color: string;
   $blur?: number;
 }>`
@@ -115,6 +151,8 @@ const SoftBg = styled.div`
     }
 `;
 
+const NAV_HEIGHT = 72;
+
 /* ========== 공통 레이아웃 ========== */
 const Page = styled.main`
   min-height: 100vh;
@@ -122,6 +160,7 @@ const Page = styled.main`
   flex-direction: column;
   align-items: center;
   padding: 0;
+  margin-top: -${NAV_HEIGHT}px;
   background: transparent;
   position: relative;
   overflow-x: hidden;
@@ -1044,15 +1083,17 @@ const InsightsTickerRow = styled.div`
   }
 `;
 
-const ShowcaseGrid = styled.div`
+const ShowcaseGrid = styled.div<{ $reverse?: boolean }>`
   display: grid;
-  grid-template-columns: 1.55fr 0.95fr;
+  grid-template-columns: ${props => props.$reverse ? "0.95fr 1.55fr" : "1.55fr 0.95fr"};
   gap: 64px;
   align-items: center;
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
     gap: 44px;
+    display: flex;
+    flex-direction: ${props => props.$reverse ? "column-reverse" : "column"};
   }
 `;
 
@@ -1072,7 +1113,7 @@ const ShowcaseVisual = styled.div`
   }
 `;
 
-const ShowcaseBaseFrame = styled.div`
+const ShowcaseBaseFrame = styled.div<{ $reverse?: boolean }>`
   margin-top: 10%;
   width: min(860px, 100%);
   aspect-ratio: 16 / 9;
@@ -1081,7 +1122,7 @@ const ShowcaseBaseFrame = styled.div`
   background: #E6EAED;
   //border: 1px solid rgba(148, 163, 184, 0.35);
   box-shadow: 0 24px 80px rgba(15, 23, 42, 0.12);
-  transform: translateX(-70px);
+  transform: ${props => props.$reverse ? 'translateX(70px)' : 'translateX(-70px)'};
 
   :root[data-theme="dark"] & {
     background: rgba(15, 23, 42, 0.7);
@@ -1096,9 +1137,9 @@ const ShowcaseBaseFrame = styled.div`
   }
 `;
 
-const ShowcaseOverlayFrame = styled.div`
+const ShowcaseOverlayFrame = styled.div<{ $reverse?: boolean }>`
   position: absolute;
-  right: 25%;
+  ${props => props.$reverse ? 'left: 25%;' : 'right: 25%;'}
   bottom: 40%;
   width: 35%;
   height: 45%;
@@ -1110,13 +1151,13 @@ const ShowcaseOverlayFrame = styled.div`
   box-shadow: 0 34px 120px rgba(15, 23, 42, 0.18);
 
   @media (max-width: 640px) {
-    right: 6%;
+    ${props => props.$reverse ? 'left: 6%;' : 'right: 6%;'}
     top: 12%;
     width: 46%;
   }
 
   @media (max-width: 1024px) {
-    right: 6%;
+    ${props => props.$reverse ? 'left: 6%;' : 'right: 6%;'}
     bottom: 10%;
     width: min(360px, 56%);
     height: auto;
@@ -1150,8 +1191,14 @@ const ShowcasePlaceholder = styled.div`
   }
 `;
 
-const ShowcaseContent = styled.div`
+const ShowcaseContent = styled.div<{ $reverse?: boolean }>`
   width: 100%;
+  ${props => props.$reverse && `
+    text-align: right;
+  `}
+  @media (max-width: 1024px) {
+    text-align: left;
+  }
 `;
 
 const ShowcaseTitle = styled.h2`
@@ -1235,10 +1282,10 @@ const ProgressStepLabel = styled.div<{ $leftPct: number; $active?: boolean; $edg
   left: ${props => `${props.$leftPct}%`};
   top: -38px;
   transform: ${props => {
-    if (props.$edge === "left") return "translate(0, 0)";
-    if (props.$edge === "right") return "translate(-100%, 0)";
-    return "translate(-50%, 0)";
-  }};
+  if (props.$edge === "left") return "translate(0, 0)";
+  if (props.$edge === "right") return "translate(-100%, 0)";
+  return "translate(-50%, 0)";
+}};
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -1258,11 +1305,11 @@ const ProgressDot = styled.div<{ $leftPct: number; $active?: boolean; $edge?: "l
   top: 50%;
   left: ${props => `${props.$leftPct}%`};
   transform: ${props => {
-    const scale = props.$active ? 1.25 : 1;
-    if (props.$edge === "left") return `translate(0, -50%) scale(${scale})`;
-    if (props.$edge === "right") return `translate(-100%, -50%) scale(${scale})`;
-    return `translate(-50%, -50%) scale(${scale})`;
-  }};
+  const scale = props.$active ? 1.25 : 1;
+  if (props.$edge === "left") return `translate(0, -50%) scale(${scale})`;
+  if (props.$edge === "right") return `translate(-100%, -50%) scale(${scale})`;
+  return `translate(-50%, -50%) scale(${scale})`;
+}};
   width: 18px;
   height: 18px;
   border-radius: 999px;
@@ -1314,247 +1361,383 @@ const PROGRESS_STEPS: ProgressStepItem[] = [
   { label: "STEP 04", description: "AI 모의 면접 피드백으로 나의 면접 Develop!", leftPct: 100, edge: "right" },
 ];
 
-const SHOWCASE_IMAGES = {
-  baseSrc: "",
-  overlaySrc: "",
-} as const;
-
-const SCHEDULE_SHOWCASE_IMAGES = {
-  leftPhoneSrc: "",
-  rightListSrc: "",
-  wideSrc: "",
-} as const;
-
-const INSIGHTS_SHOWCASE_IMAGES = {
-  backgroundSrc: "",
-  dashboardSrc: "",
-} as const;
 
 const INSIGHTS_TICKER_ITEMS = [
-    "트랜잭션이 무엇이고, 왜 필요한가요?",
-    "데이터베이스 인덱스는 어떤 경우에 사용하나요?",
-    "브라우저 렌더링 과정은 어떻게 진행되나요?",
-    "상태(state)와 props의 차이는 무엇인가요?",
-    "최근 프로젝트에서 가장 큰 이슈는 무엇이었고, 어떻게 해결했나요?",
-    "팀 내에서 본인이 주도적으로 맡았던 역할은 무엇인가요?",
-    "일정이 지연됐던 경험이 있다면, 그 원인은 무엇이었나요?",
-    "협업 과정에서 의견 충돌이 있었을 때 어떻게 대응했나요?",
-    "최근에 새로 배운 기술이나 지식이 있다면 무엇인가요?",
+  "트랜잭션이 무엇이고, 왜 필요한가요?",
+  "데이터베이스 인덱스는 어떤 경우에 사용하나요?",
+  "브라우저 렌더링 과정은 어떻게 진행되나요?",
+  "상태(state)와 props의 차이는 무엇인가요?",
+  "최근 프로젝트에서 가장 큰 이슈는 무엇이었고, 어떻게 해결했나요?",
+  "팀 내에서 본인이 주도적으로 맡았던 역할은 무엇인가요?",
+  "일정이 지연됐던 경험이 있다면, 그 원인은 무엇이었나요?",
+  "협업 과정에서 의견 충돌이 있었을 때 어떻게 대응했나요?",
+  "최근에 새로 배운 기술이나 지식이 있다면 무엇인가요?",
 ] as const;
 
-const BackgroundTextContainer = styled.div`
-  position: fixed;
-  top: 78%;
-  left: 0;
-  width: 100%;
-  transform: translateY(-50%);
-  pointer-events: none;
-  z-index: 1;
-  overflow: hidden;
-`;
-
-const BackgroundText = styled.div<{ $isVisible: boolean }>`
-  display: flex;
-  align-items: center;
-  white-space: nowrap;
-  opacity: ${props => props.$isVisible ? 1 : 0};
-  transition: opacity 0.3s ease;
-  animation: scrollLeft 30s linear infinite;
-  will-change: transform;
-  
-  @media (max-width: 640px) {
-    opacity: ${props => props.$isVisible ? 0.8 : 0};
-  }
-
-  @keyframes scrollLeft {
-    0% {
-      transform: translateX(0);
-    }
-    100% {
-      transform: translateX(-50%);
-    }
-  }
-`;
-
-const BackgroundImage = styled.img`
-  height: clamp(100px, 15vw, 110px);
-  width: auto;
-  display: inline-block;
-  opacity: 1;
-  margin-top: 40px;
-  margin-right: 30px;
-  flex-shrink: 0;
-  
-  @media (max-width: 640px) {
-    height: 80px;
-    margin-right: 12px;
-  }
-`;
-
-
-const ImgBOX = styled.div`
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-`;
-
-
-const ImageLogo = styled.img`
-  height: 370px;
-  width: auto;
-  display: inline-block;
-  opacity: 1;
-  flex-shrink: 0;
-  
-  @media (max-width: 640px) {
-    height: 80px;
-    margin-right: 12px;
-  }
-`;
-
-const ImageLogo2 = styled.img`
-  height: 100px;
-  width: auto;
-  opacity: 0;
-  flex-shrink: 0;
-  animation: fadeInBounce 1s ease-out forwards;
-  animation-delay: 1.3s;
-  
-  @keyframes fadeInBounce {
-    0% {
-      opacity: 0;
-      transform: translateY(30px) scale(0.9);
-    }
-    60% {
-      opacity: 1;
-      transform: translateY(-10px) scale(1.05);
-    }
-    100% {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-  
-  @media (max-width: 768px) {
-    height: 60px;
-  }
-`;
-
-
-
-/* ====== 히어로 섹션 ====== */
+/* ========== Hero Section (Whale Space Style) ========== */
 const HeroSection = styled.section`
   width: 100%;
-  min-height: 100vh;
+  height: 100vh;
+  position: relative;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
+  overflow: hidden;
+  background: linear-gradient(
+    to right,
+    #e1ecf8 0%,
+    #e2f2f3 50%,
+    #dbf4ee 100%
+  ); /* 회색기 없이 더 맑고 진한 아이스 블루~아이스 민트 쿨톤 그라데이션 */
+
+  /* 스크롤을 내릴 때 하단 영역과 끊기지 않고 부드럽게 이어지도록 화이트 페이드 아웃 효과 적용 */
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 55vh;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.3) 40%, rgba(255, 255, 255, 0.85) 80%, rgba(255, 255, 255, 1) 100%);
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  /* 구름 이미지 (back7.png) 배경 레이어 */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url(${back7});
+    background-size: cover;
+    background-position: center bottom;
+    background-repeat: no-repeat;
+    opacity: 0.45; /* 구름 느낌이 전체적으로 은은하게 깔리도록 투명도 설정 */
+    mix-blend-mode: normal; 
+    pointer-events: none;
+    z-index: 1;
+    /* 구름 위쪽이 자연스럽게 투명해져 쿨톤 배경과 섞이도록 선형 마스크 적용 */
+    mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 70%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.3) 30%, rgba(0,0,0,1) 70%);
+    animation: driftCloud 35s ease-in-out infinite alternate;
+  }
+
+  @keyframes driftCloud {
+    0% { transform: scale(1.05) translate(0%, 1%); }
+    100% { transform: scale(1.1) translate(-1%, -1%); }
+  }
+`;
+
+const HeroInner = styled.div`
   position: relative;
-  z-index: 1;
-  padding: 0 20px;
-  padding-bottom: 360px;
-  box-sizing: border-box;
+  z-index: 10;
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 60px;
 
-  @media (max-width: 768px) {
-    min-height: 100vh;
-    padding: 0 16px;
-    padding-bottom: 100px;
+  @media (max-width: 900px) {
+    flex-direction: column;
+    text-align: center;
+    padding: 0 20px;
+    gap: 40px;
   }
 `;
 
-// const MainTitle = styled.span`
-//   font-size: 40px;
-//   font-weight: 900;
-//   letter-spacing: -0.045em;
-//   line-height: 1;
-//   display: inline-block;
-//   transform: scaleX(0.97);
-// `;
-
-const MainTitle = styled.h1`
-  margin: 0 0 6px;
-  font-size: clamp(44px, 6vw, 78px);
-  font-weight: 700;
-  color: #404040;
-  letter-spacing: -0.02em;
+const HeroContent = styled.div`
+  flex: 1;
+  color: #1a1a1a;
+  text-shadow: none; /* 배경과 자연스럽게 어울리도록 텍스트 그림자 제거 */
+  transform: translateY(-40px) translateX(-60px); /* 왼쪽 위로 이동 */
 `;
 
-const SearchTitle = styled.h2`
-    margin: 0 0 8px;
-    font-size: 28px;
-    margin-bottom: 48px;
-    font-weight: 700;
-    color: #0f172a;
-    letter-spacing: -0.02em;
+const HeroTitle = styled.h1`
+  font-size: clamp(48px, 6vw, 72px);
+  font-weight: 800;
+  line-height: 1.25;
+  margin-bottom: 24px;
+  white-space: pre-line;
+  letter-spacing: -0.03em;
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
 `;
 
-const SearchTitle3 = styled.div`
-  font-size: 140px;
-  font-weight: 700;
+const HeroSubtitle = styled.p`
+  font-size: clamp(18px, 2.2vw, 22px);
+  font-weight: 500;
+  line-height: 1.6;
+  opacity: 0.85;
+  white-space: pre-line;
+  margin-bottom: 40px;
+  max-width: 600px;
+  color: #333333;
+  
+  @media (max-width: 900px) {
+    margin-left: auto;
+    margin-right: auto;
+  }
+`;
+
+
+/* ══════════════════════════════════════════
+   Hero 섹션 전용 컴포넌트
+══════════════════════════════════════════ */
+
+const heroImgFloat = keyframes`
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-14px); }
+`;
+
+/* 왼쪽 로고+타이틀 한 줄 */
+const HeroLogoLine = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+  
+`;
+
+const HeroLogoImg = styled.img`
+  height: 150px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+`;
+
+const HeroLogoX = styled.span`
+  font-size: 110px;
+  //font-weight: 900;
   color: #0f172a;
+  line-height: 1;
   letter-spacing: -0.02em;
-  opacity: 0;
-  animation: fadeInUp 1.2s ease-out forwards;
-  animation-delay: 0.3s;
-  
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(40px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-  
-  @media (max-width: 768px) {
-    font-size: 60px;
-  }
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
 `;
-const SearchTitle4 = styled.div`
-  font-size: 90px;
+
+const HeroLogoAIText = styled.span`
+  font-size: 100px;
   font-weight: 700;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6, #ec4899);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  margin-top: 20px;
+  color: #0f172a;
+  line-height: 1;
   letter-spacing: -0.02em;
-  margin-bottom: 60px;
-  opacity: 0;
-  animation: fadeInScale 1s ease-out forwards;
-  animation-delay: 0.8s;
-  background-size: 200% 200%;
-  animation: fadeInScale 1s ease-out forwards, gradientShift 3s ease infinite;
-  animation-delay: 0.8s, 1.8s;
-  
-  @keyframes fadeInScale {
-    from {
-      opacity: 0;
-      transform: scale(0.8);
-    }
-    to {
-      opacity: 1;
-      transform: scale(1);
-    }
+  font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+`;
+
+/* 메인 슬로건 */
+const HeroMainSlogan = styled.div`
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 400; /* Mulmaru는 보통 단일 weight */
+  color: #0f172a;
+  line-height: 1.25;
+  margin-bottom: 16px;
+  letter-spacing: -0.025em;
+  font-family: 'Mulmaru', 'Pretendard', sans-serif;
+`;
+
+/* 설명 문구 */
+const HeroDescText = styled.p`
+  font-size: 18px;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.75;
+  margin-bottom: 36px;
+  max-width: 380px;
+`;
+
+/* 버튼 그룹 */
+const HeroBtnRow = styled.div`
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+`;
+
+const HeroBtn = styled.button`
+  height: 50px;
+  padding: 0 28px;
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  white-space: nowrap;
+  letter-spacing: -0.01em;
+  transition: background 0.2s ease, transform 0.15s ease;
+
+  &:hover {
+    background: #1e293b;
+    transform: translateY(-2px);
   }
-  
-  @keyframes gradientShift {
-    0%, 100% {
-      background-position: 0% 50%;
-    }
-    50% {
-      background-position: 100% 50%;
-    }
-  }
-  
-  @media (max-width: 768px) {
-    font-size: 40px;
+  &:active {
+    transform: translateY(0);
   }
 `;
+
+/* 오른쪽 이미지 영역 */
+const HeroRightArea = styled.div`
+  position: relative;
+  flex-shrink: 0;
+  width: 480px;
+  height: 480px;
+
+  @media (max-width: 1100px) {
+    width: 380px;
+    height: 380px;
+  }
+  @media (max-width: 900px) {
+    display: none;
+  }
+`;
+
+/* 3D "AI" 텍스트 이미지 (하단 메인) */
+const PageAIEl = styled.img`
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 360px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 24px 48px rgba(0, 0, 0, 0.13));
+  animation: ${heroImgFloat} 5.5s ease-in-out infinite;
+  animation-delay: 0.3s;
+`;
+
+/* 3D 도형 이미지 (상단 우측) */
+const PageImgEl = styled.img`
+  position: absolute;
+  top: -10px;
+  right: 80px;
+  width: 500px;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.10));
+  animation: ${heroImgFloat} 4.8s ease-in-out infinite;
+  animation-delay: 1.1s;
+`;
+
+/* 3D Floating Objects */
+const floatAnimation = keyframes`
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  50% { transform: translateY(-30px) rotate(5deg) scale(1.02); }
+`;
+
+const ObjectContainer = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+`;
+
+// 1. Torus (Ring) - Top Right
+const RingObject = styled.div`
+  position: absolute;
+  top: 18%;
+  right: 18%;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 24px solid #81ecec;
+  box-shadow: 
+    inset 5px 5px 15px rgba(255,255,255,0.6),
+    inset -5px -5px 15px rgba(0,168,255,0.2),
+    10px 20px 30px rgba(0,168,255,0.2);
+  transform: rotateX(40deg) rotateY(-20deg);
+  animation: ${floatAnimation} 7s ease-in-out infinite;
+  opacity: 0.9;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -24px;
+    border-radius: 50%;
+    border: 24px solid rgba(255,255,255,0.2);
+    filter: blur(5px);
+  }
+
+  @media (max-width: 768px) {
+    width: 60px;
+    height: 60px;
+    border-width: 16px;
+    right: 8%;
+    top: 15%;
+    &::after { inset: -16px; border-width: 16px; }
+  }
+`;
+
+// 2. Cube - Bottom Right
+const CubeObject = styled.div`
+  position: absolute;
+  bottom: 20%;
+  right: 20%;
+  width: 120px;
+  height: 120px;
+  background: linear-gradient(135deg, #fab1a0 0%, #e84393 100%);
+  border-radius: 24px;
+  transform: rotate(25deg) rotateX(20deg);
+  box-shadow: 
+    -10px -10px 20px rgba(255,255,255,0.4) inset,
+    10px 10px 30px rgba(232, 67, 147, 0.3);
+  animation: ${floatAnimation} 9s ease-in-out infinite reverse;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 10px; left: 10px; right: 10px; bottom: 10px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 100%);
+  }
+
+  @media (max-width: 768px) {
+    width: 70px;
+    height: 70px;
+    right: 10%;
+    bottom: 15%;
+  }
+`;
+
+// 3. Plus - Bottom Left
+const PlusObject = styled.div`
+  position: absolute;
+  bottom: 18%;
+  left: 18%;
+  width: 80px;
+  height: 80px;
+  animation: ${floatAnimation} 8s ease-in-out infinite 1s;
+  
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    background: #a29bfe;
+    border-radius: 12px;
+    box-shadow: 
+      inset 2px 2px 5px rgba(255,255,255,0.4),
+      5px 5px 15px rgba(108, 92, 231, 0.3);
+  }
+  
+  &::before {
+    top: 0; left: 28px; width: 24px; height: 80px;
+  }
+  &::after {
+    top: 28px; left: 0; width: 80px; height: 24px;
+  }
+
+  transform: rotate(-15deg);
+
+  @media (max-width: 768px) {
+    transform: scale(0.6) rotate(-15deg);
+    left: 8%;
+    bottom: 12%;
+  }
+`;
+
+
+
 
 
 const SearchTitle2 = styled.h2<{ $isVisible?: boolean }>`
@@ -1562,7 +1745,9 @@ const SearchTitle2 = styled.h2<{ $isVisible?: boolean }>`
     font-size: 48px;
     font-weight: 800;
     margin-top: 400px;
-    margin-bottom: 350px;
+    margin-bottom: 80px;
+    position: relative;
+    z-index: 1;
     
     letter-spacing: -0.02em;
     color: #0f172a;
@@ -1579,6 +1764,185 @@ const SearchTitle2 = styled.h2<{ $isVisible?: boolean }>`
       font-size: 28px;
       font-weight: 700;
     }
+`;
+
+/* Cloud Transition Wrap - Hero 아래 구름 배경을 연장 */
+const CloudTransitionWrap = styled.div`
+  width: 100%;
+  position: relative;
+  background: #ffffff;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background-image: url(${back7});
+    background-size: cover;
+    background-position: center top;
+    background-repeat: no-repeat;
+    opacity: 0.12;
+    pointer-events: none;
+    z-index: 0;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 40%, transparent 80%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 40%, transparent 80%);
+  }
+`;
+
+/* Products Section */
+const ProductsSection = styled.section<{ $isVisible?: boolean }>`
+  width: 100%;
+  max-width: 1200px;
+  margin: 200px auto 300px;
+  padding: 0 24px;
+  opacity: ${props => props.$isVisible ? 1 : 0};
+  transform: translateY(${props => props.$isVisible ? '0' : '40px'});
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+`;
+
+const ProductsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 32px;
+  margin-top: 60px;
+  
+  @media (max-width: 1024px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+  }
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const ProductCard = styled.div<{ $bgColor?: string; $delay?: number }>`
+  background: #ffffff;
+  border-radius: 32px;
+  padding: 48px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  transition-delay: ${props => props.$delay || 0}s;
+  min-height: 460px;
+  cursor: pointer;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: ${props => props.$bgColor || 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%)'};
+    opacity: 0.6;
+    z-index: 0;
+    transition: opacity 0.5s ease;
+  }
+  
+  &:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 30px 70px rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.2);
+    border-radius: 50%;
+    
+    &::after {
+      opacity: 1;
+    }
+  }
+`;
+
+const ProductTitle = styled.h3<{ $color?: string }>`
+  font-size: 28px;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 14px;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 1;
+  transition: all 0.4s ease;
+  
+  ${ProductCard}:hover & {
+    background: linear-gradient(90deg, #3a83f3, #11b884);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    transform: scale(1.1);
+  }
+`;
+
+const ProductDesc = styled.p<{ $color?: string }>`
+  font-size: 16px;
+  font-weight: 500;
+  color: #64748b;
+  line-height: 1.6;
+  margin-bottom: 32px;
+  max-width: 260px;
+  word-break: keep-all;
+  position: relative;
+  z-index: 1;
+  transition: all 0.4s ease;
+  
+  ${ProductCard}:hover & {
+    color: #334155;
+    transform: translateY(-5px);
+  }
+`;
+
+const ProductImageWrap = styled.div`
+  width: 100%;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  img {
+    width: 100%;
+    height: 100%;
+    max-height: 220px;
+    object-fit: contain;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.05));
+    transition: all 0.6s ease;
+  }
+  
+  ${ProductCard}:hover & {
+    transform: scale(1.15) rotate(3deg);
+    img {
+      filter: brightness(1.1) drop-shadow(0 20px 40px rgba(59, 130, 246, 0.15));
+    }
+  }
+`;
+
+const ProductCircleImageWrap = styled.div`
+  width: 240px;
+  height: 240px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: auto;
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  
+  ${ProductCard}:hover & {
+    transform: scale(1.2) rotate(-5deg);
+    
+    img {
+      filter: brightness(1.1) drop-shadow(0 10px 20px rgba(0,0,0,0.2));
+    }
+  }
 `;
 
 
@@ -2748,89 +3112,194 @@ const CoreValueSection = styled.section`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 40px;
-  background: #ffffff;
+  padding: 120px 40px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%);
   box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -30%;
+    left: -10%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.06) 0%, transparent 70%);
+    border-radius: 50%;
+    pointer-events: none;
+  }
   
   @media (max-width: 768px) {
     min-height: 100vh;
-    padding: 40px 20px;
+    padding: 80px 20px;
   }
 `;
 
 const CoreValueHeader = styled.div`
   text-align: center;
-  margin-bottom: 50px;
+  margin-bottom: 80px;
+  position: relative;
+  z-index: 1;
 `;
 
 const CoreValueLabel = styled.span`
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 3px;
-  color: #3b82f6;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #ffffff;
   text-transform: uppercase;
-  margin-bottom: 16px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+  padding: 8px 24px;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 `;
 
 const CoreValueTitle = styled.h2`
-  font-size: clamp(28px, 3.8vw, 40px);
-  font-weight: 800;
-  color: #111827;
-  line-height: 1.5;
+  font-size: clamp(32px, 4.5vw, 52px);
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.4;
   margin: 0;
+  letter-spacing: -0.02em;
   
   span {
-    color: #2563eb;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    display: inline-block;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+      border-radius: 2px;
+      opacity: 0.3;
+    }
   }
 `;
 
 const CoreValueGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 80px;
   max-width: 1200px;
   margin: 0 auto;
+  position: relative;
+  z-index: 1;
+  
+  @media (max-width: 900px) {
+    gap: 60px;
+  }
+`;
+
+const CoreValueRow = styled.div<{ $reverse?: boolean }>`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
   
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 32px;
   }
-`;
-
-const CoreValueCard = styled.div`
-  background: linear-gradient(180deg, #f0f9ff 0%, #e0f2fe 100%);
-  border-radius: 20px;
-  padding: 40px 28px 36px;
-  text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
   
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 24px rgba(59, 130, 246, 0.1);
-  }
+  ${props => props.$reverse && `
+    direction: rtl;
+    
+    > * {
+      direction: ltr;
+    }
+  `}
 `;
 
-const CoreValueIcon = styled.div`
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 24px;
+const CoreValueImageCard = styled.div`
+  background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
+  border-radius: 32px;
+  padding: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 400px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 20px 40px rgba(37, 99, 235, 0.2);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 32px 64px rgba(37, 99, 235, 0.3);
+  }
+  
+  @media (max-width: 900px) {
+    min-height: 320px;
+    padding: 40px;
+  }
+`;
+
+const CoreValueImagePlaceholder = styled.div`
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+`;
+
+const CoreValueContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 `;
 
 const CoreValueCardTitle = styled.h3`
-  font-size: 17px;
-  font-weight: 700;
-  color: #1e293b;
-  margin: 0 0 12px;
-  line-height: 1.5;
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+  line-height: 1.4;
+  letter-spacing: -0.02em;
 `;
 
 const CoreValueCardDesc = styled.p`
-  font-size: 13px;
-  color: #94a3b8;
+  font-size: 16px;
+  color: #64748b;
   line-height: 1.8;
   margin: 0;
 `;
@@ -2843,54 +3312,89 @@ const GrowthSection = styled.section`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 40px;
-  background: #ffffff;
+  padding: 120px 40px;
+  background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
   box-sizing: border-box;
+  position: relative;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%);
+  }
   
   @media (max-width: 768px) {
     min-height: 100vh;
-    padding: 40px 20px;
+    padding: 80px 20px;
   }
 `;
 
 const GrowthHeader = styled.div`
-  margin-bottom: 60px;
-  max-width: 1200px;
+  margin-bottom: 80px;
+  max-width: 1300px;
   margin-left: auto;
   margin-right: auto;
+  text-align: center;
+  position: relative;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, #3b82f6 50%, transparent 100%);
+    border-radius: 2px;
+  }
 `;
 
 const GrowthLabel = styled.span`
-  display: block;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 3px;
-  color: #94a3b8;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: #64748b;
   text-transform: uppercase;
-  margin-bottom: 16px;
+  margin-bottom: 20px;
+  padding: 6px 20px;
+  background: rgba(241, 245, 249, 0.8);
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
 `;
 
 const GrowthTitle = styled.h2`
-  font-size: clamp(26px, 3.5vw, 38px);
-  font-weight: 700;
-  color: #1e293b;
-  line-height: 1.4;
+  font-size: clamp(32px, 4.2vw, 48px);
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 1.5;
   margin: 0;
+  letter-spacing: -0.02em;
   
   span {
-    color: #3b82f6;
+    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     position: relative;
+    display: inline-block;
+    font-weight: 900;
     
     &::after {
       content: '';
       position: absolute;
-      bottom: 2px;
+      bottom: 0;
       left: 0;
       right: 0;
-      height: 1px;
-      background: #3b82f6;
-      border-style: dashed;
-      opacity: 0.6;
+      height: 3px;
+      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+      border-radius: 2px;
+      opacity: 0.4;
     }
   }
 `;
@@ -2911,16 +3415,34 @@ const GrowthTimeline = styled.div`
 const GrowthCard = styled.div<{ $offset?: number }>`
   flex: 1;
   background: #ffffff;
-  border: 1px solid #e5e7eb;
-  border-radius: 16px;
-  padding: 28px 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 36px 28px;
   margin-top: ${({ $offset }) => $offset || 0}px;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 0;
+    background: linear-gradient(180deg, #3b82f6 0%, #8b5cf6 100%);
+    transition: height 0.5s ease;
+  }
   
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.06);
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 16px 32px rgba(59, 130, 246, 0.12);
+    border-color: rgba(59, 130, 246, 0.2);
+    
+    &::before {
+      height: 100%;
+    }
   }
   
   @media (max-width: 900px) {
@@ -3123,52 +3645,52 @@ type SvgStrokeLogoProps = {
 };
 
 function SvgStrokeLogo({
-  src,
-  size = 120,
-  stroke = 1,
-  color = "#fff",
-}: SvgStrokeLogoProps) {
+                         src,
+                         size = 120,
+                         stroke = 1,
+                         color = "#fff",
+                       }: SvgStrokeLogoProps) {
   const rawId = useId().replace(/[:]/g, "");
   const strokeId = `stroke-${rawId}`;
   return (
-    <svg
-      width={size}
-      height={size}
-      viewBox={`0 0 ${size} ${size}`}
-      style={{ display: "block" }}
-      xmlns="http://www.w3.org/2000/svg"
-      filter={`url(#${strokeId})`}
-    >
-      <defs>
-        <filter
-          id={strokeId}
-          x="-10%"
-          y="-10%"
-          width="120%"
-          height="120%"
-          colorInterpolationFilters="sRGB"
-        >
-          <feMorphology
-            in="SourceAlpha"
-            operator="dilate"
-            radius={stroke}
-            result="DILATE"
-          />
-          <feFlood floodColor={color} />
-          <feComposite in2="DILATE" operator="in" result="STROKE" />
-          <feMerge>
-            <feMergeNode in="STROKE" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-      </defs>
-      <image
-        href={src}
-        width={size}
-        height={size}
-        preserveAspectRatio="xMidYMid meet"
-      />
-    </svg>
+      <svg
+          width={size}
+          height={size}
+          viewBox={`0 0 ${size} ${size}`}
+          style={{ display: "block" }}
+          xmlns="http://www.w3.org/2000/svg"
+          filter={`url(#${strokeId})`}
+      >
+        <defs>
+          <filter
+              id={strokeId}
+              x="-10%"
+              y="-10%"
+              width="120%"
+              height="120%"
+              colorInterpolationFilters="sRGB"
+          >
+            <feMorphology
+                in="SourceAlpha"
+                operator="dilate"
+                radius={stroke}
+                result="DILATE"
+            />
+            <feFlood floodColor={color} />
+            <feComposite in2="DILATE" operator="in" result="STROKE" />
+            <feMerge>
+              <feMergeNode in="STROKE" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <image
+            href={src}
+            width={size}
+            height={size}
+            preserveAspectRatio="xMidYMid meet"
+        />
+      </svg>
   );
 }
 
@@ -3194,10 +3716,29 @@ export default function Main() {
   const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
   const [circlesOpacity, setCirclesOpacity] = useState(1);
   const [isSearchTitle2Visible, setIsSearchTitle2Visible] = useState(false);
+  const [isProductsVisible, setIsProductsVisible] = useState(false);
   const [shouldHideNavbar, setShouldHideNavbar] = useState(false);
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [isOpenEventModalOpen, setIsOpenEventModalOpen] = useState(false);
 
   const revealStyle = (delayMs: number) =>
-    ({ ["--reveal-delay" as any]: `${delayMs}ms` } as React.CSSProperties);
+      ({ ["--reveal-delay" as any]: `${delayMs}ms` } as React.CSSProperties);
+
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setIsReviewModalOpen(true);
+  //   }, 1500);
+  //   return () => clearTimeout(timer);
+  // }, []);
+
+  useEffect(() => {
+    const hideUntil = localStorage.getItem('openEventHideUntil');
+    if (hideUntil && Date.now() < Number(hideUntil)) return;
+    const timer = setTimeout(() => {
+      setIsOpenEventModalOpen(true);
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   const FAQ_ITEMS = [
     {
@@ -3251,7 +3792,7 @@ export default function Main() {
       const fn = confettiFnRef.current;
       if (!fn) return;
       const shot = (r: number, o: any) =>
-        fn({ ...o, particleCount: Math.floor(200 * r), origin: { y: 0.8 } });
+          fn({ ...o, particleCount: Math.floor(200 * r), origin: { y: 0.8 } });
       shot(0.25, { spread: 26, startVelocity: 55 });
       shot(0.2, { spread: 60 });
       shot(0.35, { spread: 100, decay: 0.91, scalar: 0.8 });
@@ -3259,16 +3800,16 @@ export default function Main() {
       shot(0.1, { spread: 120, startVelocity: 45 });
     };
     const io = new IntersectionObserver(
-      (ents) => {
-        ents.forEach((e) => {
-          if (e.isIntersecting && !document.hidden && !cooldownRef.current) {
-            fire();
-            cooldownRef.current = true;
-            setTimeout(() => (cooldownRef.current = false), 3500);
-          }
-        });
-      },
-      { threshold: 0.5 }
+        (ents) => {
+          ents.forEach((e) => {
+            if (e.isIntersecting && !document.hidden && !cooldownRef.current) {
+              fire();
+              cooldownRef.current = true;
+              setTimeout(() => (cooldownRef.current = false), 3500);
+            }
+          });
+        },
+        { threshold: 0.5 }
     );
     io.observe(el);
     return () => io.disconnect();
@@ -3276,9 +3817,9 @@ export default function Main() {
 
   useEffect(() => {
     const reduceMotion =
-      typeof window !== "undefined" &&
-      typeof window.matchMedia === "function" &&
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        typeof window !== "undefined" &&
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const nodes = Array.from(document.querySelectorAll<HTMLElement>("[data-reveal]"));
     if (nodes.length === 0) return;
@@ -3289,15 +3830,15 @@ export default function Main() {
     }
 
     const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (!entry.isIntersecting) return;
-          const el = entry.target as HTMLElement;
-          el.setAttribute("data-reveal", "in");
-          io.unobserve(el);
-        });
-      },
-      { threshold: 0.18, rootMargin: "0px 0px -10% 0px" }
+        (entries) => {
+          entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            const el = entry.target as HTMLElement;
+            el.setAttribute("data-reveal", "in");
+            io.unobserve(el);
+          });
+        },
+        { threshold: 0.18, rootMargin: "0px 0px -10% 0px" }
     );
 
     nodes.forEach((node) => io.observe(node));
@@ -3305,6 +3846,9 @@ export default function Main() {
   }, []);
 
   useEffect(() => {
+    // Mulmaru 폰트 주입
+    injectMulmaruFont();
+    
     const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
     const setProgress = (v: number) => {
       const next = clamp(v, 0, 1);
@@ -3395,11 +3939,11 @@ export default function Main() {
         // 요소가 화면 중간 정도에 도달하면 애니메이션 시작
         const triggerPoint = windowHeight * 0.65;
         setIsSearchTitle2Visible(rect.top < triggerPoint);
-        
+
         // SearchTitle2가 화면 상단을 지나가면 navbar 숨기고 footer 표시
         const shouldHide = rect.top < 0;
         setShouldHideNavbar(shouldHide);
-        
+
         // navbar와 footer 토글을 위한 이벤트 발생
         if (shouldHide) {
           window.dispatchEvent(new CustomEvent('hideNavbar', { detail: { hide: true } }));
@@ -3408,10 +3952,19 @@ export default function Main() {
         }
       }
 
+      // Products Section 스크롤 애니메이션
+      const productsSection = document.querySelector('[data-products-section]');
+      if (productsSection) {
+        const rect = productsSection.getBoundingClientRect();
+        const windowHeight = window.innerHeight;
+        const triggerPoint = windowHeight * 0.75;
+        setIsProductsVisible(rect.top < triggerPoint);
+      }
+
       // 프로그레스 섹션(AI 모의 면접 피드백) 관련 처리
       const progressSection = progressSectionRef.current;
       let progressRect: DOMRect | null = null;
-      
+
       if (progressSection) {
         progressRect = progressSection.getBoundingClientRect();
         // 프로그레스 섹션이 화면 하단 70% 위치에 도달하면 배경 글자 숨김
@@ -3441,11 +3994,11 @@ export default function Main() {
 
       // 프로그레스 섹션 스크롤 락 로직
       if (
-        progressSection &&
-        progressRect &&
-        !isProgressPinnedRef.current &&
-        !isSnappingRef.current &&
-        Date.now() > pinCooldownUntilRef.current
+          progressSection &&
+          progressRect &&
+          !isProgressPinnedRef.current &&
+          !isSnappingRef.current &&
+          Date.now() > pinCooldownUntilRef.current
       ) {
         const vh = window.innerHeight;
         const NAV_HEIGHT = 0;
@@ -3473,7 +4026,7 @@ export default function Main() {
 
       // 기능 섹션 애니메이션 트리거 (더 일찍 시작)
       const featureRows = document.querySelectorAll('[data-feature-row]');
-      
+
       setFeatureVisibility(prevVisibility => {
         const newVisibility = [...prevVisibility];
         featureRows.forEach((row, index) => {
@@ -3491,7 +4044,7 @@ export default function Main() {
     lastScrollYRef.current = window.scrollY;
     // 초기 체크
     handleScroll();
-    
+
     window.addEventListener('scroll', handleScroll);
     return () => {
       window.removeEventListener('scroll', handleScroll);
@@ -3504,19 +4057,19 @@ export default function Main() {
   };
 
   const activeStepIndex =
-    progressValue < 0.25
-      ? 0
-      : progressValue < 0.5
-        ? 1
-        : progressValue < 0.75
-          ? 2
-          : 3;
+      progressValue < 0.25
+          ? 0
+          : progressValue < 0.5
+              ? 1
+              : progressValue < 0.75
+                  ? 2
+                  : 3;
   const activeStep = PROGRESS_STEPS[activeStepIndex] ?? PROGRESS_STEPS[0];
 
   return (
-    <Page>
-      <SoftBg />
-      <BackgroundTextContainer>
+      <Page>
+        <SoftBg />
+        {/* <BackgroundTextContainer>
         <BackgroundText $isVisible={isBackgroundVisible}>
           <BackgroundImage src={backFont} alt="" />
           <BackgroundImage src={backFont} alt="" />
@@ -3527,611 +4080,649 @@ export default function Main() {
           <BackgroundImage src={backFont} alt="" />
           <BackgroundImage src={backFont} alt="" />
         </BackgroundText>
-      </BackgroundTextContainer>
-      <HeroSection>
-        <MainTitle>
-          <ImgBOX>
-            {/*<ImageLogo src={imageLogo}></ImageLogo>*/}
+      </BackgroundTextContainer> */}
+        <HeroSection>
+          <HeroInner>
 
-            <SearchTitle3 align="center">Show your potential <br/>  <SearchTitle4 align="center"> With</SearchTitle4></SearchTitle3>
-            {/*<SearchTitle4 align="center"> with</SearchTitle4>*/}
-            <ImageLogo2 src={imageLogo2}></ImageLogo2>
+            {/* ── LEFT: 텍스트 + 버튼 ── */}
+            <HeroContent>
 
-          </ImgBOX>
+              {/* i-POTEN (로고) × AI */}
+              <HeroLogoLine>
+                <HeroLogoImg src={pageLogo} alt="i-POTEN" draggable={false} />
+                <HeroLogoX>×</HeroLogoX>
+                <HeroLogoAIText>AI</HeroLogoAIText>
+              </HeroLogoLine>
 
-          {/*<SearchTitle align="center">Show your potential with i-Poten</SearchTitle>*/}
+              {/* 메인 슬로건 */}
+              <HeroMainSlogan>당신의 잠재력을 깨우다</HeroMainSlogan>
 
-          {/*I-Poten*/}
-          {/*아이포텐*/}
-        </MainTitle>
-        {/*<SearchTitle align="center">면접으로 시작해 더욱 다양한 가치를 만드는데 함께 하세요</SearchTitle>*/}
-        {/*<SearchTitle align="center">면접으로 시작해 더욱 다양한 가치를 만드는데 함께 하세요</SearchTitle>*/}
-        {/*<SearchTitle align="center">아이포텐</SearchTitle>*/}
-        {/*<Subtitle>*/}
-        {/*  I-Poten과 함께, 더 똑똑하고 효과적인 면접을 경험하세요*/}
-        {/*  <br />*/}
-        {/*  면접 AI 함께 가나다라 마바사*/}
-        {/*</Subtitle>*/}
-        <ButtonGroup>
-          {/*<PrimaryButton href="#start">*/}
-          {/*  시작*/}
-          {/*</PrimaryButton>*/}
-          {/*<SecondaryButton href="#free">*/}
-          {/*  무료 체험*/}
-          {/*</SecondaryButton>*/}
-          {/*<BlueButton href="#guide">*/}
-          {/*  도입 문의*/}
-          {/*</BlueButton>*/}
-        </ButtonGroup>
-      </HeroSection>
+              {/* 설명 */}
+              <HeroDescText>
+                AI, I-Poten 솔루션으로<br />
+                당신의 면접과, 취업,<br />
+                합격과 성장에 필요한모든 것을 연결합니다.
+              </HeroDescText>
 
+              {/* CTA 버튼 */}
+              <HeroBtnRow>
+                <HeroBtn>지금 시작하기</HeroBtn>
+                <HeroBtn>둘러보기</HeroBtn>
+              </HeroBtnRow>
 
-      <SearchTitle2 data-search-title2 $isVisible={isSearchTitle2Visible} style={{ textAlign: 'center' }}>
-        면접으로 시작해 더욱 다양한 가치를  <br/>
-        면접으로 시작해 더욱 다양한 가치를 만드는데 함께 하세요
-      </SearchTitle2>
+            </HeroContent>
 
-      {/*<ServiceSection>*/}
+            {/* ── RIGHT: 3D 이미지 ── */}
+            <HeroRightArea>
+              {/* 상단 우측 추상 도형 */}
+              <PageImgEl src={pageImg} alt="" draggable={false} />
+              {/* 하단 3D AI 텍스트 */}
+              {/*<PageAIEl src={pageAI} alt="AI" draggable={false} />*/}
+            </HeroRightArea>
+
+          </HeroInner>
+        </HeroSection>
+
+        <CloudTransitionWrap>
+          <SearchTitle2 data-search-title2 data-service-section $isVisible={isSearchTitle2Visible} style={{ textAlign: 'center' }}>
+            면접으로 시작해 더욱 다양한 가치를  <br/>
+            면접으로 시작해 더욱 다양한 가치를 만드는데 함께 하세요
+          </SearchTitle2>
+
+          {/* Products Section */}
+          <ProductsSection data-products-section $isVisible={isProductsVisible}>
+          <ProductsGrid>
+            {/* Word Card 1 */}
+            <ProductCard $bgColor="#f8f9fa" $delay={0.1}>
+              <ProductTitle>단어학습</ProductTitle>
+              <ProductDesc>
+                면접에 자주 나오는 핵심 단어와<br />
+                실무 용어를 학습합니다
+              </ProductDesc>
+              <ProductImageWrap>
+                <img src={wordA} alt="단어학습" draggable={false} />
+              </ProductImageWrap>
+            </ProductCard>
+
+            {/* Word Card 2 */}
+            <ProductCard $bgColor="#f8f9fa" $delay={0.2}>
+              <ProductTitle>단어복습</ProductTitle>
+              <ProductDesc>
+                학습한 단어를 반복 학습하여<br />
+                완벽하게 내 것으로 만듭니다
+              </ProductDesc>
+              <ProductImageWrap>
+                <img src={wordA} alt="단어복습" draggable={false} />
+              </ProductImageWrap>
+            </ProductCard>
+
+            {/* Interview Card */}
+            <ProductCard $bgColor="linear-gradient(135deg, #3b82f6 0%, #10b981 100%)" $delay={0.3}>
+              <ProductTitle $color="#ffffff">AI 모의면접</ProductTitle>
+              <ProductDesc $color="rgba(255, 255, 255, 0.95)">
+                실전처럼 연습하는 AI 면접<br />
+                실시간 피드백으로 합격률 향상
+              </ProductDesc>
+              <ProductCircleImageWrap>
+                <img src={InterviewA} alt="AI 모의면접" draggable={false} />
+              </ProductCircleImageWrap>
+            </ProductCard>
+          </ProductsGrid>
+        </ProductsSection>
+        </CloudTransitionWrap>
+
+        {/*<ServiceSection>*/}
         {/*<ServiceTitle data-service-title data-reveal style={revealStyle(0)}>*/}
         {/*  <Highlight>취업 준비</Highlight>, 어디까지 해보셨나요?*/}
         {/*</ServiceTitle>*/}
         {/*<ServiceSubtitle data-reveal style={revealStyle(120)}>*/}
         {/*  ↓ 잡스푼은 다양한 방향의 취업 준비 솔루션을 제공합니다*/}
         {/*</ServiceSubtitle>*/}
-        
-      {/*  <ServiceGrid data-service-grid>*/}
-      {/*    {SERVICE_CARDS.map((card, index) => {*/}
-      {/*      const rotations = [-12, -6, 0, 6, 12];*/}
-      {/*      const zIndexes = [1, 2, 3, 2, 1];*/}
-      {/*      const delays = ["0s", "0.06s", "0.12s", "0.18s", "0.24s"];*/}
-      {/*      return (*/}
-      {/*        <ServiceCard*/}
-      {/*          key={card.title}*/}
-      {/*          $rotation={rotations[index] ?? 0}*/}
-      {/*          $zIndex={zIndexes[index] ?? 1}*/}
-      {/*          $translateX={0}*/}
-      {/*          $isVisible={areCardsVisible}*/}
-      {/*          style={{ transitionDelay: delays[index] ?? "0s" }}*/}
-      {/*        >*/}
-      {/*          <CardLabel>{card.label}</CardLabel>*/}
-      {/*          <CardTitle>{card.title}</CardTitle>*/}
-      {/*          <CardIcon aria-hidden>{card.icon}</CardIcon>*/}
-      {/*        </ServiceCard>*/}
-      {/*      );*/}
-      {/*    })}*/}
-      {/*  </ServiceGrid>*/}
-      {/*</ServiceSection>*/}
 
-      <ProgressSection data-progress-section ref={progressSectionRef}>
-        <ProgressKicker data-reveal style={revealStyle(0)}>I-POTEN FLOW</ProgressKicker>
-        <ProgressTitle data-reveal style={revealStyle(100)}>
-          면접을 위한 모든 과정 함께
-          <br />
-          <ProgressTitleAccent>I-Poten</ProgressTitleAccent>
-        </ProgressTitle>
-        <ProgressDescription data-reveal style={revealStyle(220)}>
-          아래로 스크롤하면 진행 바가 자연스럽게 채워지며 각 단계가 나타납니다
-        </ProgressDescription>
-        <ProgressTopSlot />
-        <ProgressBarWrap>
-          <ProgressTrack>
-            <ProgressFill $progress={progressValue} />
-          </ProgressTrack>
-          {PROGRESS_STEPS.map((step, idx) => (
-            <ProgressStepLabel
-              key={step.label}
-              $leftPct={step.leftPct}
-              $edge={step.edge}
-              $active={activeStepIndex === idx}
-            >
-              {step.label}
-            </ProgressStepLabel>
-          ))}
-          {PROGRESS_STEPS.map((step, idx) => (
-            <ProgressDot
-              key={`${step.label}-dot`}
-              $leftPct={step.leftPct}
-              $edge={step.edge}
-              $active={activeStepIndex === idx}
-            />
-          ))}
-        </ProgressBarWrap>
-        <ProgressBottomSlot data-reveal style={revealStyle(420)}>
-          <ProgressBottomDescription>{activeStep.description}</ProgressBottomDescription>
-        </ProgressBottomSlot>
-      </ProgressSection>
+        {/*  <ServiceGrid data-service-grid>*/}
+        {/*    {SERVICE_CARDS.map((card, index) => {*/}
+        {/*      const rotations = [-12, -6, 0, 6, 12];*/}
+        {/*      const zIndexes = [1, 2, 3, 2, 1];*/}
+        {/*      const delays = ["0s", "0.06s", "0.12s", "0.18s", "0.24s"];*/}
+        {/*      return (*/}
+        {/*        <ServiceCard*/}
+        {/*          key={card.title}*/}
+        {/*          $rotation={rotations[index] ?? 0}*/}
+        {/*          $zIndex={zIndexes[index] ?? 1}*/}
+        {/*          $translateX={0}*/}
+        {/*          $isVisible={areCardsVisible}*/}
+        {/*          style={{ transitionDelay: delays[index] ?? "0s" }}*/}
+        {/*        >*/}
+        {/*          <CardLabel>{card.label}</CardLabel>*/}
+        {/*          <CardTitle>{card.title}</CardTitle>*/}
+        {/*          <CardIcon aria-hidden>{card.icon}</CardIcon>*/}
+        {/*        </ServiceCard>*/}
+        {/*      );*/}
+        {/*    })}*/}
+        {/*  </ServiceGrid>*/}
+        {/*</ServiceSection>*/}
 
-      <CoreValueSection>
-        <CoreValueHeader data-reveal style={revealStyle(0)}>
-          <CoreValueLabel>COREVALUE</CoreValueLabel>
-          <CoreValueTitle>
-            합격을 넘어,
-            나만의 Identity를 완성하는<br />
-            면접 준비의 <span>핵심</span>을 제공합니다.
-          </CoreValueTitle>
-        </CoreValueHeader>
-
-        <CoreValueGrid>
-          <CoreValueCard data-reveal style={revealStyle(100)}>
-            <CoreValueIcon>
-              <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                <path d="M32 56C32 56 8 40 8 24C8 12 18 4 32 16C46 4 56 12 56 24C56 40 32 56 32 56Z" fill="url(#heart-gradient)" />
-                <defs>
-                  <linearGradient id="heart-gradient" x1="8" y1="4" x2="56" y2="56" gradientUnits="userSpaceOnUse">
-                    <stop stopColor="#60a5fa" />
-                    <stop offset="1" stopColor="#3b82f6" />
-                  </linearGradient>
-                </defs>
-              </svg>
-            </CoreValueIcon>
-            <CoreValueCardTitle>
-              정답을 외우는 면접은 끝났다<br />
-              나만의 Identity로 증명하는 면접
-            </CoreValueCardTitle>
-            <CoreValueCardDesc>
-              면접 면접 면접 면접 면접 면접
-              <br />
-              면접 면접 면접 면접 면접 면접
-              <br />
-              존재 이유죠.
-            </CoreValueCardDesc>
-          </CoreValueCard>
-
-          <CoreValueCard data-reveal style={revealStyle(200)}>
-            <CoreValueIcon>
-              <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                <circle cx="32" cy="32" r="24" fill="#3b82f6" />
-                <path d="M32 16V32M32 32L24 40M32 32L40 40M32 32V48" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-                <circle cx="32" cy="12" r="4" fill="white" />
-              </svg>
-            </CoreValueIcon>
-            <CoreValueCardTitle>
-              왜 떨어졌는지 모르는 면접은 그만
-              <br />
-              연습을 넘어 면접을 주도하는
-            </CoreValueCardTitle>
-            <CoreValueCardDesc>
-              면접 면접 면접 면접 면접 면접
-              <br />
-              면접 면접 면접 면접 면접 면접
-              <br />
-              면접 면접 면접 면접 면접 면접
-            </CoreValueCardDesc>
-          </CoreValueCard>
-
-          <CoreValueCard data-reveal style={revealStyle(300)}>
-            <CoreValueIcon>
-              <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-                <circle cx="32" cy="32" r="24" stroke="#3b82f6" strokeWidth="4" fill="none" />
-                <circle cx="32" cy="32" r="16" stroke="#3b82f6" strokeWidth="3" fill="none" />
-                <circle cx="32" cy="32" r="6" fill="#3b82f6" />
-                <path d="M48 16L56 8M56 8H48M56 8V16" stroke="#3b82f6" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </CoreValueIcon>
-            <CoreValueCardTitle>
-              합격하기 위한 면접을 넘어
-              <br />
-              합격할 수 밖에 없는 나를 만들어갑니다
-            </CoreValueCardTitle>
-            <CoreValueCardDesc>
-              면접 면접 면접 면접 면접 면접
-              <br />
-              면접 면접 면접 면접 면접 면접
-              <br />
-              면접 면접 면접 면접 면접 면접
-            </CoreValueCardDesc>
-          </CoreValueCard>
-        </CoreValueGrid>
-      </CoreValueSection>
-
-      {/* GROWTH 섹션 */}
-      <GrowthSection>
-        <GrowthHeader data-reveal style={revealStyle(0)}>
-          <GrowthLabel>GROWTH</GrowthLabel>
-          <GrowthTitle>
-            면접의 경험과 준비는
+        <ProgressSection data-progress-section ref={progressSectionRef}>
+          <ProgressKicker data-reveal style={revealStyle(0)}>I-POTEN FLOW</ProgressKicker>
+          <ProgressTitle data-reveal style={revealStyle(100)}>
+            면접을 위한 모든 과정 함께
             <br />
-            함께 발전하며, <span>내가 걸어온 길</span> 의 증명 입니다
-          </GrowthTitle>
-        </GrowthHeader>
+            <ProgressTitleAccent>I-Poten</ProgressTitleAccent>
+          </ProgressTitle>
+          <ProgressDescription data-reveal style={revealStyle(220)}>
+            아래로 스크롤하면 진행 바가 자연스럽게 채워지며 각 단계가 나타납니다
+          </ProgressDescription>
+          <ProgressTopSlot />
+          <ProgressBarWrap>
+            <ProgressTrack>
+              <ProgressFill $progress={progressValue} />
+            </ProgressTrack>
+            {PROGRESS_STEPS.map((step, idx) => (
+                <ProgressStepLabel
+                    key={step.label}
+                    $leftPct={step.leftPct}
+                    $edge={step.edge}
+                    $active={activeStepIndex === idx}
+                >
+                  {step.label}
+                </ProgressStepLabel>
+            ))}
+            {PROGRESS_STEPS.map((step, idx) => (
+                <ProgressDot
+                    key={`${step.label}-dot`}
+                    $leftPct={step.leftPct}
+                    $edge={step.edge}
+                    $active={activeStepIndex === idx}
+                />
+            ))}
+          </ProgressBarWrap>
+          <ProgressBottomSlot data-reveal style={revealStyle(420)}>
+            <ProgressBottomDescription>{activeStep.description}</ProgressBottomDescription>
+          </ProgressBottomSlot>
+        </ProgressSection>
 
-        <GrowthTimeline>
-          <GrowthCard $offset={0} data-reveal style={revealStyle(100)}>
-            <GrowthCardYear>신입</GrowthCardYear>
-            <GrowthCardTitle>나를 잠채력과 성장 가치 </GrowthCardTitle>
-            <GrowthCardDesc>
-              노력과 성장 가능성을
+        <CoreValueSection>
+          <CoreValueHeader data-reveal style={revealStyle(0)}>
+            <CoreValueLabel>COREVALUE</CoreValueLabel>
+            <CoreValueTitle>
+              합격을 넘어,
+              나만의 Identity를 완성하는<br />
+              면접 준비의 <span>핵심</span>을 제공합니다.
+            </CoreValueTitle>
+          </CoreValueHeader>
+
+          <CoreValueGrid>
+            {/* Row 1 - Image Left, Content Right */}
+            <CoreValueRow data-reveal style={revealStyle(100)}>
+              <CoreValueImageCard>
+                <CoreValueImagePlaceholder>
+                  이미지 영역<br />
+                  (사용자가 추가 예정)
+                </CoreValueImagePlaceholder>
+              </CoreValueImageCard>
+              
+              <CoreValueContent>
+                <CoreValueCardTitle>
+                  정답을 외우는 면접은 끝났다<br />
+                  나만의 Identity로 증명하는 면접
+                </CoreValueCardTitle>
+                <CoreValueCardDesc>
+                  AI가 단순히 정답을 알려주는 것이 아닌,<br />
+                  당신만의 고유한 경험과 가치를 발견하고<br />
+                  면접관에게 깊은 인상을 남기는<br />
+                  진정한 자기소개를 완성합니다.
+                </CoreValueCardDesc>
+              </CoreValueContent>
+            </CoreValueRow>
+
+            {/* Row 2 - Content Left, Image Right (Reversed) */}
+            <CoreValueRow $reverse data-reveal style={revealStyle(200)}>
+              <CoreValueImageCard>
+                <CoreValueImagePlaceholder>
+                  이미지 영역<br />
+                  (사용자가 추가 예정)
+                </CoreValueImagePlaceholder>
+              </CoreValueImageCard>
+              
+              <CoreValueContent>
+                <CoreValueCardTitle>
+                  왜 떨어졌는지 모르는 면접은 그만<br />
+                  연습을 넘어 면접을 주도하는
+                </CoreValueCardTitle>
+                <CoreValueCardDesc>
+                  실시간 AI 피드백으로 당신의 답변을 분석하고,<br />
+                  개선점을 명확히 제시합니다.<br />
+                  단순 연습을 넘어 면접장에서 자신감 있게<br />
+                  대화를 이끌어가는 능력을 키웁니다.
+                </CoreValueCardDesc>
+              </CoreValueContent>
+            </CoreValueRow>
+
+            {/* Row 3 - Image Left, Content Right */}
+            <CoreValueRow data-reveal style={revealStyle(300)}>
+              <CoreValueImageCard>
+                <CoreValueImagePlaceholder>
+                  이미지 영역<br />
+                  (사용자가 추가 예정)
+                </CoreValueImagePlaceholder>
+              </CoreValueImageCard>
+              
+              <CoreValueContent>
+                <CoreValueCardTitle>
+                  합격하기 위한 면접을 넘어<br />
+                  합격할 수 밖에 없는 나를 만들어갑니다
+                </CoreValueCardTitle>
+                <CoreValueCardDesc>
+                  일회성 합격이 아닌, 지속 가능한 성장을 추구합니다.<br />
+                  면접 준비 과정에서 쌓인 모든 경험이<br />
+                  당신의 커리어 전반에 걸쳐<br />
+                  강력한 무기가 되도록 돕습니다.
+                </CoreValueCardDesc>
+              </CoreValueContent>
+            </CoreValueRow>
+          </CoreValueGrid>
+        </CoreValueSection>
+
+        {/* GROWTH 섹션 */}
+        <GrowthSection>
+          <GrowthHeader data-reveal style={revealStyle(0)}>
+            <GrowthLabel>GROWTH</GrowthLabel>
+            <GrowthTitle>
+              면접의 경험과 준비는
               <br />
-              어필하며 ,,,,,,
-            </GrowthCardDesc>
-          </GrowthCard>
+              함께 발전하며, <span>내가 걸어온 길</span> 의 증명 입니다
+            </GrowthTitle>
+          </GrowthHeader>
 
-          <GrowthCard $offset={60} data-reveal style={revealStyle(200)}>
-            <GrowthCardYear>주니어</GrowthCardYear>
-            <GrowthCardTitle>
-              나의 노력과 경험을 어필하는
-              <br />
-              능력과 성장 ,,,,
-            </GrowthCardTitle>
-            <GrowthCardDesc>
-              호호호홓호호
-              <br />
-              호호호홓호호
-            </GrowthCardDesc>
-          </GrowthCard>
-
-          <GrowthCard $offset={120} data-reveal style={revealStyle(300)}>
-            <GrowthCardYear>시니어</GrowthCardYear>
-            <GrowthCardTitle>
-              나의 가치를 증명하고 어필하는
-              <br />
-              라라랄ㄹ랄
-            </GrowthCardTitle>
-            <GrowthCardDesc>
-              호호호홓호호
-              <br />
-              호호호홓호호
-            </GrowthCardDesc>
-          </GrowthCard>
-        </GrowthTimeline>
-      </GrowthSection>
-
-      {/* 스크롤 인터랙티브 섹션들 */}
-      <ScrollSectionsWrapper>
-        {/* 스크롤 인터랙티브 섹션 1 - 흰색 배경 */}
-        <ScrollSectionWrapper>
-          <ScrollSection $bgColor="#ffffff" $zIndex={1}>
-            <ScrollContainer>
-              <ScrollTextContent>
-                <ScrollLabel style={{ color: '#64748b' }}>Slogan</ScrollLabel>
-                <ScrollTitle style={{ color: '#0f172a' }}>
-                  EXPANDING<br />
-                  LEGACY,<br />
-                  EMPOWERING<br />
-                  TOMORROW
-                </ScrollTitle>
-                <ScrollDescription style={{ color: '#64748b' }}>
-                  축적된 기지에 새로운 더를<br />
-                  미래 산업을 향한<br />
-                  새로운 도전을 시작합니다.
-                </ScrollDescription>
-              </ScrollTextContent>
-              <ScrollImageBox>
-                <ScrollImagePlaceholder>이미지 영역 1</ScrollImagePlaceholder>
-              </ScrollImageBox>
-            </ScrollContainer>
-          </ScrollSection>
-        </ScrollSectionWrapper>
-
-        {/* 스크롤 인터랙티브 섹션 2 - 녹색 배경 */}
-        <ScrollSectionWrapper>
-          <ScrollSection $bgColor="#00ff88" $zIndex={2}>
-            <ScrollContainer>
-              <ScrollTextContent>
-                <ScrollLabel style={{ color: '#0a5940' }}>Heritage</ScrollLabel>
-                <ScrollTitle style={{ color: '#0f172a' }}>
-                  아이디어와 인사이트가<br />
-                  교차하는 곳에서<br />
-                  새로운 경험을
-                </ScrollTitle>
-                <ScrollDescription style={{ color: '#1e3a32' }}>
-                  사회가계층이 안나 새로운 가치를 만들고<br />
-                  변화와 성장을 선도하여<br />
-                  막막한 방향 잡기를 도와드립니다.
-                </ScrollDescription>
-              </ScrollTextContent>
-              <ScrollImageBox>
-                <ScrollImagePlaceholder>이미지 영역 2</ScrollImagePlaceholder>
-              </ScrollImageBox>
-            </ScrollContainer>
-          </ScrollSection>
-        </ScrollSectionWrapper>
-
-        {/* 스크롤 인터랙티브 섹션 3 - 보라색 배경 */}
-        <ScrollSectionWrapper>
-          <ScrollSection $bgColor="#7c3aed" $zIndex={3}>
-            <ScrollContainer>
-              <ScrollTextContent>
-                <ScrollLabel style={{ color: '#e9d5ff' }}>Vision</ScrollLabel>
-                <ScrollTitle style={{ color: '#ffffff' }}>
-                  사람과 기업,<br />
-                  사회를 연결하는<br />
-                  글로벌 브랜드
-                </ScrollTitle>
-                <ScrollDescription style={{ color: '#e9d5ff' }}>
-                  더 나은 내일을 위한 혁신을 추구하며<br />
-                  지속 가능한 성장을 실현하는<br />
-                  글로벌 리더로 자리매김합니다.
-                </ScrollDescription>
-              </ScrollTextContent>
-              <ScrollImageBox>
-                <ScrollImagePlaceholder>이미지 영역 3</ScrollImagePlaceholder>
-              </ScrollImageBox>
-            </ScrollContainer>
-          </ScrollSection>
-        </ScrollSectionWrapper>
-      </ScrollSectionsWrapper>
-      <LightShowcaseBand>
-        <ShowcaseSection>
-          <ShowcaseGrid>
-            <ShowcaseVisual>
-              <div data-reveal style={revealStyle(0)}>
-                <ShowcaseBaseFrame>
-                  {/*{SHOWCASE_IMAGES.baseSrc ? (*/}
-                    <ShowcaseImage src={word1} alt="" />
-                  {/*) : (*/}
-                  {/*  <ShowcasePlaceholder />*/}
-                  {/*)}*/}
-                </ShowcaseBaseFrame>
-              </div>
-              <ShowcaseOverlayFrame data-reveal data-reveal-variant="fade" style={revealStyle(180)}>
-                {/*{SHOWCASE_IMAGES.overlaySrc ? (*/}
-                  <ShowcaseImage src={word2} alt="" />
-                {/*) : (*/}
-                {/*  <ShowcasePlaceholder />*/}
-                {/*)}*/}
-              </ShowcaseOverlayFrame>
-            </ShowcaseVisual>
-
-            <ShowcaseContent data-reveal style={revealStyle(100)}>
-              <ShowcaseTitle>
-                빠르고
+          <GrowthTimeline>
+            <GrowthCard $offset={0} data-reveal style={revealStyle(100)}>
+              <GrowthCardYear>신입</GrowthCardYear>
+              <GrowthCardTitle>나를 잠채력과 성장 가치 </GrowthCardTitle>
+              <GrowthCardDesc>
+                노력과 성장 가능성을
                 <br />
-                간편하게
+                어필하며 ,,,,,,
+              </GrowthCardDesc>
+            </GrowthCard>
+
+            <GrowthCard $offset={60} data-reveal style={revealStyle(200)}>
+              <GrowthCardYear>주니어</GrowthCardYear>
+              <GrowthCardTitle>
+                나의 노력과 경험을 어필하는
                 <br />
-                공부 하세요.
-              </ShowcaseTitle>
-              <ShowcaseSubTitle>면접을 위한 공부 어떻게 하시나요?</ShowcaseSubTitle>
-              <ShowcaseDescription>
-                (여기에 작은 설명을 넣을 예정)
+                능력과 성장 ,,,,
+              </GrowthCardTitle>
+              <GrowthCardDesc>
+                호호호홓호호
                 <br />
-                이미지 2장만 넣으면 레퍼런스와 동일한 레이아웃 호호호
-              </ShowcaseDescription>
-            </ShowcaseContent>
-          </ShowcaseGrid>
-        </ShowcaseSection>
+                호호호홓호호
+              </GrowthCardDesc>
+            </GrowthCard>
 
-        {/* COREVALUE 섹션 */}
-
-
-        <ScheduleShowcaseSection>
-          <ScheduleShowcaseTitle data-reveal style={revealStyle(0)}>
-            <ScheduleShowcaseTitleMuted>면접 결과 한눈에</ScheduleShowcaseTitleMuted>
-            <ScheduleShowcaseTitleStrong>확인하고 발전하세요.</ScheduleShowcaseTitleStrong>
-          </ScheduleShowcaseTitle>
-
-
-
-        <ScheduleCardsGrid>
-
-          <ScheduleDarkCard data-reveal style={revealStyle(180)}>
-            <ScheduleDarkContent>
-              <ScheduleDarkTitle>
-                종합적 지표를 통해
+            <GrowthCard $offset={120} data-reveal style={revealStyle(300)}>
+              <GrowthCardYear>시니어</GrowthCardYear>
+              <GrowthCardTitle>
+                나의 가치를 증명하고 어필하는
                 <br />
-                파악하세요.
-              </ScheduleDarkTitle>
-              <ScheduleDarkDescription>
-                다양한 부분 점수와 종합 점수를 제공하여
+                라라랄ㄹ랄
+              </GrowthCardTitle>
+              <GrowthCardDesc>
+                호호호홓호호
                 <br />
-                나의 상황과 발전
-              </ScheduleDarkDescription>
-            </ScheduleDarkContent>
+                호호호홓호호
+              </GrowthCardDesc>
+            </GrowthCard>
+          </GrowthTimeline>
+        </GrowthSection>
 
-            <ScheduleListFrame>
-              <ScheduleListInner>
-                <ScheduleMedia src={interview1} alt="" $fit="cover" />
-              </ScheduleListInner>
-            </ScheduleListFrame>
-          </ScheduleDarkCard>
+      
+        <LightShowcaseBand>
+          {/* 섹션 1: 기존 (이미지 왼쪽, 텍스트 오른쪽) */}
+          <ShowcaseSection>
+            <ShowcaseGrid>
+              <ShowcaseVisual>
+                <div data-reveal style={revealStyle(0)}>
+                  <ShowcaseBaseFrame>
+                    <ShowcasePlaceholder />
+                  </ShowcaseBaseFrame>
+                </div>
+                <ShowcaseOverlayFrame data-reveal data-reveal-variant="fade" style={revealStyle(180)}>
+                  <ShowcasePlaceholder />
+                </ShowcaseOverlayFrame>
+              </ShowcaseVisual>
 
-          <ScheduleLightCard data-reveal style={revealStyle(260)}>
-            <ScheduleLightCaption>
-              <ScheduleLightCaptionMuted>
-                질문
-                <br />
-                하나하나
-                <br />
-                확인하고
-              </ScheduleLightCaptionMuted>
-              <ScheduleLightCaptionStrong>피드백을!</ScheduleLightCaptionStrong>
-            </ScheduleLightCaption>
+              <ShowcaseContent data-reveal style={revealStyle(100)}>
+                <ShowcaseTitle>
+                  빠르고
+                  <br />
+                  간편하게
+                  <br />
+                  공부 하세요.
+                </ShowcaseTitle>
+                <ShowcaseSubTitle>면접을 위한 공부 어떻게 하시나요?</ShowcaseSubTitle>
+                <ShowcaseDescription>
+                  나의 경험과 직무를 바탕으로
+                  <br />
+                  가장 적합한 핵심 키워드를 도출합니다.
+                </ShowcaseDescription>
+              </ShowcaseContent>
+            </ShowcaseGrid>
+          </ShowcaseSection>
 
-            <SchedulePhoneFrame>
+          {/* 섹션 3: 다시 기본 (이미지 왼쪽, 텍스트 오른쪽) */}
+          <ShowcaseSection>
+            <ShowcaseGrid>
+              <ShowcaseVisual>
+                <div data-reveal style={revealStyle(0)}>
+                  <ShowcaseBaseFrame>
+                    <ShowcasePlaceholder />
+                  </ShowcaseBaseFrame>
+                </div>
+                <ShowcaseOverlayFrame data-reveal data-reveal-variant="fade" style={revealStyle(180)}>
+                  <ShowcasePlaceholder />
+                </ShowcaseOverlayFrame>
+              </ShowcaseVisual>
+
+              <ShowcaseContent data-reveal style={revealStyle(100)}>
+                <ShowcaseTitle>
+                  상세한
+                  <br />
+                  피드백 리포트
+                </ShowcaseTitle>
+                <ShowcaseSubTitle>나의 강점과 약점 파악</ShowcaseSubTitle>
+                <ShowcaseDescription>
+                  면접이 끝난 후 제공되는 상세 리포트로
+                  <br />
+                  나의 부족한 점을 보완하세요.
+                </ShowcaseDescription>
+              </ShowcaseContent>
+            </ShowcaseGrid>
+          </ShowcaseSection>
+
+          {/* 섹션 3: 다시 기본 (이미지 왼쪽, 텍스트 오른쪽) */}
+          <ShowcaseSection>
+            <ShowcaseGrid>
+              <ShowcaseVisual>
+                <div data-reveal style={revealStyle(0)}>
+                  <ShowcaseBaseFrame>
+                    <ShowcasePlaceholder />
+                  </ShowcaseBaseFrame>
+                </div>
+                <ShowcaseOverlayFrame data-reveal data-reveal-variant="fade" style={revealStyle(180)}>
+                  <ShowcasePlaceholder />
+                </ShowcaseOverlayFrame>
+              </ShowcaseVisual>
+
+              <ShowcaseContent data-reveal style={revealStyle(100)}>
+                <ShowcaseTitle>
+                  상세한
+                  <br />
+                  피드백 리포트
+                </ShowcaseTitle>
+                <ShowcaseSubTitle>나의 강점과 약점 파악</ShowcaseSubTitle>
+                <ShowcaseDescription>
+                  면접이 끝난 후 제공되는 상세 리포트로
+                  <br />
+                  나의 부족한 점을 보완하세요.
+                </ShowcaseDescription>
+              </ShowcaseContent>
+            </ShowcaseGrid>
+          </ShowcaseSection>
+
+          {/* COREVALUE 섹션 */}
+
+
+          <ScheduleShowcaseSection>
+            <ScheduleShowcaseTitle data-reveal style={revealStyle(0)}>
+              <ScheduleShowcaseTitleMuted>면접 결과 한눈에</ScheduleShowcaseTitleMuted>
+              <ScheduleShowcaseTitleStrong>확인하고 발전하세요.</ScheduleShowcaseTitleStrong>
+            </ScheduleShowcaseTitle>
+
+
+
+            <ScheduleCardsGrid>
+
+              <ScheduleDarkCard data-reveal style={revealStyle(180)}>
+                <ScheduleDarkContent>
+                  <ScheduleDarkTitle>
+                    종합적 지표를 통해
+                    <br />
+                    파악하세요.
+                  </ScheduleDarkTitle>
+                  <ScheduleDarkDescription>
+                    다양한 부분 점수와 종합 점수를 제공하여
+                    <br />
+                    나의 상황과 발전
+                  </ScheduleDarkDescription>
+                </ScheduleDarkContent>
+
+                <ScheduleListFrame>
+                  <ScheduleListInner>
+                    <ScheduleMedia src={interview1} alt="" $fit="cover" />
+                  </ScheduleListInner>
+                </ScheduleListFrame>
+              </ScheduleDarkCard>
+
+              <ScheduleLightCard data-reveal style={revealStyle(260)}>
+                <ScheduleLightCaption>
+                  <ScheduleLightCaptionMuted>
+                    질문
+                    <br />
+                    하나하나
+                    <br />
+                    확인하고
+                  </ScheduleLightCaptionMuted>
+                  <ScheduleLightCaptionStrong>피드백을!</ScheduleLightCaptionStrong>
+                </ScheduleLightCaption>
+
+                <SchedulePhoneFrame>
                   <ScheduleMedia src={interview2} alt="" $fit="contain" />
-            </SchedulePhoneFrame>
-          </ScheduleLightCard>
+                </SchedulePhoneFrame>
+              </ScheduleLightCard>
 
 
 
-          <ScheduleLightCard data-reveal style={revealStyle(340)}>
-            <ScheduleLightCaption>
-              <ScheduleLightCaptionMuted>
-                한번에
-                <br />
-                전반적인
-                <br />
-                나의
-                <br />
-                면접
+              <ScheduleLightCard data-reveal style={revealStyle(340)}>
+                <ScheduleLightCaption>
+                  <ScheduleLightCaptionMuted>
+                    한번에
+                    <br />
+                    전반적인
+                    <br />
+                    나의
+                    <br />
+                    면접
 
-              </ScheduleLightCaptionMuted>
-              <ScheduleLightCaptionStrong>피드백!</ScheduleLightCaptionStrong>
-            </ScheduleLightCaption>
+                  </ScheduleLightCaptionMuted>
+                  <ScheduleLightCaptionStrong>피드백!</ScheduleLightCaptionStrong>
+                </ScheduleLightCaption>
 
-            <SchedulePhoneFrame>
+                <SchedulePhoneFrame>
                   <ScheduleMedia src={interview3} alt="" $fit="contain" />
-            </SchedulePhoneFrame>
-          </ScheduleLightCard>
+                </SchedulePhoneFrame>
+              </ScheduleLightCard>
 
-          <ScheduleDarkCard data-reveal style={revealStyle(420)}>
-            <ScheduleDarkContent>
-              <ScheduleDarkTitle>
-                PDF 및 마이페이지에서
-                <br />
-                영구적으로 간직하고 사용하세요
-              </ScheduleDarkTitle>
-              <ScheduleDarkDescription>
-                PDF 내보내기,
-                <br />
-                마이페이지에서 나의 면접 기록들을!
-              </ScheduleDarkDescription>
-            </ScheduleDarkContent>
+              <ScheduleDarkCard data-reveal style={revealStyle(420)}>
+                <ScheduleDarkContent>
+                  <ScheduleDarkTitle>
+                    PDF 및 마이페이지에서
+                    <br />
+                    영구적으로 간직하고 사용하세요
+                  </ScheduleDarkTitle>
+                  <ScheduleDarkDescription>
+                    PDF 내보내기,
+                    <br />
+                    마이페이지에서 나의 면접 기록들을!
+                  </ScheduleDarkDescription>
+                </ScheduleDarkContent>
 
-            <ScheduleListFrame>
-              <ScheduleListInner>
-                <ScheduleMedia src={interview4} alt="" $fit="cover" />
-              </ScheduleListInner>
-            </ScheduleListFrame>
-          </ScheduleDarkCard>
+                <ScheduleListFrame>
+                  <ScheduleListInner>
+                    <ScheduleMedia src={interview4} alt="" $fit="cover" />
+                  </ScheduleListInner>
+                </ScheduleListFrame>
+              </ScheduleDarkCard>
 
-        </ScheduleCardsGrid>
-        </ScheduleShowcaseSection>
+            </ScheduleCardsGrid>
+          </ScheduleShowcaseSection>
 
-        <InsightsSection>
-          <InsightsTitle data-reveal style={revealStyle(0)}>
-            실제 면접 데이터를 통해
-            <br />
-            <InsightsTitle2 data-reveal style={revealStyle(0)}>더욱 엄선된 면접을 제공합니다.</InsightsTitle2>
-          </InsightsTitle>
-
-        <InsightsPanel>
-
-
-          <InsightsPanelInner>
-            <InsightsLeft data-reveal style={revealStyle(140)}>
-              <InsightsLeftTitle>
-                실제,
-                <br />
-                <Highlight2>4,000여 개</Highlight2>의
-                <br />
-                면접 데이터로
-                <br />
-                <InsightsLeftStrong>보다 정확하게, 확실하게 </InsightsLeftStrong>
-              </InsightsLeftTitle>
-              <InsightsBody>
-                실제 면접 같은 다양한 면접을 통해
-                <br />
-                면접 준비 시간을 줄여보세요.
-              </InsightsBody>
-            </InsightsLeft>
-
-            <InsightsRight data-reveal style={revealStyle(220)}>
-              <InsightsQuestionStack>
-                <InsightsQuestionTrack>
-                  {INSIGHTS_TICKER_ITEMS.map((t) => (
-                    <InsightsQuestionPill key={`a-${t}`}>{t}</InsightsQuestionPill>
-                  ))}
-                  {INSIGHTS_TICKER_ITEMS.map((t) => (
-                    <InsightsQuestionPill key={`b-${t}`}>{t}</InsightsQuestionPill>
-                  ))}
-                </InsightsQuestionTrack>
-              </InsightsQuestionStack>
-
-              {/*<InsightsTickerBox>*/}
-              {/*  <InsightsTickerTrack>*/}
-              {/*    {INSIGHTS_TICKER_ITEMS.map((t, idx) => (*/}
-              {/*      <InsightsTickerRow key={`a-${idx}`}>{t}</InsightsTickerRow>*/}
-              {/*    ))}*/}
-              {/*    {INSIGHTS_TICKER_ITEMS.map((t, idx) => (*/}
-              {/*      <InsightsTickerRow key={`b-${idx}`}>{t}</InsightsTickerRow>*/}
-              {/*    ))}*/}
-              {/*  </InsightsTickerTrack>*/}
-              {/*  <InsightsTickerMask />*/}
-              {/*</InsightsTickerBox>*/}
-
-              <InsightsDashboardFrame>
-                <InsightsDashboardInner>
-                    <InsightsBackgroundImage src={interview5} alt="" />
-                </InsightsDashboardInner>
-              </InsightsDashboardFrame>
-            </InsightsRight>
-          </InsightsPanelInner>
-        </InsightsPanel>
-        </InsightsSection>
-      </LightShowcaseBand>
-
-      <WhiteBackground>
-        <PracticeSection>
-          <PracticeIcon data-reveal style={revealStyle(0)}><img style={{ width: "110px", height: "auto" }} src={image} /></PracticeIcon>
-          <PracticeTitle data-reveal style={revealStyle(120)}>
-            <DotStyle>"</DotStyle><PracticeHighlight2>면접</PracticeHighlight2><DotStyle>"</DotStyle> <br/>
-            <PracticeHighlight>지속적인 연습</PracticeHighlight>이 <br/>필요합니다
-
-          </PracticeTitle>
-          <PracticeDescription data-reveal style={revealStyle(240)}>
-            <SubTextStyle>면접은 지속적인 연습과 준비가 필요합니다 <br /><SubTextStyle2>I-Poten</SubTextStyle2>이 당신의 취업과 발전에 함께하겠습니다</SubTextStyle>
-          </PracticeDescription>
-        </PracticeSection>
-
-        <FaqSection>
-          <FaqTitle data-reveal style={revealStyle(0)}>자주 묻는 질문</FaqTitle>
-          <FaqList data-reveal data-reveal-variant="fade" style={revealStyle(140)}>
-            {FAQ_ITEMS.map((item, idx) => {
-              const isOpen = openFaqIndex === idx;
-              return (
-                <FaqItem key={item.q}>
-                  <FaqButtonRow
-                    type="button"
-                    aria-expanded={isOpen}
-                    onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                  >
-                    <FaqQuestion>{item.q}</FaqQuestion>
-                    <FaqToggle>{isOpen ? "×" : "+"}</FaqToggle>
-                  </FaqButtonRow>
-                  {isOpen ? <FaqAnswer>{item.a}</FaqAnswer> : null}
-                </FaqItem>
-              );
-            })}
-          </FaqList>
-        </FaqSection>
-
-        <HomeFiveSection ref={sectionRef}>
-          <Hero>
-            <TitleBox data-reveal data-reveal-variant="fade" style={revealStyle(120)}>I-POTEN</TitleBox>
-            <h2>국내 최초, 개발자를 위한 AI 모의 면접 플랫폼</h2>
-            <p>
-              <BlueText>I-Poten</BlueText>은 진짜 면접처럼 연습하고, <br />
-              기업 맞춤 정보를 통해 자신 있게 면접을 준비할 수 있도록 돕습니다.
-            </p>
-          </Hero>
-          <Features data-reveal style={revealStyle(220)}>
-            <h2>
-              <BlueText>I-Poten</BlueText>은 이렇게 다릅니다
-            </h2>
-            <p>
-              단순한 질문 생성기가 아닙니다. <br />
-              각 기업이 요구하는 조건, 자주 묻는 질문, 실제 면접에서 사용된 질문을
-              수집하고 분석하여
+          <InsightsSection>
+            <InsightsTitle data-reveal style={revealStyle(0)}>
+              실제 면접 데이터를 통해
               <br />
-              사용자에게 맞춤형으로 제공하는 국내 최초 개발자 특화 면접 준비
-              사이트입니다.
-            </p>
-          </Features>
-          <Companies data-reveal style={revealStyle(320)}>
-            <h3>
-              현재 <BlueText>I-Poten</BlueText>이 지원하는 기업
-            </h3>
-            <LogoSlider>
-              <LogoTrack>
-                {[logoDanggeun, logoToss, logoEncore, logoKT, logoDanggeun, logoToss, logoEncore, logoKT].map((src, i) => (
-                  <LogoItemWrap key={`${src}-${i}`}>
-                    <SvgStrokeLogo src={src} size={120} stroke={1} />
-                  </LogoItemWrap>
-                ))}
-              </LogoTrack>
-            </LogoSlider>
-          </Companies>
-          <ConfettiCanvas ref={canvasRef} />
-        </HomeFiveSection>
+              <InsightsTitle2 data-reveal style={revealStyle(0)}>더욱 엄선된 면접을 제공합니다.</InsightsTitle2>
+            </InsightsTitle>
 
-        
-      </WhiteBackground>
+            <InsightsPanel>
 
 
-      <ScrollTopButton onClick={scrollToTop} aria-label="맨 위로">
-        ↑
-      </ScrollTopButton>
-    </Page>
+              <InsightsPanelInner>
+                <InsightsLeft data-reveal style={revealStyle(140)}>
+                  <InsightsLeftTitle>
+                    실제,
+                    <br />
+                    <Highlight2>4,000여 개</Highlight2>의
+                    <br />
+                    면접 데이터로
+                    <br />
+                    <InsightsLeftStrong>보다 정확하게, 확실하게 </InsightsLeftStrong>
+                  </InsightsLeftTitle>
+                  <InsightsBody>
+                    실제 면접 같은 다양한 면접을 통해
+                    <br />
+                    면접 준비 시간을 줄여보세요.
+                  </InsightsBody>
+                </InsightsLeft>
+
+                <InsightsRight data-reveal style={revealStyle(220)}>
+                  <InsightsQuestionStack>
+                    <InsightsQuestionTrack>
+                      {INSIGHTS_TICKER_ITEMS.map((t) => (
+                          <InsightsQuestionPill key={`a-${t}`}>{t}</InsightsQuestionPill>
+                      ))}
+                      {INSIGHTS_TICKER_ITEMS.map((t) => (
+                          <InsightsQuestionPill key={`b-${t}`}>{t}</InsightsQuestionPill>
+                      ))}
+                    </InsightsQuestionTrack>
+                  </InsightsQuestionStack>
+
+                  {/*<InsightsTickerBox>*/}
+                  {/*  <InsightsTickerTrack>*/}
+                  {/*    {INSIGHTS_TICKER_ITEMS.map((t, idx) => (*/}
+                  {/*      <InsightsTickerRow key={`a-${idx}`}>{t}</InsightsTickerRow>*/}
+                  {/*    ))}*/}
+                  {/*    {INSIGHTS_TICKER_ITEMS.map((t, idx) => (*/}
+                  {/*      <InsightsTickerRow key={`b-${idx}`}>{t}</InsightsTickerRow>*/}
+                  {/*    ))}*/}
+                  {/*  </InsightsTickerTrack>*/}
+                  {/*  <InsightsTickerMask />*/}
+                  {/*</InsightsTickerBox>*/}
+
+                  <InsightsDashboardFrame>
+                    <InsightsDashboardInner>
+                      <InsightsBackgroundImage src={interview5} alt="" />
+                    </InsightsDashboardInner>
+                  </InsightsDashboardFrame>
+                </InsightsRight>
+              </InsightsPanelInner>
+            </InsightsPanel>
+          </InsightsSection>
+        </LightShowcaseBand>
+
+        <WhiteBackground>
+          <PracticeSection>
+            <PracticeIcon data-reveal style={revealStyle(0)}><img style={{ width: "110px", height: "auto" }} src={image} /></PracticeIcon>
+            <PracticeTitle data-reveal style={revealStyle(120)}>
+              <DotStyle>"</DotStyle><PracticeHighlight2>면접</PracticeHighlight2><DotStyle>"</DotStyle> <br/>
+              <PracticeHighlight>지속적인 연습</PracticeHighlight>이 <br/>필요합니다
+
+            </PracticeTitle>
+            <PracticeDescription data-reveal style={revealStyle(240)}>
+              <SubTextStyle>면접은 지속적인 연습과 준비가 필요합니다 <br /><SubTextStyle2>I-Poten</SubTextStyle2>이 당신의 취업과 발전에 함께하겠습니다</SubTextStyle>
+            </PracticeDescription>
+          </PracticeSection>
+
+          <FaqSection>
+            <FaqTitle data-reveal style={revealStyle(0)}>자주 묻는 질문</FaqTitle>
+            <FaqList data-reveal data-reveal-variant="fade" style={revealStyle(140)}>
+              {FAQ_ITEMS.map((item, idx) => {
+                const isOpen = openFaqIndex === idx;
+                return (
+                    <FaqItem key={item.q}>
+                      <FaqButtonRow
+                          type="button"
+                          aria-expanded={isOpen}
+                          onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                      >
+                        <FaqQuestion>{item.q}</FaqQuestion>
+                        <FaqToggle>{isOpen ? "×" : "+"}</FaqToggle>
+                      </FaqButtonRow>
+                      {isOpen ? <FaqAnswer>{item.a}</FaqAnswer> : null}
+                    </FaqItem>
+                );
+              })}
+            </FaqList>
+          </FaqSection>
+
+          <HomeFiveSection ref={sectionRef}>
+            <Hero>
+              <TitleBox data-reveal data-reveal-variant="fade" style={revealStyle(120)}>I-POTEN</TitleBox>
+              <h2>국내 최초, 개발자를 위한 AI 모의 면접 플랫폼</h2>
+              <p>
+                <BlueText>I-Poten</BlueText>은 진짜 면접처럼 연습하고, <br />
+                기업 맞춤 정보를 통해 자신 있게 면접을 준비할 수 있도록 돕습니다.
+              </p>
+            </Hero>
+            <Features data-reveal style={revealStyle(220)}>
+              <h2>
+                <BlueText>I-Poten</BlueText>은 이렇게 다릅니다
+              </h2>
+              <p>
+                단순한 질문 생성기가 아닙니다. <br />
+                각 기업이 요구하는 조건, 자주 묻는 질문, 실제 면접에서 사용된 질문을
+                수집하고 분석하여
+                <br />
+                사용자에게 맞춤형으로 제공하는 국내 최초 개발자 특화 면접 준비
+                사이트입니다.
+              </p>
+            </Features>
+            <Companies data-reveal style={revealStyle(320)}>
+              <h3>
+                현재 <BlueText>I-Poten</BlueText>이 지원하는 기업
+              </h3>
+              <LogoSlider>
+                <LogoTrack>
+                  {[logoDanggeun, logoToss, logoEncore, logoKT, logoDanggeun, logoToss, logoEncore, logoKT].map((src, i) => (
+                      <LogoItemWrap key={`${src}-${i}`}>
+                        <SvgStrokeLogo src={src} size={120} stroke={1} />
+                      </LogoItemWrap>
+                  ))}
+                </LogoTrack>
+              </LogoSlider>
+            </Companies>
+            <ConfettiCanvas ref={canvasRef} />
+          </HomeFiveSection>
+
+
+        </WhiteBackground>
+
+
+        <ScrollTopButton onClick={scrollToTop} aria-label="맨 위로">
+          ↑
+        </ScrollTopButton>
+
+        <Review
+            isOpen={isReviewModalOpen}
+            onClose={() => setIsReviewModalOpen(false)}
+            onSubmit={async (rating, comment) => {
+              console.log('리뷰 제출:', { rating, comment });
+              alert(`리뷰가 제출되었습니다!\n평점: ${rating}점\n내용: ${comment}`);
+            }}
+        />
+        <OpenEvent
+            isOpen={isOpenEventModalOpen}
+            onClose={() => setIsOpenEventModalOpen(false)}
+        />
+      </Page>
   );
 }

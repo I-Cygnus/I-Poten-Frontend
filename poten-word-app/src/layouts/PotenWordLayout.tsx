@@ -1,5 +1,5 @@
 import React from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import SearchBar from "../components/word/SearchBar.tsx";
 import ExploreStageTabs from "../components/word/ExploreStageTabs";
@@ -25,93 +25,21 @@ const UI = {
     shadow: "0 20px 60px rgba(62,99,224,.08)",
 };
 
-const HERO_NAV_TEXT_OFFSET = 26;
+const HERO_NAV_TEXT_OFFSET = 0;
 
-const Shell = styled.div<{ $noSide?: boolean; $quizWide?: boolean; $flushBottom?: boolean }>`
+const Shell = styled.div<{ $quizWide?: boolean; $flushBottom?: boolean }>`
     --container-max: ${({ $quizWide }) => ($quizWide ? "1440px" : "1280px")};
     --main-max: ${({ $quizWide }) => ($quizWide ? "1180px" : "980px")};
     --gutter: clamp(16px, 3.5vw, 28px);
-    --side-w: 220px;
-    --gap: 24px;
 
     max-width: calc(var(--container-max) + var(--gutter) * 2);
     margin-inline: auto;
     padding-inline: var(--gutter);
-
     padding-bottom: ${({ $flushBottom }) => ($flushBottom ? "0px" : "40px")};
 
     display: grid;
-    gap: var(--gap);
-    grid-template-columns: ${(p) =>
-            p.$noSide ? "1fr" : "minmax(180px, var(--side-w)) minmax(0, 1fr)"};
+    grid-template-columns: 1fr;
     align-items: start;
-
-    @media (max-width: 1024px) {
-        grid-template-columns: 1fr;
-        justify-items: center;
-    }
-`;
-
-const Side = styled.nav`
-    background: ${UI.panel};
-    border: 1px solid ${UI.line};
-    border-radius: 14px;
-    padding: 14px;
-    position: sticky;
-    top: var(--side-top, 20px);
-    align-self: start;
-    margin-top: var(--side-mt, 0px);
-
-    @media (max-width: 1024px) {
-        position: static;
-        width: min(680px, 100%);
-    }
-`;
-
-const TitleLink = styled(NavLink)`
-    display: block;
-    font-weight: 750;
-    font-size: 18px;
-    letter-spacing: -0.02em;
-    color: ${UI.text};
-    background: #eef4ff;
-    border-radius: 10px;
-    padding: 10px 12px;
-    margin-bottom: 8px;
-    text-decoration: none;
-    &:hover {
-        background: #e6eeff;
-    }
-    &.active {
-        outline: 2px solid ${UI.primary};
-        color: ${UI.primary};
-    }
-`;
-
-const List = styled.ul`
-    list-style: none;
-    margin: 8px 0 0;
-    padding: 0;
-    display: grid;
-    gap: 6px;
-`;
-
-const ItemLink = styled(NavLink)`
-    display: block;
-    padding: 12px 12px;
-    border-radius: 10px;
-    font-weight: 700;
-    color: ${UI.text};
-    text-decoration: none;
-    border: 1px solid transparent;
-    &.active {
-        background: ${UI.primarySoft};
-        color: ${UI.primary};
-        border-color: ${UI.primary};
-    }
-    &:hover {
-        background: #f8fafc;
-    }
 `;
 
 const SearchStack = styled.div`
@@ -313,15 +241,15 @@ export default function PotenWordLayout() {
                         align="left"
                         narrow
                         offsetLeft={HERO_NAV_TEXT_OFFSET}
-                        floatingIcons={[icon4]}
+                        floatingIcons={[icon1]}
                         iconProps={{
                             width: "360px",
                             height: "240px",
-                            top: "70px",
+                            top: "75px",
                             rightOffset: -150,
                             maxIconWidthPercent: 100,
                             positions: [{ left: 30, top: 22 }],
-                            scales: [1.05],
+                            scales: [0.9],
                             withShadow: false,
                         }}
                     />
@@ -372,40 +300,13 @@ export default function PotenWordLayout() {
             <Shell
                 ref={shellRef}
                 data-testid="potenword-shell"
-                $noSide={isQuizModePage || isLanding || isSearchLikeRoute || isQuizLandingRoute}
                 $quizWide={isQuizModePage}
                 $flushBottom={isSearchLikeRoute}
                 style={{
-                    ["--side-top" as any]: "calc(var(--poten-header-h, 0px) + 20px)",
                     ["--side-mt" as any]:
                         showWordHero || showNoteHero || showBookHero || showQuizHero ? "12px" : "0px",
                 }}
             >
-                {/* 메인 랜딩(/learning) 에서는 사이드바 렌더 X */}
-                {!isQuizModePage && !isLanding && !isSearchLikeRoute && !isQuizLandingRoute && (
-                    <Side aria-label="포텐워드 네비게이션">
-                        <TitleLink
-                            to={`${BASE}/word`}
-                            end
-                            aria-label="포텐워드 홈으로"
-                        >
-                            포텐워드
-                        </TitleLink>
-                        <List>
-                            <li>
-                                <ItemLink to={`${BASE}/note`} end>
-                                    포텐노트
-                                </ItemLink>
-                            </li>
-                            <li>
-                                <ItemLink to={`${BASE}/quiz/home`}>포텐퀴즈</ItemLink>
-                            </li>
-                            <li>
-                                <ItemLink to={`${BASE}/book`}>포텐북</ItemLink>
-                            </li>
-                        </List>
-                    </Side>
-                )}
 
                 <Main ref={mainRef}>
                     {showSearchBars && (

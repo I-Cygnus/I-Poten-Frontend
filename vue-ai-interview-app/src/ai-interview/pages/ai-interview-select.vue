@@ -1,37 +1,135 @@
 <template>
   <main>
+    <!-- 상단 로고 -->
+    <div :style="topLogoContainerStyle" @click="goHome">
+      <img :src="Logo" alt="i-Poten Logo" :style="topLogoStyle" />
+    </div>
+
+    <!-- Credit Confirmation Modal -->
+    <div v-if="showCreditModal" :style="modalOverlayStyle" @click="closeCreditModal">
+      <div :style="creditModalContentStyle" @click.stop>
+        <!-- 상단 아이콘 -->
+        <div :style="creditModalIconWrapStyle">
+          <div :style="creditModalIconCircleStyle">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none">
+              <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                fill="white" stroke="white" stroke-width="0.5" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div :style="creditModalBadgeStyle">CREDIT</div>
+        </div>
+
+        <!-- 타이틀 -->
+        <h2 :style="creditModalTitleStyle">
+          크레딧 <span :style="creditModalAmountStyle">{{ pendingCreditCost }}</span>개가 소모됩니다
+        </h2>
+        <p :style="creditModalDescStyle">
+          <strong>{{ pendingTypeName }}</strong> 면접을 시작하면<br/>
+          보유 크레딧에서 차감됩니다.
+        </p>
+
+        <!-- 크레딧 소모 표시 -->
+        <div :style="creditInfoBoxStyle">
+          <div :style="creditInfoRowStyle">
+            <span :style="creditInfoLabelStyle">면접 유형</span>
+            <span :style="creditInfoValueStyle">{{ pendingTypeName }}</span>
+          </div>
+          <div :style="creditInfoDividerStyle"></div>
+          <div :style="creditInfoRowStyle">
+            <span :style="creditInfoLabelStyle">소모 크레딧</span>
+            <div :style="creditInfoCostStyle">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                  fill="#f59e0b" stroke="#f59e0b" stroke-width="0.5" stroke-linejoin="round"/>
+              </svg>
+              <span>{{ pendingCreditCost }}개</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 버튼 -->
+        <div :style="modalButtonGroupStyle">
+          <button :style="modalCancelButtonStyle" @click="closeCreditModal">취소</button>
+          <button :style="creditConfirmButtonStyle" @click="confirmCreditAndProceed">시작하기</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Required Modal -->
+    <div v-if="showLoginModal" :style="modalOverlayStyle" @click="closeLoginModal">
+      <div :style="modalContentStyle" @click.stop>
+        <div :style="modalIconContainerStyle">
+          <div :style="modalIconCircleStyle">
+            <svg :style="modalIconStyle" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+            </svg>
+          </div>
+        </div>
+        <h2 :style="modalTitleStyle">로그인이 필요합니다</h2>
+        <p :style="modalMessageStyle">
+          AI 면접 서비스는 <strong>회원가입 후</strong> 이용 가능합니다.<br/>
+          지금 바로 회원가입하고 맞춤형 면접을 경험해보세요.
+        </p>
+        <div :style="modalButtonGroupStyle">
+          <button :style="modalCancelButtonStyle" @click="closeLoginModal">
+            취소
+          </button>
+          <button :style="modalConfirmButtonStyle" @click="goToLogin">
+            로그인하기
+          </button>
+        </div>
+      </div>
+    </div>
+
     <v-container v-if="!start" align-center :style="containerStyle">
       <!-- 첫 번째 화면: 면접 유형 선택 -->
       <div v-if="!showInterviewTypeSelection" :style="selectionContainerStyle">
         <div :style="titleContainerStyle">
           <h2 :style="enhancedTitleStyle">
-            <span :style="titleHighlightStyle">면접 유형</span>을 선택해주세요
+            원하는 <span :style="titleHighlightStyle">면접 유형</span>을 선택하세요
           </h2>
-          <div :style="titleUnderlineStyle"></div>
-          <p :style="titleDescriptionStyle">자신에게 맞는 면접 유형을 선택하여 실전 면접을 준비해보세요</p>
+          <a href="#" :style="guideLinkStyle">더 많은 설명 보기 ></a>
         </div>
         <div :style="interviewOptionsWrapperStyle">
-          <div 
-            v-for="(option, index) in interviewTypes" 
+          <div
+            v-for="(option, index) in interviewTypes"
             :key="index"
-            :style="[interviewTypeItemStyle, 
-                    selectedInterviewType === option.type ? selectedInterviewTypeItemStyle : {}, 
-                    option.status === 'preparing' ? preparingInterviewTypeItemStyle : {}]"
+            :style="getCardStyle(index, hoveredCardIndex === index, cardsVisible)"
             @click="selectInterviewType(option.type)"
+            @mouseenter="hoveredCardIndex = index"
+            @mouseleave="hoveredCardIndex = null"
           >
-            <div :style="interviewTypeIconStyle">
-              <v-icon size="32" :color="selectedInterviewType === option.type ? 'white' : 'primary'">
-                {{ option.icon }}
-              </v-icon>
+            <!-- 이미지 카드 -->
+            <img
+              v-if="cardImages[index]"
+              :src="cardImages[index]"
+              :style="cardImageStyle"
+              :alt="option.title"
+            />
+            <!-- 이미지 없는 카드 (맞춤형) -->
+            <div v-else :style="fallbackCardStyle(index)">
+              <p :style="fallbackLabelStyle">custom</p>
+              <h3 :style="fallbackTitleStyle">{{ option.title }}</h3>
+              <p :style="fallbackDescStyle">{{ option.description }}</p>
             </div>
-            <div :style="interviewTypeContentStyle">
-              <h2 :style="[interviewTypeTitleStyle, selectedInterviewType === option.type ? selectedInterviewTypeTitleStyle : {}]">{{ option.title }}</h2>
-              <p :style="interviewTypeDescriptionStyle">{{ option.description }}</p>
+            <!-- 크레딧 뱃지 -->
+            <div v-if="option.status !== 'preparing' && getCreditCost(option.type) > 0" :style="creditBadgeStyle">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"
+                  fill="#fbbf24" stroke="#fbbf24" stroke-width="0.5" stroke-linejoin="round"/>
+              </svg>
+              {{ getCreditCost(option.type) }}
             </div>
-            <div :style="interviewTypeStatusStyle" v-if="option.status === 'preparing'">
-              <v-chip color="grey" small>준비중</v-chip>
+            <!-- 호버 오버레이 -->
+            <div :style="cardHoverOverlay(hoveredCardIndex === index)"></div>
+            <!-- 준비중 블러 오버레이 -->
+            <div v-if="option.status === 'preparing'" :style="preparingOverlayStyle">
+              <div :style="preparingOverlayContentStyle">
+                <v-icon size="36" color="white" style="margin-bottom: 12px; opacity: 0.9;">mdi-lock-outline</v-icon>
+                <span :style="preparingOverlayTextStyle">COMING SOON</span>
+                <span :style="preparingOverlaySubTextStyle">준비 중인 기능입니다</span>
+              </div>
             </div>
-            <div :style="interviewTypeOverlayStyle"></div>
           </div>
         </div>
       </div>
@@ -405,6 +503,10 @@
 import { ref, computed, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { useHead } from '@vueuse/head'
+import JImg from '@/assets/J.png';
+import ChImg from '@/assets/Ch.png';
+import CImg from '@/assets/C.png';
+import Logo from '@/assets/Logo.png';
 
 // ✅ SEO 메타 정보
 useHead({
@@ -440,6 +542,34 @@ useHead({
 const router = useRouter();
 const start = ref(false);
 const showInterviewTypeSelection = ref(false);
+const hoveredCardIndex = ref(null);
+const cardsVisible = ref(false);
+const showLoginModal = ref(false);
+const showCreditModal = ref(false);
+const pendingType = ref('');
+const pendingCreditCost = ref(0);
+const pendingTypeName = ref('');
+
+const CREDIT_COSTS = { '전형별': 2, '기업별': 6 };
+const TYPE_NAMES = { '전형별': '전형별 면접', '기업별': '기업별 면접' };
+
+const getCreditCost = (type) => CREDIT_COSTS[type] || 0;
+
+const closeCreditModal = () => { showCreditModal.value = false; pendingType.value = ''; };
+
+const confirmCreditAndProceed = () => {
+  showCreditModal.value = false;
+  const type = pendingType.value;
+  selectedInterviewType.value = type;
+  router.push({ name: 'ai-interview-detail', params: { type } });
+};
+
+const goHome = () => {
+  window.location.href = '/';
+};
+
+// 카드별 이미지 매핑 (순서: 전형별, 채용공고별, 기업별, 추가옵션)
+const cardImages = [JImg, ChImg, CImg, null];
 
 
 
@@ -465,6 +595,13 @@ const interviewTypes = [
     icon: "mdi-domain",
     description: "특정 기업에 맞춤 면접 준비",
     status: "active"
+  },
+  {
+    type: "추가옵션",
+    title: "맞춤형 면접",
+    icon: "mdi-star",
+    description: "개인 맞춤형 면접 준비",
+    status: "preparing"
   }
 ];
 const selectedInterviewType = ref("");
@@ -552,8 +689,52 @@ const isCompanyFormValid = computed(() => {
   );
 });
 
+// 로그인 확인 함수 (httponly 쿠키는 직접 접근 불가하므로 API 호출로 확인)
+const checkLoginStatus = async () => {
+  try {
+    // HttpOnly 쿠키는 JavaScript로 직접 접근할 수 없으므로
+    // API 엔드포인트를 통해 인증 상태를 확인하거나
+    // 서버에서 설정한 별도의 클라이언트 접근 가능 토큰을 확인해야 합니다.
+    // 여기서는 쿠키가 자동으로 전송되는 API 호출로 확인합니다.
+    
+    // 방법 1: API 엔드포인트로 인증 확인
+    const response = await fetch('/api/auth/check', {
+      method: 'GET',
+      credentials: 'include' // httponly 쿠키 포함
+    });
+    
+    if (response.ok) {
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Login check failed:', error);
+    // API 호출 실패 시 localStorage 백업 체크 (있다면)
+    const userToken = localStorage.getItem('userToken');
+    return !!userToken;
+  }
+};
+
+// 로그인 모달 닫기
+const closeLoginModal = () => {
+  showLoginModal.value = false;
+};
+
+// 로그인 페이지로 이동
+const goToLogin = () => {
+  showLoginModal.value = false;
+  window.location.href = '/vue-account/account/login';
+};
+
 // 선택 핸들러
-const selectInterviewType = (type) => {
+const selectInterviewType = async (type) => {
+  // 로그인 확인
+  const isLoggedIn = await checkLoginStatus();
+  if (!isLoggedIn) {
+    showLoginModal.value = true;
+    return;
+  }
+  
   // 준비중인 옵션은 선택 불가
   const option = interviewTypes.find(opt => opt.type === type);
   if (option && option.status === 'preparing') {
@@ -562,7 +743,16 @@ const selectInterviewType = (type) => {
   }
   
   selectedInterviewType.value = type;
-  
+
+  // 크레딧 소모가 있는 유형은 확인 모달 표시
+  if (CREDIT_COSTS[type]) {
+    pendingType.value = type;
+    pendingCreditCost.value = CREDIT_COSTS[type];
+    pendingTypeName.value = TYPE_NAMES[type] || type;
+    showCreditModal.value = true;
+    return;
+  }
+
   // 전형별 또는 기업별 선택 시 새로운 페이지로 이동
   if (type === '전형별' || type === '기업별' || type === '채용공고별') {
     router.push({
@@ -625,6 +815,11 @@ onMounted(() => {
   
   // speakNotice();
   // window.addEventListener("beforeunload", handleBeforeUnload);
+  
+  // Trigger entrance animation
+  setTimeout(() => {
+    cardsVisible.value = true;
+  }, 100);
 });
 
 // 면접 시작 함수
@@ -704,7 +899,7 @@ const containerStyle = {
   marginTop: '0', 
   maxWidth: '100%',
   width: '100%',
-  background: 'linear-gradient(180deg, #ffffff 0%, #f0f9ff 40%, #e0f2fe 100%)',
+  background: 'linear-gradient(180deg, #faf9fb 0%, #f5f3f7 50%, #ede9f2 100%)',
   minHeight: '100vh',
   padding: '80px 40px 120px',
   display: 'flex',
@@ -779,31 +974,28 @@ const titleContainerStyle = {
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  marginBottom: '3rem',
+  marginBottom: '2rem',
   position: 'relative',
   width: '100%'
 };
 
 // 향상된 타이틀 스타일
 const enhancedTitleStyle = {
-  fontSize: '2.8rem',
-  fontWeight: '800',
-  color: '#333',
-  marginBottom: '1rem',
+  fontSize: '1.8rem',
+  fontWeight: '700',
+  color: '#1e293b',
+  marginBottom: '0.5rem',
   letterSpacing: '-0.02em',
   textAlign: 'center',
   width: '100%',
   position: 'relative',
-  textShadow: '0 2px 10px rgba(0, 0, 0, 0.05)',
-  lineHeight: '1.2'
+  lineHeight: '1.3'
 };
 
 // 타이틀 하이라이트 스타일
 const titleHighlightStyle = {
-  background: 'linear-gradient(135deg, #4F9CF9 0%, #10B981 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
+  color: '#1e293b',
+  fontWeight: '800',
   position: 'relative',
   display: 'inline-block'
 };
@@ -853,15 +1045,496 @@ const selectionContainerStyle = {
 // 면접 유형 선택 옵션 스타일
 const interviewOptionsWrapperStyle = {
   width: '100%',
-  maxWidth: '1000px',
+  maxWidth: '1300px',
   margin: '0 auto',
   display: 'flex',
-  flexWrap: 'wrap',
+  flexWrap: 'nowrap',
   justifyContent: 'center',
-  gap: '20px'
+  alignItems: 'center',
+  overflowX: 'visible',
+  padding: '60px 20px 100px',
+  gap: '24px',
 };
 
-// 면접 유형 아이템 스타일
+// 가이드 링크 스타일
+const guideLinkStyle = {
+  color: '#6366f1',
+  fontSize: '0.95rem',
+  fontWeight: '600',
+  textDecoration: 'none',
+  marginTop: '8px',
+  display: 'inline-block',
+  transition: 'color 0.3s ease',
+  '&:hover': {
+    color: '#4f46e5'
+  }
+};
+
+// 카드 스타일 함수
+const getCardStyle = (index, isHovered, isVisible) => {
+  const animationDelay = `${index * 0.1}s`;
+
+  return {
+    position: 'relative',
+    borderRadius: '24px',
+    overflow: 'hidden',
+    cursor: 'pointer',
+    transition: `transform 0.35s cubic-bezier(0.16,1,0.3,1), box-shadow 0.35s ease, opacity 0.6s ease-out ${animationDelay}`,
+    boxShadow: isHovered
+      ? '0 36px 72px rgba(0,0,0,0.28), 0 12px 24px rgba(0,0,0,0.12)'
+      : '0 16px 40px rgba(0,0,0,0.15)',
+    width: '290px',
+    minWidth: '290px',
+    height: '430px',
+    flexShrink: 0,
+    opacity: isVisible ? 1 : 0,
+    transform: isHovered
+      ? 'translateY(-16px) scale(1.04)'
+      : isVisible
+        ? 'translateY(0)'
+        : 'translateY(40px)',
+    zIndex: isHovered ? 100 : index + 1,
+    background: 'transparent',
+  };
+};
+
+// 이미지 스타일
+const cardImageStyle = {
+  position: 'absolute',
+  inset: '0',
+  width: '100%',
+  height: '100%',
+  objectFit: 'cover',
+  objectPosition: 'center top',
+  display: 'block',
+  userSelect: 'none',
+  pointerEvents: 'none',
+};
+
+// 호버 오버레이
+const cardHoverOverlay = (isHovered) => ({
+  position: 'absolute',
+  inset: '0',
+  background: isHovered ? 'rgba(0,0,0,0.10)' : 'transparent',
+  transition: 'background 0.3s ease',
+  zIndex: 5,
+  borderRadius: '20px',
+  pointerEvents: 'none',
+});
+
+// 준비중 블러 오버레이
+const preparingOverlayStyle = {
+  position: 'absolute',
+  inset: '0',
+  background: 'rgba(15, 23, 42, 0.4)',
+  backdropFilter: 'blur(12px)',
+  WebkitBackdropFilter: 'blur(12px)',
+  zIndex: 10,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: '24px',
+};
+
+const preparingOverlayContentStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  background: 'rgba(255, 255, 255, 0.1)',
+  padding: '24px 32px',
+  borderRadius: '20px',
+  border: '1px solid rgba(255, 255, 255, 0.2)',
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+};
+
+const preparingOverlayTextStyle = {
+  color: '#ffffff',
+  fontSize: '1.2rem',
+  fontWeight: '800',
+  letterSpacing: '0.15em',
+  marginBottom: '4px',
+  textShadow: '0 2px 4px rgba(0,0,0,0.3)',
+};
+
+const preparingOverlaySubTextStyle = {
+  color: 'rgba(255, 255, 255, 0.8)',
+  fontSize: '0.85rem',
+  fontWeight: '500',
+  letterSpacing: '-0.02em',
+};
+
+// 이미지 없는 카드 (맞춤형)
+const fallbackCardStyle = (index) => ({
+  position: 'absolute',
+  inset: '0',
+  background: 'linear-gradient(160deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%)',
+  backdropFilter: 'blur(16px)',
+  WebkitBackdropFilter: 'blur(16px)',
+  display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'flex-start',
+  padding: '32px 28px',
+  border: '1px solid rgba(255, 255, 255, 0.15)',
+  borderRadius: '24px',
+});
+
+const fallbackLabelStyle = {
+  fontSize: '0.8rem',
+  fontWeight: '700',
+  color: 'rgba(255,255,255,0.7)',
+  letterSpacing: '0.1em',
+  textTransform: 'uppercase',
+  marginBottom: '16px',
+  display: 'inline-block',
+  background: 'rgba(255, 255, 255, 0.1)',
+  padding: '6px 12px',
+  borderRadius: '12px',
+  width: 'fit-content'
+};
+
+const fallbackTitleStyle = {
+  fontSize: '1.8rem',
+  fontWeight: '800',
+  color: '#ffffff',
+  letterSpacing: '-0.03em',
+  lineHeight: '1.3',
+  marginBottom: '16px',
+  textShadow: '0 2px 8px rgba(0,0,0,0.2)'
+};
+
+const fallbackDescStyle = {
+  fontSize: '0.95rem',
+  color: 'rgba(255,255,255,0.85)',
+  lineHeight: '1.6',
+  fontWeight: '400',
+};
+
+// 카드 이미지 오버레이 (호버 시 어두워짐)
+const getCardImageOverlayStyle = (isHovered) => ({
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  width: '100%',
+  height: '100%',
+  background: isHovered ? 'rgba(0, 0, 0, 0.25)' : 'rgba(0, 0, 0, 0.15)',
+  transition: 'background 0.3s ease',
+  zIndex: 1
+});
+
+// 카드 콘텐츠 래퍼
+const cardContentWrapperStyle = {
+  position: 'relative',
+  zIndex: 2,
+  padding: '24px',
+  display: 'flex',
+  flexDirection: 'column',
+  height: '100%',
+  justifyContent: 'space-between'
+};
+
+// 카드 타이틀 스타일 함수
+const cardTitleStyle = (index) => {
+  const isDark = index === 0; // 첫 번째 카드만 어두운 텍스트
+  return {
+    fontSize: '1.15rem',
+    fontWeight: '700',
+    lineHeight: '1.4',
+    color: isDark ? '#1e293b' : '#ffffff',
+    marginBottom: '14px',
+    maxWidth: '260px',
+    whiteSpace: 'pre-line'
+  };
+};
+
+// 카드 아이콘 컨테이너
+const cardIconStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  marginBottom: '8px'
+};
+
+// 아이콘 원형 배경
+const iconCircleStyle = (index) => {
+  const isDark = index === 0;
+  return {
+    width: '32px',
+    height: '32px',
+    borderRadius: '50%',
+    backgroundColor: isDark ? '#1e293b' : 'rgba(255, 255, 255, 0.9)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+  };
+};
+
+// 아이콘 화살표
+const iconArrowStyle = (index) => {
+  return {
+    display: 'inline-block',
+    transform: index === 0 ? 'rotate(-45deg)' : 'none'
+  };
+};
+
+// ========== 크레딧 뱃지 ========== //
+const creditBadgeStyle = {
+  position: 'absolute',
+  top: '14px',
+  right: '14px',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '4px',
+  padding: '5px 10px',
+  background: 'rgba(15, 23, 42, 0.72)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  borderRadius: '50px',
+  border: '1px solid rgba(251, 191, 36, 0.35)',
+  color: '#fbbf24',
+  fontSize: '12px',
+  fontWeight: '700',
+  letterSpacing: '0.3px',
+  zIndex: 10,
+};
+
+// ========== 크레딧 확인 모달 ========== //
+const creditModalContentStyle = {
+  background: '#ffffff',
+  borderRadius: '32px',
+  padding: '56px 40px 40px',
+  maxWidth: '440px',
+  width: '100%',
+  boxShadow: '0 40px 100px rgba(15, 23, 42, 0.15), 0 0 0 1px rgba(15, 23, 42, 0.03)',
+  textAlign: 'center',
+  position: 'relative',
+  animation: 'slideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
+};
+
+const creditModalIconWrapStyle = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '12px',
+  marginBottom: '32px',
+};
+
+const creditModalIconCircleStyle = {
+  width: '80px',
+  height: '80px',
+  borderRadius: '24px',
+  background: 'linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  boxShadow: '0 12px 32px rgba(245, 158, 11, 0.3)',
+};
+
+const creditModalBadgeStyle = {
+  padding: '4px 14px',
+  background: '#fff7ed',
+  color: '#d97706',
+  fontSize: '11px',
+  fontWeight: '800',
+  borderRadius: '50px',
+  letterSpacing: '1.2px',
+  border: '1px solid #ffedd5',
+};
+
+const creditModalTitleStyle = {
+  fontSize: '1.75rem',
+  fontWeight: '900',
+  color: '#0f172a',
+  marginBottom: '14px',
+  letterSpacing: '-0.04em',
+  lineHeight: '1.25',
+};
+
+const creditModalAmountStyle = {
+  color: '#f59e0b',
+  position: 'relative',
+  zIndex: 1,
+};
+
+const creditModalDescStyle = {
+  fontSize: '1.05rem',
+  color: '#64748b',
+  lineHeight: '1.75',
+  marginBottom: '36px',
+  fontWeight: '500',
+};
+
+const creditInfoBoxStyle = {
+  background: '#f8fafc',
+  border: '1px solid #f1f5f9',
+  borderRadius: '20px',
+  padding: '24px',
+  marginBottom: '36px',
+  textAlign: 'left',
+};
+
+const creditInfoRowStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+};
+
+const creditInfoDividerStyle = {
+  height: '1px',
+  background: '#e2e8f0',
+  margin: '16px 0',
+  opacity: 0.5,
+};
+
+const creditInfoLabelStyle = {
+  fontSize: '0.9rem',
+  color: '#94a3b8',
+  fontWeight: '600',
+};
+
+const creditInfoValueStyle = {
+  fontSize: '1rem',
+  color: '#1e293b',
+  fontWeight: '700',
+};
+
+const creditInfoCostStyle = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: '6px',
+  fontSize: '1.1rem',
+  color: '#f59e0b',
+  fontWeight: '800',
+};
+
+const creditConfirmButtonStyle = {
+  padding: '16px 40px',
+  borderRadius: '16px',
+  border: 'none',
+  background: '#0f172a',
+  color: '#ffffff',
+  fontSize: '1.05rem',
+  fontWeight: '700',
+  cursor: 'pointer',
+  transition: 'all 0.25s ease',
+  boxShadow: '0 10px 25px rgba(15, 23, 42, 0.25)',
+  minWidth: '160px',
+};
+
+// ========== 로그인 모달 스타일 ========== //
+const modalOverlayStyle = {
+  position: 'fixed',
+  top: '0',
+  left: '0',
+  right: '0',
+  bottom: '0',
+  backgroundColor: 'rgba(15, 23, 42, 0.75)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 9999,
+  padding: '20px',
+  animation: 'fadeIn 0.3s ease-out'
+};
+
+const modalContentStyle = {
+  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+  borderRadius: '24px',
+  padding: '48px 40px',
+  maxWidth: '480px',
+  width: '100%',
+  boxShadow: '0 24px 48px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(255, 255, 255, 0.1)',
+  textAlign: 'center',
+  position: 'relative',
+  animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
+};
+
+const modalIconContainerStyle = {
+  display: 'flex',
+  justifyContent: 'center',
+  marginBottom: '24px'
+};
+
+const modalIconCircleStyle = {
+  width: '80px',
+  height: '80px',
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, #4F9CF9 0%, #3b82f6 100%)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  boxShadow: '0 8px 24px rgba(79, 156, 249, 0.3)'
+};
+
+const modalIconStyle = {
+  width: '40px',
+  height: '40px',
+  color: '#ffffff'
+};
+
+const modalTitleStyle = {
+  fontSize: '1.75rem',
+  fontWeight: '800',
+  color: '#0f172a',
+  marginBottom: '16px',
+  letterSpacing: '-0.02em'
+};
+
+const modalMessageStyle = {
+  fontSize: '1.05rem',
+  color: '#64748b',
+  lineHeight: '1.7',
+  marginBottom: '32px',
+  fontWeight: '500'
+};
+
+const modalButtonGroupStyle = {
+  display: 'flex',
+  gap: '12px',
+  justifyContent: 'center'
+};
+
+const modalCancelButtonStyle = {
+  padding: '14px 28px',
+  borderRadius: '12px',
+  border: '2px solid #e2e8f0',
+  background: '#ffffff',
+  color: '#64748b',
+  fontSize: '1rem',
+  fontWeight: '600',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  minWidth: '120px'
+};
+
+const modalConfirmButtonStyle = {
+  padding: '14px 28px',
+  borderRadius: '12px',
+  border: 'none',
+  background: 'linear-gradient(135deg, #4F9CF9 0%, #3b82f6 100%)',
+  color: '#ffffff',
+  fontSize: '1rem',
+  fontWeight: '700',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  boxShadow: '0 4px 12px rgba(79, 156, 249, 0.4)',
+  minWidth: '140px'
+};
+
+// 카드 설명 스타일 함수
+const cardDescriptionStyle = (index) => {
+  const isDark = index === 0;
+  return {
+    fontSize: '0.8rem',
+    lineHeight: '1.4',
+    color: isDark ? '#64748b' : 'rgba(255, 255, 255, 0.85)',
+    marginTop: 'auto',
+    whiteSpace: 'pre-line'
+  };
+};
+
+// 면접 유형 아이템 스타일 (호환성 유지)
 const interviewTypeItemStyle = {
   position: 'relative',
   borderRadius: '24px',
@@ -1107,6 +1780,21 @@ const unselectedChipStyle = {
     boxShadow: '0 4px 16px rgba(79, 156, 249, 0.15)',
     borderColor: 'rgba(79, 156, 249, 0.3)'
   }
+};
+
+const topLogoContainerStyle = {
+  position: 'fixed',
+  top: '30px',
+  left: '40px',
+  zIndex: 1000,
+  cursor: 'pointer',
+  transition: 'transform 0.2s ease',
+};
+
+const topLogoStyle = {
+  height: '40px',
+  width: 'auto',
+  objectFit: 'contain'
 };
 // --------------------------------- //
 
