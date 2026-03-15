@@ -8,6 +8,13 @@ jobs:
   build:
     runs-on: [ self-hosted, i-poten-front ]
     steps:
+      - name: Free disk space
+        run: |
+          docker builder prune -af --filter until=24h || true
+          docker image prune -af --filter until=24h || true
+          docker container prune -f || true
+          docker volume prune -f || true
+
       - name: Checkout code
         uses: actions/checkout@v3
       
