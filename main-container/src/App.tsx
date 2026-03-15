@@ -12,7 +12,8 @@ import mitt from "mitt";
 
 import Main from "./components/Main.tsx";
 import EventPage from "./event/page/EventPage";
-import NewEventPage from "./event/page/NewEventPage.tsx";
+import EventPage1 from "./event/page/EventPage1";
+import EventPage2 from "./event/page/EventPage2";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
 
@@ -25,9 +26,6 @@ import ThemeToggleButton from "./ThemeToggleButton";
 import { themeAtom } from "@jobspoon/app-state";
 import Logo from "./assets/img_1.png";
 import RequireLogin from "./RequireLogin.tsx";
-import NewEventDetailPage from "./event/page/NewEventDetailPage.tsx";
-import NewWinnerDetailPage from "./event/page/NewWinnerDetailPage.tsx";
-import ReviewSurveyPage from "./survey/page/ReviewSurveyPage.tsx";
 
 const eventBus = mitt();
 
@@ -63,12 +61,20 @@ function InnerApp() {
         components: {
           MuiCssBaseline: {
             styleOverrides: (themeParam) => ({
-              "html, body, #app": { height: "100%" },
+              html: { margin: 0, padding: 0 },
               body: {
+                margin: 0,
+                padding: 0,
+                minHeight: "100%",
                 backgroundColor: themeParam.palette.background.default,
                 color: themeParam.palette.text.primary,
                 transition: "background-color .2s ease, color .2s ease",
                 backgroundImage: "none",
+              },
+              "#app": {
+                margin: 0,
+                padding: 0,
+                minHeight: "100%",
               },
             }),
           },
@@ -85,6 +91,17 @@ function InnerApp() {
 
   function AppRoutes() {
     const location = useLocation();
+    const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
+
+    useEffect(() => {
+      const update = () => setCurrentPath(window.location.pathname);
+      window.addEventListener("vue-route-change", update);
+      window.addEventListener("popstate", update);
+      return () => {
+        window.removeEventListener("vue-route-change", update);
+        window.removeEventListener("popstate", update);
+      };
+    }, []);
 
     // 네비게이션바 숨길 경로
     const hiddenLayouts = [
@@ -92,38 +109,40 @@ function InnerApp() {
       "/vue-ai-interview/ai-interview/select",
       "/vue-ai-interview/ai-interview/result",
       "/vue-ai-interview/ai-interview/form/",
-      "/vue-ai-interview/ai-test/",
+      "/vue-ai-interview/ai-interview/detail/",
+      "/vue-ai-interview/ai-interview/end",
+      "/vue-ai-interview/ai-test",
+      "/event/1",
     ];
 
-      const hiddenLayoutsFooters = [
-          "/mypage/",
-          "/mypage",
-          "/vue-account/account/login",
-          "/vue-ai-interview/ai-interview/select",
-          "/vue-ai-interview/ai-interview/result",
-          "/vue-ai-interview/ai-interview/form/",
-          "/vue-ai-interview/ai-test/",
-      ];
-    const hideLayout = hiddenLayouts.some((path) =>
-      location.pathname.startsWith(path)
-    );
+    const hiddenLayoutsFooters = [
+      "/mypage/",
+      "/mypage",
+      "/vue-account/account/login",
+      "/vue-ai-interview/ai-interview/select",
+      "/vue-ai-interview/ai-interview/result",
+      "/vue-ai-interview/ai-interview/form/",
+      "/vue-ai-interview/ai-interview/detail/",
+      "/vue-ai-interview/ai-interview/end",
+      "/vue-ai-interview/ai-test",
+      "/event/1",
+    ];
 
-      const hideLayoutFooter = hiddenLayoutsFooters.some((path) =>
-          location.pathname.startsWith(path)
-      );
+    const hiddenLayoutsLogo = [
+      "/vue-ai-interview/ai-interview/select",
+      "/vue-ai-interview/ai-interview/form/",
+      "/vue-ai-interview/ai-interview/result",
+      "/vue-ai-interview/ai-interview/detail/",
+      "/vue-ai-interview/ai-interview/end",
+      "/vue-ai-interview/ai-test",
+    ];
 
-      const shouldHideNavbar = hideLayout;
-      const shouldShowFooter = !hideLayoutFooter;
+    const hideLayout = hiddenLayouts.some((path) => currentPath.startsWith(path));
+    const hideLayoutFooter = hiddenLayoutsFooters.some((path) => currentPath.startsWith(path));
+    const hiddenLayoutLogo = hiddenLayoutsLogo.some((path) => currentPath.startsWith(path));
 
-      const hiddenLayoutsLogo = [
-          "/vue-ai-interview/ai-interview/select",
-          "/vue-ai-interview/ai-interview/form/",
-          "/vue-ai-interview/ai-interview/result",
-          "/vue-ai-interview/ai-test/",
-      ];
-      const hiddenLayoutLogo = hiddenLayoutsLogo.some((path) =>
-          location.pathname.startsWith(path)
-      );
+    const shouldHideNavbar = hideLayout;
+    const shouldShowFooter = !hideLayoutFooter;
 
     // 🔒 SPA 하위 경로는 noindex (정적 랜딩은 인덱싱 허용)
     // - '/studies' (정적 랜딩) → index 허용
@@ -137,9 +156,7 @@ function InnerApp() {
       "/studies/", // 슬래시 포함 → 정확히 하위만 매칭
       "/learning/",
     ];
-    const noindex = noindexPrefixes.some((p) =>
-      location.pathname.startsWith(p)
-    );
+    const noindex = noindexPrefixes.some((p) => location.pathname.startsWith(p));
 
     return (
       <Suspense fallback={<CircularProgress />}>
@@ -156,7 +173,7 @@ function InnerApp() {
             <img
               src={Logo}
               alt="Logo"
-              style={{ width: 180, height: 70, objectFit: "contain", marginLeft:"70px", marginTop:"10px" }}
+              style={{ width: 180, height: 70, objectFit: "contain", marginLeft: "70px", marginTop: "10px" }}
               onClick={goHome}
             />
           </div>
@@ -164,12 +181,9 @@ function InnerApp() {
 
         <Routes>
           <Route path="/" element={<Main />} />
-          <Route path="/review-survey" element={<ReviewSurveyPage />} />
           <Route path="/event" element={<EventPage />} />
-          <Route path="/news/event/list" element={<NewEventPage />} />
-            <Route path="/news/event" element={<NewEventPage />} />
-            <Route path="/news/event/:id" element={<NewEventDetailPage />} />
-            <Route path="/news/event/winner/:id" element={<NewWinnerDetailPage />} />
+          <Route path="/event/1" element={<EventPage1 />} />
+          <Route path="/event/2" element={<EventPage2 />} />
           <Route
             path="/vue-account/*"
             element={<VueAccountAppWrapper eventBus={eventBus} />}
@@ -184,9 +198,10 @@ function InnerApp() {
             }
           />
           <Route path="/mypage/*" element={
-              <RequireLogin loginPath="/vue-account/account/login">
-                <MyPageApp />
-              </RequireLogin>}/>
+            <RequireLogin loginPath="/vue-account/account/login">
+              <MyPageApp />
+            </RequireLogin>}
+          />
           <Route
             path="/sveltekit-review/*"
             element={<SvelteKitReviewAppWrapper />}
