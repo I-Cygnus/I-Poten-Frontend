@@ -69,7 +69,6 @@ jobs:
             MFE_PUBLIC_SERVICE=https://i-poten.com
             NODE_OPTIONS=--max-old-space-size=4096
           cache-from: type=gha
-          cache-to: type=gha,mode=max
   
   deploy:
     needs: build
