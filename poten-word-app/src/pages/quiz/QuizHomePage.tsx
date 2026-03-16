@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import styled from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { goToAccountLogin } from "../../utils/auth.ts";
 import quiz1 from "../../assets/hero/quiz-1.png";
 import quiz2 from "../../assets/hero/quiz-2.png";
 import quiz3 from "../../assets/hero/quiz-3.png";
@@ -43,6 +44,15 @@ const UI = {
 
 export default function QuizHomePage() {
     const nav = useNavigate();
+    const location = useLocation();
+
+    const requireLogin = useCallback((redirect?: string) => {
+        const loggedIn = !!localStorage.getItem("isLoggedIn");
+        if (loggedIn) return true;
+
+        goToAccountLogin(redirect ?? (location.pathname + location.search));
+        return false;
+    }, [location.pathname, location.search]);
 
     const slides = useMemo(
         () => [
@@ -303,6 +313,8 @@ export default function QuizHomePage() {
     }, [len]);
 
     const onStart = useCallback(() => {
+        if (!requireLogin("/learning/quiz")) return;
+
         console.log("[daily] onStart", slides[idx].id, "dailyLoading=", dailyLoading, "inFlight=", dailyInFlightRef.current);
         const id = slides[idx].id;
 
@@ -311,7 +323,7 @@ export default function QuizHomePage() {
         if (id === "initials") return openDaily("INITIALS");
 
         return openDaily("CHOICE");
-    }, [slides, idx, openDaily]);
+    }, [slides, idx, openDaily, requireLogin]);
 
     const AUTO_MS = 5000;
     const [auto, setAuto] = useState(true);
@@ -499,6 +511,8 @@ export default function QuizHomePage() {
     const startInFlightRef = React.useRef(false);
 
     const onConfirmStart = async () => {
+        if (!requireLogin("/learning/quiz")) return;
+
         if (loading) return;
         if (startInFlightRef.current) return;
 
@@ -973,7 +987,12 @@ export default function QuizHomePage() {
                             key={a.id}
                             type="button"
                             role="listitem"
-                            onClick={() => nav(a.to)}
+                            onClick={() => {
+                                if (a.id === "a3") {
+                                    if (!requireLogin(a.to)) return;
+                                }
+                                nav(a.to);
+                            }}
                             aria-label={a.label}
                         >
                             <ActionHeader>
@@ -1011,6 +1030,8 @@ export default function QuizHomePage() {
                                         data-jobcard="1"
                                         style={{ ['--reveal-delay' as any]: `${(i % 3) * 70}ms` }}  // 0ms, 70ms, 140ms 반복
                                         onClick={() => {
+                                            if (!requireLogin("/learning/quiz")) return;
+
                                             setTopic({ ...it, groupId: group.id });
                                             setTitleTouched(false);
                                             setSessionTitle("");
