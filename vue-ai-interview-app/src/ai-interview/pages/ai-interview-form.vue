@@ -863,5 +863,6 @@ const addProjectBtnStyle = {
 
 onMounted(() => {
   if (!interviewType.value) router.push('/ai-interview/select');
+  if (interviewSubType.value === '인성면접') router.push('/ai-interview/personality-form');
 });
 </script>

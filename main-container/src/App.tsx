@@ -118,6 +118,9 @@ function InnerApp() {
             "/vue-ai-interview/ai-interview/detail/",
             "/vue-ai-interview/ai-interview/end",
             "/vue-ai-interview/ai-test",
+            "/vue-ai-interview/ai-interview/personality-form",
+            "/vue-ai-interview/ai-interview/personality-result",
+            "/vue-ai-interview/ai-interview/personality",
             "/event/1",
         ];
 
@@ -132,6 +135,9 @@ function InnerApp() {
             "/vue-ai-interview/ai-interview/detail/",
             "/vue-ai-interview/ai-interview/end",
             "/vue-ai-interview/ai-test",
+            "/vue-ai-interview/ai-interview/personality-form",
+            "/vue-ai-interview/ai-interview/personality-result",
+            "/vue-ai-interview/ai-interview/personality",
             "/event/1",
         ];
         const hideLayout = hiddenLayouts.some((path) =>
