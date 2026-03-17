@@ -179,7 +179,7 @@ const NewEventDetailPage: React.FC = () => {
             <PAGE>
                 <Container>
                     <HeaderRow>
-                        <BackButton type="button" onClick={() => navigate("/news/event")} aria-label="뒤로 가기">
+                        <BackButton type="button" onClick={() => navigate("/event")} aria-label="뒤로 가기">
                             <BackIcon />
                         </BackButton>
                         <Title>이벤트</Title>

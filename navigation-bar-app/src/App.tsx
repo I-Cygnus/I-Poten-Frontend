@@ -51,8 +51,8 @@ const MobileNavLink = styled(Link)<{ $active?: boolean }>`
   padding: 16px 24px;
   background: ${({ $active }) =>
     $active
-      ? "linear-gradient(135deg, rgba(79, 156, 249, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)"
-      : "transparent"};
+        ? "linear-gradient(135deg, rgba(79, 156, 249, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)"
+        : "transparent"};
   transition: all 0.2s ease;
   border-left: 3px solid ${({ $active }) => ($active ? "#4F9CF9" : "transparent")};
   
@@ -109,7 +109,7 @@ const HamburgerLine = styled.span<{ $isOpen: boolean }>`
   
   &:nth-child(1) {
     transform: ${({ $isOpen }) =>
-      $isOpen ? "rotate(45deg) translateY(7px)" : "none"};
+    $isOpen ? "rotate(45deg) translateY(7px)" : "none"};
   }
   
   &:nth-child(2) {
@@ -118,7 +118,7 @@ const HamburgerLine = styled.span<{ $isOpen: boolean }>`
   
   &:nth-child(3) {
     transform: ${({ $isOpen }) =>
-      $isOpen ? "rotate(-45deg) translateY(-7px)" : "none"};
+    $isOpen ? "rotate(-45deg) translateY(-7px)" : "none"};
   }
 `;
 
@@ -128,25 +128,25 @@ const Header = styled.header<{ $scrolled?: boolean; $hidden?: boolean }>`
   z-index: 1000;
   width: 100%;
   height: ${({ $hidden }) => ($hidden ? "0px" : "72px")};
-  background: ${({ $scrolled }) => 
+  background: ${({ $scrolled }) =>
     $scrolled ? "rgba(255, 255, 255, 0.95)" : "transparent"
-  };
-  background-color: ${({ $scrolled }) => 
+};
+  background-color: ${({ $scrolled }) =>
     $scrolled ? "rgba(255, 255, 255, 0.95)" : "transparent"
-  };
+};
   backdrop-filter: ${({ $scrolled }) => $scrolled ? "blur(20px)" : "none"};
   -webkit-backdrop-filter: ${({ $scrolled }) => $scrolled ? "blur(20px)" : "none"};
   color: #1a1a1a;
-  border-bottom: ${({ $scrolled }) => 
+  border-bottom: ${({ $scrolled }) =>
     $scrolled
-      ? "1px solid rgba(0, 0, 0, 0.08)" 
-      : "none"
-  };
-  box-shadow: ${({ $scrolled }) => 
+        ? "1px solid rgba(0, 0, 0, 0.08)"
+        : "none"
+};
+  box-shadow: ${({ $scrolled }) =>
     $scrolled
-      ? "0 2px 16px rgba(0, 0, 0, 0.04)" 
-      : "none"
-  };
+        ? "0 2px 16px rgba(0, 0, 0, 0.04)"
+        : "none"
+};
   transition: height 0.28s ease, opacity 0.28s ease, transform 0.28s ease, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, backdrop-filter 0.3s ease;
   overflow: hidden;
   opacity: ${({ $hidden }) => ($hidden ? 0 : 1)};
@@ -328,22 +328,22 @@ const NavLink = styled(Link) <{ $active?: boolean }>`
   font-weight: ${({ $active }) => ($active ? 700 : 600)};
   padding: 10px 18px;
   border-radius: 12px;
-  background: ${({ $active }) => 
-    $active 
-      ? "linear-gradient(135deg, rgba(79, 156, 249, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)" 
-      : "transparent"
-  };
+  background: ${({ $active }) =>
+    $active
+        ? "linear-gradient(135deg, rgba(79, 156, 249, 0.1) 0%, rgba(16, 185, 129, 0.1) 100%)"
+        : "transparent"
+};
   transition: all 0.2s ease;
   letter-spacing: -0.3px;
   white-space: nowrap;
   
   &:hover {
     color: #1a1a1a;
-    background: ${({ $active }) => 
-      $active 
-        ? "linear-gradient(135deg, rgba(79, 156, 249, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%)" 
+    background: ${({ $active }) =>
+    $active
+        ? "linear-gradient(135deg, rgba(79, 156, 249, 0.15) 0%, rgba(16, 185, 129, 0.15) 100%)"
         : "rgba(0, 0, 0, 0.04)"
-    };
+};
     transform: translateY(-1px);
   }
   
@@ -457,7 +457,7 @@ const App: React.FC = () => {
       if (cancelled) return;
 
       target = document.querySelector(
-        "[data-service-title], [data-service-section], [data-service-grid]"
+          "[data-service-title], [data-service-section], [data-service-grid]"
       ) as Element | null;
 
       if (!target) {
@@ -553,7 +553,7 @@ const App: React.FC = () => {
   };
 
   const isActive = (to: string) =>
-    to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
+      to === "/" ? location.pathname === "/" : location.pathname.startsWith(to);
 
   const closeMobileMenu = () => setIsMobileMenuOpen(false);
 
@@ -580,101 +580,108 @@ const App: React.FC = () => {
   }, [location.pathname]);
 
   return (
-    <>
-      <Header $scrolled={isScrolled} $hidden={isServiceNavMode}>
-        <Inner>
-          <Brand to="/" aria-label="JobSpoon 홈">
-            <LogoImg src={logoBlack} alt="JobSpoon" />
-          </Brand>
+      <>
+        <Header $scrolled={isScrolled} $hidden={isServiceNavMode}>
+          <Inner>
+            <Brand to="/" aria-label="JobSpoon 홈">
+              <LogoImg src={logoBlack} alt="JobSpoon" />
+            </Brand>
 
-          <Nav>
-            <NavLink to="/vue-ai-interview/ai-interview/landing" $active={isActive("/vue-ai-interview")}>
-              AI 인터뷰
-            </NavLink>
-            <NavLink to="/learning/word" $active={isActive("/learning/word")}>포텐워드</NavLink>
-            <NavLink to="/learning/note" $active={isActive("/learning/note")}>포텐노트</NavLink>
-            <NavLink to="/learning/quiz/home" $active={isActive("/learning/quiz/home")}>포텐퀴즈</NavLink>
-            <NavLink to="/mypage" $active={isActive("/mypage")}>MyPage</NavLink>
-            {!isLoggedIn ? (
-              <NavLink to="/vue-account/account/login" $active={isActive("/vue-account")}>
-                로그인
+            <Nav>
+              <NavLink to="/vue-ai-interview/ai-interview/landing" $active={isActive("/vue-ai-interview")}>
+                AI 인터뷰
               </NavLink>
+              <NavLink to="/learning/word" $active={isActive("/learning/word")}>포텐워드</NavLink>
+              <NavLink to="/learning/note" $active={isActive("/learning/note")}>포텐노트</NavLink>
+              <NavLink to="/learning/quiz/home" $active={isActive("/learning/quiz/home")}>포텐퀴즈</NavLink>
+              <NavLink to="/event" $active={isActive("/event")}>이벤트</NavLink>
+              <NavLink to="/mypage" $active={isActive("/mypage")}>MyPage</NavLink>
+              {!isLoggedIn ? (
+                  <NavLink to="/vue-account/account/login" $active={isActive("/vue-account")}>
+                    로그인
+                  </NavLink>
+              ) : (
+                  <AuthButton onClick={handleLogout}>로그아웃</AuthButton>
+              )}
+            </Nav>
+
+            <HamburgerButton onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} aria-label="메뉴">
+              <HamburgerLine $isOpen={isMobileMenuOpen} />
+              <HamburgerLine $isOpen={isMobileMenuOpen} />
+              <HamburgerLine $isOpen={isMobileMenuOpen} />
+            </HamburgerButton>
+          </Inner>
+        </Header>
+
+        <BottomBarWrap $visible={isServiceNavMode}>
+          <BottomBar>
+            <BottomHome to="/" aria-label="JobSpoon 홈">
+              <BottomHomeLogo src={logoBlack} alt="" />
+            </BottomHome>
+
+            <BottomNav>
+              <BottomNavLink
+                  to="/vue-ai-interview/ai-interview/landing"
+                  $active={isActive("/vue-ai-interview")}
+              >
+                AI 인터뷰
+              </BottomNavLink>
+              <BottomNavLink to="/learning/word" $active={isActive("/learning/word")}>
+                포텐워드
+              </BottomNavLink>
+              <BottomNavLink to="/learning/note" $active={isActive("/learning/note")}>
+                포텐노트
+              </BottomNavLink>
+              <BottomNavLink to="/learning/quiz/home" $active={isActive("/learning/quiz/home")}>
+                포텐퀴즈
+              </BottomNavLink>
+              <BottomNavLink to="/event" $active={isActive("/event")}>
+                이벤트
+              </BottomNavLink>
+              <BottomNavLink to="/mypage" $active={isActive("/mypage")}>
+                MyPage
+              </BottomNavLink>
+            </BottomNav>
+
+            {!isLoggedIn ? (
+                <BottomAuthLink to="/vue-account/account/login">로그인</BottomAuthLink>
             ) : (
-              <AuthButton onClick={handleLogout}>로그아웃</AuthButton>
+                <BottomAuthButton onClick={handleLogout}>로그아웃</BottomAuthButton>
             )}
-          </Nav>
+          </BottomBar>
+        </BottomBarWrap>
 
-          <HamburgerButton onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} aria-label="메뉴">
-            <HamburgerLine $isOpen={isMobileMenuOpen} />
-            <HamburgerLine $isOpen={isMobileMenuOpen} />
-            <HamburgerLine $isOpen={isMobileMenuOpen} />
-          </HamburgerButton>
-        </Inner>
-      </Header>
+        <MobileMenuOverlay $isOpen={isMobileMenuOpen} onClick={closeMobileMenu} />
+        <MobileMenu $isOpen={isMobileMenuOpen}>
 
-      <BottomBarWrap $visible={isServiceNavMode}>
-        <BottomBar>
-          <BottomHome to="/" aria-label="JobSpoon 홈">
-            <BottomHomeLogo src={logoBlack} alt="" />
-          </BottomHome>
-
-          <BottomNav>
-            <BottomNavLink
-              to="/vue-ai-interview/ai-interview/landing"
-              $active={isActive("/vue-ai-interview")}
-            >
-              AI 인터뷰
-            </BottomNavLink>
-            <BottomNavLink to="/learning/word" $active={isActive("/learning/word")}>
-              포텐워드
-            </BottomNavLink>
-            <BottomNavLink to="/learning/note" $active={isActive("/learning/note")}>
-              포텐노트
-            </BottomNavLink>
-            <BottomNavLink to="/learning/quiz/home" $active={isActive("/learning/quiz/home")}>
-              포텐퀴즈
-            </BottomNavLink>
-            <BottomNavLink to="/mypage" $active={isActive("/mypage")}>
-              MyPage
-            </BottomNavLink>
-          </BottomNav>
-
-          {!isLoggedIn ? (
-            <BottomAuthLink to="/vue-account/account/login">로그인</BottomAuthLink>
-          ) : (
-            <BottomAuthButton onClick={handleLogout}>로그아웃</BottomAuthButton>
-          )}
-        </BottomBar>
-      </BottomBarWrap>
-
-      <MobileMenuOverlay $isOpen={isMobileMenuOpen} onClick={closeMobileMenu} />
-      <MobileMenu $isOpen={isMobileMenuOpen}>
-
-        <MobileNavLink to="/vue-ai-interview/ai-interview/landing" $active={isActive("/vue-ai-interview")}>
-          AI 인터뷰
-        </MobileNavLink>
-
-        <MobileNavLink to="/learning/word" $active={isActive("/learning/word")}>
-          포텐워드
-        </MobileNavLink>
-        <MobileNavLink to="/learning/note" $active={isActive("/learning/note")}>
-          포텐노트
-        </MobileNavLink>
-        <MobileNavLink to="/learning/quiz/home" $active={isActive("/learning/quiz/home")}>
-          포텐퀴즈
-        </MobileNavLink>
-        <MobileNavLink to="/mypage" $active={isActive("/mypage")}>
-          MyPage
-        </MobileNavLink>
-        {!isLoggedIn ? (
-          <MobileNavLink to="/vue-account/account/login" $active={isActive("/vue-account")}>
-            로그인
+          <MobileNavLink to="/vue-ai-interview/ai-interview/landing" $active={isActive("/vue-ai-interview")}>
+            AI 인터뷰
           </MobileNavLink>
-        ) : (
-          <MobileAuthButton onClick={handleMobileLogout}>로그아웃</MobileAuthButton>
-        )}
-      </MobileMenu>
-    </>
+
+          <MobileNavLink to="/learning/word" $active={isActive("/learning/word")}>
+            포텐워드
+          </MobileNavLink>
+          <MobileNavLink to="/learning/note" $active={isActive("/learning/note")}>
+            포텐노트
+          </MobileNavLink>
+          <MobileNavLink to="/learning/quiz/home" $active={isActive("/learning/quiz/home")}>
+            포텐퀴즈
+          </MobileNavLink>
+          <MobileNavLink to="/event" $active={isActive("/event")}>
+            이벤트
+          </MobileNavLink>
+          <MobileNavLink to="/mypage" $active={isActive("/mypage")}>
+            MyPage
+          </MobileNavLink>
+          {!isLoggedIn ? (
+              <MobileNavLink to="/vue-account/account/login" $active={isActive("/vue-account")}>
+                로그인
+              </MobileNavLink>
+          ) : (
+              <MobileAuthButton onClick={handleMobileLogout}>로그아웃</MobileAuthButton>
+          )}
+        </MobileMenu>
+      </>
   );
 };
 

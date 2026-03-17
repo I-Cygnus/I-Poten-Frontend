@@ -688,7 +688,7 @@ const NewEventPage: React.FC = () => {
                             </WinnerHead>
 
                             {winnerPageItems.map((post) => (
-                                <WinnerRow key={post.id} href={`/news/event/winner/${post.id}`}>
+                                <WinnerRow key={post.id} href={`/event/winner/${post.id}`}>
                                     <WinnerTitleCell>
                                         <WinnerTag>{post.tag}</WinnerTag>
                                         <WinnerTitleText>{post.title}</WinnerTitleText>
@@ -762,7 +762,7 @@ const NewEventPage: React.FC = () => {
                                 const badge = getEventBadge(e.endDate);
 
                                 return (
-                                    <Card key={e.id} href={`/news/event/${e.id}`}>
+                                    <Card key={e.id} href={`/event/${e.id}`}>
                                         <ThumbWrap>
                                             <Thumb src={e.imageUrl} alt={e.title} />
                                             <Badge $type={badge.type}>{badge.text}</Badge>
