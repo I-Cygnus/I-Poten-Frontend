@@ -29,6 +29,8 @@ import ThemeSync from "./ThemeSync";
 import ThemeToggleButton from "./ThemeToggleButton";
 import { themeAtom } from "@jobspoon/app-state";
 import RequireLogin from "./RequireLogin.tsx";
+import OpenBetaEventLanding from "./event/page/OpenBetaEventLanding.tsx";
+import PotenReviewerEventLanding from "./event/page/PotenReviewerEventLanding.tsx";
 
 const eventBus = mitt();
 
@@ -180,13 +182,14 @@ function InnerApp() {
                 <Routes>
                     <Route path="/" element={<Main />} />
                     <Route path="/review-survey" element={<ReviewSurveyPage />} />
-                    <Route path="/event" element={<EventPage />} />
-                    <Route path="/event/1" element={<EventPage1 />} />
-                    <Route path="/event/2" element={<EventPage2 />} />
-                    <Route path="/news/event/list" element={<NewEventPage />} />
-                    <Route path="/news/event" element={<NewEventPage />} />
-                    <Route path="/news/event/:id" element={<NewEventDetailPage />} />
-                    <Route path="/news/event/winner/:id" element={<NewWinnerDetailPage />} />
+                    {/*<Route path="/event" element={<EventPage />} />*/}
+                    {/*<Route path="/event/1" element={<EventPage1 />} />*/}
+                    {/*<Route path="/event/2" element={<EventPage2 />} />*/}
+                    <Route path="/event" element={<NewEventPage />} />
+                    <Route path="/event/1" element={<OpenBetaEventLanding />} />
+                    <Route path="/event/2" element={<PotenReviewerEventLanding />} />
+                    <Route path="/event/:id" element={<NewEventDetailPage />} />
+                    <Route path="/event/winner/:id" element={<NewWinnerDetailPage />} />
                     <Route
                         path="/vue-account/*"
                         element={<VueAccountAppWrapper eventBus={eventBus} />}

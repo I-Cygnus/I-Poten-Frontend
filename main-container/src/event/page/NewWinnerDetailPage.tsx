@@ -233,7 +233,7 @@ const NewWinnerDetailPage: React.FC = () => {
                         게시글을 찾을 수 없어요.
                     </div>
                     <BottomActions>
-                        <ListBtn type="button" onClick={() => navigate("/news/event")}>
+                        <ListBtn type="button" onClick={() => navigate("/event")}>
                             목록
                         </ListBtn>
                     </BottomActions>
@@ -271,7 +271,7 @@ const NewWinnerDetailPage: React.FC = () => {
                         <NavRow
                             type="button"
                             disabled={!prev}
-                            onClick={() => prev && navigate(`/news/event/winner/${prev.id}`)}
+                            onClick={() => prev && navigate(`/event/winner/${prev.id}`)}
                         >
                             <NavLabel>이전 글</NavLabel>
                             <NavTitle>{prev ? prev.title : "이전 글이 없습니다."}</NavTitle>
@@ -280,7 +280,7 @@ const NewWinnerDetailPage: React.FC = () => {
                         <NavRow
                             type="button"
                             disabled={!next}
-                            onClick={() => next && navigate(`/news/event/winner/${next.id}`)}
+                            onClick={() => next && navigate(`/event/winner/${next.id}`)}
                         >
                             <NavLabel>다음 글</NavLabel>
                             <NavTitle>{next ? next.title : "다음 글이 없습니다."}</NavTitle>
@@ -288,7 +288,7 @@ const NewWinnerDetailPage: React.FC = () => {
                     </NavBox>
 
                     <BottomActions>
-                        <ListBtn type="button" onClick={() => navigate("/news/event")}>
+                        <ListBtn type="button" onClick={() => navigate("/event")}>
                             목록
                         </ListBtn>
                     </BottomActions>

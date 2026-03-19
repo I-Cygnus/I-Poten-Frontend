@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import styled, { css } from "styled-components";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ApiError, getActiveSurvey, submitActiveSurvey } from "../api/api.ts";
 import scale1Icon from "../../assets/survey/scale/scale-1-very-bad.png";
 import scale2Icon from "../../assets/survey/scale/scale-2-bad.png";
@@ -21,6 +21,12 @@ type AnswerState = {
 
 type AnswerMap = Record<string, AnswerState>;
 type ValidationMap = Record<string, string>;
+
+const goToAccountLogin = (redirect?: string) => {
+    const target = redirect?.trim() || "/";
+    const encodedRedirect = encodeURIComponent(target);
+    window.location.assign(`/vue-account/account/login?redirect=${encodedRedirect}`);
+};
 
 const UI = {
     panelBgSoft: "#f4f8ff",
@@ -124,6 +130,7 @@ function getScaleMeta(question: SurveyQuestion, value: number) {
 
 export default function ReviewSurveyPage() {
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [survey, setSurvey] = useState<GetActiveSurveyResponse | null>(null);
     const [answers, setAnswers] = useState<AnswerMap>({});
@@ -378,6 +385,12 @@ export default function ReviewSurveyPage() {
         });
     };
 
+    useEffect(() => {
+        if (!authRequired) return;
+
+        goToAccountLogin(location.pathname + location.search + location.hash);
+    }, [authRequired, location.pathname, location.search]);
+
     const handleExitClick = () => {
         openExitConfirmModal();
     };
@@ -463,22 +476,7 @@ export default function ReviewSurveyPage() {
     }
 
     if (authRequired) {
-        return (
-            <PageWrap>
-                <PageShell>
-                    <StateCard>
-                        <StateBadge>로그인 필요</StateBadge>
-                        <StateTitle>로그인이 필요합니다</StateTitle>
-                        <StateText>리뷰 설문 참여는 로그인한 사용자만 가능합니다.</StateText>
-                        <ActionRow>
-                            <PrimaryButton as="button" onClick={() => navigate("/login")}>
-                                로그인하러 가기
-                            </PrimaryButton>
-                        </ActionRow>
-                    </StateCard>
-                </PageShell>
-            </PageWrap>
-        );
+        return null;
     }
 
     if (!survey) {
