@@ -10,6 +10,7 @@ export type TermCardProps = {
     tags?: string[];
     onAdd?: (id: number) => void;
     onTagClick?: (tag: string) => void;
+    onRequireAuth?: (message: string, loginUrl: string) => void;
 };
 
 const TOKENS = {
@@ -175,6 +176,7 @@ const TermCard: React.FC<TermCardProps> = ({
                                                tags = [],
                                                onAdd,
                                                onTagClick,
+                                               onRequireAuth,
                                            }) => {
     const navigate = useNavigate();
 
@@ -190,8 +192,11 @@ const TermCard: React.FC<TermCardProps> = ({
                 const ok = ensureAuthOrAlertRedirect(AUTH_ALERT_MSG, "/vue-account/account/login", {
                     isLoggedIn: loggedIn,
                     navigate,
-                    promptType: "confirm", // 확인=이동, 취소=중단
+                    promptType: "confirm",
                     flagKey: "isLoggedIn",
+                    onRequireAuth: onRequireAuth
+                        ? ({ message, loginUrl }) => onRequireAuth(message, loginUrl)
+                        : undefined,
                 });
                 // 비로그인 흐름에서는 항상 false를 반환 → 여기서 즉시 종료 (모달 열기 금지)
                 if (!ok) return;
@@ -200,7 +205,7 @@ const TermCard: React.FC<TermCardProps> = ({
             // 로그인 상태에서만 실행
             onAdd?.(id);
         },
-        [id, navigate, onAdd]
+        [id, navigate, onAdd, onRequireAuth]
     );
 
     return (
