@@ -36,16 +36,16 @@ import note01 from "../assets/note_01.jpg";
 import note02 from "../assets/note_02.jpg";
 import quiz01 from "../assets/quiz_01.jpg";
 import quiz02 from "../assets/quiz_02.jpg";
-import interview01 from "../assets/InterviewA.jpg";
 import coreValue01 from "../assets/corevalue01.png";
 import coreValue02 from "../assets/corevalue02.png";
 import coreValue03 from "../assets/corevalue03.png";
 import interview1 from "../assets/interview1.png";
-import InterviewA from "../assets/InterviewA.png";
 import interview2 from "../assets/interview2.png";
 import interview3 from "../assets/interview3.png";
 import interview4 from "../assets/interview4.png";
 import interview5 from "../assets/interview5.png";
+import InterviewA from "../assets/InterviewA.png";
+import interviewB from "../assets/InterviewB.jpg";
 import backgr from "../assets/backgr.png";
 import backgr2 from "../assets/backgr2.png";
 import back7 from "../assets/back7.png";
@@ -5086,7 +5086,7 @@ export default function Main() {
                 </ProductDesc>
 
                 <ProductCircleImageWrap>
-                  <img src={interview01} alt="AI 모의 면접" draggable={false} />
+                  <img src={interviewB} alt="AI 모의 면접" draggable={false} />
                 </ProductCircleImageWrap>
               </ProductCard>
             </ProductsGrid>
