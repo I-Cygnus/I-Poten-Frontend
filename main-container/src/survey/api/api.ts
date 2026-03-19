@@ -34,7 +34,8 @@ async function parseErrorMessage(response: Response): Promise<string> {
             return "처리 중 오류가 발생했습니다.";
     }
 }
-const API_BASE_URL = "http://localhost:8080";
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL;
 
 export async function getActiveSurvey(): Promise<GetActiveSurveyResponse> {
     const response = await fetch(`${API_BASE_URL}/api/me/surveys/active`, {
