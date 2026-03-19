@@ -30,6 +30,16 @@ import confetti from "canvas-confetti";
 import word1 from "../assets/word3.png";
 import word2 from "../assets/word4.png";
 import wordA from "../assets/wordA.png";
+import word01 from "../assets/word_01.jpg";
+import word02 from "../assets/word_02.jpg";
+import note01 from "../assets/note_01.jpg";
+import note02 from "../assets/note_02.jpg";
+import quiz01 from "../assets/quiz_01.jpg";
+import quiz02 from "../assets/quiz_02.jpg";
+import interview01 from "../assets/InterviewA.jpg";
+import coreValue01 from "../assets/corevalue01.png";
+import coreValue02 from "../assets/corevalue02.png";
+import coreValue03 from "../assets/corevalue03.png";
 import interview1 from "../assets/interview1.png";
 import InterviewA from "../assets/InterviewA.png";
 import interview2 from "../assets/interview2.png";
@@ -41,13 +51,21 @@ import backgr2 from "../assets/backgr2.png";
 import back7 from "../assets/back7.png";
 import Review from "../review/page/Review";
 import OpenEvent from "../event/page/OpenEvent";
-
+import mobileBanner from "../assets/mobile/mobile-banner.png";
+import appStoreBtn from "../assets/mobile/appstore-button.png";
+import googlePlayBtn from "../assets/mobile/googleplay-button.png";
+import googlePlayQr from "../assets/mobile/google-play-qr.png";
+import appStoreQr from "../assets/mobile/app-store-qr.png";
 
 /* ====== 로고 이미지 ====== */
-import logoDanggeun from "../assets/d1.png";
-import logoToss from "../assets/t2.png";
-import logoEncore from "../assets/e1.png";
-import logoKT from "../assets/3.png";
+import logoDanggeun from "../assets/ci/daangn.png";
+import logoToss from "../assets/ci/toss.png";
+import logoEncore from "../assets/ci/encore.png";
+import logoKT from "../assets/ci/ktMmobile.png";
+import logoCoupang from "../assets/ci/coupang.png";
+import logoKakao from "../assets/ci/kakao.png";
+import logoLine from "../assets/ci/line.png";
+import logoNaver from "../assets/ci/naver.png";
 
 /* ====== Hero 페이지 전용 이미지 ====== */
 import pageLogo from "../assets/pageLogo.png";
@@ -99,7 +117,7 @@ const BackgroundCircle = styled.div<{
   filter: blur(${props => props.$blur || 80}px);
   opacity: 0.6;
   transform: translate(-50%, -50%);
-  
+
   @media (max-width: 768px) {
     width: ${props => props.$size * 0.6}px;
     height: ${props => props.$size * 0.6}px;
@@ -109,52 +127,53 @@ const BackgroundCircle = styled.div<{
 
 /* ========== 배경 레이어 (poten-word 스타일) ========== */
 const SoftBg = styled.div`
-    position: fixed;
-    inset: 0;
-    z-index: -1;
-    pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
 
+  background:
+      radial-gradient(
+          900px 900px at 20% 60%,
+          rgba(211, 228, 253, 0.55) 0%,
+          rgba(211, 228, 253, 0.30) 40%,
+          rgba(211, 228, 253, 0.15) 60%,
+          rgba(211, 228, 253, 0.05) 80%,
+          transparent 100%
+      ),
+      radial-gradient(
+          900px 900px at 80% 55%,
+          rgba(213, 247, 239, 0.55) 0%,
+          rgba(213, 247, 239, 0.30) 40%,
+          rgba(213, 247, 239, 0.15) 60%,
+          rgba(213, 247, 239, 0.05) 80%,
+          transparent 100%
+      ),
+      #ffffff;
+
+  @media (max-width: 640px) {
     background:
-            radial-gradient(
-                    900px 900px at 20% 60%,
-                    rgba(211, 228, 253, 0.55) 0%,
-                    rgba(211, 228, 253, 0.30) 40%,
-                    rgba(211, 228, 253, 0.15) 60%,
-                    rgba(211, 228, 253, 0.05) 80%,
-                    transparent 100%
-            ),
-            radial-gradient(
-                    900px 900px at 80% 55%,
-                    rgba(213, 247, 239, 0.55) 0%,
-                    rgba(213, 247, 239, 0.30) 40%,
-                    rgba(213, 247, 239, 0.15) 60%,
-                    rgba(213, 247, 239, 0.05) 80%,
-                    transparent 100%
-            ),
-            #ffffff;
-
-    @media (max-width: 640px) {
-        background:
-                radial-gradient(
-                        600px 600px at 30% 70%,
-                        rgba(211, 228, 253, 0.50) 0%,
-                        rgba(211, 228, 253, 0.20) 50%,
-                        transparent 100%
-                ),
-                radial-gradient(
-                        600px 600px at 80% 50%,
-                        rgba(213, 247, 239, 0.50) 0%,
-                        rgba(213, 247, 239, 0.20) 50%,
-                        transparent 100%
-                ),
-                #ffffff;
-    }
+        radial-gradient(
+            600px 600px at 30% 70%,
+            rgba(211, 228, 253, 0.50) 0%,
+            rgba(211, 228, 253, 0.20) 50%,
+            transparent 100%
+        ),
+        radial-gradient(
+            600px 600px at 80% 50%,
+            rgba(213, 247, 239, 0.50) 0%,
+            rgba(213, 247, 239, 0.20) 50%,
+            transparent 100%
+        ),
+        #ffffff;
+  }
 `;
 
 const NAV_HEIGHT = 72;
 
 /* ========== 공통 레이아웃 ========== */
 const Page = styled.main`
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -166,12 +185,12 @@ const Page = styled.main`
   overflow-x: hidden;
   scroll-snap-type: y mandatory;
   scroll-behavior: smooth;
-  
+
   & > section {
     scroll-snap-align: start;
     scroll-snap-stop: always;
   }
-  
+
   @media (max-width: 768px) {
     padding: 0;
   }
@@ -180,8 +199,8 @@ const Page = styled.main`
     opacity: 0;
     transform: translate3d(0, 12px, 0);
     transition:
-      opacity 520ms cubic-bezier(0.16, 1, 0.3, 1),
-      transform 760ms cubic-bezier(0.16, 1, 0.3, 1);
+        opacity 520ms cubic-bezier(0.16, 1, 0.3, 1),
+        transform 760ms cubic-bezier(0.16, 1, 0.3, 1);
     transition-delay: var(--reveal-delay, 0ms);
     will-change: opacity, transform, filter;
   }
@@ -269,10 +288,10 @@ const ProgressSection = styled.section`
     width: 100vw;
     height: 360px;
     background: linear-gradient(
-      to bottom,
-      rgba(248, 250, 252, 0) 0%,
-      rgba(191, 219, 254, 0.22) 45%,
-      rgba(248, 250, 252, 0.96) 100%
+        to bottom,
+        rgba(248, 250, 252, 0) 0%,
+        rgba(191, 219, 254, 0.22) 45%,
+        rgba(248, 250, 252, 0.96) 100%
     );
     pointer-events: none;
     z-index: -1;
@@ -280,10 +299,10 @@ const ProgressSection = styled.section`
 
   :root[data-theme="dark"] &::after {
     background: linear-gradient(
-      to bottom,
-      rgba(2, 6, 23, 0) 0%,
-      rgba(30, 58, 138, 0.16) 45%,
-      rgba(2, 6, 23, 0.55) 100%
+        to bottom,
+        rgba(2, 6, 23, 0) 0%,
+        rgba(30, 58, 138, 0.16) 45%,
+        rgba(2, 6, 23, 0.55) 100%
     );
   }
 
@@ -360,12 +379,12 @@ const FaqSection = styled.section`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 20px;
+  padding: 140px 20px 60px;
   box-sizing: border-box;
 
   @media (max-width: 768px) {
     min-height: 100vh;
-    padding: 40px 16px;
+    padding: 100px 16px 40px;
   }
 `;
 
@@ -384,11 +403,16 @@ const FaqTitle = styled.h2`
 
 const FaqList = styled.div`
   width: 100%;
-  border-top: 1px solid rgba(148, 163, 184, 0.35);
+  border-top: 1px solid rgba(148, 163, 184, 0.28);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 `;
 
-const FaqItem = styled.div`
-  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+const FaqItem = styled.div<{ $open?: boolean }>`
+  border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+  transition: border-color 0.28s ease, background-color 0.28s ease;
+  background: ${({ $open }) => ($open ? "rgba(59, 130, 246, 0.02)" : "transparent")};
 `;
 
 const FaqButtonRow = styled.button`
@@ -397,58 +421,97 @@ const FaqButtonRow = styled.button`
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 28px 10px;
+  padding: 26px 8px;
   background: transparent;
   border: 0;
   text-align: left;
   cursor: pointer;
+  font-family: inherit;
 
   &:focus-visible {
-    outline: 3px solid rgba(59, 130, 246, 0.28);
+    outline: 3px solid rgba(59, 130, 246, 0.22);
     outline-offset: 4px;
     border-radius: 10px;
   }
 
   @media (max-width: 640px) {
-    padding: 22px 6px;
+    padding: 20px 4px;
   }
 `;
 
 const FaqQuestion = styled.div`
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
-  color: rgba(15, 23, 42, 0.86);
-  letter-spacing: -0.01em;
+  line-height: 1.55;
+  letter-spacing: -0.012em;
+  color: rgba(15, 23, 42, 0.82);
   word-break: keep-all;
 
   :root[data-theme="dark"] & {
-    color: rgba(248, 250, 252, 0.9);
+    color: rgba(248, 250, 252, 0.88);
+  }
+
+  @media (max-width: 640px) {
+    font-size: 16px;
+    line-height: 1.5;
   }
 `;
 
-const FaqToggle = styled.div`
-  width: 40px;
-  height: 40px;
+const FaqToggle = styled.div<{ $open?: boolean }>`
+  width: 36px;
+  height: 36px;
   display: grid;
   place-items: center;
   font-size: 22px;
   font-weight: 400;
-  color: rgba(15, 23, 42, 0.65);
+  line-height: 1;
+  color: rgba(15, 23, 42, 0.5);
   flex: 0 0 auto;
+  transform: rotate(${({ $open }) => ($open ? "45deg" : "0deg")});
+  transition:
+      transform 320ms cubic-bezier(0.16, 1, 0.3, 1),
+      color 220ms ease;
 
   :root[data-theme="dark"] & {
-    color: rgba(248, 250, 252, 0.75);
+    color: rgba(248, 250, 252, 0.68);
   }
 `;
 
-const FaqAnswer = styled.div`
-  padding: 0 10px 26px;
-  font-size: 13px;
-  line-height: 1.7;
-  color: rgba(15, 23, 42, 0.62);
+const FaqAnswerWrap = styled.div<{ $open?: boolean }>`
+  display: grid;
+  grid-template-rows: ${({ $open }) => ($open ? "1fr" : "0fr")};
+  transition:
+      grid-template-rows 380ms cubic-bezier(0.16, 1, 0.3, 1),
+      opacity 240ms ease;
+  opacity: ${({ $open }) => ($open ? 1 : 0)};
+`;
+
+const FaqAnswerInner = styled.div`
+  overflow: hidden;
+`;
+
+const FaqAnswer = styled.div<{ $open?: boolean }>`
+  padding: ${({ $open }) => ($open ? "0 8px 24px" : "0 8px 0")};
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.72;
+  letter-spacing: -0.01em;
+  color: rgba(15, 23, 42, 0.6);
+  word-break: keep-all;
+  transform: translateY(${({ $open }) => ($open ? "0" : "-8px")});
+  transition:
+      padding 380ms cubic-bezier(0.16, 1, 0.3, 1),
+      transform 280ms ease,
+      opacity 220ms ease;
+  opacity: ${({ $open }) => ($open ? 1 : 0)};
 
   :root[data-theme="dark"] & {
     color: rgba(226, 232, 240, 0.72);
+  }
+
+  @media (max-width: 640px) {
+    font-size: 15px;
+    line-height: 1.68;
   }
 `;
 
@@ -568,9 +631,9 @@ const ScheduleDarkCard = styled(ScheduleCardBase)`
     position: absolute;
     inset: 0;
     background:
-      radial-gradient(circle at 78% 62%, rgba(255, 255, 255, 0) 0 54%, rgba(255, 255, 255, 0.10) 55% 56%, rgba(255, 255, 255, 0) 57% 100%),
-      radial-gradient(circle at 78% 62%, rgba(255, 255, 255, 0) 0 44%, rgba(255, 255, 255, 0.08) 45% 46%, rgba(255, 255, 255, 0) 47% 100%),
-      radial-gradient(circle at 78% 62%, rgba(255, 255, 255, 0) 0 34%, rgba(255, 255, 255, 0.06) 35% 36%, rgba(255, 255, 255, 0) 37% 100%);
+        radial-gradient(circle at 78% 62%, rgba(255, 255, 255, 0) 0 54%, rgba(255, 255, 255, 0.10) 55% 56%, rgba(255, 255, 255, 0) 57% 100%),
+        radial-gradient(circle at 78% 62%, rgba(255, 255, 255, 0) 0 44%, rgba(255, 255, 255, 0.08) 45% 46%, rgba(255, 255, 255, 0) 47% 100%),
+        radial-gradient(circle at 78% 62%, rgba(255, 255, 255, 0) 0 34%, rgba(255, 255, 255, 0.06) 35% 36%, rgba(255, 255, 255, 0) 37% 100%);
     opacity: 0.65;
     pointer-events: none;
   }
@@ -578,22 +641,28 @@ const ScheduleDarkCard = styled(ScheduleCardBase)`
 
 const ScheduleLightCaption = styled.div`
   position: absolute;
-  left: 56px;
+  left: 50%;
   bottom: 56px;
+  transform: translateX(-50%);
+  width: min(92%, 520px);
   z-index: 2;
   font-size: 26px;
   line-height: 1.35;
   letter-spacing: -0.03em;
   font-weight: 900;
+  text-align: left;
 
   @media (max-width: 640px) {
-    left: 28px;
     bottom: 28px;
+    width: min(92%, 520px);
     font-size: 22px;
   }
 `;
 
 const ScheduleLightCaptionMuted = styled.div`
+  display: block;
+  margin: 0;
+  text-align: left;
   color: rgba(15, 23, 42, 0.32);
 
   :root[data-theme="dark"] & {
@@ -602,8 +671,10 @@ const ScheduleLightCaptionMuted = styled.div`
 `;
 
 const ScheduleLightCaptionStrong = styled.div`
+  display: block;
+  margin: 6px 0 0;
+  text-align: left;
   color: rgba(15, 23, 42, 0.92);
-  margin-top: 6px;
 
   :root[data-theme="dark"] & {
     color: rgba(248, 250, 252, 0.92);
@@ -632,7 +703,7 @@ const ScheduleMedia = styled.img<{ $fit?: "cover" | "contain" }>`
   width: 100%;
   height: 100%;
   display: block;
-  object-fit:  "contain";
+  object-fit: ${({ $fit }) => $fit ?? "contain"};
 `;
 
 const ScheduleMediaPlaceholder = styled.div`
@@ -649,14 +720,14 @@ const ScheduleMediaPlaceholder = styled.div`
 const ScheduleDarkContent = styled.div`
   position: absolute;
   top: 56px;
-  left: 56px;
-  right: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(92%, 520px);
   z-index: 2;
 
   @media (max-width: 640px) {
     top: 32px;
-    left: 32px;
-    right: 32px;
+    width: min(92%, 520px);
   }
 `;
 
@@ -721,35 +792,38 @@ const InsightsSection = styled.section`
 `;
 
 const InsightsTitle = styled.h2`
+  width: 100%;
   margin: 0 0 42px;
-  font-size: clamp(34px, 4.8vw, 40px);
+  text-align: left;
+  font-size: clamp(34px, 4.8vw, 54px);
   letter-spacing: -0.04em;
   line-height: 1.1;
-  font-weight: 900;
+  word-break: keep-all;
+
+  @media (max-width: 640px) {
+    margin-bottom: 28px;
+  }
+`;
+
+const InsightsTitleMuted = styled.span`
+  display: block;
   color: rgba(15, 23, 42, 0.35);
-  //color: rgba(15, 23, 42, 0.92);
-  word-break: keep-all;
-
-  :root[data-theme="dark"] & {
-    color: rgba(248, 250, 252, 0.95);
-  }
-`;
-
-const InsightsTitle2 = styled.h2`
-  margin: 0 0 42px;
-  font-size: clamp(34px, 4.8vw, 40px);
-  letter-spacing: -0.04em;
-  line-height: 1.1;
   font-weight: 900;
-  //color: rgba(15, 23, 42, 0.35);
+
+  :root[data-theme="dark"] & {
+    color: rgba(226, 232, 240, 0.55);
+  }
+`;
+
+const InsightsTitleStrong = styled.span`
+  display: block;
   color: rgba(15, 23, 42, 0.92);
-  word-break: keep-all;
+  font-weight: 900;
 
   :root[data-theme="dark"] & {
     color: rgba(248, 250, 252, 0.95);
   }
 `;
-
 
 const InsightsPanel = styled.div`
   width: 100%;
@@ -783,7 +857,7 @@ const InsightsPanelInner = styled.div`
   display: grid;
   grid-template-columns: 1.05fr 0.95fr;
   gap: 36px;
-  align-items: center;
+  align-items: start;
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
@@ -811,24 +885,38 @@ const InsightsBackgroundImage = styled.img`
   object-fit: cover;
 `;
 
+const InsightsBackgroundVideo = styled.video`
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain;
+  object-position: center center;
+  transform: scale(1.12) translate(3%, -3%);
+  transform-origin: right top;
+  background: #E2E8F0;
+  border-radius: inherit;
+  box-shadow: none;
+  filter: none;
+`;
+
 const InsightsBackgroundPlaceholder = styled.div`
   width: 100%;
   height: 100%;
   background:
-    radial-gradient(circle at 22% 40%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 55%),
-    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 55%),
-    linear-gradient(
-      135deg,
-      rgba(219, 234, 254, 1) 0%,
-      rgba(165, 243, 252, 1) 45%,
-      rgba(167, 243, 208, 1) 100%
-    );
+      radial-gradient(circle at 22% 40%, rgba(255, 255, 255, 0.55), rgba(255, 255, 255, 0) 55%),
+      radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 55%),
+      linear-gradient(
+          135deg,
+          rgba(219, 234, 254, 1) 0%,
+          rgba(165, 243, 252, 1) 45%,
+          rgba(167, 243, 208, 1) 100%
+      );
 
   :root[data-theme="dark"] & {
     background:
-      radial-gradient(circle at 22% 40%, rgba(96, 165, 250, 0.18), rgba(2, 6, 23, 0) 55%),
-      radial-gradient(circle at 80% 70%, rgba(34, 211, 238, 0.14), rgba(2, 6, 23, 0) 55%),
-      linear-gradient(135deg, rgba(30, 41, 59, 0.92) 0%, rgba(17, 24, 39, 0.92) 55%, rgba(2, 6, 23, 0.92) 100%);
+        radial-gradient(circle at 22% 40%, rgba(96, 165, 250, 0.18), rgba(2, 6, 23, 0) 55%),
+        radial-gradient(circle at 80% 70%, rgba(34, 211, 238, 0.14), rgba(2, 6, 23, 0) 55%),
+        linear-gradient(135deg, rgba(30, 41, 59, 0.92) 0%, rgba(17, 24, 39, 0.92) 55%, rgba(2, 6, 23, 0.92) 100%);
   }
 `;
 
@@ -836,6 +924,10 @@ const InsightsLeft = styled.div`
   position: relative;
   z-index: 1;
   max-width: 520px;
+  align-self: start;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 `;
 
 const InsightsKicker = styled.div`
@@ -896,7 +988,7 @@ const InsightsRight = styled.div`
   position: relative;
   z-index: 1;
   width: 100%;
-  min-height: 420px;
+  min-height: 500px;
 
   @media (max-width: 1024px) {
     min-height: auto;
@@ -914,20 +1006,20 @@ const InsightsQuestionStack = styled.div`
   z-index: 3;
 
   -webkit-mask-image: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.35) 12%,
-    rgba(0, 0, 0, 1) 50%,
-    rgba(0, 0, 0, 0.35) 88%,
-    rgba(0, 0, 0, 0) 100%
+      to bottom,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.35) 12%,
+      rgba(0, 0, 0, 1) 50%,
+      rgba(0, 0, 0, 0.35) 88%,
+      rgba(0, 0, 0, 0) 100%
   );
   mask-image: linear-gradient(
-    to bottom,
-    rgba(0, 0, 0, 0) 0%,
-    rgba(0, 0, 0, 0.35) 12%,
-    rgba(0, 0, 0, 1) 50%,
-    rgba(0, 0, 0, 0.35) 88%,
-    rgba(0, 0, 0, 0) 100%
+      to bottom,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0.35) 12%,
+      rgba(0, 0, 0, 1) 50%,
+      rgba(0, 0, 0, 0.35) 88%,
+      rgba(0, 0, 0, 0) 100%
   );
 
   @media (max-width: 640px) {
@@ -972,13 +1064,13 @@ const InsightsQuestionPill = styled.div`
 const InsightsDashboardFrame = styled.div`
   position: absolute;
   left: 10%;
-  top: 44%;
-  width: min(100%, 1000px);
-  height: min(92%, 300px);
+  top: 34%;
+  width: min(112%, 1120px);
+  height: min(108%, 390px);
   border-radius: 24px;
-  background: rgba(248, 250, 252, 0.92);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  box-shadow: 0 28px 90px rgba(15, 23, 42, 0.12);
+  background: transparent;
+  border: none;
+  box-shadow: none;
   overflow: hidden;
   z-index: 1;
 
@@ -995,7 +1087,10 @@ const InsightsDashboardFrame = styled.div`
 const InsightsDashboardInner = styled.div`
   width: 100%;
   height: 100%;
-  aspect-ratio: 16 / 7;
+  aspect-ratio: 16 / 8;
+  border-radius: inherit;
+  overflow: hidden;
+  background: #E2E8F0;
 `;
 
 const InsightsDashboardPlaceholder = styled.div`
@@ -1028,11 +1123,11 @@ const InsightsTickerMask = styled.div`
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    to bottom,
-    rgba(255, 255, 255, 0.85) 0%,
-    rgba(255, 255, 255, 0) 30%,
-    rgba(255, 255, 255, 0) 70%,
-    rgba(255, 255, 255, 0.85) 100%
+      to bottom,
+      rgba(255, 255, 255, 0.85) 0%,
+      rgba(255, 255, 255, 0) 30%,
+      rgba(255, 255, 255, 0) 70%,
+      rgba(255, 255, 255, 0.85) 100%
   );
   pointer-events: none;
   z-index: 3;
@@ -1085,8 +1180,8 @@ const InsightsTickerRow = styled.div`
 
 const ShowcaseGrid = styled.div<{ $reverse?: boolean }>`
   display: grid;
-  grid-template-columns: ${props => props.$reverse ? "0.95fr 1.55fr" : "1.55fr 0.95fr"};
-  gap: 64px;
+  grid-template-columns: ${props => props.$reverse ? "1.1fr 1.4fr" : "1.4fr 1.1fr"};
+  gap: 40px;
   align-items: center;
 
   @media (max-width: 1024px) {
@@ -1099,30 +1194,46 @@ const ShowcaseGrid = styled.div<{ $reverse?: boolean }>`
 
 const ShowcaseVisual = styled.div`
   position: relative;
-  width: 100vw;
-  height: auto;
-  min-height: clamp(420px, 62vh, 780px);
-  margin-left: calc(50% - 50vw);
-  //overflow: hidden;
+  width: 100%;
+  min-height: 680px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  overflow: visible;
 
   @media (max-width: 1024px) {
-    width: 100%;
-    margin-left: 0;
-    min-height: clamp(360px, 52vh, 560px);
-    overflow: visible;
+    min-height: 520px;
+  }
+
+  @media (max-width: 640px) {
+    min-height: 380px;
+  }
+`;
+
+const ShowcaseFrameStack = styled.div<{ $reverse?: boolean }>`
+  position: relative;
+  width: fit-content;
+  margin-top: 24px;
+  transform: translateX(-300px);
+
+  @media (max-width: 1024px) {
+    transform: translateX(-120px);
+    margin-top: 0;
+  }
+
+  @media (max-width: 640px) {
+    transform: translateX(-56px);
   }
 `;
 
 const ShowcaseBaseFrame = styled.div<{ $reverse?: boolean }>`
-  margin-top: 10%;
-  width: min(860px, 100%);
+  position: relative;
+  width: clamp(820px, 56vw, 980px);
   aspect-ratio: 16 / 9;
-  border-radius: 18px;
+  border-radius: 22px;
   overflow: hidden;
   background: #E6EAED;
-  //border: 1px solid rgba(148, 163, 184, 0.35);
   box-shadow: 0 24px 80px rgba(15, 23, 42, 0.12);
-  transform: ${props => props.$reverse ? 'translateX(70px)' : 'translateX(-70px)'};
 
   :root[data-theme="dark"] & {
     background: rgba(15, 23, 42, 0.7);
@@ -1131,42 +1242,56 @@ const ShowcaseBaseFrame = styled.div<{ $reverse?: boolean }>`
   }
 
   @media (max-width: 1024px) {
-    margin-top: 0;
+    width: min(100%, 820px);
+  }
+
+  @media (max-width: 640px) {
     width: 100%;
-    transform: translateX(0);
+    border-radius: 18px;
   }
 `;
 
 const ShowcaseOverlayFrame = styled.div<{ $reverse?: boolean }>`
   position: absolute;
-  ${props => props.$reverse ? 'left: 25%;' : 'right: 25%;'}
-  bottom: 40%;
-  width: 35%;
-  height: 45%;
-  aspect-ratio: 3 / 4;
-  border-radius: 16px;
+  top: -120px;
+  ${({ $reverse }) =>
+      $reverse
+          ? "left: -138px;"
+          : "right: -120px;"}
+
+  width: clamp(580px, 38vw, 720px);
+  aspect-ratio: 16 / 9;
+  border-radius: 18px;
   overflow: hidden;
   background: #ffffff;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  box-shadow: 0 34px 120px rgba(15, 23, 42, 0.18);
-
-  @media (max-width: 640px) {
-    ${props => props.$reverse ? 'left: 6%;' : 'right: 6%;'}
-    top: 12%;
-    width: 46%;
-  }
-
-  @media (max-width: 1024px) {
-    ${props => props.$reverse ? 'left: 6%;' : 'right: 6%;'}
-    bottom: 10%;
-    width: min(360px, 56%);
-    height: auto;
-  }
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  box-shadow: 0 26px 80px rgba(15, 23, 42, 0.16);
+  z-index: 3;
 
   :root[data-theme="dark"] & {
     background: rgba(15, 23, 42, 0.75);
     border-color: rgba(148, 163, 184, 0.18);
     box-shadow: 0 42px 140px rgba(2, 6, 23, 0.75);
+  }
+
+  @media (max-width: 1024px) {
+    top: -28px;
+    ${({ $reverse }) =>
+        $reverse
+            ? "left: -52px;"
+            : "right: -52px;"}
+    width: min(62vw, 500px);
+    border-radius: 16px;
+  }
+
+  @media (max-width: 640px) {
+    top: -14px;
+    ${({ $reverse }) =>
+        $reverse
+            ? "left: -18px;"
+            : "right: -18px;"}
+    width: 60%;
+    border-radius: 14px;
   }
 `;
 
@@ -1174,38 +1299,49 @@ const ShowcaseImage = styled.img`
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: contain;
+  object-fit: cover;
+  object-position: center top;
 `;
 
 const ShowcasePlaceholder = styled.div`
   width: 100%;
   height: 100%;
   background: radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.10), transparent 55%),
-    radial-gradient(circle at 70% 80%, rgba(6, 182, 212, 0.10), transparent 55%),
-    linear-gradient(180deg, rgba(241, 245, 249, 0.95), rgba(226, 232, 240, 0.85));
+  radial-gradient(circle at 70% 80%, rgba(6, 182, 212, 0.10), transparent 55%),
+  linear-gradient(180deg, rgba(241, 245, 249, 0.95), rgba(226, 232, 240, 0.85));
 
   :root[data-theme="dark"] & {
     background: radial-gradient(circle at 30% 20%, rgba(96, 165, 250, 0.16), transparent 55%),
-      radial-gradient(circle at 70% 80%, rgba(6, 182, 212, 0.14), transparent 55%),
-      linear-gradient(180deg, rgba(15, 23, 42, 0.85), rgba(2, 6, 23, 0.75));
+    radial-gradient(circle at 70% 80%, rgba(6, 182, 212, 0.14), transparent 55%),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.85), rgba(2, 6, 23, 0.75));
   }
 `;
 
-const ShowcaseContent = styled.div<{ $reverse?: boolean }>`
-  width: 100%;
-  ${props => props.$reverse && `
-    text-align: right;
-  `}
+const ShowcaseContent = styled.div<{ $reverse?: boolean; $shiftX?: number }>`
+  position: relative;
+  left: ${({ $shiftX = 0 }) => `${$shiftX}px`};
+  width: ${({ $shiftX = 0 }) =>
+      $shiftX < 0 ? `calc(100% + ${Math.abs($shiftX)}px)` : "100%"};
+  max-width: none;
+
+  ${({ $reverse }) =>
+      $reverse &&
+      `
+      text-align: right;
+    `}
+
   @media (max-width: 1024px) {
-    text-align: left;
-  }
+  text-align: left;
+  left: 0;
+  width: 100%;
+}
 `;
 
 const ShowcaseTitle = styled.h2`
   font-size: clamp(40px, 6vw, 64px);
   font-weight: 900;
   letter-spacing: -0.04em;
-  line-height: 1.05;
+  line-height: 1.08;
   margin: 0 0 18px;
   word-break: keep-all;
   color: ${BRAND.blue};
@@ -1213,6 +1349,11 @@ const ShowcaseTitle = styled.h2`
   :root[data-theme="dark"] & {
     color: #f8fafc;
   }
+`;
+
+const ShowcaseTitleLine = styled.span`
+  display: block;
+  white-space: nowrap;
 `;
 
 const ShowcaseTitleAccent = styled.span`
@@ -1225,6 +1366,8 @@ const ShowcaseTitleAccent = styled.span`
 
 const ShowcaseSubTitle = styled.h3`
   margin: 18px 0 10px;
+  width: 100%;
+  max-width: 430px;
   font-size: 16px;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -1233,17 +1376,30 @@ const ShowcaseSubTitle = styled.h3`
   :root[data-theme="dark"] & {
     color: #e2e8f0;
   }
+
+  @media (max-width: 1024px) {
+    max-width: 100%;
+  }
 `;
 
 const ShowcaseDescription = styled.p`
   margin: 0;
+  width: 100%;
+  max-width: 430px;
+  min-height: calc(1.75em * 4);
   font-size: 15px;
   line-height: 1.75;
   color: #64748b;
   word-break: keep-all;
+  text-wrap: pretty;
 
   :root[data-theme="dark"] & {
     color: #cbd5e1;
+  }
+
+  @media (max-width: 1024px) {
+    max-width: 100%;
+    min-height: auto;
   }
 `;
 
@@ -1282,10 +1438,10 @@ const ProgressStepLabel = styled.div<{ $leftPct: number; $active?: boolean; $edg
   left: ${props => `${props.$leftPct}%`};
   top: -38px;
   transform: ${props => {
-  if (props.$edge === "left") return "translate(0, 0)";
-  if (props.$edge === "right") return "translate(-100%, 0)";
-  return "translate(-50%, 0)";
-}};
+    if (props.$edge === "left") return "translate(0, 0)";
+    if (props.$edge === "right") return "translate(-100%, 0)";
+    return "translate(-50%, 0)";
+  }};
   font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.12em;
@@ -1305,11 +1461,11 @@ const ProgressDot = styled.div<{ $leftPct: number; $active?: boolean; $edge?: "l
   top: 50%;
   left: ${props => `${props.$leftPct}%`};
   transform: ${props => {
-  const scale = props.$active ? 1.25 : 1;
-  if (props.$edge === "left") return `translate(0, -50%) scale(${scale})`;
-  if (props.$edge === "right") return `translate(-100%, -50%) scale(${scale})`;
-  return `translate(-50%, -50%) scale(${scale})`;
-}};
+    const scale = props.$active ? 1.25 : 1;
+    if (props.$edge === "left") return `translate(0, -50%) scale(${scale})`;
+    if (props.$edge === "right") return `translate(-100%, -50%) scale(${scale})`;
+    return `translate(-50%, -50%) scale(${scale})`;
+  }};
   width: 18px;
   height: 18px;
   border-radius: 999px;
@@ -1355,12 +1511,11 @@ type ProgressStepItem = {
 };
 
 const PROGRESS_STEPS: ProgressStepItem[] = [
-  { label: "STEP 01", description: "면접을 준비하기 위한 공부 환경을 제공합니다.", leftPct: 0, edge: "left" },
-  { label: "STEP 02", description: "면접 준비를 위한 공부를 확인 검증하는 퀴즈를 제공합니다.", leftPct: 33.333 },
-  { label: "STEP 03", description: "면접을 준비할 수 있도록 AI 모의면접을 진행합니다.", leftPct: 66.666 },
-  { label: "STEP 04", description: "AI 모의 면접 피드백으로 나의 면접 Develop!", leftPct: 100, edge: "right" },
+  { label: "STEP 01", description: "면접을 준비하기 위한 학습 환경을 제공합니다.", leftPct: 0, edge: "left" },
+  { label: "STEP 02", description: "퀴즈를 통해 학습 내용을 확인하고 점검할 수 있습니다.", leftPct: 33.333 },
+  { label: "STEP 03", description: "AI 모의 면접으로 실전처럼 면접을 연습할 수 있습니다.", leftPct: 66.666 },
+  { label: "STEP 04", description: "AI 모의 면접 피드백으로 나의 면접 역량 Develop!", leftPct: 100, edge: "right" },
 ];
-
 
 const INSIGHTS_TICKER_ITEMS = [
   "트랜잭션이 무엇이고, 왜 필요한가요?",
@@ -1374,6 +1529,8 @@ const INSIGHTS_TICKER_ITEMS = [
   "최근에 새로 배운 기술이나 지식이 있다면 무엇인가요?",
 ] as const;
 
+type StoreModalType = "google" | "appstore" | null;
+
 /* ========== Hero Section (Whale Space Style) ========== */
 const HeroSection = styled.section`
   width: 100%;
@@ -1384,10 +1541,10 @@ const HeroSection = styled.section`
   justify-content: center;
   overflow: hidden;
   background: linear-gradient(
-    to right,
-    #e1ecf8 0%,
-    #e2f2f3 50%,
-    #dbf4ee 100%
+      to right,
+      #e1ecf8 0%,
+      #e2f2f3 50%,
+      #dbf4ee 100%
   ); /* 회색기 없이 더 맑고 진한 아이스 블루~아이스 민트 쿨톤 그라데이션 */
 
   /* 스크롤을 내릴 때 하단 영역과 끊기지 않고 부드럽게 이어지도록 화이트 페이드 아웃 효과 적용 */
@@ -1415,7 +1572,7 @@ const HeroSection = styled.section`
     background-position: center bottom;
     background-repeat: no-repeat;
     opacity: 0.45; /* 구름 느낌이 전체적으로 은은하게 깔리도록 투명도 설정 */
-    mix-blend-mode: normal; 
+    mix-blend-mode: normal;
     pointer-events: none;
     z-index: 1;
     /* 구름 위쪽이 자연스럽게 투명해져 쿨톤 배경과 섞이도록 선형 마스크 적용 */
@@ -1475,7 +1632,7 @@ const HeroSubtitle = styled.p`
   margin-bottom: 40px;
   max-width: 600px;
   color: #333333;
-  
+
   @media (max-width: 900px) {
     margin-left: auto;
     margin-right: auto;
@@ -1498,7 +1655,12 @@ const HeroLogoLine = styled.div`
   align-items: center;
   gap: 12px;
   margin-bottom: 22px;
-  
+  margin-left: -16px;
+
+  @media (max-width: 900px) {
+    margin-left: 0;
+    justify-content: center;
+  }
 `;
 
 const HeroLogoImg = styled.img`
@@ -1529,23 +1691,39 @@ const HeroLogoAIText = styled.span`
 
 /* 메인 슬로건 */
 const HeroMainSlogan = styled.div`
-  font-size: clamp(28px, 3vw, 42px);
-  font-weight: 400; /* Mulmaru는 보통 단일 weight */
+  font-size: clamp(38px, 4.4vw, 64px);
+  font-weight: 700;
   color: #0f172a;
-  line-height: 1.25;
+  line-height: 1.2;
   margin-bottom: 16px;
   letter-spacing: -0.025em;
-  font-family: 'Mulmaru', 'Pretendard', sans-serif;
+  font-family: 'IncheonEduJaramBold', 'Pretendard', sans-serif;
 `;
 
 /* 설명 문구 */
 const HeroDescText = styled.p`
-  font-size: 18px;
-  font-weight: 500;
-  color: #64748b;
-  line-height: 1.75;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  color: #475569;
+  line-height: 1.68;
+  letter-spacing: -0.012em;
   margin-bottom: 36px;
-  max-width: 380px;
+  max-width: 390px;
+  word-break: keep-all;
+  text-wrap: pretty;
+
+  @media (max-width: 900px) {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 14px;
+    line-height: 1.64;
+    letter-spacing: -0.01em;
+    max-width: 100%;
+  }
 `;
 
 /* 버튼 그룹 */
@@ -1562,6 +1740,7 @@ const HeroBtn = styled.button`
   color: #ffffff;
   font-size: 14px;
   font-weight: 600;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   border: none;
   border-radius: 999px;
   cursor: pointer;
@@ -1584,11 +1763,14 @@ const HeroRightArea = styled.div`
   flex-shrink: 0;
   width: 480px;
   height: 480px;
+  transform: translateX(60px);
 
   @media (max-width: 1100px) {
     width: 380px;
     height: 380px;
+    transform: translateX(24px);
   }
+
   @media (max-width: 900px) {
     display: none;
   }
@@ -1643,10 +1825,10 @@ const RingObject = styled.div`
   height: 100px;
   border-radius: 50%;
   border: 24px solid #81ecec;
-  box-shadow: 
-    inset 5px 5px 15px rgba(255,255,255,0.6),
-    inset -5px -5px 15px rgba(0,168,255,0.2),
-    10px 20px 30px rgba(0,168,255,0.2);
+  box-shadow:
+      inset 5px 5px 15px rgba(255,255,255,0.6),
+      inset -5px -5px 15px rgba(0,168,255,0.2),
+      10px 20px 30px rgba(0,168,255,0.2);
   transform: rotateX(40deg) rotateY(-20deg);
   animation: ${floatAnimation} 7s ease-in-out infinite;
   opacity: 0.9;
@@ -1680,9 +1862,9 @@ const CubeObject = styled.div`
   background: linear-gradient(135deg, #fab1a0 0%, #e84393 100%);
   border-radius: 24px;
   transform: rotate(25deg) rotateX(20deg);
-  box-shadow: 
-    -10px -10px 20px rgba(255,255,255,0.4) inset,
-    10px 10px 30px rgba(232, 67, 147, 0.3);
+  box-shadow:
+      -10px -10px 20px rgba(255,255,255,0.4) inset,
+      10px 10px 30px rgba(232, 67, 147, 0.3);
   animation: ${floatAnimation} 9s ease-in-out infinite reverse;
 
   &::before {
@@ -1709,17 +1891,17 @@ const PlusObject = styled.div`
   width: 80px;
   height: 80px;
   animation: ${floatAnimation} 8s ease-in-out infinite 1s;
-  
+
   &::before, &::after {
     content: '';
     position: absolute;
     background: #a29bfe;
     border-radius: 12px;
-    box-shadow: 
-      inset 2px 2px 5px rgba(255,255,255,0.4),
-      5px 5px 15px rgba(108, 92, 231, 0.3);
+    box-shadow:
+        inset 2px 2px 5px rgba(255,255,255,0.4),
+        5px 5px 15px rgba(108, 92, 231, 0.3);
   }
-  
+
   &::before {
     top: 0; left: 28px; width: 24px; height: 80px;
   }
@@ -1736,34 +1918,41 @@ const PlusObject = styled.div`
   }
 `;
 
+const SearchTitle2 = styled.h2`
+  margin: 0 0 8px;
+  margin-top: 400px;
+  margin-bottom: 400px;
+  position: relative;
+  z-index: 1;
 
+  font-size: 48px;
+  font-weight: 800;
+  line-height: 1.35;
+  letter-spacing: -0.02em;
+  text-align: center;
+  font-family: Freesentation, sans-serif;
+  overflow-wrap: break-word;
+  word-break: keep-all;
 
+  @media (max-width: 768px) {
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+`;
 
+const SearchTitle2Line = styled.span`
+  display: block;
+`;
 
-const SearchTitle2 = styled.h2<{ $isVisible?: boolean }>`
-    margin: 0 0 8px;
-    font-size: 48px;
-    font-weight: 800;
-    margin-top: 400px;
-    margin-bottom: 80px;
-    position: relative;
-    z-index: 1;
-    
-    letter-spacing: -0.02em;
-    color: #0f172a;
-    font-family: Freesentation, sans-serif;
-    overflow-wrap: break-word;
-    word-break: keep-all;
-    
-    opacity: ${props => props.$isVisible ? 1 : 0.2};
-    transform: translateY(${props => props.$isVisible ? '0' : '30px'});
-    filter: blur(${props => props.$isVisible ? '0px' : '8px'});
-    transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-    
-    @media (max-width: 768px) {
-      font-size: 28px;
-      font-weight: 700;
-    }
+const SearchTitle2Char = styled.span<{ $active: number }>`
+  display: inline-block;
+  color: ${({ $active }) => `rgba(15, 23, 42, ${0.18 + $active * 0.82})`};
+  transition: color 0.12s linear;
+
+  :root[data-theme="dark"] & {
+    color: ${({ $active }) => `rgba(248, 250, 252, ${0.22 + $active * 0.73})`};
+  }
 `;
 
 /* Cloud Transition Wrap - Hero 아래 구름 배경을 연장 */
@@ -1771,7 +1960,7 @@ const CloudTransitionWrap = styled.div`
   width: 100%;
   position: relative;
   background: #ffffff;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -1807,19 +1996,22 @@ const ProductsGrid = styled.div`
   grid-template-columns: repeat(3, 1fr);
   gap: 32px;
   margin-top: 60px;
-  
+
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
     gap: 24px;
   }
-  
+
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
   }
 `;
 
-const ProductCard = styled.div<{ $bgColor?: string; $delay?: number }>`
-  background: #ffffff;
+const ProductCard = styled.div<{ $bgColor?: string; $delay?: number; $featured?: boolean }>`
+  background: ${({ $featured, $bgColor }) =>
+      $featured
+          ? ($bgColor || "linear-gradient(135deg, #3b82f6 0%, #10b981 100%)")
+          : "#ffffff"};
   border-radius: 32px;
   padding: 48px 32px;
   display: flex;
@@ -1828,57 +2020,72 @@ const ProductCard = styled.div<{ $bgColor?: string; $delay?: number }>`
   text-align: center;
   position: relative;
   overflow: hidden;
-  border: 1px solid rgba(0, 0, 0, 0.04);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.04);
+  border: 1px solid ${({ $featured }) =>
+      $featured ? "rgba(255, 255, 255, 0.14)" : "rgba(0, 0, 0, 0.04)"};
+  box-shadow: ${({ $featured }) =>
+      $featured
+          ? "0 18px 48px rgba(59, 130, 246, 0.18)"
+          : "0 12px 40px rgba(0, 0, 0, 0.04)"};
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
   transition-delay: ${props => props.$delay || 0}s;
   min-height: 460px;
   cursor: pointer;
-  
+
   &::after {
     content: '';
     position: absolute;
     inset: 0;
-    background: ${props => props.$bgColor || 'linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%)'};
-    opacity: 0.6;
+    background: ${({ $featured }) =>
+        $featured
+            ? "radial-gradient(circle at 20% 20%, rgba(255,255,255,0.18), transparent 38%), radial-gradient(circle at 80% 80%, rgba(255,255,255,0.10), transparent 34%)"
+            : "linear-gradient(135deg, rgba(59, 130, 246, 0.05) 0%, rgba(16, 185, 129, 0.05) 100%)"};
+    opacity: 1;
     z-index: 0;
     transition: opacity 0.5s ease;
   }
-  
+
   &:hover {
     transform: translateY(-12px) scale(1.02);
-    box-shadow: 0 30px 70px rgba(59, 130, 246, 0.12);
-    border-color: rgba(59, 130, 246, 0.2);
+    box-shadow: ${({ $featured }) =>
+        $featured
+            ? "0 30px 70px rgba(59, 130, 246, 0.24)"
+            : "0 30px 70px rgba(59, 130, 246, 0.12)"};
+    border-color: ${({ $featured }) =>
+        $featured ? "rgba(255,255,255,0.22)" : "rgba(59, 130, 246, 0.2)"};
     border-radius: 50%;
-    
-    &::after {
-      opacity: 1;
-    }
   }
 `;
 
-const ProductTitle = styled.h3<{ $color?: string }>`
+const ProductTitle = styled.h3<{ $color?: string; $featured?: boolean }>`
   font-size: 28px;
   font-weight: 800;
-  color: #0f172a;
+  color: ${({ $color }) => $color || "#0f172a"};
   margin-bottom: 14px;
   letter-spacing: -0.02em;
   position: relative;
   z-index: 1;
   transition: all 0.4s ease;
-  
+
   ${ProductCard}:hover & {
-    background: linear-gradient(90deg, #3a83f3, #11b884);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    transform: scale(1.1);
+    ${({ $featured }) =>
+        $featured
+            ? `
+          color: #ffffff;
+          transform: scale(1.04);
+        `
+            : `
+          background: linear-gradient(90deg, #3a83f3, #11b884);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          transform: scale(1.1);
+        `}
   }
 `;
 
-const ProductDesc = styled.p<{ $color?: string }>`
+const ProductDesc = styled.p<{ $color?: string; $featured?: boolean }>`
   font-size: 16px;
   font-weight: 500;
-  color: #64748b;
+  color: ${({ $color }) => $color || "#64748b"};
   line-height: 1.6;
   margin-bottom: 32px;
   max-width: 260px;
@@ -1886,9 +2093,9 @@ const ProductDesc = styled.p<{ $color?: string }>`
   position: relative;
   z-index: 1;
   transition: all 0.4s ease;
-  
+
   ${ProductCard}:hover & {
-    color: #334155;
+    color: ${({ $featured, $color }) => ($featured ? ($color || "#ffffff") : "#334155")};
     transform: translateY(-5px);
   }
 `;
@@ -1902,7 +2109,7 @@ const ProductImageWrap = styled.div`
   position: relative;
   z-index: 1;
   transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  
+
   img {
     width: 100%;
     height: 100%;
@@ -1911,7 +2118,7 @@ const ProductImageWrap = styled.div`
     filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.05));
     transition: all 0.6s ease;
   }
-  
+
   ${ProductCard}:hover & {
     transform: scale(1.15) rotate(3deg);
     img {
@@ -1928,17 +2135,17 @@ const ProductCircleImageWrap = styled.div`
   justify-content: center;
   margin-top: auto;
   transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
-  
+
   img {
     width: 100%;
     height: 100%;
     object-fit: contain;
     transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
-  
+
   ${ProductCard}:hover & {
     transform: scale(1.2) rotate(-5deg);
-    
+
     img {
       filter: brightness(1.1) drop-shadow(0 10px 20px rgba(0,0,0,0.2));
     }
@@ -1980,14 +2187,14 @@ const Subtitle = styled.p`
   color: #334155;
   margin-bottom: 48px;
   word-break: keep-all;
-  
+
   @media (max-width: 640px) {
     font-size: 15px;
     line-height: 1.6;
     margin-bottom: 32px;
     animation: fadeInUp 0.8s ease-out 0.2s both;
   }
-  
+
   :root[data-theme="dark"] & {
     color: #cbd5e1;
   }
@@ -2078,7 +2285,7 @@ const SecondaryButton = styled.a`
     background: rgba(255, 255, 255, 0.05);
     color: ${BRAND.blueDark};
     border-color: rgba(96, 165, 250, 0.3);
-    
+
     &:hover {
       background: rgba(255, 255, 255, 0.1);
       border-color: rgba(96, 165, 250, 0.5);
@@ -2107,7 +2314,7 @@ const BlueButton = styled(SecondaryButton)`
     background: ${BRAND.blue};
     color: #ffffff;
     border-color: ${BRAND.blue};
-    
+
     &:hover {
       background: ${BRAND.blueHover};
       border-color: ${BRAND.blueHover};
@@ -2179,16 +2386,16 @@ const ServiceSection = styled.section`
   z-index: 1;
   padding: 60px 20px;
   box-sizing: border-box;
-  
+
   @media (max-width: 768px) {
     min-height: 100vh;
     padding: 40px 20px;
   }
-  
+
   @media (max-width: 640px) {
     padding: 40px 16px;
   }
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -2201,7 +2408,7 @@ const ServiceSection = styled.section`
     pointer-events: none;
     z-index: -1;
   }
-  
+
   :root[data-theme="dark"] &::after {
     background: linear-gradient(to bottom, transparent 0%, rgba(30, 58, 138, 0.2) 50%, rgba(30, 58, 138, 0.4) 100%);
   }
@@ -2214,13 +2421,13 @@ const ServiceTitle = styled.h2`
   margin-bottom: 16px;
   color: #1a1a1a;
   word-break: keep-all;
-  
+
   @media (max-width: 640px) {
     font-size: 26px;
     line-height: 1.4;
     padding: 0 16px;
   }
-  
+
   :root[data-theme="dark"] & {
     color: #f8fafc;
   }
@@ -2233,12 +2440,12 @@ const ServiceSubtitle = styled.p`
   color: #5a5a5a;
   margin-bottom: 48px;
   word-break: keep-all;
-  
+
   @media (max-width: 640px) {
     font-size: 14px;
     margin-bottom: 32px;
   }
-  
+
   :root[data-theme="dark"] & {
     color: #94a3b8;
   }
@@ -2282,8 +2489,8 @@ const ServiceCard = styled.div<{ $rotation: number; $zIndex: number; $isVisible?
   justify-content: flex-start;
   box-shadow: 0 26px 70px rgba(59, 130, 246, 0.16);
   transform: ${props => props.$isVisible
-    ? `rotate(${props.$rotation}deg) translateY(0) translateZ(0)`
-    : `rotate(0deg) translateY(30px) translateZ(0)`};
+      ? `rotate(${props.$rotation}deg) translateY(0) translateZ(0)`
+      : `rotate(0deg) translateY(30px) translateZ(0)`};
   opacity: ${props => (props.$isVisible ? 1 : 0)};
   z-index: ${props => props.$zIndex};
   border: 1px solid rgba(59, 130, 246, 0.12);
@@ -2293,14 +2500,14 @@ const ServiceCard = styled.div<{ $rotation: number; $zIndex: number; $isVisible?
   & + & {
     margin-left: -64px;
   }
-  
+
   &::before {
     content: '';
     position: absolute;
     inset: 0;
     border-radius: 22px;
     background: radial-gradient(circle at 30% 20%, rgba(59, 130, 246, 0.18), transparent 55%),
-      radial-gradient(circle at 70% 70%, rgba(6, 182, 212, 0.14), transparent 55%);
+    radial-gradient(circle at 70% 70%, rgba(6, 182, 212, 0.14), transparent 55%);
     opacity: 0.75;
     transition: opacity 0.3s ease;
     pointer-events: none;
@@ -2309,7 +2516,7 @@ const ServiceCard = styled.div<{ $rotation: number; $zIndex: number; $isVisible?
   &:hover {
     transform: rotate(${props => props.$rotation * 0.15}deg) translateY(-22px) scale(1.03);
     box-shadow: 0 34px 90px rgba(59, 130, 246, 0.22);
-    
+
     &::before {
       opacity: 1;
     }
@@ -2332,7 +2539,7 @@ const ServiceCard = styled.div<{ $rotation: number; $zIndex: number; $isVisible?
       margin-left: -56px;
     }
   }
-  
+
   @media (max-width: 640px) {
     width: 100%;
     height: 240px;
@@ -2354,11 +2561,11 @@ const ServiceCard = styled.div<{ $rotation: number; $zIndex: number; $isVisible?
     background: linear-gradient(180deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.92) 100%);
     border-color: rgba(96, 165, 250, 0.18);
     box-shadow: 0 34px 90px rgba(2, 6, 23, 0.55);
-    
+
     &::before {
       opacity: 0.55;
     }
-    
+
     &:hover {
       background: linear-gradient(180deg, rgba(17, 32, 66, 0.92) 0%, rgba(30, 41, 59, 0.92) 100%);
       box-shadow: 0 40px 110px rgba(2, 6, 23, 0.65);
@@ -2376,7 +2583,7 @@ const CardLabel = styled.div`
   @media (max-width: 640px) {
     font-size: 12px;
   }
-  
+
   :root[data-theme="dark"] & {
     color: rgba(226, 232, 240, 0.7);
   }
@@ -2391,11 +2598,11 @@ const CardTitle = styled.h3`
   word-break: keep-all;
   line-height: 1.15;
   text-align: left;
-  
+
   @media (max-width: 640px) {
     font-size: 26px;
   }
-  
+
   :root[data-theme="dark"] & {
     color: #f1f5f9;
   }
@@ -2411,11 +2618,11 @@ const CardIcon = styled.div`
   padding-bottom: 10px;
   filter: drop-shadow(0 18px 26px rgba(59, 130, 246, 0.18));
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-  
+
   @media (max-width: 640px) {
     font-size: 78px;
   }
-  
+
   ${ServiceCard}:hover & {
     transform: translateY(-8px) scale(1.04);
   }
@@ -2455,7 +2662,7 @@ const SERVICE_CARDS: ServiceCardItem[] = [
   {
     label: "Consultation Room",
     title: "복기",
-    icon: "�",
+    icon: " ",
   },
 ];
 
@@ -2465,7 +2672,7 @@ const WhiteBackground = styled.div`
   width: 100%;
   position: relative;
   z-index: 1;
-  
+
   :root[data-theme="dark"] & {
     background: #0f172a;
   }
@@ -2486,7 +2693,7 @@ const PracticeSection = styled.section`
   position: relative;
   z-index: 1;
   box-sizing: border-box;
-  
+
   @media (max-width: 768px) {
     min-height: 100vh;
     padding: 40px 16px;
@@ -2505,12 +2712,12 @@ const PracticeIcon = styled.div`
   font-size: 64px;
   box-shadow: 0 10px 40px rgba(59, 130, 246, 0.22);
   animation: float 3s ease-in-out infinite;
-  
+
   @keyframes float {
     0%, 100% { transform: translateY(0); }
     50% { transform: translateY(-10px); }
   }
-  
+
   @media (max-width: 640px) {
     width: 90px;
     height: 90px;
@@ -2526,12 +2733,12 @@ const PracticeTitle = styled.h2`
   color: #1e293b;
   word-break: keep-all;
   line-height: 1.3;
-  
+
   @media (max-width: 640px) {
     font-size: 28px;
     margin-bottom: 16px;
   }
-  
+
   :root[data-theme="dark"] & {
     color: #f1f5f9;
   }
@@ -2571,14 +2778,14 @@ const PracticeDescription = styled.p`
   margin-bottom: 60px;
   line-height: 1.7;
   word-break: keep-all;
-  
+
   @media (max-width: 640px) {
     font-size: 15px;
     line-height: 1.6;
     margin-bottom: 40px;
   }
 
-  
+
   :root[data-theme="dark"] & {
     color: #cbd5e1;
   }
@@ -2631,7 +2838,7 @@ const StepCard = styled.div`
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -2641,22 +2848,22 @@ const StepCard = styled.div`
     height: 4px;
     background: linear-gradient(90deg, ${BRAND.blue}, ${BRAND.cyanDeep});
   }
-  
+
   &:hover {
     transform: translateY(-8px);
     box-shadow: 0 20px 40px rgba(59, 130, 246, 0.14);
     border-color: rgba(59, 130, 246, 0.28);
   }
-  
+
   @media (max-width: 640px) {
     padding: 32px 24px;
     border-radius: 16px;
-    
+
     &:hover {
       transform: translateY(-4px);
     }
   }
-  
+
   :root[data-theme="dark"] & {
     background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(51, 65, 85, 0.95));
     border-color: rgba(96, 165, 250, 0.2);
@@ -2674,7 +2881,7 @@ const StepBadge = styled.div`
   letter-spacing: 0.05em;
   margin-bottom: 20px;
   text-transform: uppercase;
-  
+
   @media (max-width: 640px) {
     font-size: 11px;
     padding: 5px 14px;
@@ -2689,12 +2896,12 @@ const StepTitle = styled.h3`
   margin-bottom: 16px;
   letter-spacing: -0.02em;
   word-break: keep-all;
-  
+
   @media (max-width: 640px) {
     font-size: 20px;
     margin-bottom: 12px;
   }
-  
+
   :root[data-theme="dark"] & {
     color: #f1f5f9;
   }
@@ -2705,12 +2912,12 @@ const StepDescription = styled.p`
   color: #64748b;
   line-height: 1.7;
   word-break: keep-all;
-  
+
   @media (max-width: 640px) {
     font-size: 14px;
     line-height: 1.6;
   }
-  
+
   :root[data-theme="dark"] & {
     color: #cbd5e1;
   }
@@ -2724,13 +2931,13 @@ const MockupCard = styled.div`
   margin-top: 60px;
   box-shadow: 0 20px 60px rgba(16, 185, 129, 0.3);
   text-align: center;
-  
+
   @media (max-width: 640px) {
     padding: 32px 24px;
     margin-top: 40px;
     border-radius: 16px;
   }
-  
+
   :root[data-theme="dark"] & {
     background: linear-gradient(135deg, ${BRAND.greenDeep}, ${BRAND.cyanDeep});
   }
@@ -2741,7 +2948,7 @@ const MockupTitle = styled.h4`
   font-weight: 800;
   margin-bottom: 12px;
   word-break: keep-all;
-  
+
   @media (max-width: 640px) {
     font-size: 20px;
     margin-bottom: 10px;
@@ -2753,7 +2960,7 @@ const MockupText = styled.p`
   opacity: 0.95;
   line-height: 1.6;
   word-break: keep-all;
-  
+
   @media (max-width: 640px) {
     font-size: 14px;
     line-height: 1.5;
@@ -2766,7 +2973,7 @@ const FeaturesSection = styled.section`
   width: 100%;
   margin: 80px auto;
   padding: 0 20px;
-  
+
   @media (max-width: 768px) {
     margin: 40px auto;
     padding: 0 16px;
@@ -2788,7 +2995,7 @@ const FeatureRow = styled.div<{ $reverse?: boolean; $isVisible?: boolean }>`
     gap: 40px;
     margin-bottom: 100px;
   }
-  
+
   @media (max-width: 640px) {
     gap: 24px;
     margin-bottom: 60px;
@@ -2802,13 +3009,13 @@ const FeatureContent = styled.div<{ $reverse?: boolean; $isVisible?: boolean }>`
   opacity: ${props => props.$isVisible ? 1 : 0};
   transform: translateX(${props => props.$isVisible ? '0' : (props.$reverse ? '40px' : '-40px')});
   transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
-  
+
   @media (max-width: 968px) {
     order: 1;
     padding-left: 0;
     transform: translateX(0);
   }
-  
+
   @media (max-width: 640px) {
     padding: 0;
   }
@@ -2830,7 +3037,7 @@ const FeatureImageBox = styled.div<{ $reverse?: boolean; $isVisible?: boolean }>
   opacity: ${props => props.$isVisible ? 1 : 0};
   transform: translateX(${props => props.$isVisible ? '0' : (props.$reverse ? '-40px' : '40px')}) scale(${props => props.$isVisible ? 1 : 0.95});
   transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -2842,13 +3049,13 @@ const FeatureImageBox = styled.div<{ $reverse?: boolean; $isVisible?: boolean }>
     background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(6, 182, 212, 0.05));
     border-radius: 16px;
   }
-  
+
   @media (max-width: 968px) {
     order: 2;
     min-height: 300px;
     transform: translateX(0) scale(${props => props.$isVisible ? 1 : 0.95});
   }
-  
+
   @media (max-width: 640px) {
     min-height: 200px;
     max-height: 240px;
@@ -2856,13 +3063,13 @@ const FeatureImageBox = styled.div<{ $reverse?: boolean; $isVisible?: boolean }>
     border-radius: 16px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
     margin: 0;
-    
+
     &::before {
       width: 70%;
       height: 70%;
     }
   }
-  
+
   :root[data-theme="dark"] & {
     background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.8));
     border-color: rgba(148, 163, 184, 0.1);
@@ -2875,11 +3082,11 @@ const FeatureImagePlaceholder = styled.div`
   font-weight: 600;
   text-align: center;
   z-index: 1;
-  
+
   @media (max-width: 640px) {
     font-size: 16px;
   }
-  
+
   :root[data-theme="dark"] & {
     color: #64748b;
   }
@@ -2895,13 +3102,13 @@ const FeatureBadge = styled.div`
   font-weight: 700;
   margin-bottom: 20px;
   letter-spacing: 0.02em;
-  
+
   @media (max-width: 640px) {
     font-size: 12px;
     padding: 6px 16px;
     margin-bottom: 16px;
   }
-  
+
   :root[data-theme="dark"] & {
     color: ${BRAND.blueDark};
   }
@@ -2915,12 +3122,12 @@ const FeatureTitle = styled.h3`
   letter-spacing: -0.03em;
   line-height: 1.3;
   word-break: keep-all;
-  
+
   @media (max-width: 640px) {
     font-size: 24px;
     margin-bottom: 16px;
   }
-  
+
   :root[data-theme="dark"] & {
     color: #f1f5f9;
   }
@@ -2937,13 +3144,13 @@ const FeatureDescription = styled.p`
   line-height: 1.8;
   margin-bottom: 24px;
   word-break: keep-all;
-  
+
   @media (max-width: 640px) {
     font-size: 15px;
     line-height: 1.6;
     margin-bottom: 20px;
   }
-  
+
   :root[data-theme="dark"] & {
     color: #cbd5e1;
   }
@@ -2962,7 +3169,7 @@ const FeatureListItem = styled.li`
   padding-left: 32px;
   position: relative;
   word-break: keep-all;
-  
+
   &::before {
     content: '✓';
     position: absolute;
@@ -2971,17 +3178,17 @@ const FeatureListItem = styled.li`
     font-weight: 900;
     font-size: 20px;
   }
-  
+
   @media (max-width: 640px) {
     font-size: 14px;
     padding: 10px 0;
     padding-left: 28px;
-    
+
     &::before {
       font-size: 18px;
     }
   }
-  
+
   :root[data-theme="dark"] & {
     color: #cbd5e1;
   }
@@ -2989,118 +3196,279 @@ const FeatureListItem = styled.li`
 
 /* ========== 하단 AI 면접 소개 섹션 ========== */
 const scrollLeft = keyframes`
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-50%, 0, 0); }
 `;
 
 const HomeFiveSection = styled.section`
-  max-width: 900px;
-  margin: 320px auto 180px;
-  padding: 0 20px;
+  width: 100%;
+  max-width: 1080px;
+  margin: 220px auto 160px;
+  padding: 0 24px;
   text-align: center;
   position: relative;
   z-index: 1;
-  
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: -56px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: min(100%, 920px);
+    height: 1px;
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(148, 163, 184, 0.32) 50%,
+        transparent 100%
+    );
+  }
+
   @media (max-width: 768px) {
-    margin: 150px auto 100px;
+    margin: 140px auto 96px;
     padding: 0 16px;
+
+    &::before {
+      top: -40px;
+      width: calc(100% - 32px);
+    }
   }
 `;
 
-const TitleBox = styled.div`
-  font-size: clamp(2.5rem, 8vw, 5rem);
-  font-weight: 900;
-  letter-spacing: 1px;
-  display: inline-block;
-  position: relative;
-  background: linear-gradient(135deg, ${BRAND.blue} 0%, ${BRAND.greenDeep} 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-transform: uppercase;
-  text-shadow:
-      0px 3px 6px rgba(0, 0, 0, 0.25),
-      0px 8px 20px rgba(16, 185, 129, 0.3),
-      0px 8px 20px rgba(59, 130, 246, 0.3);
-  transform: perspective(500px) rotateX(10deg);
-  transition: all 0.4s ease-in-out;
-  margin-bottom: 50px;
+const COMPANY_LOGOS = [
+  { src: logoKT, alt: "KT M mobile" },
+  { src: logoDanggeun, alt: "당근" },
+  { src: logoToss, alt: "Toss" },
+  { src: logoEncore, alt: "en-core" },
+  { src: logoCoupang, alt: "Coupang" },
+  { src: logoKakao, alt: "Kakao", boxWidth: 128 },
+  { src: logoLine, alt: "LINE", boxWidth: 128 },
+  { src: logoNaver, alt: "NAVER" },
+];
 
-  &:hover {
-    transform: perspective(500px) rotateX(0deg) scale(1.05);
-    text-shadow:
-        0px 6px 12px rgba(0, 0, 0, 0.3),
-        0px 12px 30px rgba(16, 185, 129, 0.4),
-        0px 12px 30px rgba(59, 130, 246, 0.4);
-  }
-  
-  @media (max-width: 768px) {
-    margin-bottom: 30px;
-    transform: perspective(500px) rotateX(5deg);
+const TitleBox = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: ${BRAND.blue};
+  padding: 9px 18px;
+  margin-bottom: 24px;
+  border-radius: 999px;
+  border: 1px solid rgba(59, 130, 246, 0.14);
+  background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(248, 250, 252, 0.92) 100%
+  );
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+  backdrop-filter: blur(10px);
+
+  :root[data-theme="dark"] & {
+    color: ${BRAND.blueDark};
+    border-color: rgba(96, 165, 250, 0.2);
+    background: linear-gradient(
+        180deg,
+        rgba(30, 41, 59, 0.84) 0%,
+        rgba(15, 23, 42, 0.84) 100%
+    );
+    box-shadow: 0 16px 40px rgba(2, 6, 23, 0.35);
   }
 `;
 
 const Hero = styled.div`
-  margin-bottom: 40px;
+  max-width: 820px;
+  margin: 0 auto 56px;
+
   h2 {
-    font-size: clamp(24px, 4vw, 32px);
-    font-weight: 700;
-    margin-bottom: 12px;
+    margin: 0 0 18px;
+    font-size: clamp(34px, 5vw, 52px);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 1.2;
     color: #0f172a;
     word-break: keep-all;
-    
+    text-wrap: balance;
+
     :root[data-theme="dark"] & {
       color: #f8fafc;
     }
   }
+
   p {
-    font-size: clamp(16px, 2.5vw, 18px);
-    line-height: 1.6;
-    color: #475569;
+    margin: 0 auto;
+    max-width: 720px;
+    font-size: 16px;
+    line-height: 1.8;
+    color: #64748b;
     word-break: keep-all;
-    
+    text-wrap: pretty;
+
     :root[data-theme="dark"] & {
       color: #cbd5e1;
+    }
+  }
+
+  @media (max-width: 768px) {
+    margin-bottom: 40px;
+
+    h2 {
+      font-size: 32px;
+      line-height: 1.28;
+      margin-bottom: 14px;
+    }
+
+    p {
+      font-size: 15px;
+      line-height: 1.72;
     }
   }
 `;
 
 const Features = styled.div`
-  margin-top: 60px;
+  max-width: 920px;
+  margin: 0 auto 28px;
+  padding: 34px 36px;
+  border-radius: 30px;
+  background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.92) 0%,
+      rgba(248, 250, 252, 0.98) 100%
+  );
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 20px 60px rgba(15, 23, 42, 0.06);
+  backdrop-filter: blur(10px);
+
   h2 {
-    font-size: clamp(20px, 3vw, 24px);
-    font-weight: 600;
-    margin-bottom: 16px;
+    margin: 0 0 14px;
+    font-size: clamp(24px, 3vw, 32px);
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    line-height: 1.3;
     color: #0f172a;
     word-break: keep-all;
-    
+
     :root[data-theme="dark"] & {
       color: #f8fafc;
     }
   }
+
   p {
-    font-size: clamp(14px, 2vw, 16px);
-    color: #64748b;
+    margin: 0;
+    font-size: 15px;
     line-height: 1.8;
+    color: #64748b;
     word-break: keep-all;
-    
+    text-wrap: pretty;
+
     :root[data-theme="dark"] & {
-      color: #94a3b8;
+      color: #cbd5e1;
+    }
+  }
+
+  :root[data-theme="dark"] & {
+    background: linear-gradient(
+        180deg,
+        rgba(30, 41, 59, 0.84) 0%,
+        rgba(15, 23, 42, 0.88) 100%
+    );
+    border-color: rgba(148, 163, 184, 0.14);
+    box-shadow: 0 26px 70px rgba(2, 6, 23, 0.45);
+  }
+
+  @media (max-width: 768px) {
+    padding: 26px 22px;
+    border-radius: 24px;
+    margin-bottom: 22px;
+
+    h2 {
+      font-size: 22px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 14px;
+      line-height: 1.72;
     }
   }
 `;
 
 const Companies = styled.div`
-  margin-top: 60px;
+  max-width: 980px;
+  margin: 220px auto 260px;
+  padding-top: 28px;
+  padding-bottom: 24px;
   text-align: center;
-  h3 {
-    font-size: clamp(18px, 2.5vw, 20px);
-    font-weight: 600;
-    color: #0f172a;
-    word-break: keep-all;
-    
-    :root[data-theme="dark"] & {
-      color: #f8fafc;
-    }
+
+  @media (max-width: 768px) {
+    margin: 132px auto 168px;
+    padding-top: 18px;
+    padding-bottom: 16px;
+  }
+`;
+
+const CompaniesEyebrow = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.08);
+  color: ${BRAND.blue};
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+
+  :root[data-theme="dark"] & {
+    color: ${BRAND.blueDark};
+    background: rgba(96, 165, 250, 0.12);
+  }
+`;
+
+const CompaniesTitle = styled.h2`
+  margin: 0;
+  font-size: clamp(30px, 4.6vw, 46px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.18;
+  color: #0f172a;
+  word-break: keep-all;
+
+  :root[data-theme="dark"] & {
+    color: #f8fafc;
+  }
+`;
+
+const CompaniesTitleAccent = styled.span`
+  color: ${BRAND.blue};
+
+  :root[data-theme="dark"] & {
+    color: ${BRAND.blueDark};
+  }
+`;
+
+const CompaniesDesc = styled.p`
+  margin: 14px auto 0;
+  max-width: 760px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #64748b;
+  word-break: keep-all;
+
+  :root[data-theme="dark"] & {
+    color: #cbd5e1;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 14px;
+    line-height: 1.7;
   }
 `;
 
@@ -3117,7 +3485,7 @@ const CoreValueSection = styled.section`
   box-sizing: border-box;
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -3129,7 +3497,7 @@ const CoreValueSection = styled.section`
     border-radius: 50%;
     pointer-events: none;
   }
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -3141,7 +3509,7 @@ const CoreValueSection = styled.section`
     border-radius: 50%;
     pointer-events: none;
   }
-  
+
   @media (max-width: 768px) {
     min-height: 100vh;
     padding: 80px 20px;
@@ -3149,6 +3517,9 @@ const CoreValueSection = styled.section`
 `;
 
 const CoreValueHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   margin-bottom: 80px;
   position: relative;
@@ -3156,16 +3527,19 @@ const CoreValueHeader = styled.div`
 `;
 
 const CoreValueLabel = styled.span`
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 4px;
+  line-height: 1;
+  letter-spacing: 0.22em;
   color: #ffffff;
   text-transform: uppercase;
   margin-bottom: 24px;
   background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
-  padding: 8px 24px;
-  border-radius: 20px;
+  padding: 9px 22px;
+  border-radius: 999px;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
 `;
 
@@ -3176,7 +3550,7 @@ const CoreValueTitle = styled.h2`
   line-height: 1.4;
   margin: 0;
   letter-spacing: -0.02em;
-  
+
   span {
     background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
     -webkit-background-clip: text;
@@ -3184,7 +3558,7 @@ const CoreValueTitle = styled.h2`
     background-clip: text;
     position: relative;
     display: inline-block;
-    
+
     &::after {
       content: '';
       position: absolute;
@@ -3207,7 +3581,7 @@ const CoreValueGrid = styled.div`
   margin: 0 auto;
   position: relative;
   z-index: 1;
-  
+
   @media (max-width: 900px) {
     gap: 60px;
   }
@@ -3218,12 +3592,12 @@ const CoreValueRow = styled.div<{ $reverse?: boolean }>`
   grid-template-columns: 1fr 1fr;
   gap: 60px;
   align-items: center;
-  
+
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
     gap: 32px;
   }
-  
+
   ${props => props.$reverse && `
     direction: rtl;
     
@@ -3234,18 +3608,16 @@ const CoreValueRow = styled.div<{ $reverse?: boolean }>`
 `;
 
 const CoreValueImageCard = styled.div`
+  width: 100%;
+  aspect-ratio: 3/2;
   background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   border-radius: 32px;
-  padding: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 400px;
+  padding: 0;
   position: relative;
   overflow: hidden;
   transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
   box-shadow: 0 20px 40px rgba(37, 99, 235, 0.2);
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -3255,16 +3627,16 @@ const CoreValueImageCard = styled.div`
     height: 200%;
     background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
     pointer-events: none;
+    z-index: 1;
   }
-  
+
   &:hover {
     transform: translateY(-8px);
     box-shadow: 0 32px 64px rgba(37, 99, 235, 0.3);
   }
-  
+
   @media (max-width: 900px) {
-    min-height: 320px;
-    padding: 40px;
+    border-radius: 24px;
   }
 `;
 
@@ -3280,6 +3652,16 @@ const CoreValueImagePlaceholder = styled.div`
   text-align: center;
   position: relative;
   z-index: 1;
+`;
+
+const CoreValueImage = styled.img<{ $fit?: "cover" | "contain" }>`
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: ${({ $fit }) => $fit ?? "cover"};
+  object-position: center;
 `;
 
 const CoreValueContent = styled.div`
@@ -3316,7 +3698,7 @@ const GrowthSection = styled.section`
   background: linear-gradient(180deg, #ffffff 0%, #fafbfc 100%);
   box-sizing: border-box;
   position: relative;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -3326,7 +3708,7 @@ const GrowthSection = styled.section`
     height: 1px;
     background: linear-gradient(90deg, transparent 0%, #e2e8f0 50%, transparent 100%);
   }
-  
+
   @media (max-width: 768px) {
     min-height: 100vh;
     padding: 80px 20px;
@@ -3334,13 +3716,16 @@ const GrowthSection = styled.section`
 `;
 
 const GrowthHeader = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
   margin-bottom: 80px;
   max-width: 1300px;
   margin-left: auto;
   margin-right: auto;
-  text-align: center;
   position: relative;
-  
+
   &::after {
     content: '';
     position: absolute;
@@ -3355,16 +3740,19 @@ const GrowthHeader = styled.div`
 `;
 
 const GrowthLabel = styled.span`
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 11px;
   font-weight: 700;
-  letter-spacing: 4px;
+  line-height: 1;
+  letter-spacing: 0.22em;
   color: #64748b;
   text-transform: uppercase;
   margin-bottom: 20px;
-  padding: 6px 20px;
+  padding: 8px 22px;
   background: rgba(241, 245, 249, 0.8);
-  border-radius: 16px;
+  border-radius: 999px;
   border: 1px solid #e2e8f0;
 `;
 
@@ -3375,7 +3763,7 @@ const GrowthTitle = styled.h2`
   line-height: 1.5;
   margin: 0;
   letter-spacing: -0.02em;
-  
+
   span {
     background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
     -webkit-background-clip: text;
@@ -3384,7 +3772,7 @@ const GrowthTitle = styled.h2`
     position: relative;
     display: inline-block;
     font-weight: 900;
-    
+
     &::after {
       content: '';
       position: absolute;
@@ -3405,7 +3793,7 @@ const GrowthTimeline = styled.div`
   max-width: 1200px;
   margin: 0 auto;
   align-items: flex-start;
-  
+
   @media (max-width: 900px) {
     flex-direction: column;
     gap: 20px;
@@ -3414,6 +3802,7 @@ const GrowthTimeline = styled.div`
 
 const GrowthCard = styled.div<{ $offset?: number }>`
   flex: 1;
+  min-width: 0;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 20px;
@@ -3423,7 +3812,7 @@ const GrowthCard = styled.div<{ $offset?: number }>`
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -3434,17 +3823,17 @@ const GrowthCard = styled.div<{ $offset?: number }>`
     background: linear-gradient(180deg, #3b82f6 0%, #8b5cf6 100%);
     transition: height 0.5s ease;
   }
-  
+
   &:hover {
     transform: translateY(-8px) scale(1.02);
     box-shadow: 0 16px 32px rgba(59, 130, 246, 0.12);
     border-color: rgba(59, 130, 246, 0.2);
-    
+
     &::before {
       height: 100%;
     }
   }
-  
+
   @media (max-width: 900px) {
     margin-top: 0;
   }
@@ -3463,14 +3852,19 @@ const GrowthCardTitle = styled.h3`
   font-weight: 700;
   color: #1e293b;
   margin: 0 0 10px;
-  line-height: 1.4;
+  line-height: 1.45;
+  letter-spacing: -0.02em;
+  word-break: keep-all;
+  text-wrap: pretty;
 `;
 
 const GrowthCardDesc = styled.p`
-  font-size: 13px;
+  font-size: 14px;
   color: #94a3b8;
-  line-height: 1.7;
+  line-height: 1.75;
   margin: 0;
+  word-break: keep-all;
+  text-wrap: pretty;
 `;
 
 /* ========== 스크롤 인터랙티브 섹션 ========== */
@@ -3496,7 +3890,7 @@ const ScrollSection = styled.section<{ $bgColor: string; $zIndex: number }>`
   position: sticky;
   top: 0;
   z-index: ${props => props.$zIndex};
-  
+
   @media (max-width: 768px) {
     padding: 60px 20px;
     height: 100vh;
@@ -3510,7 +3904,7 @@ const ScrollContainer = styled.div`
   grid-template-columns: 1fr 1fr;
   gap: 60px;
   align-items: center;
-  
+
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
     gap: 40px;
@@ -3560,7 +3954,7 @@ const ScrollImageBox = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   @media (max-width: 900px) {
     order: 0;
     aspect-ratio: 16 / 9;
@@ -3582,46 +3976,80 @@ const ScrollImagePlaceholder = styled.div`
 const LogoSlider = styled.div`
   overflow: hidden;
   width: 100%;
-  margin-top: 20px;
-  
-  @media (max-width: 640px) {
-    margin-top: 16px;
-  }
+  margin-top: 26px;
+  padding: 20px 0;
+  position: relative;
 `;
 
 const LogoTrack = styled.div`
   display: flex;
-  gap: 40px;
-  animation: ${scrollLeft} 20s linear infinite;
-  
+  align-items: center;
+  width: max-content;
+  will-change: transform;
+  animation: ${scrollLeft} 42s linear infinite;
+
+  ${LogoSlider}:hover & {
+    animation-play-state: paused;
+  }
+
   @media (max-width: 640px) {
-    gap: 30px;
-    animation: ${scrollLeft} 15s linear infinite;
+    animation: ${scrollLeft} 32s linear infinite;
   }
 `;
 
-const LogoItemWrap = styled.div`
-  width: 120px;
-  height: 120px;
-  padding: 2px;
+const LogoGroup = styled.div`
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 44px;
+  padding-right: 44px;
+
+  @media (max-width: 640px) {
+    gap: 30px;
+    padding-right: 30px;
+  }
+`;
+
+const LogoItemWrap = styled.div<{ $width?: number }>`
+  flex: 0 0 auto;
+  width: ${({ $width }) => `${$width ?? 144}px`};
+  height: 46px;
   display: flex;
   align-items: center;
   justify-content: center;
-  filter: grayscale(0.3);
-  transition: transform 0.3s ease, filter 0.3s ease;
-  flex-shrink: 0;
-  
+  opacity: 0.96;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+
   &:hover {
-    transform: scale(1.05);
-    filter: grayscale(0);
+    transform: translateY(-2px);
+    opacity: 1;
   }
-  
+
   @media (max-width: 640px) {
-    width: 90px;
-    height: 90px;
+    width: ${({ $width }) => `${Math.round(($width ?? 144) * 0.8)}px`};
+    height: 38px;
   }
 `;
 
+const LogoInner = styled.div<{ $height?: number }>`
+  width: 100%;
+  height: ${({ $height }) => `${$height ?? 40}px`};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  @media (max-width: 640px) {
+    height: ${({ $height }) => `${Math.round(($height ?? 40) * 0.8)}px`};
+  }
+`;
+
+const LogoImage = styled.img`
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+`;
 
 const BlueText = styled.strong`
   color: ${BRAND.blue};
@@ -3635,6 +4063,356 @@ const ConfettiCanvas = styled.canvas`
   pointer-events: none;
   z-index: 9999;
 `;
+
+/* ========== 모바일 ========== */
+
+const MobilePromoSection = styled.section`
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto 120px;
+  padding: 0 20px;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    margin: 0 auto 88px;
+    padding: 0 16px;
+  }
+`;
+
+const MobilePromoHead = styled.div`
+  text-align: center;
+  margin-bottom: 24px;
+`;
+
+const MobilePromoEyebrow = styled.span`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.08);
+  color: ${BRAND.blue};
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+`;
+
+const MobilePromoTitle = styled.h2`
+  margin: 0;
+  font-size: clamp(30px, 4.6vw, 46px);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  line-height: 1.18;
+  color: #0f172a;
+  word-break: keep-all;
+
+  :root[data-theme="dark"] & {
+    color: #f8fafc;
+  }
+`;
+
+const MobilePromoDesc = styled.p`
+  margin: 14px auto 0;
+  max-width: 760px;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #64748b;
+  word-break: keep-all;
+
+  :root[data-theme="dark"] & {
+    color: #cbd5e1;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+`;
+
+const MobilePromoBanner = styled.div`
+  position: relative;
+  width: 100%;
+  min-height: 430px;
+  border-radius: 40px;
+  overflow: visible;
+  isolation: isolate;
+  background: linear-gradient(180deg, #eef2f7 0%, #edf4f6 100%);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.08);
+
+  display: grid;
+  grid-template-columns: 0.92fr 1.08fr;
+  align-items: center;
+  padding: 44px 60px;
+  box-sizing: border-box;
+
+  @media (max-width: 1024px) {
+    min-height: 390px;
+    padding: 38px 40px;
+    grid-template-columns: 0.95fr 1.05fr;
+  }
+
+  @media (max-width: 768px) {
+    min-height: auto;
+    grid-template-columns: 1fr;
+    padding: 28px 20px 18px;
+    border-radius: 24px;
+    gap: 16px;
+  }
+`;
+
+const MobilePromoImage = styled.img`
+  position: absolute;
+  right: 0;
+  top: -72px;
+  z-index: 2;
+  display: block;
+  width: min(760px, 68%);
+  height: auto;
+  margin: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 28px 60px rgba(15, 23, 42, 0.16));
+
+  @media (max-width: 1024px) {
+    width: min(680px, 72%);
+    top: -28px;
+  }
+
+  @media (max-width: 768px) {
+    position: relative;
+    top: -10px;
+    right: auto;
+    width: min(560px, 96%);
+    margin: 0 0 -10px auto;
+  }
+`;
+
+const MobilePromoLogo = styled.img`
+  display: block;
+  width: 140px;
+  height: auto;
+  object-fit: contain;
+  margin-bottom: 18px;
+
+  @media (max-width: 768px) {
+    width: 120px;
+    margin-bottom: 14px;
+  }
+`;
+
+const MobilePromoContent = styled.div`
+  position: relative;
+  z-index: 3;
+  max-width: 420px;
+  align-self: center;
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    align-self: start;
+  }
+`;
+
+const MobilePromoInsideTitle = styled.h2`
+  margin: 0;
+  font-size: clamp(34px, 4.2vw, 54px);
+  font-weight: 900;
+  line-height: 1.12;
+  letter-spacing: -0.045em;
+  color: #0f172a;
+  word-break: keep-all;
+
+  @media (max-width: 768px) {
+    font-size: 32px;
+    line-height: 1.16;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 28px;
+  }
+`;
+
+const MobilePromoInsideDesc = styled.p`
+  margin: 20px 0 0;
+  font-size: 17px;
+  line-height: 1.55;
+  color: rgba(15, 23, 42, 0.72);
+  word-break: keep-all;
+
+  @media (max-width: 768px) {
+    margin-top: 16px;
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 14px;
+  }
+`;
+
+const MobileStoreRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+
+  @media (max-width: 768px) {
+    margin-top: 22px;
+  }
+`;
+
+const MobileStoreButtonImg = styled.img`
+  display: block;
+  height: 54px;
+  width: auto;
+  object-fit: contain;
+
+  @media (max-width: 768px) {
+    height: 48px;
+  }
+
+  @media (max-width: 480px) {
+    height: 44px;
+  }
+`;
+
+const MobileStoreActionButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  transition: transform 0.18s ease, opacity 0.18s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    opacity: 0.96;
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+`;
+
+const StoreQrModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(8px);
+`;
+
+const StoreQrModalCard = styled.div`
+  position: relative;
+  width: min(92vw, 420px);
+  border-radius: 28px;
+  background: #ffffff;
+  padding: 28px 24px 24px;
+  box-shadow: 0 28px 80px rgba(15, 23, 42, 0.24);
+  text-align: center;
+
+  :root[data-theme="dark"] & {
+    background: #0f172a;
+    box-shadow: 0 28px 80px rgba(2, 6, 23, 0.55);
+  }
+
+  @media (max-width: 640px) {
+    border-radius: 22px;
+    padding: 24px 18px 20px;
+  }
+`;
+
+const StoreQrCloseButton = styled.button`
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.12);
+  color: #0f172a;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: background 0.18s ease, transform 0.18s ease;
+
+  &:hover {
+    background: rgba(148, 163, 184, 0.2);
+    transform: scale(1.04);
+  }
+
+  :root[data-theme="dark"] & {
+    color: #f8fafc;
+    background: rgba(148, 163, 184, 0.16);
+  }
+`;
+
+const StoreQrTitle = styled.h3`
+  margin: 6px 0 10px;
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  color: #0f172a;
+
+  :root[data-theme="dark"] & {
+    color: #f8fafc;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 22px;
+  }
+`;
+
+const StoreQrDesc = styled.p`
+  margin: 0 0 20px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: #64748b;
+  word-break: keep-all;
+
+  :root[data-theme="dark"] & {
+    color: #cbd5e1;
+  }
+`;
+
+const StoreQrImageWrap = styled.div`
+  width: min(100%, 240px);
+  margin: 0 auto;
+  padding: 14px;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.18);
+
+  :root[data-theme="dark"] & {
+    background: #ffffff;
+  }
+`;
+
+const StoreQrImage = styled.img`
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+`;
+
+const StoreQrCaption = styled.p`
+  margin: 16px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #94a3b8;
+`;
+
 
 /* ========== SVG 스트로크 로고 컴포넌트 ========== */
 type SvgStrokeLogoProps = {
@@ -3652,6 +4430,7 @@ function SvgStrokeLogo({
                        }: SvgStrokeLogoProps) {
   const rawId = useId().replace(/[:]/g, "");
   const strokeId = `stroke-${rawId}`;
+
   return (
       <svg
           width={size}
@@ -3659,31 +4438,34 @@ function SvgStrokeLogo({
           viewBox={`0 0 ${size} ${size}`}
           style={{ display: "block" }}
           xmlns="http://www.w3.org/2000/svg"
-          filter={`url(#${strokeId})`}
+          filter={stroke > 0 ? `url(#${strokeId})` : undefined}
       >
-        <defs>
-          <filter
-              id={strokeId}
-              x="-10%"
-              y="-10%"
-              width="120%"
-              height="120%"
-              colorInterpolationFilters="sRGB"
-          >
-            <feMorphology
-                in="SourceAlpha"
-                operator="dilate"
-                radius={stroke}
-                result="DILATE"
-            />
-            <feFlood floodColor={color} />
-            <feComposite in2="DILATE" operator="in" result="STROKE" />
-            <feMerge>
-              <feMergeNode in="STROKE" />
-              <feMergeNode in="SourceGraphic" />
-            </feMerge>
-          </filter>
-        </defs>
+        {stroke > 0 && (
+            <defs>
+              <filter
+                  id={strokeId}
+                  x="-10%"
+                  y="-10%"
+                  width="120%"
+                  height="120%"
+                  colorInterpolationFilters="sRGB"
+              >
+                <feMorphology
+                    in="SourceAlpha"
+                    operator="dilate"
+                    radius={stroke}
+                    result="DILATE"
+                />
+                <feFlood floodColor={color} />
+                <feComposite in2="DILATE" operator="in" result="STROKE" />
+                <feMerge>
+                  <feMergeNode in="STROKE" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+            </defs>
+        )}
+
         <image
             href={src}
             width={size}
@@ -3720,6 +4502,34 @@ export default function Main() {
   const [shouldHideNavbar, setShouldHideNavbar] = useState(false);
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [isOpenEventModalOpen, setIsOpenEventModalOpen] = useState(false);
+  const [storeModalType, setStoreModalType] = useState<StoreModalType>(null);
+  const productsSectionRef = useRef<HTMLElement | null>(null);
+
+  const searchTitle2Ref = useRef<HTMLHeadingElement | null>(null);
+  const [searchTitle2FillProgress, setSearchTitle2FillProgress] = useState(0);
+
+  const SEARCH_TITLE2_LINES = [
+    "면접으로 시작해 더 다양한 가치를 만드는데",
+    "함께 하세요",
+  ] as const;
+
+  const goToAiInterview = () => {
+    window.location.href = "http://localhost/vue-ai-interview/ai-interview/landing";
+  };
+
+  const scrollToProducts = () => {
+    if (!productsSectionRef.current) return;
+
+    const y =
+        productsSectionRef.current.getBoundingClientRect().top +
+        window.scrollY -
+        88;
+
+    window.scrollTo({
+      top: y,
+      behavior: "smooth",
+    });
+  };
 
   const revealStyle = (delayMs: number) =>
       ({ ["--reveal-delay" as any]: `${delayMs}ms` } as React.CSSProperties);
@@ -3730,6 +4540,37 @@ export default function Main() {
   //   }, 1500);
   //   return () => clearTimeout(timer);
   // }, []);
+
+  const renderSearchTitle2 = () => {
+    const totalChars = SEARCH_TITLE2_LINES.join("").replace(/\s/g, "").length;
+    let currentCharIndex = 0;
+
+    return SEARCH_TITLE2_LINES.map((line, lineIndex) => (
+        <SearchTitle2Line key={lineIndex}>
+          {[...line].map((char, charIndex) => {
+            if (char === " ") {
+              return <span key={`${lineIndex}-${charIndex}`}>&nbsp;</span>;
+            }
+
+            const active = Math.max(
+                0,
+                Math.min(1, searchTitle2FillProgress * totalChars - currentCharIndex)
+            );
+
+            currentCharIndex += 1;
+
+            return (
+                <SearchTitle2Char
+                    key={`${lineIndex}-${charIndex}`}
+                    $active={active}
+                >
+                  {char}
+                </SearchTitle2Char>
+            );
+          })}
+        </SearchTitle2Line>
+    ));
+  };
 
   useEffect(() => {
     const hideUntil = localStorage.getItem('openEventHideUntil');
@@ -3742,32 +4583,32 @@ export default function Main() {
 
   const FAQ_ITEMS = [
     {
-      q: "무료로 체험해 볼 수 있나요?",
-      a: "무료 체험 제공 여부는 플랜에 따라 다를 수 있어요. 자세한 내용은 문의해 주세요.",
+      q: "I-Poten은 어떤 서비스인가요?",
+      a: "I-Poten은 면접 준비에 필요한 학습, 퀴즈, AI 모의 면접, 피드백 리포트를 하나로 연결해 주는 서비스입니다. 단순히 질문과 답변을 외우는 방식이 아니라, 반복 학습과 실전 연습을 통해 나만의 답변과 면접 역량을 만들어 갈 수 있도록 돕습니다.",
     },
     {
-      q: "결제는 어떻게 하나요?",
-      a: "카드 등록을 통해 구독하거나 별도의 계산서 발급을 통해 결제할 수 있습니다.",
+      q: "무료로 이용할 수 있나요?",
+      a: "일부 기능은 무료로 이용할 수 있으며, 서비스 정책에 따라 체험 범위가 달라질 수 있습니다. 학습, 퀴즈, AI 모의 면접 등 세부 이용 범위는 추후 플랜에 따라 구분될 수 있습니다.",
     },
     {
-      q: "프로그램을 설치해야 하나요?",
-      a: "별도 설치 없이 웹에서 바로 이용할 수 있어요.",
+      q: "어떤 사람에게 적합한 서비스인가요?",
+      a: "취업을 준비하는 신입 구직자부터 이직을 준비하는 주니어, 경력 정리를 하고 싶은 시니어까지 폭넓게 활용할 수 있습니다. 직무별 핵심 개념 학습이 필요한 사용자, 실전 면접 연습이 필요한 사용자, 피드백을 통해 답변을 개선하고 싶은 사용자에게 특히 적합합니다.",
     },
     {
-      q: "회의실마다 디스플레이가 없어도 사용이 가능한가요?",
-      a: "디스플레이 없이도 기본 기능은 사용할 수 있으며, 디스플레이 연동은 선택 사항입니다.",
+      q: "별도 프로그램 설치가 필요한가요?",
+      a: "아니요. I-Poten은 웹 기반 서비스이기 때문에 별도의 프로그램 설치 없이 바로 이용할 수 있습니다. 브라우저만 있으면 학습, 퀴즈, AI 모의 면접, 결과 확인까지 한 곳에서 진행할 수 있습니다.",
     },
     {
-      q: "구축형 예약 시스템 도입도 가능한가요?",
-      a: "규모와 환경에 맞춘 구축/커스터마이징 도입도 가능합니다.",
+      q: "AI 모의 면접은 어떻게 진행되나요?",
+      a: "AI 모의 면접은 실제 면접처럼 질문에 답변하는 방식으로 진행되며, 사용자의 답변 내용을 바탕으로 피드백을 제공합니다. 답변의 흐름, 전달력, 보완할 점 등을 확인하면서 반복 연습에 활용할 수 있도록 구성됩니다.",
     },
     {
-      q: "디스플레이로 사용할 수 있는 기기는 무엇인가요?",
-      a: "모니터/태블릿 등 다양한 디스플레이 기기에서 사용할 수 있어요.",
+      q: "면접 결과나 피드백은 다시 확인할 수 있나요?",
+      a: "네. 면접 결과와 피드백은 리포트 형태로 다시 확인할 수 있으며, 마이페이지나 저장 기능을 통해 반복적으로 복기할 수 있습니다. 이를 통해 이전 답변과 현재 답변을 비교하며 성장 과정을 확인할 수 있습니다.",
     },
     {
-      q: "연동을 지원하는 서비스는 무엇인가요?",
-      a: "연동 지원 범위는 계속 확장 중이며, 필요한 서비스가 있다면 요청해 주세요.",
+      q: "학습한 내용은 퀴즈나 면접 연습과 연결되나요?",
+      a: "네. I-Poten은 단어 학습, 퀴즈, AI 모의 면접이 서로 연결되도록 설계되어 있습니다. 학습한 내용을 퀴즈로 점검하고, 이후 면접 답변에서 실제로 활용해 보면서 준비 과정을 자연스럽게 이어갈 수 있습니다.",
     },
   ] as const;
 
@@ -3845,10 +4686,33 @@ export default function Main() {
     return () => io.disconnect();
   }, []);
 
+  const injectFonts = () => {
+    const style = document.createElement("style");
+    style.textContent = `
+    @font-face {
+      font-family: 'InkLiquid';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/InkLipquid.woff') format('woff');
+      font-weight: normal;
+      font-display: swap;
+    }
+
+    @font-face {
+      font-family: 'IncheonEduJaramBold';
+      src: url('/fonts/IncheonEduJarambold.woff2') format('woff2');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+  `;
+    document.head.appendChild(style);
+  };
+
   useEffect(() => {
     // Mulmaru 폰트 주입
-    injectMulmaruFont();
-    
+    injectFonts();
+
     const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(min, v));
     const setProgress = (v: number) => {
       const next = clamp(v, 0, 1);
@@ -3932,19 +4796,24 @@ export default function Main() {
       setCirclesOpacity(scrollY < fadeStart ? 1 : newOpacity);
 
       // SearchTitle2 스크롤 애니메이션 및 navbar/footer 토글
-      const searchTitle2 = document.querySelector('[data-search-title2]');
+      const searchTitle2 = searchTitle2Ref.current;
       if (searchTitle2) {
         const rect = searchTitle2.getBoundingClientRect();
         const windowHeight = window.innerHeight;
-        // 요소가 화면 중간 정도에 도달하면 애니메이션 시작
+
         const triggerPoint = windowHeight * 0.65;
         setIsSearchTitle2Visible(rect.top < triggerPoint);
 
-        // SearchTitle2가 화면 상단을 지나가면 navbar 숨기고 footer 표시
+        const fillStart = windowHeight * 0.82;
+        const fillEnd = windowHeight * 0.28;
+        const rawProgress = (fillStart - rect.top) / (fillStart - fillEnd);
+        const nextFillProgress = Math.max(0, Math.min(1, rawProgress));
+
+        setSearchTitle2FillProgress(nextFillProgress);
+
         const shouldHide = rect.top < 0;
         setShouldHideNavbar(shouldHide);
 
-        // navbar와 footer 토글을 위한 이벤트 발생
         if (shouldHide) {
           window.dispatchEvent(new CustomEvent('hideNavbar', { detail: { hide: true } }));
         } else {
@@ -4052,6 +4921,26 @@ export default function Main() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!storeModalType) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setStoreModalType(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [storeModalType]);
+
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -4065,6 +4954,20 @@ export default function Main() {
                   ? 2
                   : 3;
   const activeStep = PROGRESS_STEPS[activeStepIndex] ?? PROGRESS_STEPS[0];
+
+  const storeModalTitle =
+      storeModalType === "google"
+          ? "Google Play 다운로드"
+          : storeModalType === "appstore"
+              ? "App Store 다운로드"
+              : "";
+
+  const storeModalQr =
+      storeModalType === "google"
+          ? googlePlayQr
+          : storeModalType === "appstore"
+              ? appStoreQr
+              : "";
 
   return (
       <Page>
@@ -4099,15 +5002,19 @@ export default function Main() {
 
               {/* 설명 */}
               <HeroDescText>
-                AI, I-Poten 솔루션으로<br />
-                당신의 면접과, 취업,<br />
-                합격과 성장에 필요한모든 것을 연결합니다.
+                AI 기반 I-Poten 솔루션으로<br />
+                당신의 면접과 취업, 합격 이후의 성장까지<br />
+                필요한 모든 것을 연결합니다.
               </HeroDescText>
 
               {/* CTA 버튼 */}
               <HeroBtnRow>
-                <HeroBtn>지금 시작하기</HeroBtn>
-                <HeroBtn>둘러보기</HeroBtn>
+                <HeroBtn type="button" onClick={goToAiInterview}>
+                  지금 시작하기
+                </HeroBtn>
+                <HeroBtn type="button" onClick={scrollToProducts}>
+                  둘러보기
+                </HeroBtn>
               </HeroBtnRow>
 
             </HeroContent>
@@ -4124,51 +5031,66 @@ export default function Main() {
         </HeroSection>
 
         <CloudTransitionWrap>
-          <SearchTitle2 data-search-title2 data-service-section $isVisible={isSearchTitle2Visible} style={{ textAlign: 'center' }}>
-            면접으로 시작해 더욱 다양한 가치를  <br/>
-            면접으로 시작해 더욱 다양한 가치를 만드는데 함께 하세요
+          <SearchTitle2
+              ref={searchTitle2Ref}
+              data-search-title2
+              data-service-section
+          >
+            {renderSearchTitle2()}
           </SearchTitle2>
 
           {/* Products Section */}
-          <ProductsSection data-products-section $isVisible={isProductsVisible}>
-          <ProductsGrid>
-            {/* Word Card 1 */}
-            <ProductCard $bgColor="#f8f9fa" $delay={0.1}>
-              <ProductTitle>단어학습</ProductTitle>
-              <ProductDesc>
-                면접에 자주 나오는 핵심 단어와<br />
-                실무 용어를 학습합니다
-              </ProductDesc>
-              <ProductImageWrap>
-                <img src={wordA} alt="단어학습" draggable={false} />
-              </ProductImageWrap>
-            </ProductCard>
+          <ProductsSection
+              ref={productsSectionRef}
+              data-products-section
+              $isVisible={isProductsVisible}
+          >
+            <ProductsGrid>
+              {/* Word Card 1 */}
+              <ProductCard $bgColor="#f8f9fa" $delay={0.1}>
+                <ProductTitle>단어학습</ProductTitle>
+                <ProductDesc>
+                  면접에 자주 나오는 핵심 단어와<br />
+                  실무 용어를 학습합니다
+                </ProductDesc>
+                <ProductImageWrap>
+                  <img src={word01} alt="단어학습" draggable={false} />
+                </ProductImageWrap>
+              </ProductCard>
 
-            {/* Word Card 2 */}
-            <ProductCard $bgColor="#f8f9fa" $delay={0.2}>
-              <ProductTitle>단어복습</ProductTitle>
-              <ProductDesc>
-                학습한 단어를 반복 학습하여<br />
-                완벽하게 내 것으로 만듭니다
-              </ProductDesc>
-              <ProductImageWrap>
-                <img src={wordA} alt="단어복습" draggable={false} />
-              </ProductImageWrap>
-            </ProductCard>
+              {/* Word Card 2 */}
+              <ProductCard $bgColor="#f8f9fa" $delay={0.2}>
+                <ProductTitle>단어복습</ProductTitle>
+                <ProductDesc>
+                  학습한 단어를 반복 학습하여<br />
+                  완벽하게 내 것으로 만듭니다
+                </ProductDesc>
+                <ProductImageWrap>
+                  <img src={note01} alt="단어복습" draggable={false} />
+                </ProductImageWrap>
+              </ProductCard>
 
-            {/* Interview Card */}
-            <ProductCard $bgColor="linear-gradient(135deg, #3b82f6 0%, #10b981 100%)" $delay={0.3}>
-              <ProductTitle $color="#ffffff">AI 모의면접</ProductTitle>
-              <ProductDesc $color="rgba(255, 255, 255, 0.95)">
-                실전처럼 연습하는 AI 면접<br />
-                실시간 피드백으로 합격률 향상
-              </ProductDesc>
-              <ProductCircleImageWrap>
-                <img src={InterviewA} alt="AI 모의면접" draggable={false} />
-              </ProductCircleImageWrap>
-            </ProductCard>
-          </ProductsGrid>
-        </ProductsSection>
+              {/* Interview Card */}
+              <ProductCard
+                  $featured
+                  $bgColor="linear-gradient(135deg, #5b8ef7 0%, #56d3c2 100%)"
+                  $delay={0.3}
+              >
+                <ProductTitle $color="#0f172a" $featured>
+                  AI 모의 면접
+                </ProductTitle>
+
+                <ProductDesc $color="rgba(15, 23, 42, 0.62)" $featured>
+                  실전처럼 연습하는 AI 면접<br />
+                  실시간 피드백으로 합격률 향상
+                </ProductDesc>
+
+                <ProductCircleImageWrap>
+                  <img src={interview01} alt="AI 모의 면접" draggable={false} />
+                </ProductCircleImageWrap>
+              </ProductCard>
+            </ProductsGrid>
+          </ProductsSection>
         </CloudTransitionWrap>
 
         {/*<ServiceSection>*/}
@@ -4205,12 +5127,13 @@ export default function Main() {
         <ProgressSection data-progress-section ref={progressSectionRef}>
           <ProgressKicker data-reveal style={revealStyle(0)}>I-POTEN FLOW</ProgressKicker>
           <ProgressTitle data-reveal style={revealStyle(100)}>
-            면접을 위한 모든 과정 함께
+            면접의 모든 과정을
             <br />
-            <ProgressTitleAccent>I-Poten</ProgressTitleAccent>
+            <ProgressTitleAccent>I-Poten</ProgressTitleAccent>과 함께
           </ProgressTitle>
           <ProgressDescription data-reveal style={revealStyle(220)}>
-            아래로 스크롤하면 진행 바가 자연스럽게 채워지며 각 단계가 나타납니다
+            면접 준비의 흐름을 따라
+            각 단계를 순차적으로 확인해 보세요
           </ProgressDescription>
           <ProgressTopSlot />
           <ProgressBarWrap>
@@ -4255,12 +5178,9 @@ export default function Main() {
             {/* Row 1 - Image Left, Content Right */}
             <CoreValueRow data-reveal style={revealStyle(100)}>
               <CoreValueImageCard>
-                <CoreValueImagePlaceholder>
-                  이미지 영역<br />
-                  (사용자가 추가 예정)
-                </CoreValueImagePlaceholder>
+                <CoreValueImage src={coreValue01} alt="I-Poten 핵심 가치 1" $fit="cover" />
               </CoreValueImageCard>
-              
+
               <CoreValueContent>
                 <CoreValueCardTitle>
                   정답을 외우는 면접은 끝났다<br />
@@ -4270,7 +5190,7 @@ export default function Main() {
                   AI가 단순히 정답을 알려주는 것이 아닌,<br />
                   당신만의 고유한 경험과 가치를 발견하고<br />
                   면접관에게 깊은 인상을 남기는<br />
-                  진정한 자기소개를 완성합니다.
+                  진정한 자기소개를 완성하도록 돕습니다.
                 </CoreValueCardDesc>
               </CoreValueContent>
             </CoreValueRow>
@@ -4278,12 +5198,9 @@ export default function Main() {
             {/* Row 2 - Content Left, Image Right (Reversed) */}
             <CoreValueRow $reverse data-reveal style={revealStyle(200)}>
               <CoreValueImageCard>
-                <CoreValueImagePlaceholder>
-                  이미지 영역<br />
-                  (사용자가 추가 예정)
-                </CoreValueImagePlaceholder>
+                <CoreValueImage src={coreValue02} alt="I-Poten 핵심 가치 2" $fit="cover" />
               </CoreValueImageCard>
-              
+
               <CoreValueContent>
                 <CoreValueCardTitle>
                   왜 떨어졌는지 모르는 면접은 그만<br />
@@ -4301,16 +5218,13 @@ export default function Main() {
             {/* Row 3 - Image Left, Content Right */}
             <CoreValueRow data-reveal style={revealStyle(300)}>
               <CoreValueImageCard>
-                <CoreValueImagePlaceholder>
-                  이미지 영역<br />
-                  (사용자가 추가 예정)
-                </CoreValueImagePlaceholder>
+                <CoreValueImage src={coreValue03} alt="I-Poten 핵심 가치 3" $fit="cover" />
               </CoreValueImageCard>
-              
+
               <CoreValueContent>
                 <CoreValueCardTitle>
                   합격하기 위한 면접을 넘어<br />
-                  합격할 수 밖에 없는 나를 만들어갑니다
+                  합격할 수밖에 없는 나를 만들어갑니다
                 </CoreValueCardTitle>
                 <CoreValueCardDesc>
                   일회성 합격이 아닌, 지속 가능한 성장을 추구합니다.<br />
@@ -4330,140 +5244,177 @@ export default function Main() {
             <GrowthTitle>
               면접의 경험과 준비는
               <br />
-              함께 발전하며, <span>내가 걸어온 길</span> 의 증명 입니다
+              함께 발전하며, <span>내가 걸어온 길</span>의 증명입니다
             </GrowthTitle>
           </GrowthHeader>
 
           <GrowthTimeline>
-            <GrowthCard $offset={0} data-reveal style={revealStyle(100)}>
+            <GrowthCard $offset={120} data-reveal style={revealStyle(100)}>
               <GrowthCardYear>신입</GrowthCardYear>
-              <GrowthCardTitle>나를 잠채력과 성장 가치 </GrowthCardTitle>
-              <GrowthCardDesc>
-                노력과 성장 가능성을
+              <GrowthCardTitle>
+                가능성을 증명하는
                 <br />
-                어필하며 ,,,,,,
+                첫 면접
+              </GrowthCardTitle>
+              <GrowthCardDesc>
+                배움의 과정과 성장 의지를 바탕으로
+                <br />
+                앞으로의 가능성을 설득력 있게 보여줍니다.
               </GrowthCardDesc>
             </GrowthCard>
 
             <GrowthCard $offset={60} data-reveal style={revealStyle(200)}>
               <GrowthCardYear>주니어</GrowthCardYear>
               <GrowthCardTitle>
-                나의 노력과 경험을 어필하는
+                경험으로 실력을 말하는
                 <br />
-                능력과 성장 ,,,,
+                성장의 면접
               </GrowthCardTitle>
               <GrowthCardDesc>
-                호호호홓호호
+                실무 경험과 프로젝트 성과를 통해
                 <br />
-                호호호홓호호
+                문제 해결 능력과 실행력을 보여줍니다.
               </GrowthCardDesc>
             </GrowthCard>
 
-            <GrowthCard $offset={120} data-reveal style={revealStyle(300)}>
+            <GrowthCard $offset={0} data-reveal style={revealStyle(300)}>
               <GrowthCardYear>시니어</GrowthCardYear>
               <GrowthCardTitle>
-                나의 가치를 증명하고 어필하는
+                가치와 영향력을 증명하는
                 <br />
-                라라랄ㄹ랄
+                완성의 면접
               </GrowthCardTitle>
               <GrowthCardDesc>
-                호호호홓호호
+                조직에 기여한 성과와 리더십을 바탕으로
                 <br />
-                호호호홓호호
+                더 큰 책임과 역할을 증명합니다.
               </GrowthCardDesc>
             </GrowthCard>
           </GrowthTimeline>
         </GrowthSection>
 
-      
         <LightShowcaseBand>
-          {/* 섹션 1: 기존 (이미지 왼쪽, 텍스트 오른쪽) */}
+          {/* 섹션 1: 포텐워드 */}
           <ShowcaseSection>
             <ShowcaseGrid>
               <ShowcaseVisual>
                 <div data-reveal style={revealStyle(0)}>
-                  <ShowcaseBaseFrame>
-                    <ShowcasePlaceholder />
-                  </ShowcaseBaseFrame>
+                  <ShowcaseFrameStack>
+                    <ShowcaseBaseFrame>
+                      <ShowcaseImage
+                          src={word02}
+                          alt="포텐워드 상세 화면"
+                          draggable={false}
+                      />
+                    </ShowcaseBaseFrame>
+
+                    <ShowcaseOverlayFrame
+                        data-reveal
+                        data-reveal-variant="fade"
+                        style={revealStyle(180)}
+                    >
+                      <ShowcaseImage
+                          src={word01}
+                          alt="포텐워드 메인 화면"
+                          draggable={false}
+                      />
+                    </ShowcaseOverlayFrame>
+                  </ShowcaseFrameStack>
                 </div>
-                <ShowcaseOverlayFrame data-reveal data-reveal-variant="fade" style={revealStyle(180)}>
-                  <ShowcasePlaceholder />
-                </ShowcaseOverlayFrame>
               </ShowcaseVisual>
 
-              <ShowcaseContent data-reveal style={revealStyle(100)}>
+              <ShowcaseContent $shiftX={-100} data-reveal style={revealStyle(100)}>
                 <ShowcaseTitle>
-                  빠르고
-                  <br />
-                  간편하게
-                  <br />
-                  공부 하세요.
+                  <ShowcaseTitleLine>필요한 용어만</ShowcaseTitleLine>
+                  <ShowcaseTitleLine>빠르게 찾으세요</ShowcaseTitleLine>
                 </ShowcaseTitle>
-                <ShowcaseSubTitle>면접을 위한 공부 어떻게 하시나요?</ShowcaseSubTitle>
+                <ShowcaseSubTitle>면접 준비의 시작, 포텐워드로 더 쉽게</ShowcaseSubTitle>
                 <ShowcaseDescription>
-                  나의 경험과 직무를 바탕으로
-                  <br />
-                  가장 적합한 핵심 키워드를 도출합니다.
+                  분야별로 꼭 필요한 IT 용어를 모아 4만 개 이상의 포텐워드를 한곳에서 검색하고, 상세한 설명과 연관 키워드로 더 넓고 깊게 학습할 수 있습니다.
                 </ShowcaseDescription>
               </ShowcaseContent>
             </ShowcaseGrid>
           </ShowcaseSection>
 
-          {/* 섹션 3: 다시 기본 (이미지 왼쪽, 텍스트 오른쪽) */}
+          {/* 섹션 2: 포텐노트 */}
           <ShowcaseSection>
             <ShowcaseGrid>
               <ShowcaseVisual>
                 <div data-reveal style={revealStyle(0)}>
-                  <ShowcaseBaseFrame>
-                    <ShowcasePlaceholder />
-                  </ShowcaseBaseFrame>
+                  <ShowcaseFrameStack>
+                    <ShowcaseBaseFrame>
+                      <ShowcaseImage
+                          src={note02}
+                          alt="포텐노트 반복 학습 화면"
+                          draggable={false}
+                      />
+                    </ShowcaseBaseFrame>
+
+                    <ShowcaseOverlayFrame
+                        data-reveal
+                        data-reveal-variant="fade"
+                        style={revealStyle(180)}
+                    >
+                      <ShowcaseImage
+                          src={note01}
+                          alt="포텐노트 메인 화면"
+                          draggable={false}
+                      />
+                    </ShowcaseOverlayFrame>
+                  </ShowcaseFrameStack>
                 </div>
-                <ShowcaseOverlayFrame data-reveal data-reveal-variant="fade" style={revealStyle(180)}>
-                  <ShowcasePlaceholder />
-                </ShowcaseOverlayFrame>
               </ShowcaseVisual>
 
-              <ShowcaseContent data-reveal style={revealStyle(100)}>
+              <ShowcaseContent $shiftX={-100} data-reveal style={revealStyle(100)}>
                 <ShowcaseTitle>
-                  상세한
-                  <br />
-                  피드백 리포트
+                  <ShowcaseTitleLine>나만의 학습을</ShowcaseTitleLine>
+                  <ShowcaseTitleLine>완성하세요</ShowcaseTitleLine>
                 </ShowcaseTitle>
-                <ShowcaseSubTitle>나의 강점과 약점 파악</ShowcaseSubTitle>
+                <ShowcaseSubTitle>모아두고, 가려보며, 반복해서 익히세요</ShowcaseSubTitle>
                 <ShowcaseDescription>
-                  면접이 끝난 후 제공되는 상세 리포트로
-                  <br />
-                  나의 부족한 점을 보완하세요.
+                  포텐노트에 학습하고 싶은 용어만 따로 모아 나만의 학습 목록으로 관리하고, 용어와 뜻을 가려가며 반복 학습과 진행 상황까지 한눈에 확인할 수 있습니다.
                 </ShowcaseDescription>
               </ShowcaseContent>
             </ShowcaseGrid>
           </ShowcaseSection>
 
-          {/* 섹션 3: 다시 기본 (이미지 왼쪽, 텍스트 오른쪽) */}
+          {/* 섹션 3: 포텐퀴즈 */}
           <ShowcaseSection>
             <ShowcaseGrid>
               <ShowcaseVisual>
                 <div data-reveal style={revealStyle(0)}>
-                  <ShowcaseBaseFrame>
-                    <ShowcasePlaceholder />
-                  </ShowcaseBaseFrame>
+                  <ShowcaseFrameStack>
+                    <ShowcaseBaseFrame>
+                      <ShowcaseImage
+                          src={quiz02}
+                          alt="포텐퀴즈 타임라인 화면"
+                          draggable={false}
+                      />
+                    </ShowcaseBaseFrame>
+
+                    <ShowcaseOverlayFrame
+                        data-reveal
+                        data-reveal-variant="fade"
+                        style={revealStyle(180)}
+                    >
+                      <ShowcaseImage
+                          src={quiz01}
+                          alt="포텐퀴즈 메인 화면"
+                          draggable={false}
+                      />
+                    </ShowcaseOverlayFrame>
+                  </ShowcaseFrameStack>
                 </div>
-                <ShowcaseOverlayFrame data-reveal data-reveal-variant="fade" style={revealStyle(180)}>
-                  <ShowcasePlaceholder />
-                </ShowcaseOverlayFrame>
               </ShowcaseVisual>
 
-              <ShowcaseContent data-reveal style={revealStyle(100)}>
+              <ShowcaseContent $shiftX={-100} data-reveal style={revealStyle(100)}>
                 <ShowcaseTitle>
-                  상세한
-                  <br />
-                  피드백 리포트
+                  <ShowcaseTitleLine>꾸준하게 확인하며</ShowcaseTitleLine>
+                  <ShowcaseTitleLine>실력을 쌓으세요</ShowcaseTitleLine>
                 </ShowcaseTitle>
-                <ShowcaseSubTitle>나의 강점과 약점 파악</ShowcaseSubTitle>
+                <ShowcaseSubTitle>퀴즈로 점검하고, 기록으로 성장하세요</ShowcaseSubTitle>
                 <ShowcaseDescription>
-                  면접이 끝난 후 제공되는 상세 리포트로
-                  <br />
-                  나의 부족한 점을 보완하세요.
+                  오늘의 퀴즈와 직무별 퀴즈로 원하는 분야와 난이도에 맞춰 학습하고, 퀴즈 타임라인으로 학습 기록과 성과를 한눈에 확인할 수 있습니다. 틀린 문제는 오답노트에 모아 복습이 필요한 문제만 다시 학습해 보세요.
                 </ShowcaseDescription>
               </ShowcaseContent>
             </ShowcaseGrid>
@@ -4487,12 +5438,12 @@ export default function Main() {
                   <ScheduleDarkTitle>
                     종합적 지표를 통해
                     <br />
-                    파악하세요.
+                    나의 면접 역량을 파악하세요.
                   </ScheduleDarkTitle>
                   <ScheduleDarkDescription>
-                    다양한 부분 점수와 종합 점수를 제공하여
+                    다양한 세부 점수와 종합 점수를 제공하여
                     <br />
-                    나의 상황과 발전
+                    현재 나의 상태와 성장 방향을 한눈에 확인할 수 있습니다.
                   </ScheduleDarkDescription>
                 </ScheduleDarkContent>
 
@@ -4525,14 +5476,11 @@ export default function Main() {
               <ScheduleLightCard data-reveal style={revealStyle(340)}>
                 <ScheduleLightCaption>
                   <ScheduleLightCaptionMuted>
-                    한번에
+                    한 번에
                     <br />
                     전반적인
                     <br />
-                    나의
-                    <br />
-                    면접
-
+                    나의 면접
                   </ScheduleLightCaptionMuted>
                   <ScheduleLightCaptionStrong>피드백!</ScheduleLightCaptionStrong>
                 </ScheduleLightCaption>
@@ -4547,12 +5495,12 @@ export default function Main() {
                   <ScheduleDarkTitle>
                     PDF 및 마이페이지에서
                     <br />
-                    영구적으로 간직하고 사용하세요
+                    면접 기록을 오래도록 보관하세요
                   </ScheduleDarkTitle>
                   <ScheduleDarkDescription>
-                    PDF 내보내기,
+                    PDF로 내보내거나
                     <br />
-                    마이페이지에서 나의 면접 기록들을!
+                    마이페이지에서 나의 면접 기록을 언제든 다시 확인할 수 있습니다.
                   </ScheduleDarkDescription>
                 </ScheduleDarkContent>
 
@@ -4568,18 +5516,15 @@ export default function Main() {
 
           <InsightsSection>
             <InsightsTitle data-reveal style={revealStyle(0)}>
-              실제 면접 데이터를 통해
-              <br />
-              <InsightsTitle2 data-reveal style={revealStyle(0)}>더욱 엄선된 면접을 제공합니다.</InsightsTitle2>
+              <InsightsTitleMuted>실제 면접 데이터를 통해</InsightsTitleMuted>
+              <InsightsTitleStrong>더욱 엄선된 면접을 제공합니다.</InsightsTitleStrong>
             </InsightsTitle>
 
             <InsightsPanel>
-
-
               <InsightsPanelInner>
                 <InsightsLeft data-reveal style={revealStyle(140)}>
                   <InsightsLeftTitle>
-                    실제,
+                    실제
                     <br />
                     <Highlight2>4,000여 개</Highlight2>의
                     <br />
@@ -4620,7 +5565,15 @@ export default function Main() {
 
                   <InsightsDashboardFrame>
                     <InsightsDashboardInner>
-                      <InsightsBackgroundImage src={interview5} alt="" />
+                      <InsightsBackgroundVideo
+                          autoPlay
+                          muted
+                          loop
+                          playsInline
+                          preload="auto"
+                      >
+                        <source src="/videos/interview.mp4" type="video/mp4" />
+                      </InsightsBackgroundVideo>
                     </InsightsDashboardInner>
                   </InsightsDashboardFrame>
                 </InsightsRight>
@@ -4630,17 +5583,23 @@ export default function Main() {
         </LightShowcaseBand>
 
         <WhiteBackground>
-          <PracticeSection>
-            <PracticeIcon data-reveal style={revealStyle(0)}><img style={{ width: "110px", height: "auto" }} src={image} /></PracticeIcon>
-            <PracticeTitle data-reveal style={revealStyle(120)}>
-              <DotStyle>"</DotStyle><PracticeHighlight2>면접</PracticeHighlight2><DotStyle>"</DotStyle> <br/>
-              <PracticeHighlight>지속적인 연습</PracticeHighlight>이 <br/>필요합니다
+          {/*<PracticeSection>*/}
+          {/*  <PracticeIcon data-reveal style={revealStyle(0)}>*/}
+          {/*    <img style={{ width: "110px", height: "auto" }} src={image} />*/}
+          {/*  </PracticeIcon>*/}
 
-            </PracticeTitle>
-            <PracticeDescription data-reveal style={revealStyle(240)}>
-              <SubTextStyle>면접은 지속적인 연습과 준비가 필요합니다 <br /><SubTextStyle2>I-Poten</SubTextStyle2>이 당신의 취업과 발전에 함께하겠습니다</SubTextStyle>
-            </PracticeDescription>
-          </PracticeSection>
+          {/*  <PracticeTitle data-reveal style={revealStyle(120)}>*/}
+          {/*    면접은 한 번의 준비보다*/}
+          {/*    <br />*/}
+          {/*    <PracticeHighlight>반복된 연습</PracticeHighlight>이 더 중요합니다*/}
+          {/*  </PracticeTitle>*/}
+
+          {/*  <PracticeDescription data-reveal style={revealStyle(240)}>*/}
+          {/*    실전 같은 연습과 꾸준한 준비를 통해*/}
+          {/*    <br />*/}
+          {/*    더 자신 있는 답변과 더 단단한 면접 역량을 만들어 보세요.*/}
+          {/*  </PracticeDescription>*/}
+          {/*</PracticeSection>*/}
 
           <FaqSection>
             <FaqTitle data-reveal style={revealStyle(0)}>자주 묻는 질문</FaqTitle>
@@ -4648,62 +5607,162 @@ export default function Main() {
               {FAQ_ITEMS.map((item, idx) => {
                 const isOpen = openFaqIndex === idx;
                 return (
-                    <FaqItem key={item.q}>
+                    <FaqItem key={item.q} $open={isOpen}>
                       <FaqButtonRow
                           type="button"
                           aria-expanded={isOpen}
                           onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
                       >
                         <FaqQuestion>{item.q}</FaqQuestion>
-                        <FaqToggle>{isOpen ? "×" : "+"}</FaqToggle>
+                        <FaqToggle $open={isOpen}>+</FaqToggle>
                       </FaqButtonRow>
-                      {isOpen ? <FaqAnswer>{item.a}</FaqAnswer> : null}
+
+                      <FaqAnswerWrap $open={isOpen} aria-hidden={!isOpen}>
+                        <FaqAnswerInner>
+                          <FaqAnswer $open={isOpen}>{item.a}</FaqAnswer>
+                        </FaqAnswerInner>
+                      </FaqAnswerWrap>
                     </FaqItem>
                 );
               })}
             </FaqList>
           </FaqSection>
 
-          <HomeFiveSection ref={sectionRef}>
-            <Hero>
-              <TitleBox data-reveal data-reveal-variant="fade" style={revealStyle(120)}>I-POTEN</TitleBox>
-              <h2>국내 최초, 개발자를 위한 AI 모의 면접 플랫폼</h2>
-              <p>
-                <BlueText>I-Poten</BlueText>은 진짜 면접처럼 연습하고, <br />
-                기업 맞춤 정보를 통해 자신 있게 면접을 준비할 수 있도록 돕습니다.
-              </p>
-            </Hero>
-            <Features data-reveal style={revealStyle(220)}>
-              <h2>
-                <BlueText>I-Poten</BlueText>은 이렇게 다릅니다
-              </h2>
-              <p>
-                단순한 질문 생성기가 아닙니다. <br />
-                각 기업이 요구하는 조건, 자주 묻는 질문, 실제 면접에서 사용된 질문을
-                수집하고 분석하여
-                <br />
-                사용자에게 맞춤형으로 제공하는 국내 최초 개발자 특화 면접 준비
-                사이트입니다.
-              </p>
-            </Features>
-            <Companies data-reveal style={revealStyle(320)}>
-              <h3>
-                현재 <BlueText>I-Poten</BlueText>이 지원하는 기업
-              </h3>
-              <LogoSlider>
-                <LogoTrack>
-                  {[logoDanggeun, logoToss, logoEncore, logoKT, logoDanggeun, logoToss, logoEncore, logoKT].map((src, i) => (
-                      <LogoItemWrap key={`${src}-${i}`}>
-                        <SvgStrokeLogo src={src} size={120} stroke={1} />
+          <Companies data-reveal style={revealStyle(320)}>
+            <CompaniesEyebrow>Supported Companies</CompaniesEyebrow>
+
+            <CompaniesTitle>
+              현재 I-Poten이 지원하는 기업
+            </CompaniesTitle>
+
+            <CompaniesDesc>
+              다양한 기업 면접 흐름과 준비 방향을 반영해
+              <br />
+              더 실전감 있게 면접을 준비할 수 있습니다.
+            </CompaniesDesc>
+
+            <LogoSlider>
+              <LogoTrack>
+                <LogoGroup>
+                  {COMPANY_LOGOS.map((logo, i) => (
+                      <LogoItemWrap key={`group1-${i}`} $width={logo.boxWidth}>
+                        <LogoImage
+                            src={logo.src}
+                            alt={logo.alt}
+                            draggable={false}
+                        />
                       </LogoItemWrap>
                   ))}
-                </LogoTrack>
-              </LogoSlider>
-            </Companies>
-            <ConfettiCanvas ref={canvasRef} />
-          </HomeFiveSection>
+                </LogoGroup>
 
+                <LogoGroup aria-hidden="true">
+                  {COMPANY_LOGOS.map((logo, i) => (
+                      <LogoItemWrap key={`group2-${i}`} $width={logo.boxWidth}>
+                        <LogoImage
+                            src={logo.src}
+                            alt={logo.alt}
+                            draggable={false}
+                        />
+                      </LogoItemWrap>
+                  ))}
+                </LogoGroup>
+              </LogoTrack>
+            </LogoSlider>
+          </Companies>
 
+          {/*<HomeFiveSection>*/}
+          {/*  <Hero>*/}
+          {/*    <TitleBox data-reveal data-reveal-variant="fade" style={revealStyle(120)}>*/}
+          {/*      I-POTEN*/}
+          {/*    </TitleBox>*/}
+
+          {/*    <h2>*/}
+          {/*      면접 준비의 흐름을*/}
+          {/*      <br />*/}
+          {/*      더 자연스럽게 연결합니다*/}
+          {/*    </h2>*/}
+
+          {/*    <p>*/}
+          {/*      학습, 연습, 피드백의 과정을 하나로 연결해*/}
+          {/*      <br />*/}
+          {/*      더 체계적이고 실전감 있는 면접 준비를 경험해 보세요.*/}
+          {/*    </p>*/}
+          {/*  </Hero>*/}
+
+          {/*  <Features data-reveal style={revealStyle(220)}>*/}
+          {/*    <h2>한 번의 연습이 아닌, 이어지는 준비</h2>*/}
+          {/*    <p>*/}
+          {/*      핵심 개념 학습부터 AI 모의면접과 리포트까지*/}
+          {/*      <br />*/}
+          {/*      I-Poten은 면접 준비 전 과정을 끊김 없이 이어줍니다.*/}
+          {/*    </p>*/}
+          {/*  </Features>*/}
+          {/*</HomeFiveSection>*/}
+
+          <MobilePromoSection>
+            <MobilePromoHead data-reveal style={revealStyle(0)}>
+              <MobilePromoEyebrow>Mobile App</MobilePromoEyebrow>
+              <MobilePromoTitle>모바일에서도 I-Poten을 만나보세요</MobilePromoTitle>
+              <MobilePromoDesc>
+                학습부터 퀴즈, AI 모의면접까지
+                <br />
+                언제 어디서나 I-Poten을 끊김 없이 이어갈 수 있습니다.
+              </MobilePromoDesc>
+            </MobilePromoHead>
+
+            <MobilePromoBanner data-reveal data-reveal-variant="fade" style={revealStyle(120)}>
+              <MobilePromoContent>
+                <MobilePromoLogo
+                    src={pageLogo}
+                    alt="i-POTEN"
+                    draggable={false}
+                />
+
+                <MobilePromoInsideTitle>
+                  App으로 더 편하게
+                </MobilePromoInsideTitle>
+
+                <MobilePromoInsideDesc>
+                  이동 중에도, 짧은 틈에도
+                  <br />
+                  I-Poten으로 면접 준비를 이어가 보세요.
+                </MobilePromoInsideDesc>
+
+                <MobileStoreRow>
+                  <MobileStoreActionButton
+                      type="button"
+                      aria-label="Google Play 다운로드"
+                      onClick={() => setStoreModalType("google")}
+                  >
+                    <MobileStoreButtonImg
+                        src={googlePlayBtn}
+                        alt="Google Play에서 다운로드"
+                        draggable={false}
+                    />
+                  </MobileStoreActionButton>
+
+                  <MobileStoreActionButton
+                      type="button"
+                      aria-label="App Store 다운로드"
+                      onClick={() => setStoreModalType("appstore")}
+                  >
+                    <MobileStoreButtonImg
+                        src={appStoreBtn}
+                        alt="App Store에서 다운로드"
+                        draggable={false}
+                    />
+                  </MobileStoreActionButton>
+                </MobileStoreRow>
+              </MobilePromoContent>
+
+              <MobilePromoImage
+                  src={mobileBanner}
+                  alt="i-Poten 애플리케이션 출시 배너"
+                  draggable={false}
+                  loading="lazy"
+              />
+            </MobilePromoBanner>
+          </MobilePromoSection>
         </WhiteBackground>
 
 
@@ -4723,6 +5782,38 @@ export default function Main() {
             isOpen={isOpenEventModalOpen}
             onClose={() => setIsOpenEventModalOpen(false)}
         />
+        {storeModalType && (
+            <StoreQrModalOverlay onClick={() => setStoreModalType(null)}>
+              <StoreQrModalCard onClick={(e) => e.stopPropagation()}>
+                <StoreQrCloseButton
+                    type="button"
+                    aria-label="QR 모달 닫기"
+                    onClick={() => setStoreModalType(null)}
+                >
+                  ×
+                </StoreQrCloseButton>
+
+                <StoreQrTitle>{storeModalTitle}</StoreQrTitle>
+                <StoreQrDesc>
+                  스마트폰 카메라로 QR을 스캔해
+                  <br />
+                  I-Poten 앱 다운로드 페이지로 이동하세요.
+                </StoreQrDesc>
+
+                <StoreQrImageWrap>
+                  <StoreQrImage
+                      src={storeModalQr}
+                      alt={`${storeModalTitle} QR 코드`}
+                      draggable={false}
+                  />
+                </StoreQrImageWrap>
+
+                <StoreQrCaption>
+                  버튼을 누르거나 바깥 영역을 클릭하면 닫을 수 있습니다.
+                </StoreQrCaption>
+              </StoreQrModalCard>
+            </StoreQrModalOverlay>
+        )}
       </Page>
   );
 }
