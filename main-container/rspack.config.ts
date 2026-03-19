@@ -108,7 +108,8 @@ export default defineConfig({
       "process.env.REACT_NAVIGATION_APP": JSON.stringify(process.env.REACT_NAVIGATION_APP),
       "process.env.REACT_STUDYROOM_APP": JSON.stringify(process.env.REACT_STUDYROOM_APP),
       "process.env.REACT_MYPAGE_APP": JSON.stringify(process.env.REACT_MYPAGE_APP),
-      "process.env.REACT_POTEN_WORD_APP": JSON.stringify(process.env.REACT_POTEN_WORD_APP)
+      "process.env.REACT_POTEN_WORD_APP": JSON.stringify(process.env.REACT_POTEN_WORD_APP),
+      "process.env.REACT_APP_API_BASE_URL": JSON.stringify(process.env.REACT_APP_API_BASE_URL),
     }),
     new ModuleFederationPlugin(mfConfig),
 
