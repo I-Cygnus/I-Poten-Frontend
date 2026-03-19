@@ -20,7 +20,7 @@ import sampleLiquidGlass from "../../assets/wordcards/liquid-glass.png";
 import sampleAgenticAI from "../../assets/wordcards/agentic-ai.png";
 import sampleGoldenPath from "../../assets/wordcards/golden-path.png";
 import sampleIDP from "../../assets/wordcards/idp.png";
-import sampleAgentOps from "../../assets/wordcards/agent-ops.png";
+import sampleAgentOps from "../../assets/wordcards/agent-ops.jpg";
 import sampleConfidentialAI from "../../assets/wordcards/confidential-ai.png";
 import samplePlatformAsAProduct from "../../assets/wordcards/platform-as-a-product.png";
 import samplePlatformEngineering from "../../assets/wordcards/platform-engineering.png";
@@ -80,6 +80,13 @@ const NEW_ARRIVALS_SAMPLE: NewArrivalItem[] = [
         imageUrl: sampleAgenticAI,
     },
     {
+        id: "agent-ops",
+        title: "AgentOps",
+        description:
+            "LLM 에이전트를 운영 가능한 서비스로 만들기 위한 운영 체계입니다. 실행 로그·비용·지연시간·실패 재시도를 관측하고 가드레일로 안전하게 통제합니다.",
+        imageUrl: sampleAgentOps,
+    },
+    {
         id: "idp",
         title: "내부 개발자 플랫폼(IDP)",
         description:
@@ -92,13 +99,6 @@ const NEW_ARRIVALS_SAMPLE: NewArrivalItem[] = [
         description:
             "조직이 권장하는 표준 개발 흐름을 가장 쉬운 길로 제공하는 접근입니다. CI/CD, 보안 스캔, 관측성을 기본 포함해 빠르고 안전한 배포를 유도합니다.",
         imageUrl: sampleGoldenPath,
-    },
-    {
-        id: "agent-ops",
-        title: "AgentOps",
-        description:
-            "LLM 에이전트를 운영 가능한 서비스로 만들기 위한 운영 체계입니다. 실행 로그·비용·지연시간·실패 재시도를 관측하고 가드레일로 안전하게 통제합니다.",
-        imageUrl: sampleAgentOps,
     },
     {
         id: "confidential-ai",
@@ -115,18 +115,18 @@ const NEW_ARRIVALS_SAMPLE: NewArrivalItem[] = [
         imageUrl: samplePlatformAsAProduct,
     },
     {
-        id: "platform-engineering",
-        title: "Platform Engineering",
-        description:
-            "개발자 경험을 높이기 위해 공통 인프라를 셀프서비스 플랫폼으로 제공하는 분야입니다. 표준 템플릿과 골든 패스로 빠르고 안전한 개발 흐름을 만듭니다.",
-        imageUrl: samplePlatformEngineering,
-    },
-    {
         id: "sbom",
         title: "SBOM(Software Bill of Materials)",
         description:
             "소프트웨어에 포함된 라이브러리와 버전 목록을 문서화한 구성요소 명세입니다. 취약점(CVE) 대응 시 영향 범위를 빠르게 파악하고 패치를 우선순위화합니다.",
         imageUrl: sampleSBOM,
+    },
+    {
+        id: "platform-engineering",
+        title: "Platform Engineering",
+        description:
+            "개발자 경험을 높이기 위해 공통 인프라를 셀프서비스 플랫폼으로 제공하는 분야입니다. 표준 템플릿과 골든 패스로 빠르고 안전한 개발 흐름을 만듭니다.",
+        imageUrl: samplePlatformEngineering,
     },
     {
         id: "shadow-ai",
@@ -1233,6 +1233,38 @@ export default function SearchPage() {
         };
     }, []);
 
+    const openLoginRequiredModal = useCallback(
+        (
+            description = "로그인하신 후 이용할 수 있어요.",
+            loginUrl = "/login"
+        ) => {
+            showMessage({
+                tone: "warning",
+                title: "로그인이 필요합니다",
+                description,
+                actions: [
+                    {
+                        label: "닫기",
+                        tone: "normal",
+                        autoClose: true,
+                    },
+                    {
+                        label: "로그인하러 가기",
+                        tone: "primary",
+                        onClick: () => navigate(loginUrl),
+                        autoClose: true,
+                    },
+                ],
+            });
+        },
+        [showMessage, navigate]
+    );
+
+    const isLoggedInForNoteAction = useCallback(() => {
+        if (typeof window === "undefined") return false;
+        return !!window.localStorage.getItem("isLoggedIn");
+    }, []);
+
     /** URL params */
     const q = (params.get("q") ?? "").trim();
     const tag = params.get("tag") ?? "";
@@ -1575,6 +1607,14 @@ export default function SearchPage() {
     /** 단일/벌크 저장 트리거 */
     const handleAddClick = useCallback(
         async (termId: number) => {
+            if (!isLoggedInForNoteAction()) {
+                openLoginRequiredModal(
+                    "로그인하신 후 단어를 내 포텐노트에 저장할 수 있어요.",
+                    "/vue-account/account/login"
+                );
+                return;
+            }
+
             const hasSelection = selectedIds.size > 0;
 
             if (hasSelection) {
@@ -1588,42 +1628,63 @@ export default function SearchPage() {
 
             try {
                 setNotebooks(await fetchUserFolders());
+                setMoveOpen(true);
             } catch (e: any) {
                 if (e?.response?.status === 401) {
-                    alert("로그인이 필요합니다.");
-                    navigate("/login");
+                    openLoginRequiredModal(
+                        "로그인하신 후 단어를 내 포텐노트에 저장할 수 있어요.",
+                        "/vue-account/account/login"
+                    );
                     return;
                 }
                 setNotebooks([]);
+                showMessage({
+                    tone: "error",
+                    title: "포텐노트를 불러오지 못했어요",
+                    description: "잠시 후 다시 시도해 주세요.",
+                });
             }
-
-            setMoveOpen(true);
         },
-        [selectedIds, navigate]
+        [selectedIds, isLoggedInForNoteAction, openLoginRequiredModal, showMessage]
     );
 
     /** 직무 저장 함수 */
     const handleJobPlusClick = useCallback(
         async (e: React.MouseEvent, job: JobGroup) => {
             e.stopPropagation();
+
+            if (!isLoggedInForNoteAction()) {
+                openLoginRequiredModal(
+                    "로그인하신 후 직무별 추천 포텐워드를 내 포텐노트에 저장할 수 있어요.",
+                    "/vue-account/account/login"
+                );
+                return;
+            }
+
             setSelectedJob(job);
 
             try {
                 const folders = await fetchUserFolders();
                 setNotebooks(folders);
+                setNoteModalOpen(true);
             } catch (err: any) {
                 if (err?.response?.status === 401) {
-                    alert("로그인이 필요합니다.");
-                    navigate("/login");
+                    openLoginRequiredModal(
+                        "로그인하신 후 직무별 추천 포텐워드를 내 포텐노트에 저장할 수 있어요.",
+                        "/vue-account/account/login"
+                    );
                     return;
                 }
                 console.error("[fetchUserFolders] 실패:", err);
                 setNotebooks([]);
+                showMessage({
+                    tone: "error",
+                    title: "포텐노트를 불러오지 못했어요",
+                    description: "잠시 후 다시 시도해 주세요.",
+                });
             }
-
-            setNoteModalOpen(true);
         },
-        [navigate]
+        [isLoggedInForNoteAction, openLoginRequiredModal, showMessage]
     );
 
     const handleSaveJobToNotebook = useCallback(
@@ -1688,12 +1749,7 @@ export default function SearchPage() {
                 const s = err?.response?.status;
 
                 if (s === 401) {
-                    showMessage({
-                        tone: "warning",
-                        title: "로그인이 필요합니다",
-                        description: "로그인 후 다시 시도해 주세요.",
-                    });
-                    navigate("/login");
+                    openLoginRequiredModal("로그인 세션이 만료되었어요. 다시 로그인한 후 저장해 주세요.");
                 } else if (s === 403) {
                     showMessage({
                         tone: "warning",
@@ -1719,31 +1775,52 @@ export default function SearchPage() {
                 setSaving(false);
             }
         },
-        [selectedJob, saving, navigate, showMessage]
+        [selectedJob, saving, showMessage, openLoginRequiredModal]
     );
 
     /** 액션바 '내 포텐노트에 저장하기' */
     const openBulkSave = useCallback(async () => {
         const ids = Array.from(selectedIds);
+
         if (ids.length === 0) {
-            alert("먼저 단어를 선택해 주세요.");
+            showMessage({
+                tone: "info",
+                title: "선택된 항목이 없어요",
+                description: "먼저 저장할 단어를 선택해 주세요.",
+            });
             return;
         }
+
+        if (!isLoggedInForNoteAction()) {
+            openLoginRequiredModal(
+                "로그인하신 후 선택한 단어를 내 포텐노트에 저장할 수 있어요.",
+                "/vue-account/account/login"
+            );
+            return;
+        }
+
         setSelectedTermId(null);
         setPendingTermIds(ids);
 
         try {
             setNotebooks(await fetchUserFolders());
+            setMoveOpen(true);
         } catch (e: any) {
             if (e?.response?.status === 401) {
-                alert("로그인이 필요합니다.");
-                navigate("/login");
+                openLoginRequiredModal(
+                    "로그인하신 후 선택한 단어를 내 포텐노트에 저장할 수 있어요.",
+                    "/vue-account/account/login"
+                );
                 return;
             }
             setNotebooks([]);
+            showMessage({
+                tone: "error",
+                title: "포텐노트를 불러오지 못했어요",
+                description: "잠시 후 다시 시도해 주세요.",
+            });
         }
-        setMoveOpen(true);
-    }, [selectedIds, navigate]);
+    }, [selectedIds, showMessage, isLoggedInForNoteAction, openLoginRequiredModal]);
 
     /** 벌크 응답 파싱 */
     type BulkParsed = {
@@ -1790,7 +1867,11 @@ export default function SearchPage() {
                     pendingTermIds && pendingTermIds.length > 0 ? pendingTermIds : selectedTermId ? [selectedTermId] : [];
 
                 if (idsToSave.length === 0) {
-                    alert("저장할 항목이 없어요.");
+                    showMessage({
+                        tone: "info",
+                        title: "저장할 항목이 없어요",
+                        description: "저장할 단어를 먼저 선택해 주세요.",
+                    });
                     return;
                 }
 
@@ -1852,7 +1933,7 @@ export default function SearchPage() {
             } catch (err: any) {
                 const s = err?.response?.status;
                 if (s === 401) {
-                    showMessage({ tone: "warning", title: "로그인이 필요합니다", description: "로그인 후 다시 시도해 주세요." });
+                    openLoginRequiredModal("로그인 세션이 만료되었어요. 다시 로그인한 후 저장해 주세요.");
                 } else if (s === 403) {
                     showMessage({ tone: "warning", title: "접근 권한이 없어요", description: "해당 포텐노트에 접근할 수 없습니다." });
                 } else if (s === 404) {
@@ -1869,7 +1950,7 @@ export default function SearchPage() {
                 setSaving(false);
             }
         },
-        [pendingTermIds, selectedTermId, saving, clearAllSelected, savedEver, showMessage]
+        [pendingTermIds, selectedTermId, saving, clearAllSelected, savedEver, showMessage, openLoginRequiredModal]
     );
 
     /** 용어 카드 1장씩 등장 */
@@ -2074,6 +2155,9 @@ export default function SearchPage() {
                                                                 tags={t.tags}
                                                                 onTagClick={handleTagClick}
                                                                 onAdd={handleAddClick}
+                                                                onRequireAuth={(message, loginUrl) => {
+                                                                    openLoginRequiredModal(message, loginUrl);
+                                                                }}
                                                             />
                                                         </AlignWithCheck>
                                                     </CardWrap>

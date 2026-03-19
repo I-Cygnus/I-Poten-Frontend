@@ -46,13 +46,46 @@ export default function QuizHomePage() {
     const nav = useNavigate();
     const location = useLocation();
 
-    const requireLogin = useCallback((redirect?: string) => {
-        const loggedIn = !!localStorage.getItem("isLoggedIn");
-        if (loggedIn) return true;
+    const openLoginRequiredModal = useCallback(
+        (
+            description = "로그인하신 후 이용할 수 있어요.",
+            redirect?: string
+        ) => {
+            openSys({
+                tone: "warning",
+                title: "로그인이 필요합니다",
+                description,
+                actions: [
+                    {
+                        label: "닫기",
+                        tone: "normal",
+                        autoClose: true,
+                    },
+                    {
+                        label: "로그인하러 가기",
+                        tone: "primary",
+                        onClick: () => goToAccountLogin(redirect ?? (location.pathname + location.search)),
+                        autoClose: true,
+                    },
+                ],
+            });
+        },
+        [location.pathname, location.search]
+    );
 
-        goToAccountLogin(redirect ?? (location.pathname + location.search));
-        return false;
-    }, [location.pathname, location.search]);
+    const requireLogin = useCallback(
+        (redirect?: string, description = "로그인하신 후 이용할 수 있어요.") => {
+            const loggedIn =
+                typeof window !== "undefined" &&
+                !!window.localStorage.getItem("isLoggedIn");
+
+            if (loggedIn) return true;
+
+            openLoginRequiredModal(description, redirect);
+            return false;
+        },
+        [openLoginRequiredModal]
+    );
 
     const slides = useMemo(
         () => [
@@ -313,7 +346,7 @@ export default function QuizHomePage() {
     }, [len]);
 
     const onStart = useCallback(() => {
-        if (!requireLogin("/learning/quiz")) return;
+        if (!requireLogin("/learning/quiz", "로그인하신 후 오늘의 퀴즈를 시작할 수 있어요.")) return;
 
         console.log("[daily] onStart", slides[idx].id, "dailyLoading=", dailyLoading, "inFlight=", dailyInFlightRef.current);
         const id = slides[idx].id;
@@ -511,7 +544,6 @@ export default function QuizHomePage() {
     const startInFlightRef = React.useRef(false);
 
     const onConfirmStart = async () => {
-        if (!requireLogin("/learning/quiz")) return;
 
         if (loading) return;
         if (startInFlightRef.current) return;
@@ -988,9 +1020,14 @@ export default function QuizHomePage() {
                             type="button"
                             role="listitem"
                             onClick={() => {
-                                if (a.id === "a3") {
-                                    if (!requireLogin(a.to)) return;
+                                if (a.id === "a2") {
+                                    if (!requireLogin(a.to, "로그인하신 후 퀴즈 타임라인을 확인할 수 있어요.")) return;
                                 }
+
+                                if (a.id === "a3") {
+                                    if (!requireLogin(a.to, "로그인하신 후 오답노트를 확인할 수 있어요.")) return;
+                                }
+
                                 nav(a.to);
                             }}
                             aria-label={a.label}
@@ -1030,7 +1067,7 @@ export default function QuizHomePage() {
                                         data-jobcard="1"
                                         style={{ ['--reveal-delay' as any]: `${(i % 3) * 70}ms` }}  // 0ms, 70ms, 140ms 반복
                                         onClick={() => {
-                                            if (!requireLogin("/learning/quiz")) return;
+                                            if (!requireLogin("/learning/quiz", "로그인하신 후 직무별 퀴즈를 설정할 수 있어요.")) return;
 
                                             setTopic({ ...it, groupId: group.id });
                                             setTitleTouched(false);

@@ -6,6 +6,7 @@ import { fetchMyFoldersWithStats } from "../../api/folderStats.ts";
 import { goToAccountLogin } from "../../utils/auth.ts";
 import { NarrowLeft } from "../../styles/layout.ts";
 import { usePotenDialog } from "../../components/common/PotenDialog.tsx";
+import SystemMessageModal, { SystemMessage } from "../../components/common/SystemMessageModal.tsx";
 
 /* ===== UI tokens (WordbookFolderPage와 일치) ===== */
 const UI = {
@@ -781,13 +782,56 @@ export default function PotenNoteHomePage() {
 
     const dialogs = usePotenDialog();
 
+    const [systemMessage, setSystemMessage] = React.useState<SystemMessage | null>(null);
+    const [systemOpen, setSystemOpen] = React.useState(false);
+
+    const showMessage = React.useCallback((msg: SystemMessage) => {
+        setSystemMessage(msg);
+        setSystemOpen(true);
+    }, []);
+
+    const openLoginRequiredModal = React.useCallback(
+        (description = "로그인하신 후 이용할 수 있어요.") => {
+            showMessage({
+                tone: "warning",
+                title: "로그인이 필요합니다",
+                description,
+                actions: [
+                    {
+                        label: "닫기",
+                        tone: "normal",
+                        autoClose: true,
+                    },
+                    {
+                        label: "로그인하러 가기",
+                        tone: "primary",
+                        onClick: () => goToAccountLogin(location.pathname + location.search),
+                        autoClose: true,
+                    },
+                ],
+            });
+        },
+        [showMessage, location.pathname, location.search]
+    );
+
+    const ensureLoggedInForCreateFolder = React.useCallback(async () => {
+        const loggedIn =
+            typeof window !== "undefined" &&
+            !!window.localStorage.getItem("isLoggedIn");
+
+        if (loggedIn) return true;
+
+        openLoginRequiredModal("로그인하신 후 새 폴더를 만들 수 있어요.");
+        return false;
+    }, [openLoginRequiredModal]);
+
     // 로그인 가드
-    React.useEffect(() => {
-        const loggedIn = !!localStorage.getItem("isLoggedIn");
-        if (!loggedIn) {
-            goToAccountLogin(location.pathname + location.search);
-        }
-    }, [location.pathname, location.search]);
+    // React.useEffect(() => {
+    //     const loggedIn = !!localStorage.getItem("isLoggedIn");
+    //     if (!loggedIn) {
+    //         goToAccountLogin(location.pathname + location.search);
+    //     }
+    // }, [location.pathname, location.search]);
 
     // 목록
     const [all, setAll] = React.useState<Folder[]>([]);
@@ -835,6 +879,9 @@ export default function PotenNoteHomePage() {
     };
 
     const createFolder = async () => {
+        const canContinue = await ensureLoggedInForCreateFolder();
+        if (!canContinue) return;
+
         const name = await dialogs.prompt({
             title: "새 폴더 만들기",
             label: "폴더 이름",
@@ -852,13 +899,25 @@ export default function PotenNoteHomePage() {
             },
         });
         if (!name) return;
+
         try {
-            const { data } = await http.post("/me/folders", { wordbookName: name }, { headers: { ...authHeader() } });
+            const { data } = await http.post(
+                "/me/folders",
+                { wordbookName: name },
+                { headers: { ...authHeader() } }
+            );
+
             setAll((prev) => [
-                { id: data.id, name: data.wordbookName ?? name, termCount: 0, learnedCount: 0, updatedAt: new Date().toISOString() },
+                {
+                    id: data.id,
+                    name: data.wordbookName ?? name,
+                    termCount: 0,
+                    learnedCount: 0,
+                    updatedAt: new Date().toISOString(),
+                },
                 ...prev,
             ]);
-            setTotal((t) => (typeof t === "number" ? (t || 0) + 1 : 1)); // ⚡ 추가
+            setTotal((t) => (typeof t === "number" ? (t || 0) + 1 : 1));
         } catch (e: any) {
             await dialogs.alert({
                 title: "폴더 생성에 실패했습니다.",
@@ -895,17 +954,10 @@ export default function PotenNoteHomePage() {
                 const qStr = q.trim() || undefined;
                 const call = (p: number) =>
                     fetchMyFoldersWithStats({
-                        // page index 다양한 명칭 동시 지원
                         page: p,
-                        pageIndex: p,
-                        pageNo: p + 1,
-                        // page size 다양한 명칭 동시 지원
-                        size: perPage,
-                        limit: perPage,
                         perPage,
                         sort: sortToServer(sortKey),
                         q: qStr,
-                        _ts: Date.now()
                     });
 
                 // 1) 호출
@@ -1292,6 +1344,15 @@ export default function PotenNoteHomePage() {
                 </>
             )}
             {menuFor !== null && <GlobalOverlay onClick={closeMenu} />}
+
+            <SystemMessageModal
+                open={systemOpen}
+                message={systemMessage}
+                onClose={() => {
+                    setSystemOpen(false);
+                    setSystemMessage(null);
+                }}
+            />
         </NarrowLeft>
     );
 }

@@ -8,16 +8,64 @@ export type FolderSummary = {
     updatedAt?: string | null;
 };
 
-export async function fetchMyFoldersWithStats(params: {
+type FetchMyFoldersWithStatsParams = {
     page?: number;       // 0-base
     perPage?: number;    // 기본 20
     sort?: string;       // "sortOrder,asc" | "name,desc" | "updatedAt,desc" ...
     q?: string;
-}) {
+};
+
+function pickTotal(data: any, headers?: any): number {
+    const headerRaw =
+        headers?.["x-total-count"] ?? headers?.["X-Total-Count"];
+    const headerTotal = Number(headerRaw);
+
+    if (Number.isFinite(headerTotal)) return headerTotal;
+
+    const candidates = [
+        data?.total,
+        data?.totalItems,
+        data?.totalElements,
+        data?.totalCount,
+        data?.page?.totalElements,
+        data?.pagination?.total,
+        data?.meta?.total,
+        data?.meta?.totalItems,
+    ];
+
+    for (const value of candidates) {
+        const n = Number(value);
+        if (Number.isFinite(n) && n >= 0) return n;
+    }
+
+    return 0;
+}
+
+function pickItems(data: any): any[] {
+    if (Array.isArray(data)) return data;
+    if (Array.isArray(data?.content)) return data.content;
+    if (Array.isArray(data?.items)) return data.items;
+    if (Array.isArray(data?.folders)) return data.folders;
+    if (Array.isArray(data?.list)) return data.list;
+    if (Array.isArray(data?.data?.items)) return data.data.items;
+    return [];
+}
+
+export async function fetchMyFoldersWithStats(params: FetchMyFoldersWithStatsParams) {
     const { page, perPage = 20, sort = "sortOrder,asc", q } = params || {};
 
+    const queryParams: Record<string, any> = {
+        sort,
+        q,
+    };
+
+    if (page != null) {
+        queryParams.page = page;
+        queryParams.perPage = perPage;
+    }
+
     const res = await http.get("/me/wordbook/folders/stats", {
-        params: page == null ? {} : { page, perPage, sort, q },
+        params: queryParams,
         headers: { ...authHeader() },
         withCredentials: true,
         validateStatus: () => true,
@@ -31,28 +79,23 @@ export async function fetchMyFoldersWithStats(params: {
         throw new Error(msg);
     }
 
-    const isPaged = page != null;
+    const rawItems = pickItems(res.data);
 
-    // 1) 헤더 total 시도
-    const rawHeader =
-        res.headers?.["x-total-count"] ?? res.headers?.["X-Total-Count"];
-    const headerTotal = Number(rawHeader);
-    const headerOk = Number.isFinite(headerTotal);
+    const items: FolderSummary[] = rawItems.map((item: any) => ({
+        id: Number(item.id),
+        name: item.name ?? item.wordbookName ?? "이름없음",
+        termCount: Number(item.termCount ?? 0),
+        learnedCount:
+            item.learnedCount == null ? null : Number(item.learnedCount),
+        updatedAt: item.updatedAt ?? null,
+    }));
 
-    // 2) items 파싱
-    const items: FolderSummary[] = isPaged
-        ? (Array.isArray(res.data) ? (res.data as any[]) : [])
-        : (Array.isArray(res.data?.folders) ? (res.data.folders as any[]) : []);
-
-    // 3) total 계산: 헤더가 없으면 "현재 페이지 길이"로 fallback
-    const total = isPaged
-        ? (headerOk ? headerTotal : items.length)
-        : items.length;
+    const total = pickTotal(res.data, res.headers) || items.length;
 
     return {
         items,
         total,
         page: page ?? 0,
-        perPage: isPaged ? perPage : items.length,
+        perPage: page != null ? perPage : items.length,
     };
 }
