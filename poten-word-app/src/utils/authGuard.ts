@@ -91,6 +91,11 @@ export type AuthGuardOptions = {
 
     /** true면 alert/confirm 없이 바로 이동(무음) @default false */
     silent?: boolean;
+
+    onRequireAuth?: (payload: {
+        message: string;
+        loginUrl: string;
+    }) => void;
 };
 
 /**
@@ -140,17 +145,6 @@ export function ensureAuthOrAlertRedirect(
 
     try {
         // 3) 안내/확인 또는 무음 처리
-        const promptType = options?.promptType ?? "alert";
-        let proceed = options?.silent
-            ? true
-            : (promptType === "confirm"
-                ? confirm(message) // 확인:true / 취소:false
-                : (alert(message), true)); // alert 후 진행
-
-        // 취소한 경우: 원동작 중단, 현재 페이지 유지
-        if (!proceed) return false;
-
-        // 4) 리다이렉트 대상 URL 구성
         const getCurrentUrl =
             options?.getCurrentUrl ??
             (() =>
@@ -163,6 +157,28 @@ export function ensureAuthOrAlertRedirect(
         const base = options?.loginBase ?? loginBase;
         const param = options?.returnParamKey ?? "returnUrl";
         const dest  = `${base}?${encodeURIComponent(param)}=${encodeURIComponent(getCurrentUrl())}`;
+
+        // 커스텀 UI(SystemMessageModal 등)를 쓰는 경우 브라우저 alert/confirm 대신 위임
+        if (options?.onRequireAuth) {
+            options.onRequireAuth({
+                message,
+                loginUrl: dest,
+            });
+            return false;
+        }
+
+        const promptType = options?.promptType ?? "alert";
+        let proceed = options?.silent
+            ? true
+            : (promptType === "confirm"
+                ? confirm(message) // 확인:true / 취소:false
+                : (alert(message), true)); // alert 후 진행
+
+        // 취소한 경우: 원동작 중단, 현재 페이지 유지
+        if (!proceed) return false;
+
+        // 4) 리다이렉트 대상 URL 구성
+        // onRequireAuth가 없는 기존 호출부는 아래 이동 로직을 그대로 사용
 
         // 5) 이동
         if (options?.navigate) {

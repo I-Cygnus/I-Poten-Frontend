@@ -102,6 +102,7 @@ const TermCardWithTagsLazy: React.FC<Props> = ({
                                                    tags,
                                                    onAdd,
                                                    onTagClick,
+                                                   onRequireAuth,
                                                    fallbackApi,
                                                }) => {
     // props.tags가 있으면 우선 사용, 없으면 lazy 로딩
@@ -136,6 +137,7 @@ const TermCardWithTagsLazy: React.FC<Props> = ({
             tags={loadedTags ?? []}
             onAdd={onAdd}
             onTagClick={onTagClick}
+            onRequireAuth={onRequireAuth}
         />
     );
 };
