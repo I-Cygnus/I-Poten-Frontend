@@ -63,6 +63,14 @@ import {
 import { getMyProfileSummary } from "../api/MyProfileApi.ts";
 import { getCreditAccountSummary, type CreditAccountSummary } from "../api/CreditApi.ts";
 import { getMySchedules, type Schedule } from "../api/userScheduleApi.ts";
+import {
+    getInterests,
+    getMyInterests,
+    InterestsApiError,
+    type Interest,
+    updateMyInterests,
+    validateUpdateMyInterestsRequest,
+} from "../api/interestsApi.ts";
 import { getLastActivityAt, getMostRecentActivityAt, LAST_ACTIVITY_EVENT } from "../utils/activity.ts";
 import SystemMessageModal, { type SystemMessage } from "../components/common/SystemMessageModal.tsx";
 
@@ -120,7 +128,7 @@ const menuItems = [
     { key: "profile" as const, label: "회원정보", icon: UserRound },
     { key: "interview" as const, label: "AI 모의 면접 기록", icon: Bot },
     { key: "quiz" as const, label: "포텐퀴즈 기록", icon: FileText },
-    { key: "schedule" as const, label: "일정관리", icon: CalendarDays },
+    { key: "schedule" as const, label: "일정 관리", icon: CalendarDays },
     { key: "interest field" as const, label: "관심 분야 설정", icon: Sparkles },
     { key: "inquiry" as const, label: "문의하기", icon: CircleHelp },
     { key: "withdraw" as const, label: "회원탈퇴", icon: LogOut },
@@ -144,22 +152,76 @@ const inquiryTypeOptions = [
     { value: "OTHER" as const, label: "기타", icon: Inbox },
 ];
 
-const INTEREST_FIELD_OPTIONS = [
-    "Frontend",
-    "Backend",
-    "Database",
-    "Network",
-    "Operating System",
-    "Data Structure & Algorithm",
-    "Security",
-    "Software Engineering",
-    "DevOps / Cloud",
-    "Computer Science",
-    "AI / Data / Machine Learning",
-    "Embedded / IoT / System Programming",
-] as const;
+type InterestSelection = {
+    categories: number[];
+    tags: number[];
+};
 
-const INTEREST_FIELDS_STORAGE_KEY = "mypage-interest-fields";
+const DEFAULT_INTEREST_SELECTION: InterestSelection = {
+    categories: [],
+    tags: [],
+};
+
+const PRIMARY_INTEREST_CATEGORY_LABELS: Record<string, string> = {
+    Frontend: "프론트엔드(Frontend)",
+    Backend: "백엔드(Backend)",
+    Database: "데이터베이스(Database)",
+    Network: "네트워크(Network)",
+    "Operating System": "운영체제(Operating System)",
+    "Data Structure & Algorithm": "자료구조 & 알고리즘(Data Structure & Algorithm)",
+    Security: "보안(Security)",
+    "Software Engineering": "소프트웨어 공학(Software Engineering)",
+    "DevOps / Cloud": "데브옵스 / 클라우드(DevOps / Cloud)",
+    "Computer Science": "컴퓨터 과학(Computer Science)",
+    "AI / Data / Machine Learning": "인공지능 / 데이터 / 머신러닝(AI / Data / Machine Learning)",
+    "Embedded / IoT / System Programming": "임베디드 / IoT / 시스템 프로그래밍(Embedded / IoT / System Programming)",
+};
+
+function normalizeInterestSelection(
+    selection: InterestSelection,
+    interestOptions: Interest[]
+): InterestSelection {
+    const uniqueCategories = Array.from(new Set(
+        selection.categories.filter((id) =>
+            interestOptions.some((interest) => interest.id === id)
+        )
+    ));
+
+    const availableTagIds = new Set(
+        getAvailableInterestTags(uniqueCategories, interestOptions).map((tag) => tag.id)
+    );
+
+    const uniqueTags = Array.from(new Set(
+        selection.tags.filter((id) => availableTagIds.has(id))
+    ));
+
+    return {
+        categories: uniqueCategories,
+        tags: uniqueTags,
+    };
+}
+
+function formatInterestCategoryLabel(name: string) {
+    const trimmedName = name.trim();
+    return PRIMARY_INTEREST_CATEGORY_LABELS[trimmedName] ?? trimmedName;
+}
+
+function getInterestCategoryLabel(id: number, interestOptions: Interest[]) {
+    const categoryName = interestOptions.find((option) => option.id === id)?.name;
+    return categoryName ? formatInterestCategoryLabel(categoryName) : String(id);
+}
+
+function getAvailableInterestTags(categoryIds: number[], interestOptions: Interest[]) {
+    const tagMap = new Map<number, Interest["tags"][number]>();
+
+    for (const tag of interestOptions
+        .filter((option) => categoryIds.includes(option.id))
+        .flatMap((option) => option.tags)) {
+        tagMap.set(tag.id, tag);
+    }
+
+    return Array.from(tagMap.values());
+}
 
 function toQuestionTypeLabel(value: string) {
     switch (value) {
@@ -385,33 +447,11 @@ export default function MyPage() {
     const [sysOpen, setSysOpen] = useState(false);
     const [sysMsg, setSysMsg] = useState<SystemMessage | null>(null);
     const [isEditingInterestFields, setIsEditingInterestFields] = useState(false);
-    const [selectedInterestFields, setSelectedInterestFields] = useState<string[]>(() => {
-        const defaults = ["Backend", "Database", "Network"];
-
-        if (typeof window === "undefined") {
-            return defaults;
-        }
-
-        const saved = window.localStorage.getItem(INTEREST_FIELDS_STORAGE_KEY);
-        if (!saved) {
-            return defaults;
-        }
-
-        try {
-            const parsed = JSON.parse(saved);
-            if (!Array.isArray(parsed)) {
-                return defaults;
-            }
-
-            const next = parsed.filter((item): item is string =>
-                typeof item === "string" && INTEREST_FIELD_OPTIONS.includes(item as (typeof INTEREST_FIELD_OPTIONS)[number])
-            );
-
-            return next.length > 0 ? next : defaults;
-        } catch {
-            return defaults;
-        }
-    });
+    const [interestOptions, setInterestOptions] = useState<Interest[]>([]);
+    const [interestOptionsLoading, setInterestOptionsLoading] = useState(true);
+    const [interestSaving, setInterestSaving] = useState(false);
+    const [interestSelection, setInterestSelection] = useState<InterestSelection>(DEFAULT_INTEREST_SELECTION);
+    const [draftInterestSelection, setDraftInterestSelection] = useState<InterestSelection>(DEFAULT_INTEREST_SELECTION);
     const navigate = useNavigate();
     const location = useLocation();
     const outlet = useOutlet();
@@ -426,28 +466,95 @@ export default function MyPage() {
         setSysMsg(null);
     };
 
-    const toggleInterestField = (field: string) => {
-        setSelectedInterestFields((current) => (
-            current.includes(field)
-                ? current.filter((item) => item !== field)
-                : [...current, field]
-        ));
+    const openInterestFieldEditor = () => {
+        setDraftInterestSelection(interestSelection);
+        setIsEditingInterestFields(true);
     };
 
-    const handleSaveInterestFields = () => {
-        if (typeof window !== "undefined") {
-            window.localStorage.setItem(
-                INTEREST_FIELDS_STORAGE_KEY,
-                JSON.stringify(selectedInterestFields)
+    const toggleInterestCategory = (categoryId: number) => {
+        setDraftInterestSelection((current) => {
+            const nextCategories = current.categories.includes(categoryId)
+                ? current.categories.filter((item) => item !== categoryId)
+                : [...current.categories, categoryId];
+            const availableTagIds = new Set(
+                getAvailableInterestTags(nextCategories, interestOptions).map((tag) => tag.id)
             );
+
+            return {
+                categories: nextCategories,
+                tags: current.tags.filter((tagId) => availableTagIds.has(tagId)),
+            };
+        });
+    };
+
+    const toggleInterestTag = (tagId: number) => {
+        setDraftInterestSelection((current) => ({
+            ...current,
+            tags: current.tags.includes(tagId)
+                ? current.tags.filter((item) => item !== tagId)
+                : [...current.tags, tagId],
+        }));
+    };
+
+    const handleCancelInterestFields = () => {
+        setDraftInterestSelection(interestSelection);
+        setIsEditingInterestFields(false);
+    };
+
+    const handleResetInterestFields = () => {
+        setDraftInterestSelection(DEFAULT_INTEREST_SELECTION);
+    };
+
+    const handleSaveInterestFields = async () => {
+        if (interestSaving) {
+            return;
         }
 
-        setIsEditingInterestFields(false);
-        openSys({
-            title: "관심 분야를 저장했어요.",
-            description: "선택한 분야를 바탕으로 추천 퀴즈와 학습 흐름을 구성하고 있어요.",
-            confirmLabel: "확인",
-        });
+        const payload = {
+            interestsIds: draftInterestSelection.categories,
+            interestTagIds: draftInterestSelection.tags,
+        };
+
+        try {
+            validateUpdateMyInterestsRequest(payload, interestOptions);
+        } catch (error) {
+            openSys({
+                tone: "warning",
+                title: error instanceof Error ? error.message : "관심 분야를 다시 확인해 주세요.",
+                confirmLabel: "확인",
+            });
+            return;
+        }
+
+        try {
+            setInterestSaving(true);
+            const saved = await updateMyInterests(payload);
+            const nextSelection = normalizeInterestSelection(
+                {
+                    categories: saved.interestIds,
+                    tags: saved.interestTagIds,
+                },
+                interestOptions
+            );
+
+            setInterestSelection(nextSelection);
+            setDraftInterestSelection(nextSelection);
+            setIsEditingInterestFields(false);
+            openSys({
+                title: "관심 분야를 저장했어요.",
+                description: "선택한 카테고리와 태그를 바탕으로 추천 퀴즈와 학습 흐름을 구성하고 있어요.",
+                confirmLabel: "확인",
+            });
+        } catch (error) {
+            console.error(error);
+            openSys({
+                tone: "error",
+                title: error instanceof Error ? error.message : "관심 분야 저장에 실패했습니다.",
+                confirmLabel: "확인",
+            });
+        } finally {
+            setInterestSaving(false);
+        }
     };
 
     const mockCreditSummary = useMemo(
@@ -652,6 +759,82 @@ export default function MyPage() {
         };
 
         fetchMyProfile();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        let mounted = true;
+
+        const fetchInterests = async () => {
+            try {
+                setInterestOptionsLoading(true);
+                const interests = await getInterests();
+
+                if (!mounted) {
+                    return;
+                }
+
+                setInterestOptions(interests);
+
+                try {
+                    const mine = await getMyInterests();
+
+                    if (!mounted) {
+                        return;
+                    }
+
+                    const nextSelection = normalizeInterestSelection(
+                        {
+                            categories: mine.interestIds,
+                            tags: mine.interestTagIds,
+                        },
+                        interests
+                    );
+
+                    setInterestSelection(nextSelection);
+                    setDraftInterestSelection(nextSelection);
+                } catch (error) {
+                    if (!mounted) {
+                        return;
+                    }
+
+                    if (error instanceof InterestsApiError && error.status === 401) {
+                        setInterestSelection(DEFAULT_INTEREST_SELECTION);
+                        setDraftInterestSelection(DEFAULT_INTEREST_SELECTION);
+                        return;
+                    }
+
+                    console.error(error);
+                    openSys({
+                        tone: "error",
+                        title: "내 관심사를 불러오지 못했습니다.",
+                    });
+                    setInterestSelection(DEFAULT_INTEREST_SELECTION);
+                    setDraftInterestSelection(DEFAULT_INTEREST_SELECTION);
+                }
+            } catch (error) {
+                console.error(error);
+
+                if (mounted) {
+                    setInterestOptions([]);
+                    setInterestSelection(DEFAULT_INTEREST_SELECTION);
+                    setDraftInterestSelection(DEFAULT_INTEREST_SELECTION);
+                    openSys({
+                        tone: "error",
+                        title: "관심사 목록을 불러오지 못했습니다.",
+                    });
+                }
+            } finally {
+                if (mounted) {
+                    setInterestOptionsLoading(false);
+                }
+            }
+        };
+
+        void fetchInterests();
 
         return () => {
             mounted = false;
@@ -953,6 +1136,14 @@ export default function MyPage() {
         0
     );
     const upcomingSchedules = schedules.slice(0, 3);
+    const selectedInterestCategoryLabels = interestSelection.categories.map((categoryId) =>
+        getInterestCategoryLabel(categoryId, interestOptions)
+    );
+    const selectedInterestTagLabels = interestSelection.tags.map((tagId) =>
+        getAvailableInterestTags(interestSelection.categories, interestOptions)
+            .find((tag) => tag.id === tagId)?.name ?? String(tagId)
+    );
+    const availableDraftInterestTags = getAvailableInterestTags(draftInterestSelection.categories, interestOptions);
 
     const isInterviewRoute = location.pathname.startsWith("/mypage/interview");
     const displayActiveMenu: MenuKey = isInterviewRoute ? "interview" : activeMenu;
@@ -1358,7 +1549,7 @@ export default function MyPage() {
                             <PanelCard>
                                 <PanelHeader>
                                     <PanelTitle>다가오는 일정</PanelTitle>
-                                    <PanelAction onClick={() => navigate("schedule")}>일정관리 이동</PanelAction>
+                                    <PanelAction onClick={() => navigate("schedule")}>일정 관리 이동</PanelAction>
                                 </PanelHeader>
                                 <TimelineList>
                                     {scheduleLoading ? (
@@ -1719,45 +1910,107 @@ export default function MyPage() {
                             {/*        <span>?대찓???뚮┝</span>*/}
                             {/*        <FakeToggle $active={false} />*/}
                             {/*    </ToggleRow>*/}
-                            {/*</SettingCard>*/}
+                                {/*</SettingCard>*/}
 
-                            <SettingCard>
+                            <SettingCard $featured>
                                 <SettingTitle>관심 분야 선택</SettingTitle>
-                                <SettingDescription>선택한 관심 분야를 바탕으로 추천 퀴즈와 학습 흐름이 구성됩니다.</SettingDescription>
-                                <TagRow>
-                                    {selectedInterestFields.length > 0 ? selectedInterestFields.map((field) => (
-                                        <Tag key={field}>{field}</Tag>
-                                    )) : (
-                                        <Tag>관심 분야를 선택해 주세요.</Tag>
-                                    )}
-                                </TagRow>
-                                {isEditingInterestFields ? (
+                                <SettingDescription>
+                                    1차로 {interestOptions.length}개 카테고리 중 관심 분야를 고르고, 2차로 세부 태그를 선택해 추천 흐름을 더 정교하게 맞출 수 있습니다.
+                                </SettingDescription>
+                                <InterestSummaryGrid>
+                                    <InterestFieldSummary>
+                                        <SummaryLabel>선택한 카테고리</SummaryLabel>
+                                        <TagRow>
+                                            {selectedInterestCategoryLabels.length > 0 ? selectedInterestCategoryLabels.map((field) => (
+                                                <Tag key={field}>{field}</Tag>
+                                            )) : (
+                                                <Tag>관심 카테고리를 선택해 주세요.</Tag>
+                                            )}
+                                        </TagRow>
+                                    </InterestFieldSummary>
+                                    <InterestFieldSummary>
+                                        <SummaryLabel>선택한 태그</SummaryLabel>
+                                        <TagRow>
+                                            {selectedInterestTagLabels.length > 0 ? selectedInterestTagLabels.map((tag) => (
+                                                <Tag key={tag}>{tag}</Tag>
+                                            )) : (
+                                                <Tag>세부 태그를 선택해 주세요.</Tag>
+                                            )}
+                                        </TagRow>
+                                    </InterestFieldSummary>
+                                </InterestSummaryGrid>
+                                {interestOptionsLoading ? (
+                                    <EmptyInterestHint>관심사 목록을 불러오는 중입니다.</EmptyInterestHint>
+                                ) : isEditingInterestFields ? (
                                     <>
-                                        <InterestFieldPicker>
-                                            {INTEREST_FIELD_OPTIONS.map((field) => (
-                                                <InterestFieldChipButton
-                                                    key={field}
-                                                    type="button"
-                                                    $active={selectedInterestFields.includes(field)}
-                                                    onClick={() => toggleInterestField(field)}
-                                                >
-                                                    {field}
-                                                </InterestFieldChipButton>
-                                            ))}
-                                        </InterestFieldPicker>
+                                        <InterestEditorGrid>
+                                            <InterestFieldEditorSection>
+                                                <EditorTitle>1차 카테고리 선택</EditorTitle>
+                                                <InterestFieldPicker>
+                                                    {interestOptions.map((category) => (
+                                                        <InterestFieldChipButton
+                                                            key={category.id}
+                                                            type="button"
+                                                            $active={draftInterestSelection.categories.includes(category.id)}
+                                                            onClick={() => toggleInterestCategory(category.id)}
+                                                        >
+                                                            {formatInterestCategoryLabel(category.name)}
+                                                        </InterestFieldChipButton>
+                                                    ))}
+                                                </InterestFieldPicker>
+                                            </InterestFieldEditorSection>
+                                            <InterestFieldEditorSection>
+                                                <EditorTitle>2차 태그 선택</EditorTitle>
+                                                {draftInterestSelection.categories.length > 0 ? (
+                                                    <InterestFieldPicker>
+                                                        {availableDraftInterestTags.map((tag) => (
+                                                            <InterestFieldChipButton
+                                                                key={tag.id}
+                                                                type="button"
+                                                                $active={draftInterestSelection.tags.includes(tag.id)}
+                                                                onClick={() => toggleInterestTag(tag.id)}
+                                                            >
+                                                                #{tag.name}
+                                                            </InterestFieldChipButton>
+                                                        ))}
+                                                    </InterestFieldPicker>
+                                                ) : (
+                                                    <EmptyInterestHint>
+                                                        먼저 1차 카테고리를 선택하면 관련 태그가 열립니다.
+                                                    </EmptyInterestHint>
+                                                )}
+                                            </InterestFieldEditorSection>
+                                        </InterestEditorGrid>
+                                        <InterestMetaRow>
+                                            <SelectionMetaCard>
+                                                <SelectionMetaValue>{draftInterestSelection.categories.length}개</SelectionMetaValue>
+                                                <SelectionMetaLabel>선택된 카테고리</SelectionMetaLabel>
+                                            </SelectionMetaCard>
+                                            <SelectionMetaCard>
+                                                <SelectionMetaValue>{draftInterestSelection.tags.length}개</SelectionMetaValue>
+                                                <SelectionMetaLabel>선택된 태그</SelectionMetaLabel>
+                                            </SelectionMetaCard>
+                                        </InterestMetaRow>
                                         <SettingHelperText>
-                                            여러 분야를 함께 선택할 수 있습니다. 포텐워드와 퀴즈 추천 구성에 반영됩니다.
+                                            카테고리는 최대 5개, 태그는 최대 20개까지 저장할 수 있습니다.
                                         </SettingHelperText>
                                         <StackButtonGroup>
-                                            <PrimaryButton type="button" onClick={handleSaveInterestFields}>
-                                                관심 분야 저장
+                                            <PrimaryButton type="button" onClick={() => void handleSaveInterestFields()}>
+                                                {interestSaving ? "저장 중..." : "관심 분야 저장"}
                                             </PrimaryButton>
-                                            <GhostButton type="button" onClick={() => setIsEditingInterestFields(false)}>
+                                            <GhostButton type="button" onClick={handleResetInterestFields}>
+                                                선택 초기화
+                                            </GhostButton>
+                                            <GhostButton type="button" onClick={handleCancelInterestFields}>
                                                 취소
                                             </GhostButton>
                                         </StackButtonGroup>
                                     </>
-                                ) : null}
+                                ) : (
+                                    <GhostButton type="button" onClick={openInterestFieldEditor}>
+                                        관심 분야 편집
+                                    </GhostButton>
+                                )}
                             </SettingCard>
 
                             {/*<SettingCard>*/}
@@ -2742,7 +2995,7 @@ const SettingsGrid = styled.div`
   }
 `;
 
-const SettingCard = styled.div`
+const SettingCard = styled.div<{ $featured?: boolean }>`
     border: 1px solid rgba(14, 18, 28, 0.06);
     border-radius: 12px;
     background: #ffffff;
@@ -2751,6 +3004,7 @@ const SettingCard = styled.div`
     display: flex;
     flex-direction: column;
     gap: 16px;
+    grid-column: ${({ $featured }) => ($featured ? "1 / -1" : "auto")};
 `;
 
 const SettingTitle = styled.h3`
@@ -2794,10 +3048,37 @@ const FakeToggle = styled.div<{ $active: boolean }>`
     }
 `;
 
+const InterestSummaryGrid = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 14px;
+
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
 const TagRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+`;
+
+const InterestFieldSummary = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 120px;
+  padding: 16px 18px;
+  border: 1px solid ${palette.border};
+  border-radius: 16px;
+  background: linear-gradient(180deg, #fcfdff 0%, #f8fbff 100%);
+`;
+
+const SummaryLabel = styled.div`
+    font-size: 13px;
+    font-weight: 700;
+    color: ${palette.textSoft};
 `;
 
 const Tag = styled.span`
@@ -2810,6 +3091,34 @@ const Tag = styled.span`
     color: ${palette.secondaryHover};
     font-size: 13px;
     font-weight: 700;
+`;
+
+const InterestFieldEditorSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid ${palette.border};
+  border-radius: 18px;
+  background: #fbfdff;
+`;
+
+const EditorTitle = styled.h4`
+    margin: 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: ${palette.text};
+`;
+
+const InterestEditorGrid = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 16px;
+
+  @media (max-width: 980px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const InterestFieldPicker = styled.div`
@@ -2841,6 +3150,12 @@ const InterestFieldChipButton = styled.button<{ $active: boolean }>`
     }
 `;
 
+const InterestMetaRow = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+`;
+
 const SettingHelperText = styled.p`
   margin: 0;
   font-size: 13px;
@@ -2848,10 +3163,51 @@ const SettingHelperText = styled.p`
   color: #64748b;
 `;
 
+const EmptyInterestHint = styled.div`
+    border: 1px dashed ${palette.border};
+    border-radius: 14px;
+    background: #f8fafc;
+    padding: 14px 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: ${palette.textSoft};
+`;
+
+const SelectionMetaCard = styled.div`
+    min-width: 140px;
+    flex: 0 0 auto;
+    padding: 14px 16px;
+    border-radius: 14px;
+    border: 1px solid ${palette.border};
+    background: #fbfcff;
+`;
+
+const SelectionMetaValue = styled.div`
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.2;
+    color: ${palette.text};
+`;
+
+const SelectionMetaLabel = styled.div`
+    margin-top: 4px;
+    font-size: 12px;
+    color: ${palette.textSoft};
+`;
+
 const StackButtonGroup = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 10px;
+
+  > * {
+    min-width: 140px;
+  }
+
+  @media (max-width: 760px) {
+    flex-direction: column;
+  }
 `;
 
 const FormGrid = styled.div`
