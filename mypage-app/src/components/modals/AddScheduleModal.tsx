@@ -1,456 +1,1113 @@
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
-import { useEffect, useState } from "react";
-import { UserScheduleRequest } from "../../api/userScheduleApi.ts";
-import { notifyError, notifySuccess } from "../../utils/toast";
+import type { Schedule, ScheduleUpsertRequest } from "../../api/userScheduleApi.ts";
+import { CalendarDays } from "lucide-react";
 
-/* 🕐 TimePicker (오전/오후 + 시 + 분) */
-function TimePicker({ label, name, value, onChange, disabled }: {
-    label: string;
-    name: string;
-    value: string;
-    onChange: (name: string, value: string) => void;
-    disabled?: boolean;
-}) {
-    const [ampm, setAmpm] = useState("AM");
-    const [hour, setHour] = useState("01");
-    const [minute, setMinute] = useState("00");
+type Props = {
+    onClose: () => void;
+    onSubmit: (payload: ScheduleUpsertRequest) => Promise<void>;
+    initialData?: Schedule | null;
+    isSubmitting?: boolean;
+};
 
-    useEffect(() => {
-        if (!value) return;
-        const [h, m] = value.split(":").map(Number);
-        if (h >= 12) {
-            setAmpm("PM");
-            setHour((h === 12 ? 12 : h - 12).toString().padStart(2, "0"));
-        } else {
-            setAmpm("AM");
-            setHour((h === 0 ? 12 : h).toString().padStart(2, "0"));
-        }
-        setMinute(m.toString().padStart(2, "0"));
-    }, [value]);
+type FormState = {
+    title: string;
+    memo: string;
+    allDay: boolean;
+    startAt: string;
+    endAt: string;
+};
 
-    useEffect(() => {
-        let realHour = Number(hour);
-        if (ampm === "PM" && realHour !== 12) realHour += 12;
-        if (ampm === "AM" && realHour === 12) realHour = 0;
-        const formatted = `${realHour.toString().padStart(2, "0")}:${minute}`;
-        onChange(name, formatted);
-    }, [ampm, hour, minute]);
+type DateRange = {
+    start: Date;
+    end: Date;
+};
 
-    return (
-        <TimePickerWrapper>
-            <label>{label}</label>
-            <PickerRow>
-                <select value={ampm} onChange={(e) => setAmpm(e.target.value)} disabled={disabled}>
-                    <option value="AM">오전</option>
-                    <option value="PM">오후</option>
-                </select>
-                <select value={hour} onChange={(e) => setHour(e.target.value)} disabled={disabled}>
-                    {Array.from({ length: 12 }, (_, i) => {
-                        const val = (i + 1).toString().padStart(2, "0");
-                        return <option key={val} value={val}>{val}</option>;
-                    })}
-                </select>
-                <span>:</span>
-                <select value={minute} onChange={(e) => setMinute(e.target.value)} disabled={disabled}>
-                    {[0,5,10,15,20,25,30,35,40,45,50,55].map((m) => {
-                        const val = m.toString().padStart(2, "0");
-                        return <option key={val} value={val}>{val}</option>;
-                    })}
-                </select>
-            </PickerRow>
-        </TimePickerWrapper>
+const WEEK_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
+
+function pad(value: number) {
+    return String(value).padStart(2, "0");
+}
+
+function formatDateInputValue(date: Date) {
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function toDatetimeLocalValue(isoString: string) {
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) return "";
+
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60_000);
+    return localDate.toISOString().slice(0, 16);
+}
+
+function toDateInputValue(isoString: string) {
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) return "";
+
+    const offset = date.getTimezoneOffset();
+    const localDate = new Date(date.getTime() - offset * 60_000);
+    return localDate.toISOString().slice(0, 10);
+}
+
+function toIsoString(value: string, allDay: boolean, boundary: "start" | "end") {
+    if (!value) return "";
+
+    if (allDay) {
+        const time = boundary === "start" ? "T00:00:00" : "T23:59:59";
+        return new Date(`${value}${time}`).toISOString();
+    }
+
+    return new Date(value).toISOString();
+}
+
+function normalizeFormDateValue(value: string, allDay: boolean) {
+    if (!value) return "";
+
+    if (allDay) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(value)) return value;
+        return toDateInputValue(value);
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) return value;
+    return toDatetimeLocalValue(value);
+}
+
+function getRoundedNow() {
+    const now = new Date();
+    const rounded = new Date(now);
+    rounded.setMinutes(Math.ceil(now.getMinutes() / 30) * 30, 0, 0);
+    return rounded;
+}
+
+function createInitialForm(initialData?: Schedule | null): FormState {
+    const start = getRoundedNow();
+    const end = new Date(start);
+    end.setHours(end.getHours() + 1);
+
+    if (!initialData) {
+        return {
+            title: "",
+            memo: "",
+            allDay: false,
+            startAt: toDatetimeLocalValue(start.toISOString()),
+            endAt: toDatetimeLocalValue(end.toISOString()),
+        };
+    }
+
+    return {
+        title: initialData.title,
+        memo: initialData.memo,
+        allDay: initialData.allDay,
+        startAt: initialData.allDay
+            ? toDateInputValue(initialData.startAt)
+            : toDatetimeLocalValue(initialData.startAt),
+        endAt: initialData.allDay
+            ? toDateInputValue(initialData.endAt)
+            : toDatetimeLocalValue(initialData.endAt),
+    };
+}
+
+function startOfMonth(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function endOfMonth(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+}
+
+function startOfCalendar(date: Date) {
+    const firstDay = startOfMonth(date);
+    return new Date(
+        firstDay.getFullYear(),
+        firstDay.getMonth(),
+        firstDay.getDate() - firstDay.getDay()
     );
 }
 
-/* 📅 AddScheduleModal */
-export default function AddScheduleModal({ onClose, onSubmit, initialData }: {
-    onClose: () => void;
-    onSubmit: (data: UserScheduleRequest) => Promise<void>;
-    initialData?: any;
-}) {
-    const isEditMode = !!initialData;
-    const [form, setForm] = useState({
-        title: "",
-        description: "",
-        startDate: "",
-        startTime: "",
-        endDate: "",
-        endTime: "",
-        location: "",
-        allDay: false,
-        color: "#3b82f6",
+function startOfDay(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function isSameDay(left: Date, right: Date) {
+    return (
+        left.getFullYear() === right.getFullYear() &&
+        left.getMonth() === right.getMonth() &&
+        left.getDate() === right.getDate()
+    );
+}
+
+function formatMonthLabel(date: Date) {
+    return new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "long",
+    }).format(date);
+}
+
+function parseFormValue(value: string, allDay: boolean) {
+    if (!value) return null;
+    const date = new Date(allDay ? `${value}T00:00:00` : value);
+    return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function getCurrentFormRange(form: FormState): DateRange | null {
+    const start = parseFormValue(form.startAt, form.allDay);
+    const end = parseFormValue(form.endAt, form.allDay);
+
+    if (!start || !end) return null;
+
+    return {
+        start: startOfDay(start),
+        end: startOfDay(end),
+    };
+}
+
+function orderRange(left: Date, right: Date): DateRange {
+    return left.getTime() <= right.getTime()
+        ? { start: startOfDay(left), end: startOfDay(right) }
+        : { start: startOfDay(right), end: startOfDay(left) };
+}
+
+function buildCalendarWeeks(displayMonth: Date) {
+    const calendarStart = startOfCalendar(displayMonth);
+    const next = new Date(calendarStart);
+    const weeks: Date[][] = [];
+
+    for (let weekIndex = 0; weekIndex < 6; weekIndex += 1) {
+        const week: Date[] = [];
+        for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
+            week.push(new Date(next));
+            next.setDate(next.getDate() + 1);
+        }
+        weeks.push(week);
+    }
+
+    return weeks;
+}
+
+function applyRangeToForm(prev: FormState, range: DateRange): FormState {
+    if (prev.allDay) {
+        return {
+            ...prev,
+            startAt: formatDateInputValue(range.start),
+            endAt: formatDateInputValue(range.end),
+        };
+    }
+
+    const currentStart = parseFormValue(prev.startAt, false) ?? getRoundedNow();
+    const currentEnd = parseFormValue(prev.endAt, false) ?? new Date(currentStart.getTime() + 60 * 60 * 1000);
+
+    const nextStart = new Date(range.start);
+    nextStart.setHours(
+        currentStart.getHours(),
+        currentStart.getMinutes(),
+        currentStart.getSeconds(),
+        currentStart.getMilliseconds()
+    );
+
+    const nextEnd = new Date(range.end);
+    nextEnd.setHours(
+        currentEnd.getHours(),
+        currentEnd.getMinutes(),
+        currentEnd.getSeconds(),
+        currentEnd.getMilliseconds()
+    );
+
+    if (nextEnd.getTime() < nextStart.getTime()) {
+        nextEnd.setTime(nextStart.getTime());
+    }
+
+    return {
+        ...prev,
+        startAt: toDatetimeLocalValue(nextStart.toISOString()),
+        endAt: toDatetimeLocalValue(nextEnd.toISOString()),
+    };
+}
+
+function formatRangeLabel(range: DateRange | null) {
+    if (!range) return "날짜를 선택해 주세요.";
+
+    const formatter = new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
     });
 
-    const handleTimeChange = (name: string, value: string) => {
-        setForm((prev) => ({ ...prev, [name]: value }));
-    };
+    return `${formatter.format(range.start)} - ${formatter.format(range.end)}`;
+}
+
+type RangePosition = "none" | "single" | "start" | "middle" | "end";
+
+export default function AddScheduleModal({
+                                             onClose,
+                                             onSubmit,
+                                             initialData,
+                                             isSubmitting = false,
+                                         }: Props) {
+    const [form, setForm] = useState<FormState>(() => createInitialForm(initialData));
+    const [displayMonth, setDisplayMonth] = useState<Date>(() => {
+        const initialForm = createInitialForm(initialData);
+        return parseFormValue(initialForm.startAt, initialForm.allDay) ?? new Date();
+    });
+    const [dragStartDate, setDragStartDate] = useState<Date | null>(null);
+    const [dragRange, setDragRange] = useState<DateRange | null>(null);
+    const isEditMode = Boolean(initialData && initialData.id > 0);
+
+    const [rangeAnchorDate, setRangeAnchorDate] = useState<Date | null>(null);
+    const didDragRef = useRef(false);
 
     useEffect(() => {
-        const formatDate = (d: Date) => d.toLocaleDateString("en-CA");
-        const formatTime = (d: Date) => d.toTimeString().slice(0, 5);
+        const nextForm = createInitialForm(initialData);
+        setForm(nextForm);
 
-        if (isEditMode) {
-            const start = new Date(initialData.startTime);
-            const end = new Date(initialData.endTime);
-            setForm({
-                ...initialData,
-                startDate: formatDate(start),
-                startTime: formatTime(start),
-                endDate: formatDate(end),
-                endTime: formatTime(end),
-            });
-        } else {
-            const now = new Date();
-            const roundedStart = new Date(now);
-            const roundedMinutes = Math.ceil(now.getMinutes() / 5) * 5;
-            if (roundedMinutes === 60) roundedStart.setHours(now.getHours() + 1, 0, 0, 0);
-            else roundedStart.setMinutes(roundedMinutes, 0, 0);
-            const roundedEnd = new Date(roundedStart);
-            roundedEnd.setHours(roundedStart.getHours() + 1);
-            setForm((p) => ({
-                ...p,
-                startDate: formatDate(roundedStart),
-                startTime: formatTime(roundedStart),
-                endDate: formatDate(roundedEnd),
-                endTime: formatTime(roundedEnd),
-            }));
-        }
+        const nextMonth = parseFormValue(nextForm.startAt, nextForm.allDay) ?? new Date();
+        setDisplayMonth(new Date(nextMonth.getFullYear(), nextMonth.getMonth(), 1));
+        setDragStartDate(null);
+        setDragRange(null);
+        setRangeAnchorDate(null);
+        didDragRef.current = false;
     }, [initialData]);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!form.title.trim()) return notifyError("제목을 입력해주세요.");
-        if (!form.startDate || !form.endDate) return notifyError("날짜를 선택해주세요.");
-        if (new Date(form.endDate) < new Date(form.startDate))
-            return notifyError("종료일은 시작일 이후여야 합니다.");
+    useEffect(() => {
+        const handleWindowMouseUp = () => {
+            setDragStartDate(null);
+            didDragRef.current = false;
+        };
 
-        try {
-            const startTime = form.allDay
-                ? `${form.startDate}T00:00:00`
-                : `${form.startDate}T${form.startTime}`;
-            const endTime = form.allDay
-                ? `${form.endDate}T23:59:59`
-                : `${form.endDate}T${form.endTime}`;
+        window.addEventListener("mouseup", handleWindowMouseUp);
+        return () => window.removeEventListener("mouseup", handleWindowMouseUp);
+    }, []);
 
-            const data: UserScheduleRequest = { ...form, startTime, endTime };
-            await onSubmit(data);
+    const isValidRange = useMemo(() => {
+        const start = new Date(toIsoString(form.startAt, form.allDay, "start"));
+        const end = new Date(toIsoString(form.endAt, form.allDay, "end"));
 
-            onClose();
-        } catch (err: any) {
-            console.error(err);
-            const message = err?.response?.data?.message || "일정 저장 중 오류가 발생했습니다.";
-            notifyError(message);
+        return start.getTime() <= end.getTime();
+    }, [form.allDay, form.endAt, form.startAt]);
+
+    const selectedRange = useMemo(() => {
+        return dragRange ?? getCurrentFormRange(form);
+    }, [dragRange, form]);
+
+    const rangeLabel = useMemo(() => formatRangeLabel(selectedRange), [selectedRange]);
+
+    const weeks = useMemo(() => buildCalendarWeeks(displayMonth), [displayMonth]);
+    const monthStart = startOfMonth(displayMonth);
+    const monthEnd = endOfMonth(displayMonth);
+    const today = new Date();
+
+    const handleChange =
+        (key: keyof FormState) =>
+            (
+                event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            ) => {
+                if (
+                    key === "allDay" &&
+                    event.target instanceof HTMLInputElement &&
+                    event.target.type === "checkbox"
+                ) {
+                    const nextAllDay = event.target.checked;
+
+                    setForm((prev) => ({
+                        ...prev,
+                        allDay: nextAllDay,
+                        startAt: normalizeFormDateValue(prev.startAt, nextAllDay),
+                        endAt: normalizeFormDateValue(prev.endAt, nextAllDay),
+                    }));
+                    return;
+                }
+
+                const value =
+                    event.target instanceof HTMLInputElement &&
+                    event.target.type === "checkbox"
+                        ? event.target.checked
+                        : event.target.value;
+
+                setForm((prev) => ({
+                    ...prev,
+                    [key]: value,
+                }));
+
+                if (key === "startAt" || key === "endAt") {
+                    const nextDate = parseFormValue(String(value), form.allDay);
+                    if (nextDate) {
+                        setDisplayMonth(new Date(nextDate.getFullYear(), nextDate.getMonth(), 1));
+                    }
+                }
+            };
+
+    const commitRange = (range: DateRange) => {
+        setForm((prev) => applyRangeToForm(prev, range));
+        setDragRange(null);
+        setDisplayMonth(new Date(range.start.getFullYear(), range.start.getMonth(), 1));
+    };
+
+    const handleDayMouseDown = (date: Date) => {
+        const normalized = startOfDay(date);
+        didDragRef.current = false;
+        setDragStartDate(normalized);
+        setDragRange({ start: normalized, end: normalized });
+    };
+
+    const handleDayMouseEnter = (date: Date) => {
+        const normalized = startOfDay(date);
+
+        if (dragStartDate) {
+            didDragRef.current = true;
+            setDragRange(orderRange(dragStartDate, normalized));
+            return;
         }
+
+        if (rangeAnchorDate) {
+            setDragRange(orderRange(rangeAnchorDate, normalized));
+        }
+    };
+
+    const handleDayMouseUp = (date: Date) => {
+        if (!dragStartDate) return;
+
+        const normalized = startOfDay(date);
+
+        if (didDragRef.current) {
+            const range = orderRange(dragStartDate, normalized);
+            setDragStartDate(null);
+            setRangeAnchorDate(null);
+            didDragRef.current = false;
+            commitRange(range);
+            return;
+        }
+
+        setDragStartDate(null);
+    };
+
+    const handleDayClick = (date: Date) => {
+        const normalized = startOfDay(date);
+
+        if (didDragRef.current) {
+            didDragRef.current = false;
+            return;
+        }
+
+        if (!rangeAnchorDate) {
+            setRangeAnchorDate(normalized);
+            setDragRange({ start: normalized, end: normalized });
+            return;
+        }
+
+        const range = orderRange(rangeAnchorDate, normalized);
+        setRangeAnchorDate(null);
+        commitRange(range);
+    };
+
+    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
+
+        const payload: ScheduleUpsertRequest = {
+            title: form.title.trim(),
+            memo: form.memo.trim(),
+            allDay: form.allDay,
+            startAt: toIsoString(form.startAt, form.allDay, "start"),
+            endAt: toIsoString(form.endAt, form.allDay, "end"),
+        };
+
+        await onSubmit(payload);
     };
 
     return (
         <Backdrop onClick={onClose}>
-            <Modal onClick={(e) => e.stopPropagation()}>
+            <Modal onClick={(event) => event.stopPropagation()}>
                 <Header>
-                    <h3>{isEditMode ? "일정 수정" : "일정 추가"}</h3>
-                    <CloseBtn onClick={onClose}>×</CloseBtn>
+                    <HeaderLeft>
+                        <IconBadge>
+                            <CalendarDays size={20} strokeWidth={2.1} />
+                        </IconBadge>
+                        <HeaderTextWrap>
+                            <Title>{isEditMode ? "일정 수정" : "일정 추가"}</Title>
+                            <Description>
+                                날짜를 드래그해서 범위를 선택하고, 오른쪽에서 세부 내용을 정리해 보세요.
+                            </Description>
+                        </HeaderTextWrap>
+                    </HeaderLeft>
+
+                    <CloseButton type="button" onClick={onClose} aria-label="닫기">
+                        ×
+                    </CloseButton>
                 </Header>
 
-                <Form onSubmit={handleSubmit}>
-                    <label>
-                        제목
-                        <input
-                            name="title"
-                            value={form.title}
-                            onChange={(e) => setForm({ ...form, title: e.target.value })}
-                            placeholder="일정 제목을 입력하세요"
-                        />
-                    </label>
+                <Body>
+                    <CalendarPanel>
+                        <MonthToolbar>
+                            <MonthArrowButton
+                                type="button"
+                                onClick={() =>
+                                    setDisplayMonth(
+                                        new Date(
+                                            displayMonth.getFullYear(),
+                                            displayMonth.getMonth() - 1,
+                                            1
+                                        )
+                                    )
+                                }
+                                aria-label="이전 달"
+                            >
+                                ‹
+                            </MonthArrowButton>
 
-                    <label>
-                        설명
-                        <textarea
-                            name="description"
-                            value={form.description}
-                            onChange={(e) => setForm({ ...form, description: e.target.value })}
-                            rows={3}
-                            placeholder="일정 설명을 입력하세요 (선택)"
-                        />
-                    </label>
+                            <MonthPill>{formatMonthLabel(displayMonth)}</MonthPill>
 
-                    <TimeGroup>
-                        <TimeRow>
-                            <label>
-                                시작 날짜
-                                <input
-                                    type="date"
-                                    name="startDate"
-                                    value={form.startDate}
-                                    onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                                    required
-                                />
-                            </label>
-                            <TimePicker
-                                label="시작 시간"
-                                name="startTime"
-                                value={form.startTime}
-                                onChange={handleTimeChange}
-                                disabled={form.allDay}
-                            />
-                        </TimeRow>
+                            <MonthArrowButton
+                                type="button"
+                                onClick={() =>
+                                    setDisplayMonth(
+                                        new Date(
+                                            displayMonth.getFullYear(),
+                                            displayMonth.getMonth() + 1,
+                                            1
+                                        )
+                                    )
+                                }
+                                aria-label="다음 달"
+                            >
+                                ›
+                            </MonthArrowButton>
+                        </MonthToolbar>
 
-                        <TimeRow>
-                            <label>
-                                종료 날짜
-                                <input
-                                    type="date"
-                                    name="endDate"
-                                    value={form.endDate}
-                                    onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                                    required
-                                />
-                            </label>
-                            <TimePicker
-                                label="종료 시간"
-                                name="endTime"
-                                value={form.endTime}
-                                onChange={handleTimeChange}
-                                disabled={form.allDay}
-                            />
-                        </TimeRow>
-
-                        <AllDayRow>
-                            <span>하루 종일</span>
-                            <SwitchWrapper>
-                                <SwitchInput
-                                    type="checkbox"
-                                    checked={form.allDay}
-                                    onChange={() => setForm({ ...form, allDay: !form.allDay })}
-                                />
-                                <SwitchSlider checked={form.allDay} />
-                            </SwitchWrapper>
-                        </AllDayRow>
-                    </TimeGroup>
-
-                    <label>
-                        장소
-                        <input
-                            name="location"
-                            value={form.location}
-                            onChange={(e) => setForm({ ...form, location: e.target.value })}
-                            placeholder="예: 강남 카페, 스터디룸 등"
-                        />
-                    </label>
-
-                    <ColorSelectRow>
-                        <span>색상</span>
-                        <ColorPalette>
-                            {["#A5D8FF","#B2F2BB","#FFD6A5","#D0BFFF","#FFADAD","#FDFFB6","#C8E7FF","#E8C2FF"].map((c) => (
-                                <ColorCircle
-                                    key={c}
-                                    color={c}
-                                    selected={form.color === c}
-                                    onClick={() => setForm({ ...form, color: c })}
-                                />
+                        <WeekHeader>
+                            {WEEK_LABELS.map((label) => (
+                                <WeekLabel key={label}>{label}</WeekLabel>
                             ))}
-                        </ColorPalette>
-                    </ColorSelectRow>
+                        </WeekHeader>
 
-                    <SubmitBtn type="submit">{isEditMode ? "수정하기" : "등록하기"}</SubmitBtn>
-                </Form>
+                        <CalendarGrid>
+                            {weeks.flat().map((date) => {
+                                const inCurrentMonth =
+                                    date >= monthStart &&
+                                    date <= monthEnd &&
+                                    date.getMonth() === displayMonth.getMonth();
+
+                                const rangeStart = selectedRange?.start;
+                                const rangeEnd = selectedRange?.end;
+
+                                const selected =
+                                    rangeStart &&
+                                    rangeEnd &&
+                                    startOfDay(date).getTime() >= rangeStart.getTime() &&
+                                    startOfDay(date).getTime() <= rangeEnd.getTime();
+
+                                let rangePosition: RangePosition = "none";
+
+                                if (selected && rangeStart && rangeEnd) {
+                                    const isStart = isSameDay(date, rangeStart);
+                                    const isEnd = isSameDay(date, rangeEnd);
+
+                                    if (isStart && isEnd) rangePosition = "single";
+                                    else if (isStart) rangePosition = "start";
+                                    else if (isEnd) rangePosition = "end";
+                                    else rangePosition = "middle";
+                                }
+
+                                return (
+                                    <DayButton
+                                        key={date.toISOString()}
+                                        type="button"
+                                        $muted={!inCurrentMonth}
+                                        $today={isSameDay(date, today)}
+                                        $rangePosition={rangePosition}
+                                        onMouseDown={() => handleDayMouseDown(date)}
+                                        onMouseEnter={() => handleDayMouseEnter(date)}
+                                        onMouseUp={() => handleDayMouseUp(date)}
+                                        onClick={() => handleDayClick(date)}
+                                    >
+                                        <DayText
+                                            $rangePosition={rangePosition}
+                                            $muted={!inCurrentMonth}
+                                        >
+                                            {date.getDate()}
+                                        </DayText>
+                                    </DayButton>
+                                );
+                            })}
+                        </CalendarGrid>
+
+                        <CalendarCaption>
+                            범위를 선택하면 {form.allDay ? "날짜" : "시작과 종료 일시"}가 자동으로 반영됩니다.
+                        </CalendarCaption>
+                    </CalendarPanel>
+
+                    <Form onSubmit={handleSubmit}>
+                        <FieldSection>
+                            <FieldGroup>
+                                <Label htmlFor="schedule-title">일정 제목</Label>
+                                <TextInput
+                                    id="schedule-title"
+                                    value={form.title}
+                                    onChange={handleChange("title")}
+                                    placeholder="예: 기술 면접 준비"
+                                    maxLength={100}
+                                    required
+                                />
+                            </FieldGroup>
+
+                            <FieldGroup>
+                                <Label htmlFor="schedule-memo">메모</Label>
+                                <TextArea
+                                    id="schedule-memo"
+                                    value={form.memo}
+                                    onChange={handleChange("memo")}
+                                    placeholder="예: 자료구조 복습, 예상 질문 정리"
+                                    rows={5}
+                                />
+                            </FieldGroup>
+                        </FieldSection>
+
+                        <FieldSection>
+                            <InlineOptionRow>
+                                <CheckLabel>
+                                    <CheckInput
+                                        type="checkbox"
+                                        checked={form.allDay}
+                                        onChange={handleChange("allDay")}
+                                    />
+                                    <CheckText>종일 일정</CheckText>
+                                </CheckLabel>
+                            </InlineOptionRow>
+
+                            <DateGrid>
+                                <FieldGroup>
+                                    <Label htmlFor="schedule-start">
+                                        {form.allDay ? "시작 날짜" : "시작 일시"}
+                                    </Label>
+                                    <TextInput
+                                        id="schedule-start"
+                                        type={form.allDay ? "date" : "datetime-local"}
+                                        value={form.startAt}
+                                        onChange={handleChange("startAt")}
+                                        required
+                                    />
+                                </FieldGroup>
+
+                                <FieldGroup>
+                                    <Label htmlFor="schedule-end">
+                                        {form.allDay ? "종료 날짜" : "종료 일시"}
+                                    </Label>
+                                    <TextInput
+                                        id="schedule-end"
+                                        type={form.allDay ? "date" : "datetime-local"}
+                                        value={form.endAt}
+                                        onChange={handleChange("endAt")}
+                                        required
+                                    />
+                                </FieldGroup>
+                            </DateGrid>
+
+                            {!isValidRange && (
+                                <ErrorText>종료 일시는 시작 일시보다 빠를 수 없습니다.</ErrorText>
+                            )}
+                        </FieldSection>
+
+                        <RightPanelSpacer />
+                    </Form>
+                </Body>
+
+                <Footer>
+                    <RangeSummary>
+                        <RangeSummaryLabel>선택 범위</RangeSummaryLabel>
+                        <RangeSummaryValue>{rangeLabel}</RangeSummaryValue>
+                    </RangeSummary>
+
+                    <FooterActions>
+                        <SecondaryButton type="button" onClick={onClose}>
+                            취소
+                        </SecondaryButton>
+                        <PrimaryButton
+                            type="submit"
+                            form="schedule-form-hidden"
+                            as="button"
+                            onClick={() => undefined}
+                            disabled={
+                                isSubmitting ||
+                                !form.title.trim() ||
+                                !form.startAt ||
+                                !form.endAt ||
+                                !isValidRange
+                            }
+                        >
+                            {isSubmitting
+                                ? "저장 중..."
+                                : isEditMode
+                                    ? "수정하기"
+                                    : "등록하기"}
+                        </PrimaryButton>
+                    </FooterActions>
+                </Footer>
+
+                <HiddenSubmitForm id="schedule-form-hidden" onSubmit={handleSubmit} />
             </Modal>
         </Backdrop>
     );
 }
 
-/* ========== 🍏 Styled ========== */
 const Backdrop = styled.div`
     position: fixed;
     inset: 0;
-    background: rgba(0,0,0,0.35);
+    z-index: 1400;
     display: flex;
-    justify-content: center;
     align-items: center;
-    z-index: 999;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(15, 23, 42, 0.32);
+    backdrop-filter: blur(8px);
 `;
 
 const Modal = styled.div`
+    width: min(100%, 940px);
+    max-height: min(90vh, 860px);
+    overflow: hidden;
+    border-radius: 28px;
     background: #ffffff;
-    border-radius: 20px;
-    padding: 28px 26px;
-    width: 440px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Noto Sans KR", sans-serif;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    box-shadow:
+        0 32px 80px rgba(15, 23, 42, 0.14),
+        0 8px 24px rgba(15, 23, 42, 0.08);
 `;
 
 const Header = styled.div`
     display: flex;
+    align-items: flex-start;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    h3 {
-        font-size: 18px;
-        font-weight: 600;
-        color: #111;
+    gap: 18px;
+    padding: 22px 24px 18px;
+    border-bottom: 1px solid #eef2f7;
+`;
+
+const HeaderLeft = styled.div`
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+`;
+
+const IconBadge = styled.div`
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    display: grid;
+    place-items: center;
+    color: #4f6ef7;
+    background: linear-gradient(180deg, #f7f9ff 0%, #eef3ff 100%);
+    border: 1px solid #dfe7ff;
+    box-shadow:
+            0 8px 20px rgba(79, 110, 247, 0.10),
+            inset 0 1px 0 rgba(255, 255, 255, 0.75);
+
+    svg {
+        display: block;
     }
 `;
 
-const CloseBtn = styled.button`
-    border: none;
-    background: none;
-    font-size: 24px;
-    color: #999;
-    cursor: pointer;
-    transition: color 0.2s;
-    &:hover { color: #444; }
+const HeaderTextWrap = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 `;
 
-const Form = styled.form`
+const Title = styled.h2`
+    margin: 0;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #111827;
+`;
+
+const Description = styled.p`
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #6b7280;
+`;
+
+const CloseButton = styled.button`
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: #6b7280;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.18s ease, color 0.18s ease;
+
+    &:hover {
+        background: #f3f4f6;
+        color: #111827;
+    }
+`;
+
+const Body = styled.div`
+    display: grid;
+    grid-template-columns: minmax(320px, 390px) minmax(0, 1fr);
+    min-height: 470px;
+
+    @media (max-width: 920px) {
+        grid-template-columns: 1fr;
+    }
+`;
+
+const CalendarPanel = styled.section`
+    padding: 22px 20px 20px 24px;
+    border-right: 1px solid #eef2f7;
+    background: #ffffff;
+
+    @media (max-width: 920px) {
+        border-right: none;
+        border-bottom: 1px solid #eef2f7;
+    }
+`;
+
+const MonthToolbar = styled.div`
+    display: grid;
+    grid-template-columns: 40px 1fr 40px;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 18px;
+`;
+
+const MonthArrowButton = styled.button`
+    width: 40px;
+    height: 40px;
+    border: 1px solid #eceff3;
+    border-radius: 999px;
+    background: #ffffff;
+    color: #4b5563;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        border-color: #dbe2ea;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+    }
+`;
+
+const MonthPill = styled.div`
+    height: 42px;
+    border-radius: 999px;
+    background: #f6f7fb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 18px;
+    font-size: 18px;
+    font-weight: 700;
+    color: #374151;
+`;
+
+const WeekHeader = styled.div`
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+    margin-bottom: 6px;
+`;
+
+const WeekLabel = styled.div`
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    color: #9ca3af;
+`;
+
+const CalendarGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
+`;
+
+const DayButton = styled.button<{
+    $muted: boolean;
+    $today: boolean;
+    $rangePosition: RangePosition;
+}>`
+    position: relative;
+    height: 44px;
+    border: none;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    border-radius: 14px;
+
+    &::before {
+        content: "";
+        position: absolute;
+        inset: 4px 0;
+        background: ${({ $rangePosition, $today }) => {
+    if ($rangePosition === "single") return "#3b5bfd";
+    if ($rangePosition === "start") return "#dfe8ff";
+    if ($rangePosition === "middle") return "#edf3ff";
+    if ($rangePosition === "end") return "#dfe8ff";
+    if ($today) return "#f3f6fb";
+    return "transparent";
+}};
+        border-radius: ${({ $rangePosition }) => {
+    if ($rangePosition === "single") return "999px";
+    if ($rangePosition === "start") return "999px 0 0 999px";
+    if ($rangePosition === "middle") return "0";
+    if ($rangePosition === "end") return "0 999px 999px 0";
+    return "14px";
+}};
+        transition: all 0.18s ease;
+    }
+
+    &:hover::before {
+        box-shadow: ${({ $rangePosition }) =>
+    $rangePosition === "none"
+        ? "inset 0 0 0 1px #dbe2ea"
+        : "inset 0 0 0 1px rgba(59, 91, 253, 0.12)"};
+    }
+`;
+
+const DayText = styled.span<{
+    $rangePosition: RangePosition;
+    $muted: boolean;
+}>`
+    position: relative;
+    z-index: 1;
+    width: 36px;
+    height: 36px;
+    margin: 4px auto 0;
+    display: grid;
+    place-items: center;
+    border-radius: 999px;
+    font-size: 14px;
+    font-weight: 700;
+    color: ${({ $rangePosition, $muted }) => {
+    if ($rangePosition === "single") return "#ffffff";
+    if ($muted) return "#c0c6d1";
+    return "#374151";
+}};
+    background: ${({ $rangePosition }) => {
+    if ($rangePosition === "start" || $rangePosition === "end") return "#3b5bfd";
+    return "transparent";
+}};
+
+    ${({ $rangePosition }) =>
+    ($rangePosition === "start" || $rangePosition === "end") &&
+    `
+        color: #ffffff;
+        box-shadow: 0 10px 22px rgba(59, 91, 253, 0.22);
+    `}
+`;
+
+const CalendarCaption = styled.div`
+    margin-top: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #8a94a6;
+`;
+
+const Form = styled.form.attrs({ id: "schedule-form" })`
     display: flex;
     flex-direction: column;
     gap: 18px;
-    label {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-        font-size: 14px;
-        color: #333;
-    }
-    input, textarea, select {
-        border: 1px solid #ddd;
-        border-radius: 10px;
-        padding: 8px 10px;
-        font-size: 14px;
-        background: #fafafa;
-        transition: all 0.2s;
-        &:focus {
-            border-color: #007aff;
-            background: #fff;
-            box-shadow: 0 0 0 3px rgba(0,122,255,0.15);
-            outline: none;
-        }
-    }
-    textarea { resize: none; }
+    padding: 24px 24px 20px;
+    background: #ffffff;
 `;
 
-const TimeGroup = styled.div`
+const FieldSection = styled.section`
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 16px;
 `;
 
-const TimeRow = styled.div`
-    display: flex;
-    justify-content: space-between;
-    gap: 12px;
-`;
-
-const TimePickerWrapper = styled.div`
+const FieldGroup = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
+`;
+
+const Label = styled.label`
     font-size: 14px;
+    font-weight: 700;
+    color: #374151;
 `;
 
-const PickerRow = styled.div`
+const TextInput = styled.input`
+    width: 100%;
+    height: 50px;
+    border: 1px solid #e6eaf0;
+    border-radius: 14px;
+    background: #fbfcfe;
+    padding: 0 16px;
+    font-size: 14px;
+    color: #111827;
+    outline: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+
+    &:focus {
+        border-color: #4f6ef7;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(79, 110, 247, 0.11);
+    }
+`;
+
+const TextArea = styled.textarea`
+    width: 100%;
+    min-height: 128px;
+    border: 1px solid #e6eaf0;
+    border-radius: 14px;
+    background: #fbfcfe;
+    padding: 14px 16px;
+    font-size: 14px;
+    line-height: 1.65;
+    color: #111827;
+    resize: vertical;
+    outline: none;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+
+    &:focus {
+        border-color: #4f6ef7;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px rgba(79, 110, 247, 0.11);
+    }
+`;
+
+const InlineOptionRow = styled.div`
     display: flex;
     align-items: center;
-    gap: 4px;
-    select {
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        padding: 6px 10px;
-        background: #fafafa;
-        &:focus {
-            border-color: #007aff;
-            background: #fff;
-        }
-    }
-    span { color: #666; }
 `;
 
-/* ✅ 하루 종일 토글 (Apple Switch) */
-const AllDayRow = styled.div`
+const CheckLabel = styled.label`
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+`;
+
+const CheckInput = styled.input`
+    width: 16px;
+    height: 16px;
+    accent-color: #4f6ef7;
+`;
+
+const CheckText = styled.span`
+    font-size: 14px;
+    font-weight: 700;
+    color: #374151;
+`;
+
+const DateGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+
+    @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+    }
+`;
+
+const ErrorText = styled.div`
+    font-size: 13px;
+    font-weight: 600;
+    color: #dc2626;
+`;
+
+const RightPanelSpacer = styled.div`
+    flex: 1;
+`;
+
+const Footer = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    padding: 16px 24px;
+    border-top: 1px solid #eef2f7;
+    background: #ffffff;
+
+    @media (max-width: 720px) {
+        flex-direction: column;
+        align-items: stretch;
+    }
+`;
+
+const RangeSummary = styled.div`
+    min-width: 0;
+`;
+
+const RangeSummaryLabel = styled.div`
+    font-size: 12px;
+    font-weight: 700;
+    color: #9ca3af;
+    margin-bottom: 4px;
+`;
+
+const RangeSummaryValue = styled.div`
+    font-size: 15px;
+    font-weight: 700;
+    color: #374151;
+    word-break: keep-all;
+`;
+
+const FooterActions = styled.div`
     display: flex;
     justify-content: flex-end;
-    align-items: center;
     gap: 10px;
-    font-size: 14px;
-    color: #333;
-`;
 
-const SwitchWrapper = styled.label`
-  position: relative;
-  display: inline-block;
-  width: 44px;
-  height: 26px;
-`;
-
-const SwitchInput = styled.input.attrs({ type: "checkbox" })`
-  opacity: 0;
-  width: 0;
-  height: 0;
-`;
-
-const SwitchSlider = styled.span<{ checked: boolean }>`
-  position: absolute;
-  cursor: pointer;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: ${({ checked }) => (checked ? "#007AFF" : "#d6d6d6")};
-  transition: all 0.3s ease;
-  border-radius: 26px;
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
-  
-  &::before {
-    content: "";
-    position: absolute;
-    height: 22px;
-    width: 22px;
-    left: ${({ checked }) => (checked ? "20px" : "2px")};
-    bottom: 2px;
-    background-color: white;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-  }
-`;
-
-
-const ColorSelectRow = styled.div`
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-`;
-
-const ColorPalette = styled.div`
-    display: flex;
-    gap: 10px;
-`;
-
-const ColorCircle = styled.button.attrs({ type: "button" })<{ color: string; selected: boolean }>`
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: ${({ selected }) => (selected ? "2px solid #007aff" : "1px solid #ccc")};
-    background-color: ${({ color }) => color};
-    cursor: pointer;
-    transition: all 0.2s;
-    &:hover {
-        transform: scale(1.15);
-        box-shadow: 0 0 6px rgba(0,122,255,0.25);
+    @media (max-width: 720px) {
+        width: 100%;
+        flex-direction: column-reverse;
     }
 `;
 
-const SubmitBtn = styled.button`
-    background: linear-gradient(90deg, #007aff 0%, #0a84ff 100%);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    padding: 12px 0;
-    font-size: 15px;
-    font-weight: 600;
+const SecondaryButton = styled.button`
+    min-width: 100px;
+    height: 42px;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #4b5563;
+    font-size: 14px;
+    font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 6px 14px rgba(0,122,255,0.25);
-    transition: all 0.25s;
-    &:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,122,255,0.35); }
-    &:active { transform: translateY(0); box-shadow: 0 3px 6px rgba(0,122,255,0.2); }
+    transition: background 0.18s ease, border-color 0.18s ease;
+
+    &:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+    }
+`;
+
+const PrimaryButton = styled.button`
+    min-width: 136px;
+    height: 42px;
+    border: none;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #4f6ef7 0%, #3b5bfd 100%);
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 12px 24px rgba(79, 110, 247, 0.22);
+    transition: transform 0.16s ease, box-shadow 0.16s ease, opacity 0.16s ease;
+
+    &:hover:not(:disabled) {
+        transform: translateY(-1px);
+        box-shadow: 0 16px 28px rgba(79, 110, 247, 0.28);
+    }
+
+    &:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+        box-shadow: none;
+    }
+`;
+
+const HiddenSubmitForm = styled.form`
+    display: none;
 `;

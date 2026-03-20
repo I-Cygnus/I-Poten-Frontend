@@ -3,8 +3,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import styled from "styled-components";
 import * as pdfjsLib from "pdfjs-dist";
-import workerSrc from "pdfjs-dist/build/pdf.worker.min.js?url";
-(pdfjsLib as any).GlobalWorkerOptions.workerSrc = workerSrc;
 
 /* ========= 스타일 ========= */
 const Backdrop = styled.div`
@@ -190,6 +188,10 @@ function resolveRemoteOrigin(): string {
 }
 
 const REMOTE_ORIGIN = resolveRemoteOrigin();
+(pdfjsLib as any).GlobalWorkerOptions.workerSrc = new URL(
+    "/pdfjs/build/pdf.worker.min.js",
+    `${REMOTE_ORIGIN}/`
+).toString();
 
 /* ========= URL 후보 & 안전 fetch ========= */
 function buildPdfUrlCandidates(src: string, assetOrigin?: string): string[] {

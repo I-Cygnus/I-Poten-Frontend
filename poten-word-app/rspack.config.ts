@@ -113,7 +113,13 @@ module.exports = defineConfig({
       template: "./index.html",
     }),
     new rspack.CopyRspackPlugin({
-      patterns: [{ from: "public", to: "." }],
+      patterns: [
+        { from: "public", to: "." },
+        {
+          from: path.resolve(__dirname, "../node_modules/pdfjs-dist/build/pdf.worker.min.js"),
+          to: "pdfjs/build/pdf.worker.min.js",
+        },
+      ],
     }),
     new DefinePlugin({
       "process.env.REACT_APP_API_BASE_URL": JSON.stringify(process.env.REACT_APP_API_BASE_URL ?? ""),

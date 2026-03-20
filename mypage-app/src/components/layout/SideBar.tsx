@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import styled from "styled-components";
 import {
     FaUser,
@@ -15,6 +15,8 @@ import ServiceModal from "../modals/ServiceModal.tsx";
 
 export default function SideBar() {
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const location = useLocation();
+    const isInterviewMenuActive = location.pathname.startsWith("/mypage/interview");
 
     return (
         <Wrapper>
@@ -25,7 +27,7 @@ export default function SideBar() {
                         회원정보
                     </StyledNavLink>
 
-                    <StyledNavLink to="interview/history">
+                    <StyledNavLink to="interview/records" className={isInterviewMenuActive ? "active" : undefined}>
                         <FaFolderOpen className="icon" />
                         면접기록
                     </StyledNavLink>

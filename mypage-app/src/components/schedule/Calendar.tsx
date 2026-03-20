@@ -1,408 +1,354 @@
+import React, { useMemo } from "react";
 import styled from "styled-components";
-import { Calendar as BigCalendar, dateFnsLocalizer } from "react-big-calendar";
-import { format, parse, startOfWeek, getDay } from "date-fns";
-import { ko } from "date-fns/locale";
-import "react-big-calendar/lib/css/react-big-calendar.css";
-import { useEffect } from "react";
-import { notifyInfo } from "../../utils/toast";
-
-const locales = { ko };
-const localizer = dateFnsLocalizer({ format, parse, startOfWeek, getDay, locales });
+import type { Schedule } from "../../api/userScheduleApi.ts";
 
 type Props = {
-    schedules: any[];
-    onEventClick?: (event: any) => void;
-    view: "month" | "week" | "day";
-    date: Date;
-    onViewChange: (v: "month" | "week" | "day") => void;
-    onDateChange: (d: Date) => void;
+    schedules: Schedule[];
+    currentMonth: Date;
+    selectedScheduleId?: number | null;
+    onMonthChange: (date: Date) => void;
+    onSelectSchedule: (scheduleId: number, target: HTMLElement) => void;
+    onCreateForDate: (date: Date) => void;
 };
 
-// 기능 그대로: Custom Toolbar
-const CustomToolbar = ({ label, onNavigate, onView, view }: any) => {
-    const goToBack = () => onNavigate("PREV");
-    const goToNext = () => onNavigate("NEXT");
-    const goToToday = () => onNavigate("TODAY");
+const WEEK_LABELS = ["일", "월", "화", "수", "목", "금", "토"];
 
-    // label이 "10월 2025" → "2025년 10월" 변환
-    const formattedLabel = (() => {
-        if (view === "day") {
-            // "월요일 10월 20" 같은 기본 label 대신 직접 날짜 포맷팅
-            const today = new Date(label); // label이 날짜 객체로 안 넘어올 수도 있으니 안전하게 처리
-            try {
-                return format(today, "yyyy년 M월 d일 (EEE)", { locale: ko });
-            } catch {
-                // 혹시 label이 문자열일 경우 강제 파싱
-                return format(new Date(), "yyyy년 M월 d일 (EEE)", { locale: ko });
-            }
-        }
+function startOfMonth(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth(), 1);
+}
 
-        // 기존 월간/주간용 포맷 유지
-        const match = label.match(/(\d{1,2})월\s?(\d{4})/);
-        if (match) {
-            const [_, month, year] = match;
-            return `${year}년 ${month}월`;
-        }
+function endOfMonth(date: Date) {
+    return new Date(date.getFullYear(), date.getMonth() + 1, 0);
+}
 
-        return label;
-    })();
-
-    return (
-        <ToolbarWrapper>
-            <div className="nav-buttons">
-                <button onClick={goToBack}>‹ 이전</button>
-                <button onClick={goToToday}>오늘</button>
-                <button onClick={goToNext}>다음 ›</button>
-            </div>
-
-            <div className="label">{formattedLabel}</div>
-
-            {view !== "month" && (
-                <BackToMonthBtn onClick={() => onView("month")}>
-                    뒤로 가기
-                </BackToMonthBtn>
-            )}
-        </ToolbarWrapper>
-    );
-};
-
-// 기능 그대로: Calendar 본체
-export default function Calendar({ schedules, onEventClick }: Props) {
-    const events = schedules.map((s) => ({
-        id: s.id,
-        title:
-            s.type === "study"
-                ? `${s.studyRoomTitle || ""} - ${s.title}`
-                : s.title,
-        start: new Date(s.startTime),
-        end: new Date(s.endTime),
-        allDay: s.allDay,
-        description: s.description || "",
-        location: s.location || "",
-        color:
-            s.type === "study"
-                ? "rgba(52,211,153,0.9)"
-                : s.color
-                    ? s.color
-                    : "rgba(0,122,255,0.9)",
-        type: s.type,
-        studyRoomId: s.studyRoomId,
-    }));
-
-    const CustomEvent = ({ event }: any) => (
-        <div style={{ whiteSpace: "normal", fontSize: 13 }}>{event.title}</div>
-    );
-
-    return (
-        <CalendarWrapper>
-            <BigCalendar
-                localizer={localizer}
-                events={events}
-                startAccessor="start"
-                endAccessor="end"
-                onSelectEvent={(event) => {
-                    if (onEventClick) onEventClick(event);
-                    else notifyInfo("일정 정보를 불러오는 중입니다...");
-                }}
-                culture="ko"
-                style={{ height: "100%" }}
-                components={{ event: CustomEvent, toolbar: CustomToolbar }}
-                views={["month", "week", "day"]}
-                defaultView="month"
-                eventPropGetter={(event) => ({
-                    style: {
-                        background: event.color,
-                        borderRadius: "8px",
-                        border: "none",
-                        color: "#fff",
-                        fontWeight: 500,
-                        fontSize: "13px",
-                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)", // subtle
-                    },
-                })}
-                messages={{
-                    next: "다음",
-                    previous: "이전",
-                    today: "오늘",
-                    month: "월",
-                    week: "주",
-                    day: "일",
-                }}
-            />
-        </CalendarWrapper>
+function startOfCalendar(date: Date) {
+    const firstDay = startOfMonth(date);
+    return new Date(
+        firstDay.getFullYear(),
+        firstDay.getMonth(),
+        firstDay.getDate() - firstDay.getDay()
     );
 }
 
-/* ================== styled-components ================== */
-const CalendarWrapper = styled.div`
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    height: calc(100vh - 250px);
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: none;
-    border: none;
-    overflow: hidden;
-    padding: 0;
-    font-family: "SF Pro Text", "Noto Sans KR", sans-serif;
-    transition: all 0.2s ease;
+function isSameDay(left: Date, right: Date) {
+    return (
+        left.getFullYear() === right.getFullYear() &&
+        left.getMonth() === right.getMonth() &&
+        left.getDate() === right.getDate()
+    );
+}
 
-    /* 캘린더 외곽 테두리 제거 */
-    .rbc-month-view {
-        border: none !important;
-    }
+function formatMonthLabel(date: Date) {
+    return new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "long",
+    }).format(date);
+}
 
-    /* 요일(일~토) 사이 세로 구분선 제거 */
-    .rbc-header {
-        border-left: none !important;
-        border-right: none !important;
-    }
+function formatEventTime(schedule: Schedule) {
+    if (schedule.allDay) return "종일";
 
-    .rbc-calendar {
-        border: none !important;
-        background: transparent !important;
-    }
+    return new Intl.DateTimeFormat("ko-KR", {
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(new Date(schedule.startAt));
+}
 
-    .rbc-toolbar {
-        margin-bottom: 0.5rem !important;
-    }
+export default function Calendar({
+    schedules,
+    currentMonth,
+    selectedScheduleId,
+    onMonthChange,
+    onSelectSchedule,
+    onCreateForDate,
+}: Props) {
+    const monthStart = startOfMonth(currentMonth);
+    const monthEnd = endOfMonth(currentMonth);
+    const today = new Date();
 
-    .rbc-month-view {
-        padding: 0.4rem;
-    }
+    const weeks = useMemo(() => {
+        const calendarStart = startOfCalendar(currentMonth);
+        const next = new Date(calendarStart);
+        const result: Date[][] = [];
 
-    .rbc-date-cell {
-        padding: 7px 5px;
-        font-size: 13px;
-        font-weight: 400;
-        color: #444;
-    }
-
-    .rbc-today {
-        background: #f0f7ff !important;
-        border-radius: 6px;
-    }
-
-    /* 주말 텍스트 (요일 헤더 + 날짜 숫자 둘 다) */
-    && {
-        /* === 일요일 === */
-        .rbc-month-view .rbc-header:first-child,
-        .rbc-month-row .rbc-row > .rbc-date-cell:first-child .rbc-button-link {
-            color: #ff3b30 !important;
-            font-weight: 400 !important;
+        for (let weekIndex = 0; weekIndex < 6; weekIndex += 1) {
+            const week: Date[] = [];
+            for (let dayIndex = 0; dayIndex < 7; dayIndex += 1) {
+                week.push(new Date(next));
+                next.setDate(next.getDate() + 1);
+            }
+            result.push(week);
         }
 
-        /* === 토요일 === */
-        .rbc-month-view .rbc-header:last-child,
-        .rbc-month-row .rbc-row > .rbc-date-cell:last-child .rbc-button-link {
-            color: #007aff !important;
-            font-weight: 400 !important;
-        }
+        return result;
+    }, [currentMonth]);
 
-        /* === 기본 요일 === */
-        .rbc-header {
-            color: #1c1c1e !important;
-            font-weight: 400;
-        }
-    }
+    const schedulesByDay = useMemo(() => {
+        const map = new Map<string, Schedule[]>();
 
-    /* 오늘 날짜 강조 + 주말 분기 + hover 인터랙션 */
-    && {
-        /* 오늘 날짜 셀 기본 설정 */
-        .rbc-month-view .rbc-date-cell.rbc-now {
-            background: none !important; /* 배경 제거 */
-            position: relative;
-            z-index: 2;
-        }
+        schedules.forEach((schedule) => {
+            const date = new Date(schedule.startAt);
+            if (Number.isNaN(date.getTime())) {
+                return;
+            }
 
-        /* 오늘 날짜 버튼 공통 스타일 */
-        .rbc-month-view .rbc-date-cell.rbc-now button.rbc-button-link {
-            background-color: #007aff !important;
-            color: #ffffff !important;
-            border-radius: 50%;
-            width: 26px;
-            height: 26px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 13.5px;
-            font-weight: 600;
-            line-height: 1;
-            border: none !important;
-            box-shadow: 0 1px 4px rgba(0, 122, 255, 0.25);
-            transition: all 0.25s ease;
-            transform: scale(1);
-        }
+            const key = date.toDateString();
+            const bucket = map.get(key) ?? [];
+            bucket.push(schedule);
+            bucket.sort(
+                (left, right) =>
+                    new Date(left.startAt).getTime() - new Date(right.startAt).getTime()
+            );
+            map.set(key, bucket);
+        });
 
-        /* hover 시 밝은 파랑 + 확대 */
-        .rbc-month-view .rbc-date-cell.rbc-now button.rbc-button-link:hover {
-            background-color: #0a84ff !important;
-            box-shadow: 0 2px 8px rgba(0, 122, 255, 0.35);
-            transform: scale(1.08);
-        }
+        return map;
+    }, [schedules]);
 
-        /* 클릭 시 줄어듦 */
-        .rbc-month-view .rbc-date-cell.rbc-now button.rbc-button-link:active {
-            transform: scale(0.96);
-            box-shadow: 0 1px 3px rgba(0, 122, 255, 0.2);
-        }
+    return (
+        <Wrapper>
+            <Header>
+                <MonthTitle>{formatMonthLabel(currentMonth)}</MonthTitle>
+                <HeaderActions>
+                    <MonthButton
+                        type="button"
+                        onClick={() =>
+                            onMonthChange(
+                                new Date(
+                                    currentMonth.getFullYear(),
+                                    currentMonth.getMonth() - 1,
+                                    1
+                                )
+                            )
+                        }
+                    >
+                        이전 달
+                    </MonthButton>
+                    <MonthButton type="button" onClick={() => onMonthChange(new Date())}>
+                        이번 달
+                    </MonthButton>
+                    <MonthButton
+                        type="button"
+                        onClick={() =>
+                            onMonthChange(
+                                new Date(
+                                    currentMonth.getFullYear(),
+                                    currentMonth.getMonth() + 1,
+                                    1
+                                )
+                            )
+                        }
+                    >
+                        다음 달
+                    </MonthButton>
+                </HeaderActions>
+            </Header>
 
-        /* 오늘이 토요일일 때 (덮어쓰기) */
-        .rbc-month-view .rbc-date-cell.rbc-now:last-child button.rbc-button-link {
-            background-color: #007aff !important; /* Blue 유지 */
-            color: #ffffff !important;
-        }
+            <WeekHeader>
+                {WEEK_LABELS.map((label) => (
+                    <WeekLabel key={label}>{label}</WeekLabel>
+                ))}
+            </WeekHeader>
 
-        /* 오늘이 일요일일 때 (덮어쓰기) */
-        .rbc-month-view .rbc-date-cell.rbc-now:first-child button.rbc-button-link {
-            background-color: #ff3b30 !important; /* Apple Red */
-            color: #ffffff !important;
-            box-shadow: 0 1px 4px rgba(255, 59, 48, 0.25);
-        }
+            <Grid>
+                {weeks.flat().map((date) => {
+                    const inCurrentMonth =
+                        date >= monthStart &&
+                        date <= monthEnd &&
+                        date.getMonth() === currentMonth.getMonth();
+                    const daySchedules = schedulesByDay.get(date.toDateString()) ?? [];
+                    const visibleSchedules = daySchedules.slice(0, 3);
+                    const hiddenCount = daySchedules.length - visibleSchedules.length;
 
-        /* hover 시 (일요일용 밝은 레드) */
-        .rbc-month-view .rbc-date-cell.rbc-now:first-child button.rbc-button-link:hover {
-            background-color: #ff453a !important;
-            box-shadow: 0 2px 8px rgba(255, 59, 48, 0.35);
-        }
-    }
+                    return (
+                        <DayCell
+                            key={date.toISOString()}
+                            $muted={!inCurrentMonth}
+                            $today={isSameDay(date, today)}
+                            onDoubleClick={() => onCreateForDate(date)}
+                        >
+                            <DayHeader>
+                                <DayNumber>{date.getDate()}</DayNumber>
+                                <AddLink
+                                    type="button"
+                                    onClick={() => onCreateForDate(date)}
+                                    disabled={!inCurrentMonth}
+                                >
+                                    +
+                                </AddLink>
+                            </DayHeader>
 
-    @media (max-width: 1200px) {
-        height: 620px;
-        max-width: 95%;
-    }
+                            <EventList>
+                                {visibleSchedules.map((schedule) => (
+                                    <EventButton
+                                        key={schedule.id}
+                                        type="button"
+                                        $selected={selectedScheduleId === schedule.id}
+                                        data-schedule-trigger="true"
+                                        onClick={(event) =>
+                                            onSelectSchedule(schedule.id, event.currentTarget)
+                                        }
+                                    >
+                                        <EventTime>{formatEventTime(schedule)}</EventTime>
+                                        <EventTitle>{schedule.title}</EventTitle>
+                                    </EventButton>
+                                ))}
+
+                                {hiddenCount > 0 && <MoreText>+ {hiddenCount}개 더보기</MoreText>}
+                            </EventList>
+                        </DayCell>
+                    );
+                })}
+            </Grid>
+        </Wrapper>
+    );
+}
+
+const Wrapper = styled.section`
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+`;
+
+const Header = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
 
     @media (max-width: 768px) {
-        height: auto;
-        padding: 1rem;
-    }
-
-    /* ==================== Day / Week View 스타일 ==================== */
-    .rbc-time-view {
-        border: none !important;
-        background: #ffffff !important;
-        border-radius: 10px;
-    }
-
-    .rbc-time-header-gutter {
-        background: transparent !important;
-        border: none !important;
-        color: #6b7280 !important;
-        font-size: 12.5px !important;
-        font-weight: 400;
-    }
-
-    .rbc-time-header {
-        background: rgba(255, 255, 255, 0.7) !important;
-        backdrop-filter: blur(8px);
-        border: none !important;
-        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-        font-weight: 500;
-        color: #111;
-    }
-
-    .rbc-time-content > * + * > * {
-        border-top: 1px solid rgba(0, 0, 0, 0.05) !important;
-    }
-
-    .rbc-time-content > * {
-        border-left: none !important;
-    }
-
-    .rbc-timeslot-group {
-        min-height: 52px;
-        background: #fcfcfd;
-    }
-
-    .rbc-current-time-indicator {
-        background: #ff3b30 !important;
-        height: 2px;
-        box-shadow: 0 0 4px rgba(255, 59, 48, 0.3);
-    }
-
-    .rbc-event {
-        border: none;
-        border-radius: 10px;
-        background: linear-gradient(145deg, #34c759, #30d158);
-        color: white;
-        font-weight: 600;
-        font-size: 13px;
-        padding: 6px 8px;
-        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-        transition: all 0.15s ease;
-    }
-    .rbc-event:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    }
-
-    .rbc-time-content::-webkit-scrollbar {
-        display: none;
-    }
-
-    .rbc-today {
-        background: #f8fbff !important;
+        flex-direction: column;
+        align-items: flex-start;
     }
 `;
 
-const ToolbarWrapper = styled.div`
-    position: relative;
+const MonthTitle = styled.h2`
+    margin: 0;
+    font-size: 24px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: #0f172a;
+`;
+
+const HeaderActions = styled.div`
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 4px 12px 6px; /* 상하 패딩 줄임 (10px → 4px) */
-    background: rgba(255, 255, 255, 0.7);
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(0, 0, 0, 0.05);
-    border-radius: 8px; /* 조금 더 compact하게 */
-    margin-bottom: 0.5rem; /* 툴바-캘린더 간격 축소 */
+    flex-wrap: wrap;
+    gap: 8px;
+`;
 
-    .nav-buttons {
-        display: flex;
-        align-items: center;
-        gap: 4px;
+const MonthButton = styled.button`
+    height: 38px;
+    padding: 0 14px;
+    border-radius: 999px;
+    border: 1px solid #dbe2ea;
+    background: #ffffff;
+    color: #334155;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+`;
+
+const WeekHeader = styled.div`
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+`;
+
+const WeekLabel = styled.div`
+    text-align: center;
+    font-size: 13px;
+    font-weight: 800;
+    color: #64748b;
+`;
+
+const Grid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 10px;
+
+    @media (max-width: 980px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .nav-buttons button {
-        background: rgba(255, 255, 255, 0.6);
-        border: 1px solid rgba(0, 0, 0, 0.08);
-        border-radius: 6px; /* 작게 조정 */
-        padding: 3px 8px; /* 버튼 세로 높이 감소 */
-        font-size: 12.5px;
-        color: #111;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    .nav-buttons button:hover {
-        background: rgba(0, 122, 255, 0.1);
-        color: #007aff;
-        border-color: rgba(0, 122, 255, 0.2);
-    }
-
-    .label {
-        position: absolute;
-        left: 50%;
-        transform: translateX(-50%);
-        font-weight: 500;
-        color: #111;
-        font-size: 14.5px;
+    @media (max-width: 640px) {
+        grid-template-columns: 1fr;
     }
 `;
 
-const BackToMonthBtn = styled.button`
-    background: rgba(0, 122, 255, 0.1);
-    color: #007aff;
-    border: 1px solid rgba(0, 122, 255, 0.25);
-    border-radius: 8px;
-    padding: 5px 10px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: all 0.2s ease;
+const DayCell = styled.div<{ $muted: boolean; $today: boolean }>`
+    min-height: 160px;
+    border-radius: 18px;
+    border: 1px solid
+        ${({ $today }) => ($today ? "rgba(79, 118, 241, 0.3)" : "#e5e7eb")};
+    background: ${({ $muted }) => ($muted ? "#f8fafc" : "#ffffff")};
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    opacity: ${({ $muted }) => ($muted ? 0.62 : 1)};
+`;
 
-    &:hover {
-        background: rgba(0, 122, 255, 0.15);
-        border-color: rgba(0, 122, 255, 0.4);
+const DayHeader = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+`;
+
+const DayNumber = styled.div`
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+`;
+
+const AddLink = styled.button`
+    width: 28px;
+    height: 28px;
+    border: none;
+    border-radius: 999px;
+    background: rgba(79, 118, 241, 0.1);
+    color: #3e63e0;
+    font-size: 18px;
+    cursor: pointer;
+
+    &:disabled {
+        opacity: 0.45;
+        cursor: default;
     }
+`;
+
+const EventList = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+`;
+
+const EventButton = styled.button<{ $selected: boolean }>`
+    width: 100%;
+    border: 1px solid
+        ${({ $selected }) => ($selected ? "rgba(79, 118, 241, 0.3)" : "transparent")};
+    border-radius: 12px;
+    background: ${({ $selected }) => ($selected ? "#eef4ff" : "#f8fbff")};
+    padding: 10px;
+    text-align: left;
+    cursor: pointer;
+`;
+
+const EventTime = styled.div`
+    font-size: 11px;
+    font-weight: 800;
+    color: #4f76f1;
+    margin-bottom: 4px;
+`;
+
+const EventTitle = styled.div`
+    font-size: 13px;
+    line-height: 1.5;
+    color: #0f172a;
+    word-break: break-word;
+`;
+
+const MoreText = styled.div`
+    font-size: 12px;
+    color: #64748b;
 `;

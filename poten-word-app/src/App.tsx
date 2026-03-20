@@ -31,6 +31,7 @@ import PotenWordLandingPage from "./pages/word/PotenWordLandingPage.tsx";
 import QuizReviewPage from "./pages/quiz/regular/QuizReviewPage.tsx";
 import QuizWrongNotePage from "./pages/quiz/QuizWrongNotePage.tsx";
 import HallPage from "./pages/quiz/hall/HallPage.tsx";
+import { markLastActivity } from "./utils/activity.ts";
 
 // notes 전용 로그인 가드(필요하면 라우트에 연결해서 사용)
 function NotesGuard() {
@@ -161,6 +162,7 @@ function AppLayout() {
           const newId: string = String(data.id);
           const newName: string = data.wordbookName ?? raw;
           setNotebooks((prev) => [{ id: newId, name: newName }, ...prev]);
+          markLastActivity();
           console.debug("[createFolder] created id/name =", newId, newName);
           return newId;
         } catch (err: any) {
@@ -181,6 +183,7 @@ function AppLayout() {
         if (!selectedTermId) return;
         try {
           await http.post(`/me/folders/${notebookId}/terms`, { termId: selectedTermId });
+          markLastActivity();
           console.debug("[attach] term", selectedTermId, "-> folder", notebookId, "OK");
           closeModal();
         } catch (err: any) {

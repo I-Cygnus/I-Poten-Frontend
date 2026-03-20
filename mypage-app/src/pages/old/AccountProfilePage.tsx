@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef } from "react";
 import styled, { keyframes } from "styled-components";
 import { FaEnvelope, FaLock, FaFire } from "react-icons/fa";
 import { useOutletContext } from "react-router-dom";
-import defaultProfile from "../assets/default_profile.png";
-import ServiceModal from "../components/modals/ServiceModal.tsx";
-import TitleGuideModal from "../components/modals/TitleGuideModal.tsx";
+import defaultProfile from "../../assets/default_profile.png";
+import ServiceModal from "../../components/modals/ServiceModal.tsx";
+import TitleGuideModal from "../../components/modals/TitleGuideModal.tsx";
 // API imports removed - using mock data
 type ProfileAppearanceResponse = {
     photoUrl: string | null;
@@ -25,7 +25,7 @@ type UserTitleResponse = {
     equipped: boolean;
     acquiredAt: string;
 };
-import { notifySuccess, notifyError, notifyInfo } from "../utils/toast";
+import { notifySuccess, notifyError, notifyInfo } from "../../utils/toast.ts";
 import { motion } from "framer-motion";
 import confetti from "canvas-confetti";
 

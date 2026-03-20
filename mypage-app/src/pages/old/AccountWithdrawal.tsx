@@ -2,11 +2,11 @@ import React, { useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { FaRegHandshake } from "react-icons/fa"; // 🤝 따뜻한 작별 아이콘
-import WithdrawalConfirmModal from "../components/modals/WithdrawalConfirmModal.tsx";
-import ServiceModal from "../components/modals/ServiceModal.tsx";
+import WithdrawalConfirmModal from "../../components/modals/WithdrawalConfirmModal.tsx";
+import ServiceModal from "../../components/modals/ServiceModal.tsx";
 // API imports removed
 // import { withdrawAccount } from "../api/profileAppearanceApi.ts";
-import { notifySuccess, notifyError, notifyInfo } from "../utils/toast";
+import { notifySuccess, notifyError, notifyInfo } from "../../utils/toast.ts";
 
 export default function AccountWithdrawal() {
     const [reason, setReason] = useState("");
