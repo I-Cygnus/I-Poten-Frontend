@@ -7,6 +7,18 @@
     <div :style="bgDecoStyle"></div>
     <div :style="backgroundTextStyle">AI INTERVIEW</div>
 
+    <!-- 장치 토글 버튼 (우측 상단) -->
+    <div :style="deviceToggleBarStyle">
+      <div :style="deviceToggleBtnStyle(useMic)" @click="useMic = !useMic">
+        <v-icon size="13" :color="useMic ? '#a5b4fc' : 'rgba(255,255,255,0.3)'">mdi-microphone{{ useMic ? '' : '-off' }}</v-icon>
+        마이크
+      </div>
+      <div :style="deviceToggleBtnStyle(useCamera)" @click="useCamera = !useCamera">
+        <v-icon size="13" :color="useCamera ? '#a5b4fc' : 'rgba(255,255,255,0.3)'">mdi-video{{ useCamera ? '' : '-off' }}</v-icon>
+        카메라
+      </div>
+    </div>
+
     <div :style="interviewStartWrapperStyle">
       <!-- 진행 표시 헤더 -->
       <div :style="progressHeaderStyle">
@@ -22,15 +34,17 @@
         <video ref="previewVideo" autoplay playsinline muted :style="mainVideoStyle" />
 
         <!-- 미확인 오버레이 -->
-        <div :style="videoOverlayStyle" v-if="!mediaChecked">
-          <v-icon size="56" color="rgba(255,255,255,0.25)">mdi-microphone-outline</v-icon>
-          <p :style="overlayTextStyle">마이크를 확인하세요 (카메라는 선택)</p>
+        <div :style="videoOverlayStyle" v-if="!mediaChecked && (useMic || useCamera)">
+          <v-icon size="56" color="rgba(255,255,255,0.25)">{{ useMic ? 'mdi-microphone-outline' : 'mdi-video-outline' }}</v-icon>
+          <p :style="overlayTextStyle">
+            {{ useMic && useCamera ? '마이크·카메라 확인이 필요합니다' : useMic ? '마이크 확인이 필요합니다' : '카메라 확인이 필요합니다' }}
+          </p>
         </div>
 
-        <!-- 카메라 없음 플레이스홀더 (확인 완료 + 카메라 없을 때) -->
-        <div :style="videoOverlayStyle" v-else-if="!cameraAvailable">
+        <!-- 장치 없음 플레이스홀더 (확인 완료 + 카메라 없거나 꺼진 경우) -->
+        <div :style="videoOverlayStyle" v-else-if="mediaChecked && !cameraAvailable">
           <v-icon size="56" color="rgba(255,255,255,0.15)">mdi-account-outline</v-icon>
-          <p :style="overlayTextStyle">카메라 없음 · 마이크로 진행</p>
+          <p :style="overlayTextStyle">{{ !useCamera ? '카메라 미사용' : '카메라 없음' }} · {{ useMic ? '마이크로 진행' : '장치 없이 진행' }}</p>
         </div>
 
         <!-- PiP (카메라 있을 때만) -->
@@ -41,7 +55,7 @@
         <!-- 상태 뱃지 (좌측 상단) -->
         <div :style="topLeftBadgeStyle">
           <v-icon size="11" :color="mediaChecked ? '#10b981' : 'rgba(255,255,255,0.4)'">mdi-circle</v-icon>
-          <span>{{ !mediaChecked ? '마이크 확인 필요' : cameraAvailable ? '준비 완료' : '마이크 준비 완료' }}</span>
+          <span>{{ !mediaChecked ? '확인 필요' : cameraAvailable ? '카메라·마이크 준비 완료' : useMic ? '마이크 준비 완료' : '준비 완료' }}</span>
         </div>
 
         <!-- 하단 오버레이 -->
@@ -49,11 +63,13 @@
           <div :style="qBadgeStyle">PREP</div>
           <div :style="questionScrollContainerStyle" class="question-scroll">
             <p :style="videoQuestionTextStyle">
-              {{ !mediaChecked
-                ? '마이크를 확인해주세요. 카메라는 없어도 됩니다.'
+              {{ !mediaChecked && (useMic || useCamera)
+                ? '우측 상단 토글로 사용할 장치를 선택하고 확인 버튼을 눌러주세요.'
                 : cameraAvailable
-                  ? '카메라와 마이크가 정상 작동합니다. 면접을 시작하세요.'
-                  : '마이크가 준비됐습니다. 카메라 없이 면접을 시작하세요.' }}
+                  ? '카메라와 마이크가 준비됐습니다. 면접을 시작하세요.'
+                  : useMic
+                    ? '마이크가 준비됐습니다. 면접을 시작하세요.'
+                    : '장치 없이 진행합니다. 면접을 시작하세요.' }}
             </p>
           </div>
         </div>
@@ -63,8 +79,8 @@
       <div :style="controlsRowStyle">
         <template v-if="!mediaChecked">
           <v-btn :style="primaryControlBtnStyle" elevation="0" @click="checkMediaReady">
-            <v-icon left size="18">mdi-microphone-plus</v-icon>
-            마이크 확인 (카메라 선택)
+            <v-icon left size="18">{{ useMic || useCamera ? 'mdi-check-circle-outline' : 'mdi-play-circle' }}</v-icon>
+            {{ !useMic && !useCamera ? '장치 없이 시작' : useMic && useCamera ? '마이크·카메라 확인' : useMic ? '마이크 확인' : '카메라 확인' }}
           </v-btn>
         </template>
         <template v-else>
@@ -230,7 +246,7 @@
 
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useAiInterviewStore } from "../stores/aiInterviewStore";
 import { useRouter, onBeforeRouteLeave } from "vue-router";
 import "@mdi/font/css/materialdesignicons.css";
@@ -299,6 +315,8 @@ const startMessage = ref("");
 const userVideo = ref(null);
 const mediaChecked = ref(false);
 const cameraAvailable = ref(false);
+const useMic = ref(true);
+const useCamera = ref(true);
 const previewVideo = ref(null);
 const mediaStream = ref(null);
 const isGenerating = ref(false);
@@ -419,31 +437,59 @@ const startLoadingVideo = async () => {
   }
 };
 
+// 토글 변경 시 기존 스트림 해제 및 확인 상태 초기화
+watch([useMic, useCamera], () => {
+  mediaChecked.value = false;
+  cameraAvailable.value = false;
+  if (mediaStream.value) {
+    mediaStream.value.getTracks().forEach((t) => t.stop());
+    mediaStream.value = null;
+  }
+  if (previewVideo.value) previewVideo.value.srcObject = null;
+  // 둘 다 꺼져 있으면 확인 불필요
+  if (!useMic.value && !useCamera.value) mediaChecked.value = true;
+});
+
 const checkMediaReady = async () => {
-  // 1차: 카메라 + 마이크 동시 시도
+  // 둘 다 꺼져 있으면 즉시 통과
+  if (!useMic.value && !useCamera.value) {
+    mediaChecked.value = true;
+    return;
+  }
+
+  // 요청할 제약 조건
+  const constraints = { video: useCamera.value, audio: useMic.value };
+
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    cameraAvailable.value = true;
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    cameraAvailable.value = useCamera.value;
     mediaChecked.value = true;
     mediaStream.value = stream;
     if (previewVideo.value) previewVideo.value.srcObject = stream;
-    await nextTick();
-    if (smallPreview.value) smallPreview.value.srcObject = stream;
-    showAlert("마이크와 카메라가 정상적으로 작동합니다.");
+    if (useCamera.value) {
+      await nextTick();
+      if (smallPreview.value) smallPreview.value.srcObject = stream;
+    }
+    const label = useMic.value && useCamera.value
+      ? "마이크와 카메라가 준비됐습니다."
+      : useMic.value
+        ? "마이크가 준비됐습니다."
+        : "카메라가 준비됐습니다.";
+    showAlert(label);
     return;
   } catch (_) {
-    // 카메라 없음 → 마이크만 재시도
-  }
-
-  // 2차: 마이크만 (카메라 없는 환경)
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-    cameraAvailable.value = false;
-    mediaChecked.value = true;
-    mediaStream.value = stream;
-    showAlert("카메라를 찾을 수 없어 마이크만으로 진행합니다.\n면접은 정상적으로 진행됩니다.");
-  } catch (err) {
-    showAlert("마이크에 접근할 수 없습니다. 브라우저 권한을 확인하세요.");
+    // 카메라+마이크 동시 요청 실패 → 마이크만 폴백 (둘 다 요청한 경우만)
+    if (useCamera.value && useMic.value) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+        cameraAvailable.value = false;
+        mediaChecked.value = true;
+        mediaStream.value = stream;
+        showAlert("카메라를 찾을 수 없어 마이크만으로 진행합니다.");
+        return;
+      } catch (_) {}
+    }
+    showAlert("장치에 접근할 수 없습니다. 브라우저 권한을 확인하세요.");
     mediaChecked.value = false;
   }
 };
@@ -510,11 +556,13 @@ onMounted(async () => {
   // 초기 비디오 설정 (interview1.mp4를 기본으로 표시)
   // start가 false일 때는 interviewerVideo가 없으므로 handleStartInterview에서 처리하도록 함
 
-  try {
-    const videoOnlyStream = await navigator.mediaDevices.getUserMedia({ video: true });
-    if (previewVideo.value) previewVideo.value.srcObject = videoOnlyStream;
-  } catch (_) {
-    // 카메라 없어도 정상 진행 — checkMediaReady에서 마이크만으로 진행 가능
+  if (useCamera.value) {
+    try {
+      const videoOnlyStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (previewVideo.value) previewVideo.value.srcObject = videoOnlyStream;
+    } catch (_) {
+      // 카메라 없어도 정상 진행
+    }
   }
   if (typeof window !== "undefined") {
     speakStartMessage();
@@ -641,22 +689,23 @@ const startSTT = () => {
   }
 };
 const startRecordingAuto = async () => {
+  if (!useMic.value && !useCamera.value) return;
   try {
     recordingStream = await navigator.mediaDevices.getUserMedia({
-      video: cameraAvailable.value,
-      audio: true,
+      video: useCamera.value && cameraAvailable.value,
+      audio: useMic.value,
     });
-    if (cameraAvailable.value && userVideo.value) {
+    if (useCamera.value && cameraAvailable.value && userVideo.value) {
       userVideo.value.srcObject = recordingStream;
     }
     chunks = [];
-    const mimeType = cameraAvailable.value ? "video/webm" : "audio/webm";
+    const mimeType = (useCamera.value && cameraAvailable.value) ? "video/webm" : "audio/webm";
     recorder = new MediaRecorder(recordingStream, { mimeType });
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) chunks.push(event.data);
     };
     recorder.onstop = () => {
-      const type = cameraAvailable.value ? "video/webm" : "audio/webm";
+      const type = (useCamera.value && cameraAvailable.value) ? "video/webm" : "audio/webm";
       recordedBlob.value = new Blob(chunks, { type });
       const videoURL = URL.createObjectURL(recordedBlob.value);
       localStorage.setItem("interviewRecordingUrl", videoURL);
@@ -2707,6 +2756,34 @@ const nextQuestionBtnInlineStyle = {
   letterSpacing: "0.02em",
 };
 
+// ===== 장치 토글 버튼 =====
+const deviceToggleBarStyle = {
+  position: "absolute",
+  top: "20px",
+  right: "24px",
+  zIndex: 10,
+  display: "flex",
+  gap: "8px",
+};
+
+const deviceToggleBtnStyle = (isOn) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  padding: "7px 14px",
+  borderRadius: "100px",
+  border: isOn ? "1px solid rgba(91,107,255,0.5)" : "1px solid rgba(255,255,255,0.12)",
+  background: isOn ? "rgba(91,107,255,0.18)" : "rgba(255,255,255,0.06)",
+  color: isOn ? "#a5b4fc" : "rgba(255,255,255,0.3)",
+  fontSize: "12px",
+  fontWeight: "600",
+  cursor: "pointer",
+  backdropFilter: "blur(8px)",
+  WebkitBackdropFilter: "blur(8px)",
+  transition: "all 0.2s ease",
+  letterSpacing: "-0.01em",
+  userSelect: "none",
+});
 
 </script>
 
