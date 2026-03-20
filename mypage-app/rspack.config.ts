@@ -90,7 +90,7 @@ export default defineConfig({
       template: "./index.html",
     }),
     new rspack.CopyRspackPlugin({
-      patterns: [{ from: "public", to: "." }],
+      patterns: [{ from: "public", to: ".", noErrorOnMissing: true }],
     }),
     new DefinePlugin({
 

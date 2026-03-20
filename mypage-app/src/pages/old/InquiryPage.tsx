@@ -1,7 +1,7 @@
 import React from "react";
 import styled, { keyframes } from "styled-components";
 import { FaEnvelopeOpenText } from "react-icons/fa";
-import { notifySuccess } from "../utils/toast";
+import { notifySuccess } from "../../utils/toast.ts";
 
 export default function InquiryPage() {
     const handleCopyEmail = async () => {

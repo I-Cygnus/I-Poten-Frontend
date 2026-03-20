@@ -13,6 +13,7 @@ import SystemMessageModal, { SystemMessage } from "../../components/common/Syste
 import { fetchUserFolders, patchReorderFolders } from "../../api/wordbook.ts";
 import { deleteUserFolder, deleteUserFoldersBulk, renameUserFolder } from "../../api/folder.ts";
 import { useCategoryTree, Category } from "../../hooks/useCategoryTree";
+import { markLastActivity } from "../../utils/activity.ts";
 
 import potenWordMark from "../../assets/hero/potenword-mark.png";
 
@@ -1333,6 +1334,7 @@ export default function SearchPage() {
         sp.delete("symbol");
         sp.delete("tag");
 
+        markLastActivity();
         navigate({ search: `?${sp.toString()}` });
     }, [searchKeyword, params, size, navigate]);
 
@@ -1700,6 +1702,7 @@ export default function SearchPage() {
                     wordbookId,
                     selectedJob.key
                 );
+                markLastActivity();
 
                 const {
                     addedCount,
@@ -1876,6 +1879,7 @@ export default function SearchPage() {
                 }
 
                 const resData = await attachTermsBulk(notebookId, idsToSave);
+                markLastActivity();
                 const { addedIds, duplicateIds, failedIds, addedCount, duplicateCount, failedCount } = parseBulkResult(resData);
 
                 // 로컬 배지(확실히 아는 것만)
@@ -2213,6 +2217,7 @@ export default function SearchPage() {
                             const newId = String(data.id);
                             const newName = data.wordbookName ?? name;
                             setNotebooks((prev) => [{ id: newId, name: newName }, ...prev]);
+                            markLastActivity();
                             return newId;
                         }}
                         onReorder={async (orderedIds) => {
@@ -2358,6 +2363,7 @@ export default function SearchPage() {
                             // 2) UI 갱신
                             const newName = wb.wordbookName ?? name;
                             setNotebooks((prev) => [{ id: newId, name: newName }, ...prev]);
+                            markLastActivity();
 
                             // 3) 여기서 attach 호출하지 않음
                             // (저장은 사용자가 "저장하기" 누를 때 onSave에서만)

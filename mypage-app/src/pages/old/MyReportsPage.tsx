@@ -16,7 +16,7 @@ type CreateReportResponse = {
     status: ReportStatus;
     createdAt: string;
 };
-import { notifyError } from "../utils/toast";
+import { notifyError } from "../../utils/toast.ts";
 import { useNavigate } from "react-router-dom";
 import { FaDove, FaSearch } from "react-icons/fa";
 

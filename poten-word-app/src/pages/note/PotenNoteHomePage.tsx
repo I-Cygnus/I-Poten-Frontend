@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import http, { authHeader } from "../../utils/http.ts";
 import { fetchMyFoldersWithStats } from "../../api/folderStats.ts";
 import { goToAccountLogin } from "../../utils/auth.ts";
+import { markLastActivity } from "../../utils/activity.ts";
 import { NarrowLeft } from "../../styles/layout.ts";
 import { usePotenDialog } from "../../components/common/PotenDialog.tsx";
 import SystemMessageModal, { SystemMessage } from "../../components/common/SystemMessageModal.tsx";
@@ -918,6 +919,7 @@ export default function PotenNoteHomePage() {
                 ...prev,
             ]);
             setTotal((t) => (typeof t === "number" ? (t || 0) + 1 : 1));
+            markLastActivity();
         } catch (e: any) {
             await dialogs.alert({
                 title: "폴더 생성에 실패했습니다.",
@@ -1104,6 +1106,7 @@ export default function PotenNoteHomePage() {
                 ? { ...f, name: data?.wordbookName ?? name, updatedAt: new Date().toISOString() }
                 : f
             ));
+            markLastActivity();
         } catch (e: any) {
             // 혹시 서버가 다른 필드를 요구하면 한 번 더 시도
             if (e?.response?.status === 400) {
@@ -1113,6 +1116,7 @@ export default function PotenNoteHomePage() {
                         ? { ...f, name: data?.wordbookName ?? name, updatedAt: new Date().toISOString() }
                         : f
                     ));
+                    markLastActivity();
                     return;
                 } catch {}
             }
@@ -1147,6 +1151,7 @@ export default function PotenNoteHomePage() {
             });
             setAll(prev => prev.filter(f => f.id !== folder.id));
             setTotal(t => Math.max(0, (t || 0) - 1));
+            markLastActivity();
         } catch (e: any) {
             await dialogs.alert({
                 title: "삭제 실패",

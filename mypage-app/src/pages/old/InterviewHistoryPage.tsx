@@ -1,25 +1,10 @@
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 
-type InterviewSummary = {
-    interviewId: number;
-    interviewType: string;
-    createdAt: string;
-    sender: string;
-    finished: boolean;
-};
-
-const INTERVIEW_TYPE_MAP: Record<string, string> = {
-    TECHNICAL: "기술 면접",
-    COMPANY: "기업 면접",
-    PERSONAL: "인성 면접",
-};
-
-const API_BASE = process.env.REACT_APP_API_BASE_URL ?? "";
-
 import {FaRobot, FaRegClock, FaSearch, FaLock} from "react-icons/fa";
-import Spinner from "../components/common/Spinner.tsx";
-import {notifyError, notifyInfo} from "../utils/toast.ts";
+import Spinner from "../../components/common/Spinner.tsx";
+import {notifyError, notifyInfo} from "../../utils/toast.ts";
+import { getInterviewResultList, type InterviewSummary } from "../../api/InterviewApi.ts";
 
 export default function InterviewResultPage() {
     const [loading, setLoading] = useState(true);
@@ -31,24 +16,8 @@ export default function InterviewResultPage() {
     useEffect(() => {
         const fetchInterviewList = async () => {
             try {
-                const res = await fetch(`${API_BASE}/api/interview/result/list`, {
-                    credentials: "include",
-                });
-                if (!res.ok) {
-                    notifyError("면접 목록을 불러오지 못했습니다.");
-                    return;
-                }
-                const data = await res.json();
-                // 백엔드 응답: { list: [...] } 또는 배열 직접
-                const raw: any[] = Array.isArray(data) ? data : (data.list ?? data.interviewResultList ?? []);
-                const mapped: InterviewSummary[] = raw.map((item) => ({
-                    interviewId: item.interviewId,
-                    interviewType: INTERVIEW_TYPE_MAP[item.interviewType] ?? item.interviewType,
-                    createdAt: item.createdAt,
-                    sender: item.sender ?? "AI",
-                    finished: item.finished ?? item.isFinished ?? false,
-                }));
-                setList(mapped);
+                const interviewList = await getInterviewResultList();
+                setList(interviewList);
             } catch (e) {
                 notifyError("네트워크 오류가 발생했습니다.");
             } finally {
