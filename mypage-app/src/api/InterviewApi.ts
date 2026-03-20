@@ -1,19 +1,19 @@
 const API_BASE = process.env.REACT_APP_API_BASE_URL ?? "";
 
 const INTERVIEW_TYPE_LABEL_MAP: Record<string, string> = {
-    TECHNICAL: "\uAE30\uC220 \uBA74\uC811",
-    TECH: "\uAE30\uC220 \uBA74\uC811",
-    COMPANY: "\uAE30\uC5C5 \uBA74\uC811",
-    PERSONAL: "\uC778\uC131 \uBA74\uC811",
-    COMPREHENSIVE: "\uC885\uD569 \uBA74\uC811",
+    TECHNICAL: "기술 면접",
+    TECH: "기술 면접",
+    COMPANY: "기업 면접",
+    PERSONAL: "인성 면접",
+    COMPREHENSIVE: "종합 면접",
 };
 
 const COMMENT_SECTION_TITLES = {
-    overview: "\uC804\uBC18\uC801\uC778 \uC778\uC0C1",
-    strengths: "\uAC15\uC810",
-    improvements: "\uAC1C\uC120\uC810",
-    final: "\uCD5C\uC885 \uD3C9\uAC00",
-    grade: "\uC885\uD569 \uB4F1\uAE09",
+    overview: "전반적인 인상",
+    strengths: "강점",
+    improvements: "개선점",
+    final: "최종 평가",
+    grade: "종합 등급",
 } as const;
 
 export type InterviewSummary = {
@@ -65,7 +65,7 @@ function pickFirst<T>(...values: T[]): T | undefined {
 }
 
 function normalizeInterviewTypeLabel(value: unknown): string {
-    if (typeof value !== "string") return "AI \uBAA8\uC758\uBA74\uC811";
+    if (typeof value !== "string") return "AI 모의 면접";
     return INTERVIEW_TYPE_LABEL_MAP[value] ?? value;
 }
 
@@ -106,7 +106,7 @@ function normalizeQuestions(rawQuestions: unknown): InterviewQuestionDetail[] {
         ),
         order: Number(
             pickFirst(item?.order, item?.sequence, item?.questionOrder, index + 1) ??
-                index + 1
+            index + 1
         ),
         question: String(
             pickFirst(
@@ -114,8 +114,8 @@ function normalizeQuestions(rawQuestions: unknown): InterviewQuestionDetail[] {
                 item?.questionText,
                 item?.interviewQuestion,
                 item?.prompt,
-                `\uC9C8\uBB38 ${index + 1}`
-            ) ?? `\uC9C8\uBB38 ${index + 1}`
+                `질문 ${index + 1}`
+            ) ?? `질문 ${index + 1}`
         ),
         answer: String(
             pickFirst(item?.answer, item?.userAnswer, item?.myAnswer, item?.reply, "") ?? ""
@@ -220,7 +220,7 @@ export function normalizeInterviewSummary(item: any): InterviewSummary {
         interviewType,
         createdAt: String(
             pickFirst(item?.createdAt, item?.date, item?.interviewDate, item?.requestedAt, "") ??
-                ""
+            ""
         ),
         sender: String(pickFirst(item?.sender, item?.author, "AI") ?? "AI"),
         finished,
@@ -239,8 +239,8 @@ export function normalizeInterviewSummary(item: any): InterviewSummary {
                 item?.status,
                 item?.analysisStatus,
                 item?.resultStatus,
-                finished ? "\uBD84\uC11D \uC644\uB8CC" : "\uC9C4\uD589 \uC911"
-            ) ?? (finished ? "\uBD84\uC11D \uC644\uB8CC" : "\uC9C4\uD589 \uC911")
+                finished ? "분석 완료" : "진행 중"
+            ) ?? (finished ? "분석 완료" : "진행 중")
         ),
         totalScore:
             explicitTotalScore || calculateTotalScoreFromHexagon(item?.hexagonScore),
@@ -297,7 +297,7 @@ export function normalizeInterviewDetail(raw: any, interviewId: number): Intervi
     return {
         id: Number(
             pickFirst(source?.interviewId, source?.id, source?.resultId, interviewId) ??
-                interviewId
+            interviewId
         ),
         title: String(
             pickFirst(
@@ -305,8 +305,8 @@ export function normalizeInterviewDetail(raw: any, interviewId: number): Intervi
                 source?.interviewTitle,
                 source?.name,
                 normalizeInterviewTypeLabel(source?.interviewType),
-                "AI \uBAA8\uC758\uBA74\uC811 \uACB0\uACFC"
-            ) ?? "AI \uBAA8\uC758\uBA74\uC811 \uACB0\uACFC"
+                "AI 모의 면접 결과"
+            ) ?? "AI 모의 면접 결과"
         ),
         role: String(
             pickFirst(
@@ -323,8 +323,8 @@ export function normalizeInterviewDetail(raw: any, interviewId: number): Intervi
                 source?.status,
                 source?.analysisStatus,
                 source?.resultStatus,
-                "\uBD84\uC11D \uC644\uB8CC"
-            ) ?? "\uBD84\uC11D \uC644\uB8CC"
+                "분석 완료"
+            ) ?? "분석 완료"
         ),
         createdAt: String(
             pickFirst(
@@ -352,8 +352,8 @@ export function normalizeInterviewDetail(raw: any, interviewId: number): Intervi
                 source?.overallFeedback,
                 source?.resultSummary,
                 fallbackSummary,
-                "\uBA74\uC811 \uBD84\uC11D \uACB0\uACFC\uB97C \uBD88\uB7EC\uC654\uC2B5\uB2C8\uB2E4."
-            ) ?? "\uBA74\uC811 \uBD84\uC11D \uACB0\uACFC\uB97C \uBD88\uB7EC\uC654\uC2B5\uB2C8\uB2E4."
+                "면접 분석 결과를 불러왔습니다."
+            ) ?? "면접 분석 결과를 불러왔습니다."
         ),
         strengths: normalizeStringArray(
             pickFirst(

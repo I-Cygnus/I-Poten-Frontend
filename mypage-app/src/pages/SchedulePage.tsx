@@ -5,9 +5,9 @@ import AddScheduleModal from "../components/modals/AddScheduleModal.tsx";
 import SystemMessageModal, {
     type SystemMessage,
 } from "../components/common/SystemMessageModal.tsx";
-import ScheduleDetailPanel, {
+import ScheduleDetailPopover, {
     type ScheduleDetailAnchor,
-} from "../components/schedule/ScheduleDetailPanel.tsx";
+} from "../components/schedule/ScheduleDetailPopover.tsx";
 import Spinner from "../components/common/Spinner.tsx";
 import {
     createMySchedule,
@@ -388,8 +388,7 @@ export default function SchedulePage() {
                         <HeroBadge>SCHEDULE</HeroBadge>
                         <HeroTitle>일정 기록</HeroTitle>
                         <HeroDescription>
-                            월별 캘린더와 리스트에서 일정을 확인하고, 같은 화면에서 추가,
-                            상세 조회, 수정, 삭제까지 처리합니다.
+                            캘린더와 목록으로 일정을 한눈에 보고, 필요한 일정은 바로 관리할 수 있어요.
                         </HeroDescription>
                     </HeroText>
 
@@ -493,7 +492,7 @@ export default function SchedulePage() {
                                 />
                                 {(selectedScheduleId != null || detailLoading) && (
                                     <PopoverLayer ref={popoverRef}>
-                                        <ScheduleDetailPanel
+                                        <ScheduleDetailPopover
                                             schedule={selectedSchedule}
                                             loading={detailLoading}
                                             anchor={popoverAnchor}
@@ -538,7 +537,7 @@ export default function SchedulePage() {
                                 </ListWrap>
                                 {(selectedScheduleId != null || detailLoading) && (
                                     <PopoverLayer ref={popoverRef}>
-                                        <ScheduleDetailPanel
+                                        <ScheduleDetailPopover
                                             schedule={selectedSchedule}
                                             loading={detailLoading}
                                             anchor={popoverAnchor}

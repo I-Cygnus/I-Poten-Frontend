@@ -54,7 +54,7 @@ function formatCompactDateTime(value: string) {
     }).format(date);
 }
 
-export default function ScheduleDetailPanel({
+export default function ScheduleDetailPopover({
     schedule,
     loading = false,
     anchor = null,
@@ -84,7 +84,7 @@ export default function ScheduleDetailPanel({
                     <Description>
                         {loading
                             ? "상세 정보를 불러온 뒤 수정이나 삭제를 진행할 수 있습니다."
-                            : "캘린더를 가리지 않으면서도 일정 맥락을 유지하도록 큰 팝오버로 보여줍니다."}
+                            : "보고 싶은 일정을 화면에서 바로 확인할 수 있어요."}
                     </Description>
                 </HeaderText>
                 <CloseButton type="button" onClick={onClose} aria-label="닫기">
