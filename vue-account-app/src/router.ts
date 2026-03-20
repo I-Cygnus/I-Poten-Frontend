@@ -108,4 +108,8 @@ const router = createRouter({
 //전역 가드 등록
 router.beforeEach(adminBeforeEach);
 
+router.afterEach(() => {
+  window.dispatchEvent(new CustomEvent("vue-route-change"));
+});
+
 export default router;
