@@ -190,12 +190,7 @@ function InnerApp() {
                 <Routes>
                     <Route path="/" element={<Main />} />
                     <Route path="/review-survey" element={<ReviewSurveyPage />} />
-                    {/*<Route path="/event" element={<EventPage />} />*/}
-                    {/*<Route path="/event/1" element={<EventPage1 />} />*/}
-                    {/*<Route path="/event/2" element={<EventPage2 />} />*/}
                     <Route path="/event" element={<NewEventPage />} />
-                    <Route path="/event/1" element={<OpenBetaEventLanding />} />
-                    <Route path="/event/2" element={<PotenReviewerEventLanding />} />
                     <Route path="/event/:id" element={<NewEventDetailPage />} />
                     <Route path="/event/winner/:id" element={<NewWinnerDetailPage />} />
                     <Route
@@ -211,10 +206,14 @@ function InnerApp() {
                             </RequireToken>
                         }
                     />
-                    <Route path="/mypage/*" element={
-                        <RequireLogin loginPath="/vue-account/account/login">
-                            <MyPageApp />
-                        </RequireLogin>}/>
+                    <Route
+                        path="/mypage/*"
+                        element={
+                            <RequireLogin loginPath="/vue-account/account/login">
+                                <MyPageApp />
+                            </RequireLogin>
+                        }
+                    />
                     <Route
                         path="/sveltekit-review/*"
                         element={<SvelteKitReviewAppWrapper />}

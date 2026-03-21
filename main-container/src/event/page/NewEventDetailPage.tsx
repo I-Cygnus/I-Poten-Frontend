@@ -73,14 +73,15 @@ const PAGE = styled.div`
 const Container = styled.div`
     width: min(1120px, 100%);
     margin: 0 auto;
-    padding: 40px 24px 0;
+    padding: 28px 24px 0;
 `;
 
 const HeaderRow = styled.div`
-    display: grid;
-    grid-template-columns: 40px minmax(0, 1fr) 40px;
+    position: relative;
+    display: flex;
     align-items: center;
-    gap: 14px;
+    justify-content: flex-start;
+    min-height: 56px;
     margin-bottom: 24px;
 `;
 
@@ -96,44 +97,35 @@ const BackButton = styled.button`
 
     width: 40px;
     height: 40px;
+    padding: 0;
     border-radius: 999px;
     color: #111111;
+    position: relative;
+    z-index: 2;
 
     &:hover {
         background: rgba(0, 0, 0, 0.05);
     }
 `;
 
-const HeaderSpacer = styled.div`
-    width: 40px;
-    height: 40px;
-`;
-
 const Title = styled.h1`
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
     margin: 0;
+    width: min(100%, 760px);
+    padding: 0 64px;
+
     font-size: 32px;
     font-weight: 700;
     line-height: 1.3;
-    letter-spacing: -0.6px;
+    letter-spacing: -0.5px;
     color: #111111;
-    word-break: keep-all;
     text-align: center;
+    word-break: keep-all;
 `;
 
 const FullBleedContent = styled.div`
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
-    margin-right: calc(50% - 50vw);
-    margin-top: 0;
-
-    img {
-        width: 100%;
-        height: auto;
-        display: block;
-    }
-`;
-
-const StackedImages = styled.div`
     width: 100vw;
     margin-left: calc(50% - 50vw);
     margin-right: calc(50% - 50vw);
@@ -183,7 +175,6 @@ const NewEventDetailPage: React.FC = () => {
                             <BackIcon />
                         </BackButton>
                         <Title>이벤트</Title>
-                        <HeaderSpacer />
                     </HeaderRow>
 
                     <EmptyText>게시글을 찾을 수 없어요.</EmptyText>
@@ -200,7 +191,6 @@ const NewEventDetailPage: React.FC = () => {
                         <BackIcon />
                     </BackButton>
                     <Title>{current.title}</Title>
-                    <HeaderSpacer />
                 </HeaderRow>
             </Container>
 

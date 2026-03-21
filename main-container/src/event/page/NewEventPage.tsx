@@ -154,65 +154,74 @@ const Thumb = styled.img`
 `;
 
 // 둥근 배지
-// const Badge = styled.div<{ $type: BadgeType }>`
-//     position: absolute;
-//     top: -16px;
-//     left: 12px;
-//
-//     width: 52px;
-//     height: 52px;
-//     border-radius: 999px;
-//
-//     display: grid;
-//     place-items: center;
-//
-//     font-size: 12px;
-//     font-weight: 400;
-//     letter-spacing: -0.2px;   /* -0.3 -> -0.2 (뭉개짐도 줄어듦) */
-//     line-height: 1;
-//     white-space: nowrap;
-//     word-break: keep-all;
-//
-//     color: #ffffff;
-//     box-shadow: 0 8px 20px rgba(0,0,0,0.14);
-//
-//     transform: translateZ(0);
-//     will-change: transform;
-//
-//     background: ${({ $type }) => {
-//         if ($type === "ENDED") return "#8b8b8b";
-//         if ($type === "ALWAYS") return "#ff4d4d";
-//         return "#2f6feb";
-//     }};
-// `;
-
 const Badge = styled.div<{ $type: BadgeType }>`
     position: absolute;
-    top: -40px;
-    left: 0px;
-    z-index: 3;
-    width: 68px;
-    height: 28px;
+    top: -16px;
+    left: 12px;
 
-    border-radius: 0px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 999px;
 
-    font-size: 13px;
-    font-weight: 400;
+    display: grid;
+    place-items: center;
+
+    font-family:
+            "Pretendard",
+            -apple-system,
+            BlinkMacSystemFont,
+            "Apple SD Gothic Neo",
+            "Noto Sans KR",
+            "Segoe UI",
+            sans-serif;
+
+    font-size: 12px;
+    font-weight: 500;
     letter-spacing: -0.2px;
     line-height: 1;
     white-space: nowrap;
+    word-break: keep-all;
 
     color: #ffffff;
+    //box-shadow: 0 8px 20px rgba(0, 0, 0, 0.14);
+
+    transform: translateZ(0);
+    will-change: transform;
 
     background: ${({ $type }) => {
-    if ($type === "ENDED") return "#6D7D9D";
-    if ($type === "ALWAYS") return "#F24E57";
-    return "#578BF2";
-}};
+        if ($type === "ENDED") return "#8b8b8b";
+        if ($type === "ALWAYS") return "#ff4d4d";
+        return "#527cea";
+    }};
 `;
+
+// const Badge = styled.div<{ $type: BadgeType }>`
+//     position: absolute;
+//     top: -40px;
+//     left: 0px;
+//     z-index: 3;
+//     width: 68px;
+//     height: 28px;
+//
+//     border-radius: 0px;
+//     display: inline-flex;
+//     align-items: center;
+//     justify-content: center;
+//
+//     font-size: 13px;
+//     font-weight: 400;
+//     letter-spacing: -0.2px;
+//     line-height: 1;
+//     white-space: nowrap;
+//
+//     color: #ffffff;
+//
+//     background: ${({ $type }) => {
+//     if ($type === "ENDED") return "#6D7D9D";
+//     if ($type === "ALWAYS") return "#F24E57";
+//     return "#578BF2";
+// }};
+// `;
 
 const Meta = styled.div`
   margin-top: 14px;

@@ -389,7 +389,7 @@ export default function ReviewSurveyPage() {
         if (!authRequired) return;
 
         goToAccountLogin(location.pathname + location.search + location.hash);
-    }, [authRequired, location.pathname, location.search]);
+    }, [authRequired, location.pathname, location.search, location.hash]);
 
     const handleExitClick = () => {
         openExitConfirmModal();
@@ -476,7 +476,34 @@ export default function ReviewSurveyPage() {
     }
 
     if (authRequired) {
-        return null;
+        return (
+            <PageWrap>
+                <PageShell>
+                    <StateCard>
+                        <StateBadge>로그인 필요</StateBadge>
+                        <StateTitle>로그인 후 참여할 수 있어요</StateTitle>
+                        <StateText>
+                            설문 참여와 제출은 로그인한 사용자만 가능해요.
+                            <br />
+                            잠시 후 로그인 페이지로 이동합니다.
+                        </StateText>
+
+                        <ActionRow>
+                            <PrimaryButton
+                                type="button"
+                                onClick={() =>
+                                    goToAccountLogin(
+                                        location.pathname + location.search + location.hash
+                                    )
+                                }
+                            >
+                                로그인하러 가기
+                            </PrimaryButton>
+                        </ActionRow>
+                    </StateCard>
+                </PageShell>
+            </PageWrap>
+        );
     }
 
     if (!survey) {

@@ -2,25 +2,25 @@
 import styled, { css } from "styled-components";
 import { useLocation, useNavigate, useOutlet } from "react-router-dom";
 const pretendard = css`
-  font-family:
-    "Pretendard",
-    -apple-system,
-    BlinkMacSystemFont,
-    "Apple SD Gothic Neo",
-    "Noto Sans KR",
-    "Segoe UI",
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-  letter-spacing: -0.015em;
-  word-break: keep-all;
+    font-family:
+            "Pretendard",
+            -apple-system,
+            BlinkMacSystemFont,
+            "Apple SD Gothic Neo",
+            "Noto Sans KR",
+            "Segoe UI",
+            sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    letter-spacing: -0.015em;
+    word-break: keep-all;
 `;
 
 const interactiveText = css`
-  ${pretendard};
-  font: inherit;
-  letter-spacing: -0.015em;
+    ${pretendard};
+    font: inherit;
+    letter-spacing: -0.015em;
 `;
 import {
     Bot,
@@ -40,7 +40,6 @@ import {
     User,
     UserRound,
 } from "lucide-react";
-import { getInterviewResultList, type InterviewSummary } from "../api/InterviewApi.ts";
 import {
     createInquiry,
     getMyInquiryDetail,
@@ -51,15 +50,14 @@ import {
     type InquiryType,
 } from "../api/InquiryApi.ts";
 import {
-    getQuizTimelineRecords,
     getQuizDashboardStats,
+    getQuizTimelineRecords,
     getRecentWrongNotes,
-    getRecentQuizSessions,
     type QuizDashboardStats,
     type QuizTimelineRecord,
     type QuizWrongNoteSummary,
-    type QuizSessionSummary,
 } from "../api/QuizStatsApi.ts";
+import { getInterviewResultList, type InterviewSummary } from "../api/InterviewApi.ts";
 import { getMyProfileSummary } from "../api/MyProfileApi.ts";
 import { getCreditAccountSummary, type CreditAccountSummary } from "../api/CreditApi.ts";
 import { getMySchedules, type Schedule } from "../api/userScheduleApi.ts";
@@ -124,14 +122,20 @@ const defaultCreditSummary: CreditAccountSummary = {
     expiresAt: null,
 };
 
+const defaultQuizStats: QuizDashboardStats = {
+    solvedQuestions: 0,
+    averageAccuracy: 0,
+    streakDays: 0,
+};
+
 const menuItems = [
-    { key: "profile" as const, label: "회원정보", icon: UserRound },
+    { key: "profile" as const, label: "회원 정보", icon: UserRound },
     { key: "interview" as const, label: "AI 모의 면접 기록", icon: Bot },
     { key: "quiz" as const, label: "포텐퀴즈 기록", icon: FileText },
     { key: "schedule" as const, label: "일정 관리", icon: CalendarDays },
     { key: "interest field" as const, label: "관심 분야 설정", icon: Sparkles },
     { key: "inquiry" as const, label: "문의하기", icon: CircleHelp },
-    { key: "withdraw" as const, label: "회원탈퇴", icon: LogOut },
+    // { key: "withdraw" as const, label: "회원 탈퇴", icon: LogOut },
 ];
 
 type InquiryTypeKey = "" | InquiryType;
@@ -353,6 +357,23 @@ function getScheduleTypeLabel(schedule: Schedule) {
     return schedule.allDay ? "종일 일정" : "시간 지정";
 }
 
+function formatInterviewDateTime(value: string) {
+    if (!value) return "-";
+
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        return value;
+    }
+
+    return new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    }).format(parsed);
+}
+
 const palette = {
     pageBlue: "#f8fbff",
     pageMint: "#f8fffd",
@@ -420,20 +441,14 @@ export default function MyPage() {
     });
     const [creditSummary, setCreditSummary] = useState<CreditAccountSummary>(defaultCreditSummary);
     const [creditLoading, setCreditLoading] = useState(true);
-    const [interviewRecords, setInterviewRecords] = useState<InterviewSummary[]>([]);
-    const [interviewLoading, setInterviewLoading] = useState(true);
-    const [quizStats, setQuizStats] = useState<QuizDashboardStats>({
-        solvedQuestions: 0,
-        averageAccuracy: 0,
-        streakDays: 0,
-    });
+    const [quizStats, setQuizStats] = useState<QuizDashboardStats>(defaultQuizStats);
     const [quizStatsLoading, setQuizStatsLoading] = useState(true);
-    const [quizSessions, setQuizSessions] = useState<QuizSessionSummary[]>([]);
-    const [quizSessionsLoading, setQuizSessionsLoading] = useState(true);
     const [quizTimelineRecords, setQuizTimelineRecords] = useState<QuizTimelineRecord[]>([]);
     const [quizTimelineLoading, setQuizTimelineLoading] = useState(true);
     const [wrongNotes, setWrongNotes] = useState<QuizWrongNoteSummary[]>([]);
     const [wrongNotesLoading, setWrongNotesLoading] = useState(true);
+    const [interviewRecords, setInterviewRecords] = useState<InterviewSummary[]>([]);
+    const [interviewLoading, setInterviewLoading] = useState(true);
     const [schedules, setSchedules] = useState<Schedule[]>([]);
     const [scheduleLoading, setScheduleLoading] = useState(true);
     const [inquiryTitle, setInquiryTitle] = useState("");
@@ -874,57 +889,27 @@ export default function MyPage() {
     useEffect(() => {
         let mounted = true;
 
-        const fetchInterviewRecords = async () => {
+        const fetchQuizStats = async () => {
             try {
-                setInterviewLoading(true);
-                const records = await getInterviewResultList();
+                setQuizStatsLoading(true);
+                const summary = await getQuizDashboardStats();
 
                 if (mounted) {
-                    setInterviewRecords(records);
+                    setQuizStats(summary);
                 }
             } catch (error) {
                 console.error(error);
                 if (mounted) {
-                    setInterviewRecords([]);
+                    setQuizStats(defaultQuizStats);
                 }
             } finally {
                 if (mounted) {
-                    setInterviewLoading(false);
+                    setQuizStatsLoading(false);
                 }
             }
         };
 
-        fetchInterviewRecords();
-
-        return () => {
-            mounted = false;
-        };
-    }, []);
-
-    useEffect(() => {
-        let mounted = true;
-
-        const fetchQuizSessions = async () => {
-            try {
-                setQuizSessionsLoading(true);
-                const sessions = await getRecentQuizSessions(3);
-
-                if (mounted) {
-                    setQuizSessions(sessions);
-                }
-            } catch (error) {
-                console.error(error);
-                if (mounted) {
-                    setQuizSessions([]);
-                }
-            } finally {
-                if (mounted) {
-                    setQuizSessionsLoading(false);
-                }
-            }
-        };
-
-        fetchQuizSessions();
+        void fetchQuizStats();
 
         return () => {
             mounted = false;
@@ -994,6 +979,41 @@ export default function MyPage() {
     useEffect(() => {
         let mounted = true;
 
+        const fetchInterviewRecords = async () => {
+            try {
+                setInterviewLoading(true);
+                const items = await getInterviewResultList();
+
+                if (mounted) {
+                    setInterviewRecords(
+                        [...items].sort(
+                            (left, right) =>
+                                new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime()
+                        )
+                    );
+                }
+            } catch (error) {
+                console.error(error);
+                if (mounted) {
+                    setInterviewRecords([]);
+                }
+            } finally {
+                if (mounted) {
+                    setInterviewLoading(false);
+                }
+            }
+        };
+
+        void fetchInterviewRecords();
+
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    useEffect(() => {
+        let mounted = true;
+
         const fetchSchedules = async () => {
             try {
                 setScheduleLoading(true);
@@ -1027,40 +1047,6 @@ export default function MyPage() {
     }, []);
 
     useEffect(() => {
-        let mounted = true;
-
-        const fetchQuizStats = async () => {
-            try {
-                setQuizStatsLoading(true);
-                const stats = await getQuizDashboardStats();
-
-                if (mounted) {
-                    setQuizStats(stats);
-                }
-            } catch (error) {
-                console.error(error);
-                if (mounted) {
-                    setQuizStats({
-                        solvedQuestions: 0,
-                        averageAccuracy: 0,
-                        streakDays: 0,
-                    });
-                }
-            } finally {
-                if (mounted) {
-                    setQuizStatsLoading(false);
-                }
-            }
-        };
-
-        fetchQuizStats();
-
-        return () => {
-            mounted = false;
-        };
-    }, []);
-
-    useEffect(() => {
         if (activeMenu !== "inquiry") {
             return;
         }
@@ -1076,37 +1062,6 @@ export default function MyPage() {
 
         void loadInquiryDetail(selectedInquiryId);
     }, [activeMenu, inquiryView, selectedInquiryId]);
-
-    const dashboardStats = useMemo(
-        () => [
-            {
-                label: "보유 크레딧",
-                value: `${mockCreditSummary.balance}개`,
-                sub: `${mockCreditSummary.expiresAt} 내 만료 예정`,
-            },
-            {
-                label: "총 AI 모의 면접 기록",
-                value: `${interviewRecords.length}건`,
-                sub: "최근 30일 기준",
-            },
-            {
-                label: "총 퀴즈 풀이",
-                value: quizStatsLoading ? "..." : `${quizStats.solvedQuestions}문항`,
-                sub: "포텐퀴즈 기록 기준",
-            },
-            {
-                label: "평균 정답률",
-                value: quizStatsLoading ? "..." : `${quizStats.averageAccuracy}%`,
-                sub: "포텐퀴즈 기록 기준",
-            },
-            {
-                label: "연속 학습일",
-                value: quizStatsLoading ? "..." : `${quizStats.streakDays}일`,
-                sub: "AI 면접, 포텐 시리즈 이용 기준",
-            },
-        ],
-        [interviewRecords.length, quizStats, quizStatsLoading]
-    );
 
     const lastActivityLabel = useMemo(() => {
         if (!userProfile.lastActivityAt) return "최근 활동 없음";
@@ -1135,7 +1090,9 @@ export default function MyPage() {
         (max, record) => Math.max(max, record.accuracy),
         0
     );
-    const upcomingSchedules = schedules.slice(0, 3);
+    const recentSchedules = schedules.slice(0, 5);
+    const recentInterviewRecords = interviewRecords.slice(0, 4);
+    const recentQuizRecords = quizTimelineRecords.slice(0, 4);
     const selectedInterestCategoryLabels = interestSelection.categories.map((categoryId) =>
         getInterestCategoryLabel(categoryId, interestOptions)
     );
@@ -1349,7 +1306,7 @@ export default function MyPage() {
                                             <span>
                                                 답변{" "}
                                                 {item.answeredAt
-                                                ? formatInquiryDate(item.answeredAt)
+                                                    ? formatInquiryDate(item.answeredAt)
                                                     : "대기 중"}
                                             </span>
                                         </InquiryDateRow>
@@ -1440,10 +1397,10 @@ export default function MyPage() {
                         <Section>
                             <SectionHeader>
                                 <div>
-                                    <SectionEyebrow>MY PROFILE</SectionEyebrow>
+                                    <SectionEyebrow>MY DASHBOARD</SectionEyebrow>
                                     <SectionTitle>내 정보와 학습 현황</SectionTitle>
                                     <SectionDescription>
-                                        회원 정보와 학습 상태를 한눈에 확인할 수 있습니다.
+                                        나의 정보와 보유 크레딧, 학습 기록, 예정된 일정까지 한 화면에서 확인할 수 있습니다.
                                     </SectionDescription>
                                 </div>
                             </SectionHeader>
@@ -1474,146 +1431,129 @@ export default function MyPage() {
                                         ) : null}
                                         <HeroMetaRow>
                                             <HeroMetaChip>
-                                                <ShieldCheck size={14} />
-                                                계정 상태 정상
-                                            </HeroMetaChip>
-                                            <HeroMetaChip>
                                                 <Clock3 size={14} />
                                                 최근 활동 {lastActivityLabel}
                                             </HeroMetaChip>
                                         </HeroMetaRow>
                                     </HeroTextGroup>
                                 </HeroLeft>
-                                {/*<HeroRight>*/}
-                                {/*    <HeroActionButton>?꾨줈???섏젙</HeroActionButton>*/}
-                                {/*</HeroRight>*/}
+
+                                <HeroRight>
+                                    <CreditSummaryCard>
+                                        <CreditSummaryTop>
+                                            <CreditSummaryBadge>
+                                                <CreditCard size={14} />
+                                                CREDIT OVERVIEW
+                                            </CreditSummaryBadge>
+                                            <CreditSummaryLabel>내 크레딧</CreditSummaryLabel>
+                                        </CreditSummaryTop>
+
+                                        <CreditBalanceRow>
+                                            <CreditBalanceCopy>
+                                                <CreditBalanceValue>
+                                                    {creditLoading ? "..." : mockCreditSummary.balance}
+                                                </CreditBalanceValue>
+                                                <CreditBalanceUnit>credits</CreditBalanceUnit>
+                                            </CreditBalanceCopy>
+                                            <CreditBalanceCaption>
+                                                {creditLoading ? "크레딧 정보를 불러오는 중입니다." : "AI 면접과 학습 기능에 사용하는 현재 보유량"}
+                                            </CreditBalanceCaption>
+                                        </CreditBalanceRow>
+
+                                        {/*<CreditMetaGrid>*/}
+                                        {/*    <CreditMetaItem>*/}
+                                        {/*        <CreditMetaTitle>이번 달 적립</CreditMetaTitle>*/}
+                                        {/*        <CreditMetaValue>*/}
+                                        {/*            {creditLoading ? "..." : `${mockCreditSummary.monthlyEarned}개`}*/}
+                                        {/*        </CreditMetaValue>*/}
+                                        {/*    </CreditMetaItem>*/}
+
+                                        {/*    <CreditMetaItem>*/}
+                                        {/*        <CreditMetaTitle>이번 달 사용</CreditMetaTitle>*/}
+                                        {/*        <CreditMetaValue>*/}
+                                        {/*            {creditLoading ? "..." : `${mockCreditSummary.monthlyUsed}개`}*/}
+                                        {/*        </CreditMetaValue>*/}
+                                        {/*    </CreditMetaItem>*/}
+                                        {/*</CreditMetaGrid>*/}
+
+                                        {/*<CreditExpiryNotice>*/}
+                                        {/*    <CreditExpiryLabel>만료 예정일</CreditExpiryLabel>*/}
+                                        {/*    <CreditExpiryValue>*/}
+                                        {/*        {creditLoading ? "..." : mockCreditSummary.expiresAt}*/}
+                                        {/*    </CreditExpiryValue>*/}
+                                        {/*</CreditExpiryNotice>*/}
+                                    </CreditSummaryCard>
+                                </HeroRight>
                             </HeroCard>
                         </Section>
 
                         <StatsGrid>
-                            {dashboardStats.map((item) => (
-                                <StatCard key={item.label}>
-                                    <StatLabel>{item.label}</StatLabel>
-                                    <StatValue>{item.value}</StatValue>
-                                    <StatSub>{item.sub}</StatSub>
-                                </StatCard>
-                            ))}
+                            {/*<StatCard>*/}
+                            {/*    <StatLabel>보유 크레딧</StatLabel>*/}
+                            {/*    <StatValue>{creditLoading ? "..." : `${mockCreditSummary.balance}개`}</StatValue>*/}
+                            {/*    <StatSub>*/}
+                            {/*        이번 달 적립 {mockCreditSummary.monthlyEarned}개 · 사용 {mockCreditSummary.monthlyUsed}개*/}
+                            {/*    </StatSub>*/}
+                            {/*</StatCard>*/}
+                            <StatCard>
+                                <StatLabel>총 모의 면접 기록</StatLabel>
+                                <StatValue>{interviewLoading ? "..." : `${interviewRecords.length}개`}</StatValue>
+                                <StatSub>누적 AI 모의 면접 기록 수</StatSub>
+                            </StatCard>
+                            <StatCard>
+                                <StatLabel>총 퀴즈 풀이</StatLabel>
+                                <StatValue>{quizStatsLoading ? "..." : `${quizStats.solvedQuestions}문제`}</StatValue>
+                                <StatSub>
+                                    평균 정답률 {quizStatsLoading ? "..." : `${quizStats.averageAccuracy}%`}
+                                </StatSub>
+                            </StatCard>
+                            <StatCard>
+                                <StatLabel>내 포텐노트 개수</StatLabel>
+                                <StatValue>{wrongNotesLoading ? "..." : `${totalWrongNotes}개`}</StatValue>
+                                <StatSub>현재 불러온 포텐노트 기준</StatSub>
+                            </StatCard>
+                            <StatCard>
+                                <StatLabel>연속 학습일</StatLabel>
+                                <StatValue>{quizStatsLoading ? "..." : `${quizStats.streakDays}일`}</StatValue>
+                                <StatSub>퀴즈 학습 타임라인 기준</StatSub>
+                            </StatCard>
                         </StatsGrid>
 
                         <ContentGrid>
                             <PanelCard>
                                 <PanelHeader>
-                                    <PanelTitle>사용자 정보</PanelTitle>
-                                    {/*<PanelAction>자세히 보기</PanelAction>*/}
-                                </PanelHeader>
-                                <InfoList>
-                                    <InfoItem>
-                                        <InfoLabel>닉네임</InfoLabel>
-                                        <InfoValue>{userProfile.nickname}</InfoValue>
-                                    </InfoItem>
-                                    <InfoItem>
-                                        <InfoLabel>이메일</InfoLabel>
-                                        <InfoValue>{userProfile.email}</InfoValue>
-                                    </InfoItem>
-                                    <InfoItem>
-                                        <InfoLabel>최근 활동</InfoLabel>
-                                        <InfoValue>{lastActivityLabel}</InfoValue>
-                                    </InfoItem>
-                                    <InfoItem>
-                                        <InfoLabel>보유 크레딧</InfoLabel>
-                                        <InfoValueWrap>
-                                            <InfoValue>{mockCreditSummary.balance}개</InfoValue>
-                                            <InfoSubValue>
-                                                이번 달 적립 {mockCreditSummary.monthlyEarned}개 · 사용 {mockCreditSummary.monthlyUsed}개
-                                            </InfoSubValue>
-                                        </InfoValueWrap>
-                                    </InfoItem>
-                                    {userProfile.representativeLabel ? (
-                                        <InfoItem>
-                                            <InfoLabel>준비 상태</InfoLabel>
-                                            <InfoValueWrap>
-                                                <InfoBadge>{userProfile.representativeLabel}</InfoBadge>
-                                                {(userProfile.representativeJob || userProfile.representativeCareer) ? (
-                                                    <InfoSubValue>
-                                                        {[userProfile.representativeJob, userProfile.representativeCareer]
-                                                            .filter(Boolean)
-                                                            .join(" · ")}
-                                                    </InfoSubValue>
-                                                ) : null}
-                                            </InfoValueWrap>
-                                        </InfoItem>
-                                    ) : null}
-                                </InfoList>
-                            </PanelCard>
-
-                            <PanelCard>
-                                <PanelHeader>
-                                    <PanelTitle>다가오는 일정</PanelTitle>
-                                    <PanelAction onClick={() => navigate("schedule")}>일정 관리 이동</PanelAction>
-                                </PanelHeader>
-                                <TimelineList>
-                                    {scheduleLoading ? (
-                                        <RecordMeta>일정 정보를 불러오는 중입니다.</RecordMeta>
-                                    ) : upcomingSchedules.length === 0 ? (
-                                        <RecordMeta>다가오는 일정이 없습니다.</RecordMeta>
-                                    ) : upcomingSchedules.map((schedule) => (
-                                        <TimelineItem key={schedule.id}>
-                                            <TimelineDot />
-                                            <TimelineBody>
-                                                <TimelineTitle>{schedule.title}</TimelineTitle>
-                                                <TimelineMeta>
-                                                    {formatScheduleDate(schedule.startAt)} · {formatScheduleTime(schedule)} · {getScheduleTypeLabel(schedule)}
-                                                </TimelineMeta>
-                                            </TimelineBody>
-                                        </TimelineItem>
-                                    ))}
-                                </TimelineList>
-                            </PanelCard>
-                        </ContentGrid>
-
-                        <ContentGrid>
-                            <PanelCard>
-                                <PanelHeader>
                                     <PanelTitle>AI 모의 면접 기록</PanelTitle>
-                                    <PanelAction onClick={() => navigate("interview/records")}>전체 보기</PanelAction>
+                                    <PanelAction onClick={() => navigate("interview/records")}>
+                                        전체 보기
+                                    </PanelAction>
                                 </PanelHeader>
                                 <RecordList>
                                     {interviewLoading ? (
-                                        <RecordMeta>AI 모의 면접 기록을 불러오는 중입니다.</RecordMeta>
-                                    ) : interviewRecords.length === 0 ? (
+                                        <RecordMeta>면접 기록을 불러오는 중입니다.</RecordMeta>
+                                    ) : recentInterviewRecords.length === 0 ? (
                                         <RecordMeta>표시할 AI 모의 면접 기록이 없습니다.</RecordMeta>
-                                    ) : interviewRecords.slice(0, 3).map((record) => (
-                                        <RecordItem key={record.interviewId}>
-                                            <RecordLeft>
-                                                <RecordTitle>{record.title}</RecordTitle>
-                                                <RecordMeta>
-                                                    {record.createdAt} · {record.role} · {record.status}
-                                                </RecordMeta>
-                                            </RecordLeft>
-                                            <RecordRight>
-                                                <ScoreBadge>
-                                                    {record.finished ? `${record.totalScore}점` : "진행 중"}
-                                                </ScoreBadge>
-                                                <DetailButton
-                                                    type="button"
-                                                    onClick={() => {
-                                                        if (!record.finished) {
-                                                            openSys({
-                                                                tone: "info",
-                                                                title: "아직 면접 결과가 준비되지 않았습니다.",
-                                                            });
-                                                            return;
-                                                        }
-
-                                                        navigate(`interview/${record.interviewId}`);
-                                                    }}
-                                                >
-                                                    {record.finished ? "상세보기" : "결과 대기"}
-                                                    <ChevronRight size={16} />
-                                                </DetailButton>
-                                            </RecordRight>
-                                        </RecordItem>
-                                    ))}
+                                    ) : (
+                                        recentInterviewRecords.map((record) => (
+                                            <RecordItem key={record.interviewId}>
+                                                <RecordLeft>
+                                                    <RecordTitle>{record.title || record.interviewType}</RecordTitle>
+                                                    <RecordMeta>
+                                                        {record.role} · {formatInterviewDateTime(record.createdAt)}
+                                                    </RecordMeta>
+                                                </RecordLeft>
+                                                <RecordRight>
+                                                    <ScoreBadge>{record.finished ? "완료" : "진행 중"}</ScoreBadge>
+                                                    <DetailButton
+                                                        type="button"
+                                                        onClick={() => navigate(`/mypage/interview/${record.interviewId}`)}
+                                                    >
+                                                        상세 보기
+                                                        <ChevronRight size={16} />
+                                                    </DetailButton>
+                                                </RecordRight>
+                                            </RecordItem>
+                                        ))
+                                    )}
                                 </RecordList>
                             </PanelCard>
 
@@ -1625,38 +1565,96 @@ export default function MyPage() {
                                     </PanelAction>
                                 </PanelHeader>
                                 <RecordList>
-                                    {quizSessionsLoading ? (
+                                    {quizTimelineLoading ? (
                                         <RecordMeta>퀴즈 기록을 불러오는 중입니다.</RecordMeta>
-                                    ) : quizSessions.length === 0 ? (
-                                        <RecordMeta>표시할 퀴즈 세션이 없습니다.</RecordMeta>
-                                    ) : quizSessions.map((record) => (
-                                        <RecordItem key={record.id}>
-                                            <RecordLeft>
-                                                <RecordTitle>{record.title}</RecordTitle>
-                                                <RecordMeta>
-                                                    {record.category ? `${record.category} · ` : ""}
-                                                    {record.solved}문항 · 최근 학습 {record.studiedAt}
-                                                </RecordMeta>
-                                            </RecordLeft>
-                                            <RecordRight>
-                                                <ScoreBadge>{record.accuracy}%</ScoreBadge>
-                                                <DetailButton
-                                                    type="button"
-                                                    onClick={() =>
-                                                        window.location.assign(
-                                                            `/learning/quiz/play/result/${record.sessionId ?? record.id}`
-                                                        )
-                                                    }
-                                                >
-                                                    상세보기
-                                                    <ChevronRight size={16} />
-                                                </DetailButton>
-                                            </RecordRight>
-                                        </RecordItem>
-                                    ))}
+                                    ) : recentQuizRecords.length === 0 ? (
+                                        <RecordMeta>표시할 퀴즈 기록이 없습니다.</RecordMeta>
+                                    ) : (
+                                        recentQuizRecords.map((record) => (
+                                            <RecordItem key={record.id}>
+                                                <RecordLeft>
+                                                    <RecordTitle>{record.title}</RecordTitle>
+                                                    <RecordMeta>
+                                                        {record.category ? `${record.category} · ` : ""}
+                                                        {record.correct}/{record.total} 정답 · {record.studiedAt}
+                                                    </RecordMeta>
+                                                </RecordLeft>
+                                                <RecordRight>
+                                                    <ScoreBadge>{record.accuracy}%</ScoreBadge>
+                                                    <DetailButton
+                                                        type="button"
+                                                        onClick={() =>
+                                                            window.location.assign(
+                                                                `/learning/quiz/play/result/${record.sessionId ?? record.id}`
+                                                            )
+                                                        }
+                                                    >
+                                                        결과 보기
+                                                        <ChevronRight size={16} />
+                                                    </DetailButton>
+                                                </RecordRight>
+                                            </RecordItem>
+                                        ))
+                                    )}
                                 </RecordList>
                             </PanelCard>
                         </ContentGrid>
+
+                        <Section>
+                            <SectionHeader>
+                                <div>
+                                    <SectionEyebrow>SCHEDULE</SectionEyebrow>
+                                    <SectionTitle>일정</SectionTitle>
+                                    <SectionDescription>
+                                        예정된 학습 및 면접 준비 일정을 빠르게 확인할 수 있습니다.
+                                    </SectionDescription>
+                                </div>
+                            </SectionHeader>
+                            <PanelCard>
+                                <PanelHeader>
+                                    <PanelTitle>예정된 일정</PanelTitle>
+                                    <PrimaryButton type="button" onClick={() => navigate("schedule")}>일정 관리</PrimaryButton>
+                                </PanelHeader>
+                                <ScheduleTable>
+                                    <thead>
+                                    <tr>
+                                        <th>구분</th>
+                                        <th>일정명</th>
+                                        <th>날짜</th>
+                                        <th>시간</th>
+                                        <th>관리</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    {scheduleLoading ? (
+                                        <tr>
+                                            <td colSpan={5}>
+                                                <EmptyStateBox>일정 정보를 불러오는 중입니다.</EmptyStateBox>
+                                            </td>
+                                        </tr>
+                                    ) : recentSchedules.length === 0 ? (
+                                        <tr>
+                                            <td colSpan={5}>
+                                                <EmptyStateBox>등록된 일정이 없습니다.</EmptyStateBox>
+                                            </td>
+                                        </tr>
+                                    ) : recentSchedules.map((item) => (
+                                        <tr key={item.id}>
+                                            <td>{getScheduleTypeLabel(item)}</td>
+                                            <td>{item.title}</td>
+                                            <td>{formatScheduleDate(item.startAt)}</td>
+                                            <td>{formatScheduleTime(item)}</td>
+                                            <td>
+                                                <TableActionGroup>
+                                                    <TextButton type="button" onClick={() => navigate("schedule")}>일정 관리</TextButton>
+                                                </TableActionGroup>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </ScheduleTable>
+                            </PanelCard>
+                        </Section>
                     </>
                 );
 
@@ -1830,15 +1828,15 @@ export default function MyPage() {
             case "schedule":
                 return (
                     <Section>
-                            <SectionHeader>
-                                <div>
-                                    <SectionEyebrow>SCHEDULE</SectionEyebrow>
-                                    <SectionTitle>일정 관리</SectionTitle>
-                                    <SectionDescription>
-                                        면접 준비, 퀴즈 복습, 자기소개서 점검 일정을 자유롭게 저장하고 관리할 수 있습니다.
-                                    </SectionDescription>
-                                </div>
-                            </SectionHeader>
+                        <SectionHeader>
+                            <div>
+                                <SectionEyebrow>SCHEDULE</SectionEyebrow>
+                                <SectionTitle>일정 관리</SectionTitle>
+                                <SectionDescription>
+                                    면접 준비, 퀴즈 복습, 자기소개서 점검 일정을 자유롭게 저장하고 관리할 수 있습니다.
+                                </SectionDescription>
+                            </div>
+                        </SectionHeader>
                         <PanelCard>
                             <PanelHeader>
                                 <PanelTitle>예정된 일정</PanelTitle>
@@ -1910,7 +1908,7 @@ export default function MyPage() {
                             {/*        <span>?대찓???뚮┝</span>*/}
                             {/*        <FakeToggle $active={false} />*/}
                             {/*    </ToggleRow>*/}
-                                {/*</SettingCard>*/}
+                            {/*</SettingCard>*/}
 
                             <SettingCard $featured>
                                 <SettingTitle>관심 분야 선택</SettingTitle>
@@ -2015,9 +2013,9 @@ export default function MyPage() {
 
                             {/*<SettingCard>*/}
                             {/*    <SettingTitle>蹂댁븞 ?ㅼ젙</SettingTitle>*/}
-                            {/*    <SettingDescription>鍮꾨?踰덊샇 蹂寃? ?뚯뀥 濡쒓렇???곕룞, ?묒냽 湲곌린 愿由?湲곕뒫???ㅼ뼱媛??곸뿭?낅땲??</SettingDescription>*/}
+                            {/*    <SettingDescription>鍮꾨?踰덊샇 蹂€寃? ?뚯뀥 濡쒓렇???곕룞, ?묒냽 湲곌린 愿€由?湲곕뒫???ㅼ뼱媛??곸뿭?낅땲??</SettingDescription>*/}
                             {/*    <StackButtonGroup>*/}
-                            {/*        <GhostButton>鍮꾨?踰덊샇 蹂寃?/GhostButton>*/}
+                            {/*        <GhostButton>鍮꾨?踰덊샇 蹂€寃?/GhostButton>*/}
                             {/*        <GhostButton>?뚯뀥 怨꾩젙 ?곕룞</GhostButton>*/}
                             {/*    </StackButtonGroup>*/}
                             {/*</SettingCard>*/}
@@ -2238,9 +2236,9 @@ const Sidebar = styled.aside`
 `;
 
 const BrandArea = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 `;
 
 const BrandBadge = styled.span`
@@ -2272,9 +2270,9 @@ const BrandDescription = styled.p`
 `;
 
 const MenuList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 `;
 
 const MenuButton = styled.button<{ $active: boolean }>`
@@ -2329,10 +2327,10 @@ const SidebarBottomCard = styled.div`
 `;
 
 const SidebarBottomTitle = styled.strong`
-  display: block;
-  font-size: 15px;
-  color: #1e293b;
-  margin-bottom: 8px;
+    display: block;
+    font-size: 15px;
+    color: #1e293b;
+    margin-bottom: 8px;
 `;
 
 const SidebarBottomText = styled.p`
@@ -2409,6 +2407,157 @@ const HeroLeft = styled.div`
     gap: 18px;
 `;
 
+const HeroRight = styled.div`
+    display: flex;
+    align-items: stretch;
+    justify-content: flex-end;
+    min-width: 320px;
+    flex: 0 0 360px;
+
+    @media (max-width: 900px) {
+        width: 100%;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+`;
+
+const CreditSummaryCard = styled.div`
+    width: 100%;
+    min-height: 196px;
+    padding: 20px;
+    border-radius: 20px;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    border: 1px solid ${palette.border};
+    box-shadow: 0 8px 22px rgba(30, 41, 59, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+`;
+
+const CreditSummaryTop = styled.div`
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+`;
+
+const CreditSummaryBadge = styled.div`
+    width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: ${palette.primarySoft};
+    color: ${palette.primaryStrong};
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+`;
+
+const CreditSummaryLabel = styled.div`
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: ${palette.text};
+`;
+
+const CreditBalanceRow = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+`;
+
+const CreditBalanceCopy = styled.div`
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+`;
+
+const CreditBalanceValue = styled.div`
+    font-size: clamp(2.3rem, 4vw, 3rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    color: #0f172a;
+`;
+
+const CreditBalanceUnit = styled.div`
+    padding-bottom: 4px;
+    font-size: 14px;
+    font-weight: 700;
+    color: ${palette.primaryStrong};
+    text-transform: lowercase;
+`;
+
+const CreditBalanceCaption = styled.div`
+    font-size: 13px;
+    line-height: 1.6;
+    color: ${palette.textSoft};
+`;
+
+const CreditMetaGrid = styled.div`
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+
+    @media (max-width: 900px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    @media (max-width: 520px) {
+        grid-template-columns: 1fr;
+    }
+`;
+
+const CreditMetaItem = styled.div`
+    padding: 14px 14px;
+    border-radius: 16px;
+    background: #fbfcff;
+    border: 1px solid ${palette.borderSoft};
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+`;
+
+const CreditMetaTitle = styled.div`
+    font-size: 12px;
+    font-weight: 700;
+    color: ${palette.textSoft};
+`;
+
+const CreditMetaValue = styled.div`
+    font-size: 15px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.4;
+`;
+
+const CreditExpiryNotice = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    background: ${palette.accentGradientSoft};
+    border: 1px solid rgba(79, 118, 241, 0.08);
+`;
+
+const CreditExpiryLabel = styled.div`
+    font-size: 12px;
+    font-weight: 700;
+    color: ${palette.textSoft};
+`;
+
+const CreditExpiryValue = styled.div`
+    font-size: 14px;
+    font-weight: 800;
+    color: ${palette.text};
+    text-align: right;
+`;
+
 const AvatarWrap = styled.div`
     width: 64px;
     height: 64px;
@@ -2423,9 +2572,9 @@ const AvatarWrap = styled.div`
 
 
 const HeroTextGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 `;
 
 const HeroTitle = styled.h3`
@@ -2445,10 +2594,10 @@ const HeroSub = styled.p`
 `;
 
 const HeroBadgeRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
 `;
 
 const RepresentativeBadge = styled.div`
@@ -2472,9 +2621,9 @@ const RepresentativeHint = styled.div`
 `;
 
 const HeroMetaRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
 `;
 
 const HeroMetaChip = styled.div`
@@ -2487,11 +2636,6 @@ const HeroMetaChip = styled.div`
     color: ${palette.primaryStrong};
     font-size: 13px;
     font-weight: 600;
-`;
-
-const HeroRight = styled.div`
-  display: flex;
-  align-items: center;
 `;
 
 const HeroActionButton = styled.button`
@@ -2515,54 +2659,83 @@ const HeroActionButton = styled.button`
 `;
 
 const StatsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  gap: 16px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 18px;
 
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
+    @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+    }
 `;
 
 const StatCard = styled.div`
-    border: 1px solid ${palette.border};
-    border-radius: 12px;
-    background: #ffffff;
-    box-shadow: 0 1px 0 rgba(0,0,0,0.02), 0 2px 6px rgba(0,0,0,0.05);
-    padding: 16px 18px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    text-align: left;
+    gap: 10px;
+    min-height: 140px;
+    padding: 18px 20px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    border-radius: 24px;
+    background:
+            radial-gradient(circle at top right, rgba(79, 118, 241, 0.18), transparent 34%),
+            linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, #f8fbff 100%);
+    box-shadow:
+            0 18px 32px rgba(15, 23, 42, 0.08),
+            0 6px 14px rgba(62, 99, 224, 0.05);
+    backdrop-filter: blur(14px);
+    transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease,
+            border-color 0.2s ease;
 `;
 
 const StatLabel = styled.div`
-    font-size: 13px;
-    font-weight: 650;
-    color: #64748b;
-    margin-bottom: 10px;
-    line-height: 1.45;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    color: ${palette.primaryStrong};
+    text-align: left;
+    align-self: flex-start;
+    margin: 0;
+    padding: 0;
 `;
 
-const StatValue = styled.div`
-    font-size: 30px;
+const StatValue = styled.strong`
+    font-size: clamp(1.9rem, 3vw, 2.35rem);
     font-weight: 800;
-    line-height: 1.15;
-    letter-spacing: -0.04em;
     color: #0f172a;
-    margin-bottom: 6px;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    text-align: left;
+    align-self: flex-start;
+    margin: 0;
 `;
 
 const StatSub = styled.div`
-    font-size: 13px;
-    line-height: 1.5;
-    color: #94a3b8;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #475569;
+    text-align: left;
+    align-self: flex-start;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
 `;
 
 const ContentGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
 
-  @media (max-width: 980px) {
-    grid-template-columns: 1fr;
-  }
+    @media (max-width: 980px) {
+        grid-template-columns: 1fr;
+    }
 `;
 
 const PanelCard = styled.div`
@@ -2574,11 +2747,11 @@ const PanelCard = styled.div`
 `;
 
 const PanelHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 20px;
 `;
 
 const PanelTitle = styled.h3`
@@ -2604,39 +2777,39 @@ const PanelAction = styled.button`
 `;
 
 const InfoList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 `;
 
 const InfoItem = styled.div`
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #e2e8f0;
 
-  &:last-child {
-    padding-bottom: 0;
-    border-bottom: none;
-  }
+    &:last-child {
+        padding-bottom: 0;
+        border-bottom: none;
+    }
 `;
 
 const InfoLabel = styled.span`
-  font-size: 14px;
-  color: #64748b;
+    font-size: 14px;
+    color: #64748b;
 `;
 
 const InfoValue = styled.strong`
-  font-size: 14px;
-  color: #0f172a;
+    font-size: 14px;
+    color: #0f172a;
 `;
 
 const InfoValueWrap = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 6px;
 `;
 
 const InfoBadge = styled.span`
@@ -2659,14 +2832,14 @@ const InfoSubValue = styled.span`
 `;
 
 const TimelineList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
 `;
 
 const TimelineItem = styled.div`
-  display: flex;
-  gap: 12px;
+    display: flex;
+    gap: 12px;
 `;
 
 const TimelineDot = styled.div`
@@ -2679,26 +2852,26 @@ const TimelineDot = styled.div`
 `;
 
 const TimelineBody = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 `;
 
 const TimelineTitle = styled.div`
-  font-size: 15px;
-  font-weight: 700;
-  color: #0f172a;
+    font-size: 15px;
+    font-weight: 700;
+    color: #0f172a;
 `;
 
 const TimelineMeta = styled.div`
-  font-size: 13px;
-  color: #64748b;
+    font-size: 13px;
+    color: #64748b;
 `;
 
 const RecordList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 `;
 
 const RecordItem = styled.div`
@@ -2753,9 +2926,9 @@ const RecordRight = styled.div`
 `;
 
 const WrongNoteList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
 `;
 
 const WrongNoteCard = styled.div`
@@ -2769,18 +2942,18 @@ const WrongNoteCard = styled.div`
 `;
 
 const WrongNoteHeader = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
 `;
 
 const WrongNoteBadges = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
 `;
 
 const WrongNoteBadge = styled.span<{ $tone: "default" | "pending" | "resolved" }>`
@@ -2793,17 +2966,17 @@ const WrongNoteBadge = styled.span<{ $tone: "default" | "pending" | "resolved" }
     font-weight: 700;
     letter-spacing: -0.015em;
     background: ${({ $tone }) =>
-        $tone === "pending"
-            ? "rgba(245, 158, 11, 0.12)"
-            : $tone === "resolved"
-              ? "rgba(43, 198, 166, 0.12)"
-              : palette.primarySoft};
+            $tone === "pending"
+                    ? "rgba(245, 158, 11, 0.12)"
+                    : $tone === "resolved"
+                            ? "rgba(43, 198, 166, 0.12)"
+                            : palette.primarySoft};
     color: ${({ $tone }) =>
-        $tone === "pending"
-            ? palette.warningText
-            : $tone === "resolved"
-              ? palette.secondaryHover
-              : palette.primaryStrong};
+            $tone === "pending"
+                    ? palette.warningText
+                    : $tone === "resolved"
+                            ? palette.secondaryHover
+                            : palette.primaryStrong};
 `;
 
 const WrongNoteDate = styled.span`
@@ -2827,13 +3000,13 @@ const WrongNoteMeta = styled.p`
 `;
 
 const WrongNoteAnswerGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
 
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-  }
+    @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+    }
 `;
 
 const WrongNoteAnswerBox = styled.div`
@@ -2972,8 +3145,8 @@ const ScheduleTable = styled.table`
 `;
 
 const TableActionGroup = styled.div`
-  display: inline-flex;
-  gap: 8px;
+    display: inline-flex;
+    gap: 8px;
 `;
 
 const TextButton = styled.button<{ $danger?: boolean }>`
@@ -2986,13 +3159,13 @@ const TextButton = styled.button<{ $danger?: boolean }>`
 `;
 
 const SettingsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
 
-  @media (max-width: 1080px) {
-    grid-template-columns: 1fr;
-  }
+    @media (max-width: 1080px) {
+        grid-template-columns: 1fr;
+    }
 `;
 
 const SettingCard = styled.div<{ $featured?: boolean }>`
@@ -3008,24 +3181,24 @@ const SettingCard = styled.div<{ $featured?: boolean }>`
 `;
 
 const SettingTitle = styled.h3`
-  margin: 0;
-  font-size: 18px;
-  color: #0f172a;
+    margin: 0;
+    font-size: 18px;
+    color: #0f172a;
 `;
 
 const SettingDescription = styled.p`
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.75;
-  color: #64748b;
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.75;
+    color: #64748b;
 `;
 
 const ToggleRow = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 14px;
-  color: #334155;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #334155;
 `;
 
 const FakeToggle = styled.div<{ $active: boolean }>`
@@ -3049,30 +3222,30 @@ const FakeToggle = styled.div<{ $active: boolean }>`
 `;
 
 const InterestSummaryGrid = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: 14px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 14px;
 
-  @media (max-width: 760px) {
-    grid-template-columns: 1fr;
-  }
+    @media (max-width: 760px) {
+        grid-template-columns: 1fr;
+    }
 `;
 
 const TagRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
 `;
 
 const InterestFieldSummary = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 120px;
-  padding: 16px 18px;
-  border: 1px solid ${palette.border};
-  border-radius: 16px;
-  background: linear-gradient(180deg, #fcfdff 0%, #f8fbff 100%);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    min-height: 120px;
+    padding: 16px 18px;
+    border: 1px solid ${palette.border};
+    border-radius: 16px;
+    background: linear-gradient(180deg, #fcfdff 0%, #f8fbff 100%);
 `;
 
 const SummaryLabel = styled.div`
@@ -3094,14 +3267,14 @@ const Tag = styled.span`
 `;
 
 const InterestFieldEditorSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-  padding: 18px;
-  border: 1px solid ${palette.border};
-  border-radius: 18px;
-  background: #fbfdff;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-width: 0;
+    padding: 18px;
+    border: 1px solid ${palette.border};
+    border-radius: 18px;
+    background: #fbfdff;
 `;
 
 const EditorTitle = styled.h4`
@@ -3112,19 +3285,19 @@ const EditorTitle = styled.h4`
 `;
 
 const InterestEditorGrid = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
-  gap: 16px;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    gap: 16px;
 
-  @media (max-width: 980px) {
-    grid-template-columns: 1fr;
-  }
+    @media (max-width: 980px) {
+        grid-template-columns: 1fr;
+    }
 `;
 
 const InterestFieldPicker = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
 `;
 
 const InterestFieldChipButton = styled.button<{ $active: boolean }>`
@@ -3151,16 +3324,16 @@ const InterestFieldChipButton = styled.button<{ $active: boolean }>`
 `;
 
 const InterestMetaRow = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
 `;
 
 const SettingHelperText = styled.p`
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.65;
-  color: #64748b;
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.65;
+    color: #64748b;
 `;
 
 const EmptyInterestHint = styled.div`
@@ -3196,34 +3369,34 @@ const SelectionMetaLabel = styled.div`
 `;
 
 const StackButtonGroup = styled.div`
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 10px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 10px;
 
-  > * {
-    min-width: 140px;
-  }
+    > * {
+        min-width: 140px;
+    }
 
-  @media (max-width: 760px) {
-    flex-direction: column;
-  }
+    @media (max-width: 760px) {
+        flex-direction: column;
+    }
 `;
 
 const FormGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
 
-  @media (max-width: 760px) {
-    grid-template-columns: 1fr;
-  }
+    @media (max-width: 760px) {
+        grid-template-columns: 1fr;
+    }
 `;
 
 const FieldGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 `;
 
 const FieldLabel = styled.label`
@@ -3259,14 +3432,14 @@ const fieldBase = css`
 `;
 
 const FieldInput = styled.input`
-  ${fieldBase}
-  height: 52px;
+    ${fieldBase}
+    height: 52px;
 `;
 
 const FieldTextarea = styled.textarea`
-  ${fieldBase}
-  min-height: 180px;
-  resize: vertical;
+    ${fieldBase}
+    min-height: 180px;
+    resize: vertical;
 `;
 
 const InquiryDropdownWrap = styled.div`
@@ -3282,18 +3455,18 @@ const InquiryDropdownButton = styled.button<{ $open: boolean; $placeholder: bool
     border: 1px solid ${({ $open }) => ($open ? palette.primaryStrong : palette.border)};
     background: #ffffff;
     box-shadow: ${({ $open }) =>
-    $open
-        ? "0 0 0 4px rgba(62, 99, 224, 0.10), 0 14px 30px rgba(30, 41, 59, 0.08)"
-        : "0 6px 16px rgba(30, 41, 59, 0.05)"};
+            $open
+                    ? "0 0 0 4px rgba(62, 99, 224, 0.10), 0 14px 30px rgba(30, 41, 59, 0.08)"
+                    : "0 6px 16px rgba(30, 41, 59, 0.05)"};
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
     cursor: pointer;
     transition:
-        border-color 0.18s ease,
-        box-shadow 0.18s ease,
-        transform 0.18s ease;
+            border-color 0.18s ease,
+            box-shadow 0.18s ease,
+            transform 0.18s ease;
     color: ${({ $placeholder }) => ($placeholder ? palette.textMuted : palette.text)};
 
     &:hover {
@@ -3345,8 +3518,8 @@ const InquiryDropdownMenu = styled.div`
     background: #ffffff;
     border: 1px solid rgba(14, 18, 28, 0.08);
     box-shadow:
-        0 18px 40px rgba(15, 23, 42, 0.10),
-        0 4px 16px rgba(15, 23, 42, 0.06);
+            0 18px 40px rgba(15, 23, 42, 0.10),
+            0 4px 16px rgba(15, 23, 42, 0.06);
 `;
 
 const InquiryDropdownItem = styled.button<{ $selected: boolean }>`
@@ -3389,9 +3562,9 @@ const InquiryItemLabel = styled.span`
 `;
 
 const InlineInfo = styled.div`
-  font-size: 13px;
-  color: #64748b;
-  line-height: 1.7;
+    font-size: 13px;
+    color: #64748b;
+    line-height: 1.7;
 `;
 
 const FieldHint = styled.div`
@@ -3401,10 +3574,10 @@ const FieldHint = styled.div`
 `;
 
 const ButtonRow = styled.div`
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
+    grid-column: 1 / -1;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
 `;
 
 const InquiryLayout = styled.div<{ $view: InquiryView }>`
@@ -3466,7 +3639,7 @@ const InquiryRecordCard = styled.button<{ $active: boolean }>`
     border-radius: 18px;
     background: ${({ $active }) => ($active ? "#f8fbff" : "#ffffff")};
     box-shadow: ${({ $active }) =>
-        $active ? "0 10px 24px rgba(62, 99, 224, 0.10)" : "0 6px 16px rgba(30, 41, 59, 0.04)"};
+            $active ? "0 10px 24px rgba(62, 99, 224, 0.10)" : "0 6px 16px rgba(30, 41, 59, 0.04)"};
     padding: 18px;
     display: flex;
     flex-direction: column;
@@ -3474,9 +3647,9 @@ const InquiryRecordCard = styled.button<{ $active: boolean }>`
     text-align: left;
     cursor: pointer;
     transition:
-        transform 0.18s ease,
-        box-shadow 0.18s ease,
-        border-color 0.18s ease;
+            transform 0.18s ease,
+            box-shadow 0.18s ease,
+            border-color 0.18s ease;
 
     &:hover {
         transform: translateY(-1px);
@@ -3519,21 +3692,21 @@ const InquiryStatusChip = styled.span<{ $tone: "received" | "progress" | "answer
     font-size: 12px;
     font-weight: 700;
     background: ${({ $tone }) =>
-        $tone === "answered"
-            ? "rgba(43, 198, 166, 0.14)"
-            : $tone === "progress"
-              ? "rgba(245, 158, 11, 0.12)"
-              : $tone === "closed"
-                ? "rgba(100, 116, 139, 0.12)"
-                : "rgba(79, 118, 241, 0.12)"};
+            $tone === "answered"
+                    ? "rgba(43, 198, 166, 0.14)"
+                    : $tone === "progress"
+                            ? "rgba(245, 158, 11, 0.12)"
+                            : $tone === "closed"
+                                    ? "rgba(100, 116, 139, 0.12)"
+                                    : "rgba(79, 118, 241, 0.12)"};
     color: ${({ $tone }) =>
-        $tone === "answered"
-            ? palette.secondaryHover
-            : $tone === "progress"
-              ? palette.warningText
-              : $tone === "closed"
-                ? "#475569"
-                : palette.primaryStrong};
+            $tone === "answered"
+                    ? palette.secondaryHover
+                    : $tone === "progress"
+                            ? palette.warningText
+                            : $tone === "closed"
+                                    ? "#475569"
+                                    : palette.primaryStrong};
 `;
 
 const InquiryRecordId = styled.span`
