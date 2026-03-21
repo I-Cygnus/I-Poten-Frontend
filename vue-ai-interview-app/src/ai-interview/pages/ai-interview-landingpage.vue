@@ -94,13 +94,13 @@
             <div :style="decorativeGridStyle(idx)"></div>
 
             <!-- 메인(큰) 이미지 -->
-            <div :style="primaryImgCardStyle(idx)">
-              <div :style="imgPlaceholderStyle(idx)">{{ feature.imagePlaceholder[0] }}</div>
+            <div :style="primaryImgCardStyle()">
+              <img :src="feature.primaryImg" alt="" :style="featureImgStyle" />
             </div>
-            
+
             <!-- 서브(작은, 겹쳐진) 이미지 -->
             <div :style="secondaryImgCardStyle(idx)">
-              <div :style="imgPlaceholderStyle(idx, true)">{{ feature.imagePlaceholder[1] }}</div>
+              <img :src="feature.secondaryImg" alt="" :style="featureImgStyle" />
             </div>
           </div>
 
@@ -118,6 +118,14 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import interviewImg from '@/assets/interview.png';
+import img1_1 from '@/assets/1-1.png';
+import img1_2 from '@/assets/1-2.png';
+import img2_1 from '@/assets/2-1.png';
+import img2_2 from '@/assets/2-2.png';
+import img3_1 from '@/assets/3-1.png';
+import img3_2 from '@/assets/3-2.png';
+import img4_1 from '@/assets/4-1.png';
+import img4_2 from '@/assets/4-2.png';
 
 const router = useRouter();
 
@@ -130,51 +138,52 @@ const pageRef = ref(null);
 const features = ref([
   {
     badge: '01 / Core Engine',
-    title: '지원자를 완벽히 분석하는<br /><span style="background:linear-gradient(90deg,#1e3a8a,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;">초개인화 AI 엔진</span>',
-    desc: '단순한 범용 질문이 아닙니다.<br/>이력서와 포트폴리오를 다각도로 분석하여<br/>지원자만의 강점과 약점을 파고드는 실전 질문을 생성합니다.',
-    dots: ['이력서 기반 심층 키워드 추출', '직무 역량과 연계된 꼬리 질문 생성', '예상되는 압박 질문 사전 대비'],
+    title: '지원자와 <br />지원자의 답변을 분석하는<br /><span style="background:linear-gradient(90deg,#1e3a8a,#3b82f6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;">개인화 면접 서비스를 제공하는 AI 엔진</span>',
+    desc: '단순한 범용 질문이 아닙니다.<br/>지원자의 상황과 답변을 다각도로 분석하여<br/>지원자만의 강점과 약점을 파고드는 실전 질문을 생성합니다.',
+    dots: ['지원자 답변 기반 질문 제공', '직무 역량과 연계된 꼬리 질문 생성', '실제 여러 기업의 데이터 기반 면접 질문'],
     bgColor: '#ffffff',
     titleColor: '#0f172a',
     descColor: '#475569',
     badgeColor: '#1e3a8a',
     accentColor: '#2563eb',
-    imagePlaceholder: ['이력서 분석 대시보드', '키워드 추출 데이터']
+    primaryImg: img1_1,
   },
   {
     badge: '02 / Real Experience',
     title: '실제 면접장의 긴장감,<br /><span style="background:linear-gradient(90deg,#60a5fa,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;">압도적인 몰입감</span>',
     desc: '텍스트에 의존하는 챗봇 형식에서 벗어나,<br/>음성과 표정이 살아있는 AI 아바타 면접관과 대화하며<br/>실제 대면 면접과 동일한 환경을 경험하세요.',
-    dots: ['감정과 억양이 반영된 고품질 TTS', '상황에 즉각적으로 반응하는 AI 아바타', '실전 감각을 극대화하는 UI/UX'],
+    dots: ['감정과 억양이 반영된 고품질 TTS', '상황에 반응하는 AI 아바타', '실전 감각을 극대화하는 UI/UX'],
     bgColor: '#0b1120',
     titleColor: '#ffffff',
     descColor: '#94a3b8',
     badgeColor: '#60a5fa',
     accentColor: '#3b82f6',
-    imagePlaceholder: ['AI 아바타 진행 화면', '실시간 음성 파형/자막']
+    primaryImg: img2_1,
   },
   {
     badge: '03 / Custom Category',
-    title: '목적에 따라 세분화된<br /><span style="background:linear-gradient(90deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;">전문적인 면접 세팅</span>',
-    desc: '개발, 기획, 마케팅 등의 직무 전문 면접부터<br/>인성, 임원, 심층 기술 면접까지<br/>현재의 목표에 맞춘 디테일한 세팅이 가능합니다.',
-    dots: ['직군 및 직무별 전문 면접 지원', '신입/경력 연차에 따른 난이도 조절', '취약 역량 집중 트레이닝 모드'],
+    title: '다양한 카테고리의<br /><span style="background:linear-gradient(90deg,#38bdf8,#818cf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;">전문적인 특화 면접 </span>',
+    desc: '각 회사별 느낌을 살린 면접 <br/> 내 상황과 회사 공고기반의 면접 <br/>인성, 심층 기술 면접까지<br/>현재의 목표에 맞춘 디테일한 세팅이 가능합니다.',
+    dots: ['실 데이터기반 회사별 면접 지원',  '인성면접, 기술면접등 특화 면접 준비', '신입/경력 연차에 따른 난이도 조절'],
     bgColor: '#111827',
     titleColor: '#ffffff',
     descColor: '#94a3b8',
     badgeColor: '#38bdf8',
     accentColor: '#0ea5e9',
-    imagePlaceholder: ['면접 세팅 컨트롤러', '직무 선택 드롭다운']
+    primaryImg: img3_1,
   },
   {
     badge: '04 / Growth Report',
     title: '성장을 증명하는<br /><span style="background:linear-gradient(90deg,#0f172a,#475569);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;display:inline-block;">입체적인 평가 리포트</span>',
     desc: '면접 종료와 동시에 제공되는 다각도 분석 리포트로<br/>답변의 논리성, 직무 적합도, 비언어적 태도까지<br/>명확한 데이터 기반의 개선 방향을 확인하세요.',
-    dots: ['논리력 및 직무 적합도 AI 스코어링', '아쉬운 답변에 대한 모범 가이드라인 제공', '목소리 톤 및 표정 변화 분석 데이터'],
+    dots: ['논리력 및 직무 적합도 AI 스코어링', '아쉬운 답변에 대한 모범 가이드라인 제공', '질문의 대답에 대한 세세한 피드백 제공'],
     bgColor: '#f8fafc',
     titleColor: '#0f172a',
     descColor: '#475569',
     badgeColor: '#0f172a',
     accentColor: '#334155',
-    imagePlaceholder: ['종합 결과 스코어 카드', '상세 피드백 차트']
+    primaryImg: img4_1,
+    secondaryImg: img4_2
   }
 ]);
 
@@ -360,6 +369,7 @@ const featureInnerStyle = {
   flexDirection: 'row'
 };
 
+// 텍스트 패널과 동일한 비율 유지 (flex:1 / flex:1) → 이미지가 텍스트 영역 침범 없음
 const leftSpacerStyle = {
   flex: '1'
 };
@@ -368,26 +378,23 @@ const rightColStyle = {
   flex: '1',
   display: 'flex',
   flexDirection: 'column',
-  alignItems: 'center'
+  alignItems: 'flex-start' // 왼쪽 정렬 → wrapper가 오른쪽으로만 overflow
 };
 
 const imgSlotStyle = {
   width: '100%',
-  maxWidth: '760px', // 영역을 더 넓혀서 두 이미지가 여유있게 배치되도록 함
-  height: '200vh', // 150vh -> 200vh로 변경하여 스크롤 구간을 더 넓힘
+  height: '150vh',
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center',
+  justifyContent: 'flex-start',
   flexShrink: 0
 };
 
 const imageGroupWrapperStyle = {
   position: 'relative',
-  width: '100%',
-  height: '560px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center'
+  width: '130%',
+  height: '900px', // 두 이미지 사이 간격 확보
+  flexShrink: 0
 };
 
 const decorativeCircleStyle = (idx) => {
@@ -425,50 +432,43 @@ const decorativeGridStyle = (idx) => {
   };
 };
 
-const primaryImgCardStyle = (idx) => {
-  const isLight = features.value[idx].bgColor === '#ffffff' || features.value[idx].bgColor === '#f8fafc';
-  return {
-    background: isLight ? '#ffffff' : '#0f172a',
-    borderRadius: '24px',
-    width: '68%',
-    height: '400px',
-    position: 'absolute',
-    bottom: '20px',
-    left: '0',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    border: isLight ? '1px solid rgba(0,0,0,0.06)' : '1px solid rgba(255,255,255,0.08)',
-    boxShadow: isLight ? '0 30px 60px rgba(0,0,0,0.08), 0 4px 16px rgba(0,0,0,0.03)' : '0 30px 60px rgba(0,0,0,0.6), 0 4px 16px rgba(0,0,0,0.4)',
-    transition: 'background 0.5s ease, border 0.5s ease, box-shadow 0.5s ease, transform 0.5s ease',
-    overflow: 'hidden',
-    zIndex: 2,
-    transform: 'perspective(1200px) rotateY(4deg) rotateX(2deg)' // 조금 더 역동적인 입체감
-  };
-};
+// primary: wrapper 전체 너비 사용 (130% of rightCol = 넉넉한 크기)
+// bottom 기준으로 배치, secondary와 겹치지 않도록 top 여백 확보
+const primaryImgCardStyle = () => ({
+  borderRadius: '24px',
+  width: '100%',
+  position: 'absolute',
+  bottom: '0',
+  left: '0',
+  boxShadow: '0 40px 80px rgba(0,0,0,0.26), 0 10px 28px rgba(0,0,0,0.14)',
+  overflow: 'hidden',
+  zIndex: 2,
+  transform: 'perspective(1800px) rotateY(2.5deg) rotateX(1deg)',
+  lineHeight: '0'
+});
 
-const secondaryImgCardStyle = (idx) => {
-  const isLight = features.value[idx].bgColor === '#ffffff' || features.value[idx].bgColor === '#f8fafc';
-  return {
-    background: isLight ? 'rgba(255, 255, 255, 0.75)' : 'rgba(30, 41, 59, 0.75)',
-    backdropFilter: 'blur(16px)',
-    WebkitBackdropFilter: 'blur(16px)',
-    borderRadius: '20px',
-    width: '45%',
-    height: '260px',
-    position: 'absolute',
-    top: '-10px',
-    right: '-80px',  // 바깥으로 과감하게 빼기
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    border: isLight ? '1px solid rgba(255,255,255,0.8)' : '1px solid rgba(255,255,255,0.15)',
-    boxShadow: isLight ? '0 15px 40px rgba(0,0,0,0.06)' : '0 15px 40px rgba(0,0,0,0.5)',
-    transition: 'background 0.5s ease, border 0.5s ease, box-shadow 0.5s ease, transform 0.5s ease',
-    overflow: 'hidden',
-    zIndex: 1,
-    transform: 'perspective(1200px) rotateY(-5deg) rotateX(-2deg) translateY(-10px)' // 역동적인 비대칭 배치
-  };
+// secondary 배치 — 모두 primary 우측 상단에 살짝 겹치도록 bottom 기준
+// wrapper 728px 기준 primary 높이: 1-1≈400px / 2-1≈375px / 3-1≈316px / 4-1≈319px
+// 각 primary 상단에서 ~50px 겹치도록 bottom 값 설정
+const secondaryBottomMap = ['340px', '315px', '255px', '260px'];
+const secondaryImgCardStyle = (idx) => ({
+  borderRadius: '18px',
+  width: idx === 2 ? '52%' : '70%',
+  position: 'absolute',
+  bottom: secondaryBottomMap[idx],
+  top: 'auto',
+  right: '0',
+  boxShadow: '0 24px 52px rgba(0,0,0,0.28), 0 6px 20px rgba(0,0,0,0.16)',
+  overflow: 'hidden',
+  zIndex: 3,
+  transform: 'perspective(1800px) rotateY(-3.5deg) rotateX(-1deg)',
+  lineHeight: '0'
+});
+
+const featureImgStyle = {
+  width: '100%',
+  height: 'auto',
+  display: 'block'
 };
 
 const imgPlaceholderStyle = (idx, isSecondary = false) => {

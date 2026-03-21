@@ -102,6 +102,21 @@ function InnerApp() {
 
         useEffect(() => {
             setCurrentPath(window.location.pathname);
+            // GTM 페이지뷰 추적
+            try {
+                (window as any).dataLayer = (window as any).dataLayer || [];
+                (window as any).dataLayer.push({
+                    event: "page_view",
+                    event_category: "system",
+                    event_action: "page_view",
+                    page_path: window.location.pathname,
+                    page_title: document.title,
+                    page_section: "main-container",
+                    login_status: localStorage.getItem("isLoggedIn") === "true" ? "logged_in" : "guest",
+                });
+            } catch (e) {
+                console.warn("[GTM]", e);
+            }
         }, [location]);
 
         useEffect(() => {
@@ -161,16 +176,12 @@ function InnerApp() {
         const shouldHideNavbar = hideLayout;
         const shouldShowFooter = !hideLayoutFooter;
 
-        // 🔒 SPA 하위 경로는 noindex (정적 랜딩은 인덱싱 허용)
-        // - '/studies' (정적 랜딩) → index 허용
-        // - '/studies/...'(리모트 SPA) → noindex
-        // - '/spoon-word'도 동일 정책
+        // 🔒 SPA 하위 경로는 noindex (정적 SEO 랜딩은 Nginx에서 직접 서빙)
         const noindexPrefixes = [
             "/vue-account",
             "/vue-ai-interview",
             "/mypage",
             "/sveltekit-review",
-            "/studies/", // 슬래시 포함 → 정확히 하위만 매칭
             "/learning/",
         ];
         const noindex = noindexPrefixes.some((p) =>
@@ -201,7 +212,7 @@ function InnerApp() {
                     <Route
                         path="/vue-ai-interview/*"
                         element={
-                            <RequireToken loginPath="/vue-account/account/login">
+                            <RequireToken loginPath="/vue-account/account/login" fallback={<Main />}>
                                 <VueAiInterviewAppWrapper eventBus={eventBus} />
                             </RequireToken>
                         }
@@ -209,9 +220,9 @@ function InnerApp() {
                     <Route
                         path="/mypage/*"
                         element={
-                            <RequireLogin loginPath="/vue-account/account/login">
+                            <RequireToken loginPath="/vue-account/account/login" fallback={<Main />}>
                                 <MyPageApp />
-                            </RequireLogin>
+                            </RequireToken>
                         }
                     />
                     <Route

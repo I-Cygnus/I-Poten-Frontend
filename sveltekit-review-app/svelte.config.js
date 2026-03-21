@@ -13,7 +13,7 @@ const config = {
       // ✅ 링크 따라가지 않음. 명시된 것만 렌더
       crawl: false,
       // ✅ 실제 있는 페이지만
-      entries: ['/', '/sitemap.xml', '/robots.txt'],
+      entries: ['/', '/ai-interview', '/sitemap.xml', '/robots.txt'],
       handleHttpError: ({ status }) => {
         if (status === 404) return; // 링크 잘못 등은 무시
         throw new Error(String(status));

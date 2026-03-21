@@ -7,13 +7,13 @@
   const title = 'AI 인터뷰 | 실전형 모의면접 · 실시간 피드백 · 기록 관리';
   const desc  = '개발자 면접 준비를 위한 AI 모의면접. 직무/경험 기반 질문, 실시간 피드백, 답변 기록 관리로 합격률을 높이세요.';
   const url   = `${BASE}/ai-interview`;
-  const img   = `${BASE}/og/ai-interview.png`;
+  const img   = `${BASE}/og-image.png`;
 
   // Product-like 표현(SoftwareApplication) + FAQ
   const productJsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: '잡스푼 AI 인터뷰',
+    name: '아이포텐(I-Poten) AI 모의면접',
     applicationCategory: 'EducationalApplication',
     operatingSystem: 'Web',
     description: desc,
@@ -49,7 +49,7 @@
 </script>
 
 <svelte:head>
-  <link rel="preload" as="image" href="/og/ai-interview.avif" fetchpriority="high" />
+  <link rel="preload" as="image" href="/og-image.png" fetchpriority="high" />
   <title>{title}</title>
   <meta name="description" content={desc} />
   <link rel="canonical" href={url} />
@@ -81,13 +81,12 @@
 
   <p><a href="/ai-interview/guide">사용 가이드 →</a></p>
   <p><a href="/ai-interview/faq">FAQ →</a></p>
-  <p><a href="/vue-ai-interview/ai-interview/select?utm_source=seo&utm_medium=landing">지금 시작하기 →</a></p>
+  <p><a href="/vue-ai-interview/ai-interview/select?utm_source=seo&utm_medium=landing"
+     onclick="window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'seo_cta_clicked',event_category:'event',event_action:'click',landing_page:'ai-interview',page_section:'sveltekit-review-app'})">지금 시작하기 →</a></p>
 
   <!-- 히어로 (LCP 최적화) -->
   <picture>
-    <source srcset="/og/ai-interview.avif" type="image/avif" />
-    <source srcset="/og/ai-interview.webp" type="image/webp" />
-    <img src="/og/ai-interview.webp" alt="AI 인터뷰 미리보기"
+    <img src="/og-image.png" alt="아이포텐(I-Poten) AI 모의면접"
          width="1200" height="630" fetchpriority="high" decoding="async"
          style="max-width:100%;height:auto" />
   </picture>

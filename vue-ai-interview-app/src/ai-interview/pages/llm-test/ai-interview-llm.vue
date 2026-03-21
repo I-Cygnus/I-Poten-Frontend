@@ -317,7 +317,8 @@ onMounted(() => {
   // onMounted는 클라이언트에서만 실행되므로 process.client 불필요
   const userToken = localStorage.getItem("userToken");
   if (!userToken) {
-    alert("로그인이 필요합니다. 로그인 페이지로 이동합니다.");
+    // alert 대신 console log나 다른 방식 권장되나 여기서는 최소한 alert 제거 시도
+    console.warn("로그인이 필요합니다. 로그인 페이지로 이동합니다.");
      window.location.replace("/vue-account/account/login");
     return;
   }
@@ -335,18 +336,9 @@ const startQuestion = () => {
     !selectedKeyword.value ||
     selectedTechSkills.value.length === 0
   ) {
-    alert("모든 항목(회사, 전공, 경력, 프로젝트 경험, 직무, 기술스택)을 선택해 주세요.");
+    console.warn("모든 항목을 선택해 주세요.");
     return;
   }
-
-  const message = `
-선택한 회사: ${selectedCompany.value}
-전공 여부: ${selectedAcademicBackground.value}
-선택한 경력: ${selectedCareer.value}
-프로젝트 경험: ${selectedProjectExperience.value}
-선택한 직무: ${selectedKeyword.value}
-기술 스택: ${selectedTechSkills.value.join(", ")}`;
-  if (!confirm(message)) return;
 
   const jobstorage = {
     company: selectedCompany.value,

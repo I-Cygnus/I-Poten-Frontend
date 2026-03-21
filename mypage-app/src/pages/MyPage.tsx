@@ -610,10 +610,6 @@ export default function MyPage() {
             setInquiryList([]);
             setSelectedInquiryId(null);
             setSelectedInquiryDetail(null);
-            openSys({
-                tone: "error",
-                title: "문의 목록을 불러오지 못했습니다.",
-            });
         } finally {
             setInquiryListLoading(false);
         }
@@ -831,19 +827,14 @@ export default function MyPage() {
                     setDraftInterestSelection(DEFAULT_INTEREST_SELECTION);
                 }
             } catch (error) {
-                console.error(error);
+            console.error(error);
 
-                if (mounted) {
-                    setInterestOptions([]);
-                    setInterestSelection(DEFAULT_INTEREST_SELECTION);
-                    setDraftInterestSelection(DEFAULT_INTEREST_SELECTION);
-                    openSys({
-                        tone: "error",
-                        title: "관심사 목록을 불러오지 못했습니다.",
-                    });
-                }
-            } finally {
-                if (mounted) {
+            if (mounted) {
+                setInterestOptions([]);
+                setInterestSelection(DEFAULT_INTEREST_SELECTION);
+                setDraftInterestSelection(DEFAULT_INTEREST_SELECTION);
+            }
+            } finally {                if (mounted) {
                     setInterestOptionsLoading(false);
                 }
             }
@@ -2289,13 +2280,13 @@ const MenuButton = styled.button<{ $active: boolean }>`
     border: 1px solid ${palette.border};
 
     ${({ $active }) =>
-            $active &&
-            css`
-                background: ${palette.primary};
-                color: #ffffff;
-                border-color: ${palette.primary};
-                box-shadow: 0 4px 14px rgba(79, 118, 241, 0.18);
-            `}
+        $active &&
+        css`
+            background: ${palette.primary};
+            color: #ffffff;
+            border-color: ${palette.primary};
+            box-shadow: 0 4px 14px rgba(79, 118, 241, 0.18);
+        `}
 
     &:hover {
         transform: translateY(-1px);
