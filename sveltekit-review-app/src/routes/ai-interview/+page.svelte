@@ -1,7 +1,5 @@
 <script lang="ts">
   import { PUBLIC_BASE_URL } from '$env/static/public';
-  export const prerender = true;
-  export const csr = false;
 
   const BASE = PUBLIC_BASE_URL.replace(/\/+$/, '');
   const title = 'AI 인터뷰 | 실전형 모의면접 · 실시간 피드백 · 기록 관리';
@@ -81,8 +79,7 @@
 
   <p><a href="/ai-interview/guide">사용 가이드 →</a></p>
   <p><a href="/ai-interview/faq">FAQ →</a></p>
-  <p><a href="/vue-ai-interview/ai-interview/select?utm_source=seo&utm_medium=landing"
-     onclick="window.dataLayer=window.dataLayer||[];window.dataLayer.push({event:'seo_cta_clicked',event_category:'event',event_action:'click',landing_page:'ai-interview',page_section:'sveltekit-review-app'})">지금 시작하기 →</a></p>
+  <p><a href="/vue-ai-interview/ai-interview/select?utm_source=seo&utm_medium=landing">지금 시작하기 →</a></p>
 
   <!-- 히어로 (LCP 최적화) -->
   <picture>
