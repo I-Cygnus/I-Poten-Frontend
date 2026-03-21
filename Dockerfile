@@ -58,9 +58,10 @@ RUN npm -ws run build -w @jobspoon/theme-bridge -w @jobspoon/app-state
 RUN npm run build:next-seo
 RUN npm run build:remotes && npm run build:host
 
-# SvelteKit SEO 정적 페이지 빌드 (기존 빌드 완료 후 추가)
+# SvelteKit SEO 정적 페이지 빌드 (postbuild:ssg의 zip-mf-types는 SSG에 불필요하므로 직접 실행)
 ENV PUBLIC_BASE_URL=https://i-poten.com
-RUN cd sveltekit-review-app && npm run build:ssg
+ENV PATH="/app/node_modules/.bin:${PATH}"
+RUN cd sveltekit-review-app && rimraf build-static && node scripts/run-sveltekit.cjs sync && vite build
 
 # 2단계: Nginx
 FROM nginx:alpine

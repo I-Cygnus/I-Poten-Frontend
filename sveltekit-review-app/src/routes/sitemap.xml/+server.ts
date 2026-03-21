@@ -6,7 +6,7 @@ const BASE = PUBLIC_BASE_URL.replace(/\/+$/, '');
 
 const URLS = [
     '/',
-    '/ai-interview', '/ai-interview/guide', '/ai-interview/faq'
+    '/ai-interview'
 ];
 
 const join = (base: string, p: string) => (p === '/' ? base + '/' : base + (p.startsWith('/') ? p : `/${p}`));
