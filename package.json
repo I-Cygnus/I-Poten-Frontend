@@ -14,7 +14,7 @@
   ],
   "scripts": {
     "build:next-seo": "lerna run build --scope next-seo-app --stream",
-    "build:remotes": "lerna run build --stream --parallel --scope navigation-bar-app --scope vue-account-app --scope vue-ai-interview-app --scope mypage-app --scope spoon-word-app",
+    "build:remotes": "lerna run build --stream --concurrency=2 --scope navigation-bar-app --scope vue-account-app --scope vue-ai-interview-app --scope mypage-app --scope spoon-word-app",
     "build:host": "lerna run build --scope main-container --stream",
     "build": "npm run build:next-seo && npm run build:remotes && npm run build:host",
     "start": "lerna run start --parallel",

@@ -41,8 +41,9 @@ COPY packages/theme-bridge/package.json packages/theme-bridge/
 RUN mkdir -p packages/app-state packages/theme-bridge
 
 # workspace: 프로토콜 변환 및 의존성 설치
+# package-lock.json 삭제 후 Linux ARM64 환경에서 새로 생성 (ARM64 네이티브 바이너리 자동 포함)
 RUN find . -name "package.json" -type f -exec sed -i 's/"workspace:\*"/"*"/g' {} \;
-RUN npm install --legacy-peer-deps
+RUN rm -f package-lock.json && npm install --legacy-peer-deps
 
 # -------------------------
 # 전체 소스 복사 및 빌드

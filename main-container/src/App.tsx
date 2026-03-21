@@ -101,6 +101,10 @@ function InnerApp() {
         const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
 
         useEffect(() => {
+            setCurrentPath(window.location.pathname);
+        }, [location]);
+
+        useEffect(() => {
             const update = () => setCurrentPath(window.location.pathname);
             window.addEventListener("vue-route-change", update);
             window.addEventListener("popstate", update);
@@ -113,24 +117,38 @@ function InnerApp() {
         // 네비게이션바 숨길 경로
         const hiddenLayouts = [
             "/vue-account/account/login",
+            "/vue-account/account/privacy",
+            "/vue-account/account/admin",
+            "/vue-account/account/admin-auth",
             "/vue-ai-interview/ai-interview/select",
             "/vue-ai-interview/ai-interview/result",
             "/vue-ai-interview/ai-interview/form/",
             "/vue-ai-interview/ai-interview/detail/",
             "/vue-ai-interview/ai-interview/end",
             "/vue-ai-interview/ai-test",
+            "/vue-ai-interview/ai-interview/personality-form",
+            "/vue-ai-interview/ai-interview/personality-result",
+            "/vue-ai-interview/ai-interview/personality",
+            "/event/1",
         ];
 
         const hiddenLayoutsFooters = [
             "/mypage/",
             "/mypage",
             "/vue-account/account/login",
+            "/vue-account/account/privacy",
+            "/vue-account/account/admin",
+            "/vue-account/account/admin-auth",
             "/vue-ai-interview/ai-interview/select",
             "/vue-ai-interview/ai-interview/result",
             "/vue-ai-interview/ai-interview/form/",
             "/vue-ai-interview/ai-interview/detail/",
             "/vue-ai-interview/ai-interview/end",
             "/vue-ai-interview/ai-test",
+            "/vue-ai-interview/ai-interview/personality-form",
+            "/vue-ai-interview/ai-interview/personality-result",
+            "/vue-ai-interview/ai-interview/personality",
+            "/event/1",
         ];
         const hideLayout = hiddenLayouts.some((path) =>
             currentPath.startsWith(path)

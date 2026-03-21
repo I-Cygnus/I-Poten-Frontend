@@ -11,6 +11,9 @@ import AiInterviewDetail from "@/ai-interview/pages/ai-interview-detail.vue";
 import AiInterviewForm from "@/ai-interview/pages/ai-interview-form.vue";
 import AiInterviewEnd from "@/ai-interview/pages/ai-interview-end.vue";
 import LoadingSpinner from "@/components/common/LoadingSpinner.vue";
+import AiPersonalityForm from "@/ai-interview/pages/ai-personality-form.vue";
+import AiPersonalityInterview from "@/ai-interview/pages/ai-personality-interview.vue";
+import AiPersonalityResult from "@/ai-interview/pages/ai-personality-result.vue";
 
 const routes: Array<RouteRecordRaw> = [
     {
@@ -59,6 +62,22 @@ const routes: Array<RouteRecordRaw> = [
         path: '/ai-interview/end',
         name: 'ai-interview-end',
         component: AiInterviewEnd,
+    },
+    {
+        path: '/ai-interview/personality-form',
+        name: 'ai-personality-form',
+        component: AiPersonalityForm,
+    },
+    {
+        path: '/ai-interview/personality',
+        name: 'ai-personality-interview',
+        component: AiPersonalityInterview,
+    },
+    {
+        path: '/ai-interview/personality-result/:interviewId',
+        name: 'ai-personality-result',
+        component: AiPersonalityResult,
+        props: true,
     },
     // 필요하다면 기타 라우트 추가
     { path: "/", redirect: "/ai-interview/select" },

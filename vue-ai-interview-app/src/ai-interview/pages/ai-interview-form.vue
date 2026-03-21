@@ -217,6 +217,8 @@
       </div>
     </div>
   </main>
+
+  <AlertPopup v-model="alertVisible" :message="alertMessage" />
 </template>
 
 <style scoped>
@@ -287,6 +289,11 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import * as axiosUtility from "../utility/axiosInstance";
+import AlertPopup from '@/components/common/AlertPopup.vue';
+
+const alertVisible = ref(false);
+const alertMessage = ref('');
+const showAlert = (msg) => { alertMessage.value = msg; alertVisible.value = true; };
 
 const router = useRouter();
 const route = useRoute();
@@ -398,7 +405,7 @@ const isFormValid = computed(() => {
 const CREDIT_COSTS = { '전형별': 2, '기업별': 6 };
 
 const startInterview = async () => {
-  if (!isFormValid.value) { alert("모든 필수 항목을 선택해 주세요."); return; }
+  if (!isFormValid.value) { showAlert("모든 필수 항목을 선택해 주세요."); return; }
 
   const jobstorage = {
     interviewType: interviewType.value === "기업별" ? "COMPANY" : "TECH",
@@ -438,9 +445,9 @@ ${selectedCompany.value ? '선택한 회사: ' + selectedCompany.value : ''}
     } catch (e) {
       const status = e?.response?.status;
       if (status === 402 || status === 400) {
-        alert('크레딧이 부족합니다. 크레딧을 충전 후 이용해 주세요.');
+        showAlert('크레딧이 부족합니다. 크레딧을 충전 후 이용해 주세요.');
       } else {
-        alert('크레딧 차감 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
+        showAlert('크레딧 차감 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.');
       }
       return;
     }
@@ -856,5 +863,6 @@ const addProjectBtnStyle = {
 
 onMounted(() => {
   if (!interviewType.value) router.push('/ai-interview/select');
+  if (interviewSubType.value === '인성면접') router.push('/ai-interview/personality-form');
 });
 </script>

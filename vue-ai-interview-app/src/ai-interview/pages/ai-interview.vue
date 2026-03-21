@@ -7,6 +7,18 @@
     <div :style="bgDecoStyle"></div>
     <div :style="backgroundTextStyle">AI INTERVIEW</div>
 
+    <!-- 장치 토글 버튼 (우측 상단) -->
+    <div :style="deviceToggleBarStyle">
+      <div :style="deviceToggleBtnStyle(useMic)" @click="useMic = !useMic">
+        <v-icon size="13" :color="useMic ? '#a5b4fc' : 'rgba(255,255,255,0.3)'">mdi-microphone{{ useMic ? '' : '-off' }}</v-icon>
+        마이크
+      </div>
+      <div :style="deviceToggleBtnStyle(useCamera)" @click="useCamera = !useCamera">
+        <v-icon size="13" :color="useCamera ? '#a5b4fc' : 'rgba(255,255,255,0.3)'">mdi-video{{ useCamera ? '' : '-off' }}</v-icon>
+        카메라
+      </div>
+    </div>
+
     <div :style="interviewStartWrapperStyle">
       <!-- 진행 표시 헤더 -->
       <div :style="progressHeaderStyle">
@@ -21,21 +33,29 @@
       <div :style="mainCameraContainerStyle">
         <video ref="previewVideo" autoplay playsinline muted :style="mainVideoStyle" />
 
-        <!-- 카메라 비활성화 오버레이 -->
-        <div :style="videoOverlayStyle" v-if="!mediaChecked">
-          <v-icon size="56" color="rgba(255,255,255,0.25)">mdi-video-outline</v-icon>
-          <p :style="overlayTextStyle">카메라를 활성화하세요</p>
+        <!-- 미확인 오버레이 -->
+        <div :style="videoOverlayStyle" v-if="!mediaChecked && (useMic || useCamera)">
+          <v-icon size="56" color="rgba(255,255,255,0.25)">{{ useMic ? 'mdi-microphone-outline' : 'mdi-video-outline' }}</v-icon>
+          <p :style="overlayTextStyle">
+            {{ useMic && useCamera ? '마이크·카메라 확인이 필요합니다' : useMic ? '마이크 확인이 필요합니다' : '카메라 확인이 필요합니다' }}
+          </p>
         </div>
 
-        <!-- PiP (확인 후) -->
-        <div :style="smallPreviewStyle" v-if="mediaChecked">
+        <!-- 장치 없음 플레이스홀더 (확인 완료 + 카메라 없거나 꺼진 경우) -->
+        <div :style="videoOverlayStyle" v-else-if="mediaChecked && !cameraAvailable">
+          <v-icon size="56" color="rgba(255,255,255,0.15)">mdi-account-outline</v-icon>
+          <p :style="overlayTextStyle">{{ !useCamera ? '카메라 미사용' : '카메라 없음' }} · {{ useMic ? '마이크로 진행' : '장치 없이 진행' }}</p>
+        </div>
+
+        <!-- PiP (카메라 있을 때만) -->
+        <div :style="smallPreviewStyle" v-if="mediaChecked && cameraAvailable">
           <video ref="smallPreview" autoplay playsinline muted :style="smallVideoStyle" />
         </div>
 
         <!-- 상태 뱃지 (좌측 상단) -->
         <div :style="topLeftBadgeStyle">
           <v-icon size="11" :color="mediaChecked ? '#10b981' : 'rgba(255,255,255,0.4)'">mdi-circle</v-icon>
-          <span>{{ mediaChecked ? '준비 완료' : '카메라 확인 필요' }}</span>
+          <span>{{ !mediaChecked ? '확인 필요' : cameraAvailable ? '카메라·마이크 준비 완료' : useMic ? '마이크 준비 완료' : '준비 완료' }}</span>
         </div>
 
         <!-- 하단 오버레이 -->
@@ -43,9 +63,13 @@
           <div :style="qBadgeStyle">PREP</div>
           <div :style="questionScrollContainerStyle" class="question-scroll">
             <p :style="videoQuestionTextStyle">
-              {{ mediaChecked
-                ? '카메라와 마이크가 정상 작동합니다. 면접을 시작하세요.'
-                : '카메라와 마이크를 확인하고 면접을 준비해주세요.' }}
+              {{ !mediaChecked && (useMic || useCamera)
+                ? '우측 상단 토글로 사용할 장치를 선택하고 확인 버튼을 눌러주세요.'
+                : cameraAvailable
+                  ? '카메라와 마이크가 준비됐습니다. 면접을 시작하세요.'
+                  : useMic
+                    ? '마이크가 준비됐습니다. 면접을 시작하세요.'
+                    : '장치 없이 진행합니다. 면접을 시작하세요.' }}
             </p>
           </div>
         </div>
@@ -55,8 +79,8 @@
       <div :style="controlsRowStyle">
         <template v-if="!mediaChecked">
           <v-btn :style="primaryControlBtnStyle" elevation="0" @click="checkMediaReady">
-            <v-icon left size="18">mdi-camera-check</v-icon>
-            카메라 / 마이크 확인
+            <v-icon left size="18">{{ useMic || useCamera ? 'mdi-check-circle-outline' : 'mdi-play-circle' }}</v-icon>
+            {{ !useMic && !useCamera ? '장치 없이 시작' : useMic && useCamera ? '마이크·카메라 확인' : useMic ? '마이크 확인' : '카메라 확인' }}
           </v-btn>
         </template>
         <template v-else>
@@ -104,18 +128,18 @@
       <!-- 메인 영상 영역 -->
       <div :style="mainCameraContainerStyle">
         <!-- 면접관 비디오 -->
-        <video 
-          ref="interviewerVideo" 
-          :style="interviewerVideoStyle" 
-          playsinline 
+        <video
+          ref="interviewerVideo"
+          :style="interviewerVideoStyle"
+          playsinline
           muted
           autoplay
           @ended="onInterviewerVideoEnded"
         ></video>
 
-        <!-- 사용자 PiP (우측 상단) -->
-        <div :style="smallPreviewStyle">
-          <video ref="userVideo" v-show="start" autoplay playsinline muted :style="smallVideoStyle"></video>
+        <!-- 사용자 PiP (우측 상단, 카메라 있을 때만) -->
+        <div :style="smallPreviewStyle" v-if="cameraAvailable">
+          <video ref="userVideo" autoplay playsinline muted :style="smallVideoStyle"></video>
         </div>
 
         <!-- 타이머 (좌측 상단) -->
@@ -214,23 +238,30 @@
       </div>
     </div>
   </div>
+
+  <AlertPopup v-model="alertVisible" :message="alertMessage" />
 </template>
 
 
 
 
 <script setup>
-import { ref, computed, onMounted, onBeforeUnmount, nextTick } from "vue";
+import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
 import { useAiInterviewStore } from "../stores/aiInterviewStore";
 import { useRouter, onBeforeRouteLeave } from "vue-router";
 import "@mdi/font/css/materialdesignicons.css";
 import { useHead } from '@vueuse/head'
 import LoadingSpinner from '@/components/common/LoadingSpinner.vue';
+import AlertPopup from '@/components/common/AlertPopup.vue';
 import { clearInterviewSessionToken } from '@/utils/sessionToken';
-import interview1Video from '@/assets/interview1.mp4';
-import interview2Video from '@/assets/interview2.mp4';
-import interview3Video from '@/assets/interview3.mp4';
-import interview4Video from '@/assets/interview4.mp4';
+
+const alertVisible = ref(false);
+const alertMessage = ref('');
+const showAlert = (msg) => { alertMessage.value = msg; alertVisible.value = true; };
+const interview1Video = 'https://cdn.i-poten.com/interview/interview1.mp4';
+const interview2Video = 'https://cdn.i-poten.com/interview/interview2.mp4';
+const interview3Video = 'https://cdn.i-poten.com/interview/interview3.mp4';
+const interview4Video = 'https://cdn.i-poten.com/interview/interview4.mp4';
 
 const answerVideoSources = [interview2Video, interview3Video, interview4Video];
 const currentQuestionVideo = ref(interview2Video);
@@ -283,6 +314,9 @@ const maxQuestionId = ref(10);
 const startMessage = ref("");
 const userVideo = ref(null);
 const mediaChecked = ref(false);
+const cameraAvailable = ref(false);
+const useMic = ref(true);
+const useCamera = ref(true);
 const previewVideo = ref(null);
 const mediaStream = ref(null);
 const isGenerating = ref(false);
@@ -335,12 +369,12 @@ const onInterviewerVideoEnded = async () => {
 const playQuestionAudio = async (audioUrl) => {
   console.log('Playing question audio:', audioUrl);
   if (!audioUrl) return;
-  
+
   // 로딩 비디오 중지
   if (videoSequenceState.value === 'loading' && interviewerVideo.value) {
     interviewerVideo.value.pause();
   }
-  
+
   // 선택된 랜덤 면접관 답변 영상 재생 시작 (음성 재생 시에만)
   videoSequenceState.value = 'interview2';
   if (interviewerVideo.value) {
@@ -353,23 +387,23 @@ const playQuestionAudio = async (audioUrl) => {
       console.error('비디오 재생 실패:', err);
     }
   }
-  
+
   // 오디오 재생
   if (!audioPlayer.value) {
     audioPlayer.value = new Audio();
   }
-  
+
   audioPlayer.value.src = audioUrl;
   try {
     await audioPlayer.value.play();
   } catch (err) {
     console.error('오디오 재생 실패:', err);
   }
-  
+
   // 오디오 종료 시 처리
   audioPlayer.value.onended = async () => {
     console.log('Audio ended, switching to idle (interview1)');
-    
+
     // 다시 기본 대기 상태(interview1)로 전환
     videoSequenceState.value = 'interview1';
     if (interviewerVideo.value) {
@@ -403,22 +437,59 @@ const startLoadingVideo = async () => {
   }
 };
 
+// 토글 변경 시 기존 스트림 해제 및 확인 상태 초기화
+watch([useMic, useCamera], () => {
+  mediaChecked.value = false;
+  cameraAvailable.value = false;
+  if (mediaStream.value) {
+    mediaStream.value.getTracks().forEach((t) => t.stop());
+    mediaStream.value = null;
+  }
+  if (previewVideo.value) previewVideo.value.srcObject = null;
+  // 둘 다 꺼져 있으면 확인 불필요
+  if (!useMic.value && !useCamera.value) mediaChecked.value = true;
+});
+
 const checkMediaReady = async () => {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
-    });
+  // 둘 다 꺼져 있으면 즉시 통과
+  if (!useMic.value && !useCamera.value) {
     mediaChecked.value = true;
-    alert("마이크와 카메라가 정상적으로 작동합니다.");
+    return;
+  }
+
+  // 요청할 제약 조건
+  const constraints = { video: useCamera.value, audio: useMic.value };
+
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    cameraAvailable.value = useCamera.value;
+    mediaChecked.value = true;
     mediaStream.value = stream;
     if (previewVideo.value) previewVideo.value.srcObject = stream;
-    
-    // smallPreview가 있는 경우에도 스트림 연결
-    await nextTick();
-    if (smallPreview.value) smallPreview.value.srcObject = stream;
-  } catch (err) {
-    alert("마이크 또는 카메라에 접근할 수 없습니다. 브라우저 권한을 확인하세요.");
+    if (useCamera.value) {
+      await nextTick();
+      if (smallPreview.value) smallPreview.value.srcObject = stream;
+    }
+    const label = useMic.value && useCamera.value
+      ? "마이크와 카메라가 준비됐습니다."
+      : useMic.value
+        ? "마이크가 준비됐습니다."
+        : "카메라가 준비됐습니다.";
+    showAlert(label);
+    return;
+  } catch (_) {
+    // 카메라+마이크 동시 요청 실패 → 마이크만 폴백 (둘 다 요청한 경우만)
+    if (useCamera.value && useMic.value) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+        cameraAvailable.value = false;
+        mediaChecked.value = true;
+        mediaStream.value = stream;
+        showAlert("카메라를 찾을 수 없어 마이크만으로 진행합니다.");
+        return;
+      } catch (_) {}
+    }
+    showAlert("장치에 접근할 수 없습니다. 브라우저 권한을 확인하세요.");
     mediaChecked.value = false;
   }
 };
@@ -432,14 +503,17 @@ let chunks = [];
 const startRecording = async () => {
   try {
     recordingStream = await navigator.mediaDevices.getUserMedia({
-      video: true,
+      video: cameraAvailable.value,
       audio: true,
     });
-    if (previewVideo.value) previewVideo.value.srcObject = recordingStream;
-    if (smallPreview.value) smallPreview.value.srcObject = recordingStream;
+    if (cameraAvailable.value) {
+      if (previewVideo.value) previewVideo.value.srcObject = recordingStream;
+      if (smallPreview.value) smallPreview.value.srcObject = recordingStream;
+    }
 
     chunks = [];
-    recorder = new MediaRecorder(recordingStream, { mimeType: "video/webm" });
+    const mimeType = cameraAvailable.value ? "video/webm" : "audio/webm";
+    recorder = new MediaRecorder(recordingStream, { mimeType });
 
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) {
@@ -448,10 +522,11 @@ const startRecording = async () => {
     };
 
     recorder.onstop = () => {
-      recordedBlob.value = new Blob(chunks, { type: "video/webm" });
+      const type = cameraAvailable.value ? "video/webm" : "audio/webm";
+      recordedBlob.value = new Blob(chunks, { type });
       const videoURL = URL.createObjectURL(recordedBlob.value);
       localStorage.setItem("interviewRecordingUrl", videoURL);
-      if (previewVideo.value) {
+      if (cameraAvailable.value && previewVideo.value) {
         previewVideo.value.srcObject = null;
         previewVideo.value.src = videoURL;
         previewVideo.value.controls = true;
@@ -459,10 +534,10 @@ const startRecording = async () => {
       }
     };
     recorder.start();
-    alert("녹화를 시작합니다");
+    showAlert("녹화를 시작합니다");
   } catch (err) {
     console.error("🎥 녹화 시작 실패:", err);
-    alert("녹화 시작 중 오류가 발생했습니다.");
+    showAlert("녹화 시작 중 오류가 발생했습니다.");
   }
 };
 const stopRecording = () => {
@@ -471,7 +546,7 @@ const stopRecording = () => {
     if (recordingStream) {
       recordingStream.getTracks().forEach((track) => track.stop());
     }
-    alert("녹화 종료됨");
+    showAlert("녹화 종료됨");
   }
 };
 
@@ -480,16 +555,14 @@ let recognition;
 onMounted(async () => {
   // 초기 비디오 설정 (interview1.mp4를 기본으로 표시)
   // start가 false일 때는 interviewerVideo가 없으므로 handleStartInterview에서 처리하도록 함
-  
-  try {
-    const videoOnlyStream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-    });
-    if (previewVideo.value) {
-      previewVideo.value.srcObject = videoOnlyStream;
+
+  if (useCamera.value) {
+    try {
+      const videoOnlyStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (previewVideo.value) previewVideo.value.srcObject = videoOnlyStream;
+    } catch (_) {
+      // 카메라 없어도 정상 진행
     }
-  } catch (err) {
-    console.error("previewVideo 카메라 연결 실패:", err);
   }
   if (typeof window !== "undefined") {
     speakStartMessage();
@@ -499,7 +572,7 @@ onMounted(async () => {
     const SpeechRecognition =
       window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
-      alert("이 브라우저는 음성 인식을 지원하지 않습니다.");
+      showAlert("이 브라우저는 음성 인식을 지원하지 않습니다.");
       return;
     }
 
@@ -533,25 +606,25 @@ const speakStartMessage = () => {
         <span style="display: block; margin-bottom: 4px; font-size: 15px;">AI 모의 면접 준비</span>
         아래 순서대로 진행해주세요
       </div>
-      
+
       <div style="margin-bottom: 8px; padding: 6px 10px; background: #e3f2fd; border-radius: 6px; width: 100%;">
         <p style="margin: 0; font-weight: 500; font-size: 12px;">1. <mark style="background: #bbdefb; padding: 1px 4px; border-radius: 3px;">카메라/마이크 확인</mark> 버튼 클릭</p>
       </div>
-      
+
       <div style="margin-bottom: 8px; padding: 6px 10px; background: #e8f5e9; border-radius: 6px; width: 100%;">
         <p style="margin: 0; font-weight: 500; font-size: 12px;">2. <mark style="background: #c8e6c9; padding: 1px 4px; border-radius: 3px;">녹화 테스트</mark> 진행</p>
       </div>
-      
+
       <div style="margin-bottom: 10px; padding: 6px 10px; background: #fff8e1; border-radius: 6px; width: 100%;">
         <p style="margin: 0; font-weight: 500; font-size: 12px;">3. <mark style="background: #ffecb3; padding: 1px 4px; border-radius: 3px;">면접 시작</mark> 버튼 클릭</p>
       </div>
-      
-      ${showWarning.value ? 
+
+      ${showWarning.value ?
         '<div style="margin-top: 6px; padding: 6px 8px; background: #ffebee; border-left: 3px solid #f44336; border-radius: 4px; text-align: left;">' +
         '<p style="margin: 0; color: #c62828; font-weight: 600; display: flex; align-items: center; font-size: 12px;">' +
         '<span style="margin-right: 4px; font-size: 14px;">⚠️</span>' +
         '카메라/마이크 확인 필요</p>' +
-        '</div>' : 
+        '</div>' :
         '<div style="margin-top: 6px; padding: 6px 8px; background: #e8f5e9; border-left: 3px solid #4caf50; border-radius: 4px; text-align: left;">' +
         '<p style="margin: 0; color: #2e7d32; font-weight: 600; display: flex; align-items: center; font-size: 12px;">' +
         '<span style="margin-right: 4px; font-size: 14px;">✅</span>' +
@@ -573,6 +646,7 @@ const replayQuestion = () => {
 };
 
 const handleBeforeUnload = (event) => {
+  clearInterviewSessionToken();
   if (start.value && !finished.value) {
     event.preventDefault();
     event.returnValue = "면접이 진행 중입니다. 페이지를 나가시겠습니까?";
@@ -604,7 +678,7 @@ const startTimer = () => {
 
 const startSTT = () => {
   if (!recognition) return;
-  
+
   if (recognizing.value) {
     // STT 중지
     recognition.stop();
@@ -615,21 +689,24 @@ const startSTT = () => {
   }
 };
 const startRecordingAuto = async () => {
+  if (!useMic.value && !useCamera.value) return;
   try {
     recordingStream = await navigator.mediaDevices.getUserMedia({
-      video: true,
-      audio: true,
+      video: useCamera.value && cameraAvailable.value,
+      audio: useMic.value,
     });
-    if (userVideo.value) {
+    if (useCamera.value && cameraAvailable.value && userVideo.value) {
       userVideo.value.srcObject = recordingStream;
     }
     chunks = [];
-    recorder = new MediaRecorder(recordingStream, { mimeType: "video/webm" });
+    const mimeType = (useCamera.value && cameraAvailable.value) ? "video/webm" : "audio/webm";
+    recorder = new MediaRecorder(recordingStream, { mimeType });
     recorder.ondataavailable = (event) => {
       if (event.data.size > 0) chunks.push(event.data);
     };
     recorder.onstop = () => {
-      recordedBlob.value = new Blob(chunks, { type: "video/webm" });
+      const type = (useCamera.value && cameraAvailable.value) ? "video/webm" : "audio/webm";
+      recordedBlob.value = new Blob(chunks, { type });
       const videoURL = URL.createObjectURL(recordedBlob.value);
       localStorage.setItem("interviewRecordingUrl", videoURL);
     };
@@ -655,15 +732,15 @@ const handleStartInterview = async () => {
   console.log(JSON.stringify(info, null, 2));
 
   if (!info.job || !info.career) {
-    alert("면접 정보를 찾을 수 없습니다. 처음으로 돌아갑니다.");
+    showAlert("면접 정보를 찾을 수 없습니다. 처음으로 돌아갑니다.");
     router.push("/ai-interview");
     return;
   }
-  
+
   start.value = true;
   isStartingCountdown.value = true;
   countdownValue.value = 3;
-  
+
   await nextTick(); // DOM 업데이트 대기 (비디오 엘리먼트 생성)
 
   // 초기 면접관 비디오 설정
@@ -689,13 +766,13 @@ const handleStartInterview = async () => {
     } else {
       clearInterval(countdownTimer);
       isStartingCountdown.value = false;
-      
+
       // 첫 번째 질문 시작
-      interviewSequence.value = 1; 
+      interviewSequence.value = 1;
       currentAIMessage.value = "안녕하세요 자기소개 부탁드립니다.";
       // 지정해주신 첫 번째 질문 오디오 URL
       currentAudioUrl.value = "https://cdn.i-poten.com/questions/v1/6b1f8915-8dde-47a2-8f15-49668a67139e.mp3";
-      
+
       selectRandomVideo(); // 랜덤 영상 선택
       showStartMessage();
     }
@@ -718,7 +795,7 @@ const onAnswerComplete = async () => {
   const finalAnswer = (sttLog.value + " " + textAnswer.value).trim();
 
   if (!finalAnswer) {
-    alert("답변 내용이 없습니다. 음성 또는 텍스트로 답변을 입력해주세요.");
+    showAlert("답변 내용이 없습니다. 음성 또는 텍스트로 답변을 입력해주세요.");
     isGenerating.value = false;
     videoSequenceState.value = 'idle';
     visible.value = false;
@@ -742,7 +819,7 @@ const onAnswerComplete = async () => {
     console.log("techStacks:", info.techStacks);
     console.log("firstQuestion:", "안녕하세요 자기소개 부탁드립니다.");
     console.log("firstAnswer:", finalAnswer);
-    
+
     const res = await aiInterviewStore.requestCreateInterviewToSpring({
       interviewType: info.interviewType,
       company: info.company || "",
@@ -758,11 +835,11 @@ const onAnswerComplete = async () => {
 
     currentInterviewId.value = Number(res.interviewId);
     currentQuestionId.value = res.interviewQAId;
-    
+
     // API 응답에서 오디오 URL과 텍스트 분리
     currentAudioUrl.value = res.interviewQuestion || ''; // 오디오 URL
     currentAIMessage.value = res.interviewQuestionText || res.interviewQuestion || ''; // 텍스트
-    
+
     // localStorage에 interviewId 저장 (결과 페이지에서 사용)
     localStorage.setItem("currentInterviewId", String(res.interviewId));
 
@@ -770,7 +847,7 @@ const onAnswerComplete = async () => {
     textAnswer.value = "";
     visible.value = false; // 로딩 메시지 숨기기
     isGenerating.value = false;
-    
+
     // 랜덤 영상 선택 후 재생 및 비디오 시퀀스 시작
     selectRandomVideo();
     playQuestionAudio(currentAudioUrl.value);
@@ -803,7 +880,7 @@ const onAnswerComplete = async () => {
 
       return;
     }
-    
+
     const payload = {
       interviewId: currentInterviewId.value,
       interviewQAId: currentQuestionId.value,
@@ -816,21 +893,21 @@ const onAnswerComplete = async () => {
 
 
     if (!questionRes.interviewQuestion || !questionRes.interviewQAId) {
-      alert("다음 질문을 불러오지 못했습니다.");
+      showAlert("다음 질문을 불러오지 못했습니다.");
       isGenerating.value = false;
       return;
     }
 
     currentQuestionId.value = questionRes.interviewQAId;
-    
+
     // API 응답에서 오디오 URL과 텍스트 분리
     currentAudioUrl.value = questionRes.interviewQuestion || ''; // 오디오 URL
     currentAIMessage.value = questionRes.interviewQuestionText || questionRes.interviewQuestion || ''; // 텍스트
-    
+
     sttLog.value = "";
     textAnswer.value = "";
     visible.value = false; // 로딩 메시지 숨기기
-    
+
     // 랜덤 영상 선택 후 재생 및 비디오 시퀀스 시작
     selectRandomVideo();
     playQuestionAudio(currentAudioUrl.value);
@@ -847,13 +924,13 @@ onBeforeUnmount(() => {
   if (start.value && !finished.value) {
     clearInterviewSessionToken();
   }
-  
+
   // 오디오 재생 중지
   if (audioPlayer.value) {
     audioPlayer.value.pause();
     audioPlayer.value = null;
   }
-  
+
   localStorage.removeItem("interviewInfo");
   clearInterval(timer.value);
   window.removeEventListener("beforeunload", handleBeforeUnload);
@@ -2679,6 +2756,34 @@ const nextQuestionBtnInlineStyle = {
   letterSpacing: "0.02em",
 };
 
+// ===== 장치 토글 버튼 =====
+const deviceToggleBarStyle = {
+  position: "absolute",
+  top: "20px",
+  right: "24px",
+  zIndex: 10,
+  display: "flex",
+  gap: "8px",
+};
+
+const deviceToggleBtnStyle = (isOn) => ({
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  padding: "7px 14px",
+  borderRadius: "100px",
+  border: isOn ? "1px solid rgba(91,107,255,0.5)" : "1px solid rgba(255,255,255,0.12)",
+  background: isOn ? "rgba(91,107,255,0.18)" : "rgba(255,255,255,0.06)",
+  color: isOn ? "#a5b4fc" : "rgba(255,255,255,0.3)",
+  fontSize: "12px",
+  fontWeight: "600",
+  cursor: "pointer",
+  backdropFilter: "blur(8px)",
+  WebkitBackdropFilter: "blur(8px)",
+  transition: "all 0.2s ease",
+  letterSpacing: "-0.01em",
+  userSelect: "none",
+});
 
 </script>
 
