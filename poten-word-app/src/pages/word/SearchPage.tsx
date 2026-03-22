@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import styled, { css, keyframes } from "styled-components";
 import { useNavigate, useNavigationType, useSearchParams } from "react-router-dom";
 
@@ -57,6 +58,11 @@ type JobGroup = {
     title: string;
     desc: string;
 };
+type JobRecommendedTerm = {
+    termId: number | null;
+    title: string;
+    description: string;
+};
 
 type NewArrivalItem = {
     id: string;
@@ -64,6 +70,14 @@ type NewArrivalItem = {
     description: string;
     imageUrl: string;
 };
+
+function buildCardSearchQuery(title: string) {
+    const raw = String(title ?? "").trim();
+    if (!raw) return "";
+
+    const withoutParen = raw.replace(/\s*\([^)]*\)\s*/g, " ").replace(/\s+/g, " ").trim();
+    return withoutParen || raw;
+}
 
 const NEW_ARRIVALS_SAMPLE: NewArrivalItem[] = [
     {
@@ -205,6 +219,71 @@ async function attachJobRecommendationToFolder(
 }
 
 /** 단일/벌크 공용: 항상 :bulk 호출 */
+function normalizeJobRecommendedTerms(payload: any): JobRecommendedTerm[] {
+    const rawItems = Array.isArray(payload)
+        ? payload
+        : payload?.items ??
+          payload?.content ??
+          payload?.termList ??
+          payload?.recommendedTerms ??
+          payload?.terms ??
+          payload?.data ??
+          [];
+
+    if (!Array.isArray(rawItems)) return [];
+
+    return rawItems
+        .map((item: any) => {
+            if (typeof item === "string") {
+                return {
+                    termId: null,
+                    title: item.trim(),
+                    description: "",
+                };
+            }
+
+            const rawId = item?.termId ?? item?.id ?? item?.term?.id ?? null;
+            const termId = Number.isFinite(Number(rawId)) ? Number(rawId) : null;
+            const title = String(
+                item?.title ??
+                    item?.termTitle ??
+                    item?.name ??
+                    item?.keyword ??
+                    item?.term?.title ??
+                    ""
+            ).trim();
+            const description = String(
+                item?.description ?? item?.summary ?? item?.term?.description ?? ""
+            ).trim();
+
+            return { termId, title, description };
+        })
+        .filter((item: JobRecommendedTerm) => item.title);
+}
+
+async function fetchJobRecommendedTerms(jobKey: string) {
+    const urls = [
+        "/recommended-terms/by-job",
+        "/word/recommended-terms/by-job",
+        "/terms/recommended/by-job",
+        "/terms/recommended-terms/by-job",
+    ];
+
+    let lastErr: any;
+
+    for (const url of urls) {
+        try {
+            const res = await http.get(url, { params: { jobKey } });
+            return normalizeJobRecommendedTerms(res.data);
+        } catch (err: any) {
+            lastErr = err;
+            if (err?.response?.status !== 404) throw err;
+        }
+    }
+
+    throw lastErr;
+}
+
 async function attachTermsBulk(wordbookId: string, termIds: number[]) {
     return postWithFallback(
         [`/me/folders/${wordbookId}/terms:bulk`, `/api/me/folders/${wordbookId}/terms:bulk`],
@@ -381,8 +460,8 @@ const PagePill = styled.button<{ $active?: boolean }>`
     border-radius: 10px;
     border: 0;
 
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: -0.01em;
     cursor: pointer;
 
     color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
@@ -428,8 +507,8 @@ const PageEllipsis = styled.span`
     height: 34px;
     padding: 0 4px;
     color: rgba(15, 23, 42, 0.5);
-    font-weight: 800;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: -0.01em;
     user-select: none;
 `;
 
@@ -1184,6 +1263,11 @@ export default function SearchPage() {
     // 직무 추천 포텐워드 저장용 모달 상태
     const [noteModalOpen, setNoteModalOpen] = useState(false);
     const [selectedJob, setSelectedJob] = useState<JobGroup | null>(null);
+    const [jobTermsOpen, setJobTermsOpen] = useState(false);
+    const [jobTermsLoading, setJobTermsLoading] = useState(false);
+    const [jobTermsError, setJobTermsError] = useState<string | null>(null);
+    const [jobTerms, setJobTerms] = useState<JobRecommendedTerm[]>([]);
+    const [jobTermsJob, setJobTermsJob] = useState<JobGroup | null>(null);
 
 // 모달 상태
     const [moveOpen, setMoveOpen] = useState(false);
@@ -1205,11 +1289,12 @@ export default function SearchPage() {
                 systemTimerRef.current = null;
             }
 
-            const hasBlockingModal = moveOpen || noteModalOpen;
+            const hasBlockingModal = moveOpen || noteModalOpen || jobTermsOpen;
 
             if (hasBlockingModal) {
                 setMoveOpen(false);
                 setNoteModalOpen(false);
+                setJobTermsOpen(false);
 
                 systemTimerRef.current = window.setTimeout(() => {
                     setSystemMessage(msg);
@@ -1223,7 +1308,7 @@ export default function SearchPage() {
             setSystemMessage(msg);
             setSystemOpen(true);
         },
-        [moveOpen, noteModalOpen]
+        [moveOpen, noteModalOpen, jobTermsOpen]
     );
 
     useEffect(() => {
@@ -1689,6 +1774,137 @@ export default function SearchPage() {
         [isLoggedInForNoteAction, openLoginRequiredModal, showMessage]
     );
 
+    const openJobTermsModal = useCallback(async (job: JobGroup) => {
+        setJobTermsJob(job);
+        setJobTermsOpen(true);
+        setJobTermsLoading(true);
+        setJobTermsError(null);
+        setJobTerms([]);
+
+        try {
+            const items = await fetchJobRecommendedTerms(job.key);
+            setJobTerms(items);
+        } catch (err) {
+            console.error("[fetchJobRecommendedTerms] failed:", err);
+            setJobTermsError("추천 단어 목록을 불러오지 못했어요. 잠시 후 다시 시도해 주세요.");
+        } finally {
+            setJobTermsLoading(false);
+        }
+    }, []);
+
+    const closeJobTermsModal = useCallback(() => {
+        setJobTermsOpen(false);
+        setJobTermsLoading(false);
+        setJobTermsError(null);
+        setJobTerms([]);
+        setJobTermsJob(null);
+    }, []);
+
+    useEffect(() => {
+        if (!jobTermsOpen || typeof document === "undefined") return;
+
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.body.style.overflow = prevOverflow;
+        };
+    }, [jobTermsOpen]);
+
+    const activeJobTermsJob = jobTermsJob;
+
+    const jobTermsModal =
+        jobTermsOpen && typeof document !== "undefined"
+            ? createPortal(
+                  <JobTermsModalBackdrop
+                      role="dialog"
+                      aria-modal="true"
+                      aria-label={jobTermsJob ? `${jobTermsJob!.title} 추천 단어 목록` : "직무 추천 단어 목록"}
+                      onClick={closeJobTermsModal}
+                  >
+                      <JobTermsModalCard onClick={(e) => e.stopPropagation()}>
+                          <JobTermsModalHead>
+                              <div>
+                                  <JobTermsModalEyebrow>직무별 추천 포텐워드</JobTermsModalEyebrow>
+                                  <JobTermsModalTitle>
+                                      {jobTermsJob ? `${jobTermsJob!.title} 추천 단어` : "추천 단어"}
+                                  </JobTermsModalTitle>
+                                  <JobTermsModalDesc>
+                                      마음에 드는 단어만 개별로 저장하거나, 오른쪽 상단 버튼으로 직무 전체를 저장할 수 있어요.
+                                  </JobTermsModalDesc>
+                              </div>
+                              <JobTermsHeaderActions>
+                                  {jobTermsJob && (
+                                      <JobTermsSaveAllButton
+                                          type="button"
+                                          onClick={(e) => {
+                                              closeJobTermsModal();
+                                              void handleJobPlusClick(e, jobTermsJob!);
+                                          }}
+                                      >
+                                          전체 저장
+                                      </JobTermsSaveAllButton>
+                                  )}
+                                  <JobTermsCloseButton
+                                      type="button"
+                                      onClick={closeJobTermsModal}
+                                      aria-label="모달 닫기"
+                                  >
+                                      ×
+                                  </JobTermsCloseButton>
+                              </JobTermsHeaderActions>
+                          </JobTermsModalHead>
+
+                          <JobTermsModalBody>
+                              {jobTermsLoading && <JobTermsState>추천 단어를 불러오는 중입니다.</JobTermsState>}
+
+                              {!jobTermsLoading && jobTermsError && (
+                                  <JobTermsState $error>{jobTermsError}</JobTermsState>
+                              )}
+
+                              {!jobTermsLoading && !jobTermsError && jobTerms.length === 0 && (
+                                  <JobTermsState>표시할 추천 단어가 없어요.</JobTermsState>
+                              )}
+
+                              {!jobTermsLoading && !jobTermsError && jobTerms.length > 0 && (
+                                  <JobTermsList>
+                                      {jobTerms.map((term, idx) => (
+                                          <JobTermsItem key={`${term.termId ?? term.title}-${idx}`}>
+                                              <JobTermsItemMain>
+                                                  <JobTermsItemTitle>{term.title}</JobTermsItemTitle>
+                                                  {term.description && (
+                                                      <JobTermsItemDesc>{term.description}</JobTermsItemDesc>
+                                                  )}
+                                              </JobTermsItemMain>
+                                              <JobTermsItemAction
+                                                  type="button"
+                                                  disabled={!term.termId}
+                                                  aria-label={
+                                                      term.termId
+                                                          ? `${term.title} 단어를 포텐노트에 저장`
+                                                          : `${term.title} 단어는 저장할 수 없음`
+                                                  }
+                                                  title={term.termId ? "개별 저장" : "termId가 없어 저장할 수 없어요"}
+                                                  onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      if (!term.termId) return;
+                                                      closeJobTermsModal();
+                                                      void handleAddClick(term.termId);
+                                                  }}
+                                              >
+                                                  +
+                                              </JobTermsItemAction>
+                                          </JobTermsItem>
+                                      ))}
+                                  </JobTermsList>
+                              )}
+                          </JobTermsModalBody>
+                      </JobTermsModalCard>
+                  </JobTermsModalBackdrop>,
+                  document.body
+              )
+            : null;
+
     const handleSaveJobToNotebook = useCallback(
         async (wordbookId: string) => {
             if (!selectedJob || saving) return;
@@ -2037,6 +2253,7 @@ export default function SearchPage() {
 
     return (
         <>
+            <PageRoot>
             <SoftBg />
 
             {/* ===== Landing Hero (검색) ===== */}
@@ -2203,6 +2420,96 @@ export default function SearchPage() {
                     )}
 
                     {/* 포텐노트 모달 */}
+                    {false && (
+                        <JobTermsModalBackdrop
+                            role="dialog"
+                            aria-modal="true"
+                            aria-label={jobTermsJob ? `${jobTermsJob!.title} 추천 단어 목록` : "직무 추천 단어 목록"}
+                            onClick={closeJobTermsModal}
+                        >
+                            <JobTermsModalCard onClick={(e) => e.stopPropagation()}>
+                                <JobTermsModalHead>
+                                    <div>
+                                        <JobTermsModalEyebrow>직무별 추천 포텐워드</JobTermsModalEyebrow>
+                                        <JobTermsModalTitle>
+                                            {jobTermsJob ? `${jobTermsJob!.title} 추천 단어` : "추천 단어"}
+                                        </JobTermsModalTitle>
+                                        <JobTermsModalDesc>
+                                            원하는 용어만 개별로 저장하거나, 우측 상단 버튼으로 직무 전체를 저장할 수 있어요.
+                                        </JobTermsModalDesc>
+                                    </div>
+                                    <JobTermsHeaderActions>
+                                        {jobTermsJob && (
+                                            <JobTermsSaveAllButton
+                                                type="button"
+                                                onClick={(e) => {
+                                                    closeJobTermsModal();
+                                                    void handleJobPlusClick(e, jobTermsJob!);
+                                                }}
+                                            >
+                                                전체 저장
+                                            </JobTermsSaveAllButton>
+                                        )}
+                                        <JobTermsCloseButton
+                                            type="button"
+                                            onClick={closeJobTermsModal}
+                                            aria-label="모달 닫기"
+                                        >
+                                            ×
+                                        </JobTermsCloseButton>
+                                    </JobTermsHeaderActions>
+                                </JobTermsModalHead>
+
+                                <JobTermsModalBody>
+                                    {jobTermsLoading && <JobTermsState>추천 단어를 불러오는 중입니다.</JobTermsState>}
+
+                                    {!jobTermsLoading && jobTermsError && (
+                                        <JobTermsState $error>{jobTermsError}</JobTermsState>
+                                    )}
+
+                                    {!jobTermsLoading && !jobTermsError && jobTerms.length === 0 && (
+                                        <JobTermsState>표시할 추천 단어가 없어요.</JobTermsState>
+                                    )}
+
+                                    {!jobTermsLoading && !jobTermsError && jobTerms.length > 0 && (
+                                        <JobTermsList>
+                                            {jobTerms.map((term, idx) => (
+                                                <JobTermsItem key={`${term.termId ?? term.title}-${idx}`}>
+                                                    <JobTermsItemMain>
+                                                        <JobTermsItemTitle>{term.title}</JobTermsItemTitle>
+                                                        {term.description && (
+                                                            <JobTermsItemDesc>{term.description}</JobTermsItemDesc>
+                                                        )}
+                                                    </JobTermsItemMain>
+                                                    <JobTermsItemAction
+                                                        type="button"
+                                                        disabled={!term.termId}
+                                                        aria-label={
+                                                            term.termId
+                                                                ? `${term.title} 용어를 내 포텐노트에 저장`
+                                                                : `${term.title} 용어는 저장할 수 없음`
+                                                        }
+                                                        title={term.termId ? "개별 저장" : "termId가 없어 저장할 수 없어요"}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (!term.termId) return;
+                                                            closeJobTermsModal();
+                                                            void handleAddClick(term.termId);
+                                                        }}
+                                                    >
+                                                        +
+                                                    </JobTermsItemAction>
+                                                </JobTermsItem>
+                                            ))}
+                                        </JobTermsList>
+                                    )}
+                                </JobTermsModalBody>
+                            </JobTermsModalCard>
+                        </JobTermsModalBackdrop>
+                    )}
+
+                    {jobTermsModal}
+
                     <PotenNoteModal
                         open={moveOpen}
                         notebooks={notebooks}
@@ -2254,7 +2561,7 @@ export default function SearchPage() {
                         speedPxPerSec={60}
                         onClickItem={(item) => {
                             const sp = new URLSearchParams(params);
-                            sp.set("q", item.title);
+                            sp.set("q", buildCardSearchQuery(item.title));
                             sp.set("page", "0");
                             sp.set("size", String(size || 20));
 
@@ -2328,6 +2635,15 @@ export default function SearchPage() {
                             {JOB_GROUPS.map((job) => (
                                 <JobCard
                                     key={job.key}
+                                    role="button"
+                                    tabIndex={0}
+                                    onClick={() => openJobTermsModal(job)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                            e.preventDefault();
+                                            void openJobTermsModal(job);
+                                        }
+                                    }}
                                 >
                                     <JobCardHeader>
                                         <JobTitle>{job.title}</JobTitle>
@@ -2409,6 +2725,7 @@ export default function SearchPage() {
                     setSystemMessage(null);
                 }}
             />
+            </PageRoot>
         </>
     );
 }
@@ -2416,6 +2733,18 @@ export default function SearchPage() {
 /** =========================
  *  Styled (Landing + Layout)
  *  ========================= */
+const PageRoot = styled.div`
+    font-family:
+            "Pretendard Variable",
+            "Pretendard",
+            -apple-system,
+            BlinkMacSystemFont,
+            "Apple SD Gothic Neo",
+            "Noto Sans KR",
+            "Segoe UI",
+            sans-serif;
+`;
+
 const SoftBg = styled.div`
     position: fixed;
     inset: 0;
@@ -2740,8 +3069,8 @@ const NewArrivalsTitleRow = styled.div`
 const NewArrivalsTitle = styled.h3`
     margin: 0;
     font-size: 34px;
-    font-weight: 750;
-    letter-spacing: -0.02em;
+    font-weight: 700;
+    letter-spacing: -0.015em;
     color: #0f172a;
     ${highlightText}
 `;
@@ -2840,36 +3169,28 @@ const SquareOverlay = styled.div`
 `;
 
 const SquareTitle = styled.h4`
-  margin: 0 0 10px;
+    margin: 0 0 10px;
 
-  font-family: "GhanaChocolate", "Pretendard Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
-  font-weight: 400;
-
-  font-size: 36px;
-  line-height: 1.12;
-  letter-spacing: -0.02em;
-
-  text-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
-
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-
-  @media (max-width: 1024px) {
-    font-size: 26px;
-    margin-bottom: 8px;
-  }
-  @media (max-width: 640px) {
-    font-size: 21px;
-    margin-bottom: 6px;
-  }
+    font-family: "GhanaChocolate", "Pretendard Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-weight: 400;
+    font-size: 36px;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+    text-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
 `;
 
 const SquareDesc = styled.p`
     margin: 0;
 
-    font-family: "Pretendard Variable", system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-family:
+            "Pretendard Variable",
+            "Pretendard",
+            -apple-system,
+            BlinkMacSystemFont,
+            "Apple SD Gothic Neo",
+            "Noto Sans KR",
+            "Segoe UI",
+            sans-serif;
     font-weight: 300;
     font-size: 15px;
     line-height: 1.55;
@@ -2877,20 +3198,6 @@ const SquareDesc = styled.p`
 
     opacity: 0.92;
     text-shadow: 0 6px 18px rgba(0, 0, 0, 0.42);
-
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-
-    @media (max-width: 1024px) {
-        font-size: 14px;
-        -webkit-line-clamp: 3;
-    }
-    @media (max-width: 640px) {
-        font-size: 14px;
-        -webkit-line-clamp: 3;
-    }
 `;
 
 const SquareCardButton = styled.button`
@@ -2976,6 +3283,178 @@ const ArrivalModalPrimary = styled.button`
   cursor: pointer;
 `;
 
+const JobTermsModalBackdrop = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  background: rgba(15, 23, 42, 0.56);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+`;
+
+const JobTermsModalCard = styled.div`
+  width: min(760px, 100%);
+  max-height: min(80vh, 760px);
+  overflow: hidden;
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 28px 90px rgba(15, 23, 42, 0.24);
+  display: flex;
+  flex-direction: column;
+`;
+
+const JobTermsModalHead = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 24px 24px 18px;
+  border-bottom: 1px solid #e5e7eb;
+`;
+
+const JobTermsModalEyebrow = styled.div`
+    font-size: 12px;
+    font-weight: 800;
+    color: #4f76f1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    font-family:
+            "Pretendard Variable",
+            "Pretendard",
+            -apple-system,
+            BlinkMacSystemFont,
+            "Apple SD Gothic Neo",
+            "Noto Sans KR",
+            "Segoe UI",
+            sans-serif;
+`;
+
+const JobTermsModalTitle = styled.h3`
+    margin: 0;
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #0f172a;
+`;
+
+const JobTermsModalDesc = styled.p`
+  margin: 10px 0 0;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: -0.02em;
+  color: #475569;
+`;
+
+const JobTermsHeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+`;
+
+const JobTermsCloseButton = styled.button`
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #0f172a;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+`;
+
+const JobTermsSaveAllButton = styled.button`
+    border: 0;
+    border-radius: 999px;
+    padding: 10px 16px;
+    background: ${UI.gradient.brand};
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+`;
+
+const JobTermsModalBody = styled.div`
+  padding: 16px 24px 24px;
+  overflow: auto;
+`;
+
+const JobTermsState = styled.div<{ $error?: boolean }>`
+  padding: 24px 4px;
+  text-align: center;
+  color: ${({ $error }) => ($error ? "#dc2626" : "#64748b")};
+  font-size: 15px;
+  line-height: 1.6;
+`;
+
+const JobTermsList = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const JobTermsItem = styled.div`
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+`;
+
+const JobTermsItemMain = styled.div`
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+`;
+
+const JobTermsItemTitle = styled.h4`
+    margin: 0;
+    color: #0f172a;
+    font-size: 17px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+`;
+
+const JobTermsItemDesc = styled.p`
+  margin: 0;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: -0.02em;
+`;
+
+const JobTermsItemAction = styled.button`
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 999px;
+    background: ${UI.gradient.brand};
+    color: #fff;
+    font-size: 20px;
+    line-height: 1;
+    flex-shrink: 0;
+    cursor: pointer;
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    &:disabled {
+        cursor: not-allowed;
+        background: #cbd5e1;
+        color: #f8fafc;
+    }
+`;
+
 const TrendingWrap = styled.section`
     width: 100vw;
     left: 50%;
@@ -3009,16 +3488,16 @@ const TrendingHead = styled.div`
 `;
 
 const TrendingTitle = styled.h2`
-  margin: 0;
-  font-size: 34px;
-  font-weight: 750;
-  letter-spacing: -0.02em;
-  color: #0f172a;
+    margin: 0;
+    font-size: 34px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: #0f172a;
 
-  @media (max-width: 640px) {
-    font-size: 22px;
-  }
-  ${highlightText}
+    @media (max-width: 640px) {
+        font-size: 22px;
+    }
+    ${highlightText}
 `;
 
 const TrendingState = styled.div<{ $error?: boolean }>`
@@ -3132,9 +3611,9 @@ const RankPill = styled.span<{ $rank: number }>`
 
 const RowTitle = styled.div`
     font-size: 20px;
-    font-weight: 560;
-    line-height: 1.08;
-    letter-spacing: -0.035em;
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
     color: #0f172a;
 
     white-space: nowrap;
@@ -3143,9 +3622,9 @@ const RowTitle = styled.div`
 
     @media (max-width: 640px) {
         font-size: 17px;
-        font-weight: 520;
-        line-height: 1.1;
-        letter-spacing: -0.03em;
+        font-weight: 500;
+        line-height: 1.15;
+        letter-spacing: -0.015em;
     }
 `;
 
@@ -3353,9 +3832,9 @@ const JobCardHeader = styled.div`
 const JobTitle = styled.h4`
     margin: 0;
     font-size: 22px;
-    font-weight: 800;
+    font-weight: 700;
     color: #0f172a;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.02em;
     word-break: keep-all;
 `;
 
