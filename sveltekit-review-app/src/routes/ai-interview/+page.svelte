@@ -69,7 +69,6 @@
     var isIn=rect.top<=0&&rect.bottom>=vh;
     fixedBg.style.opacity=isIn?'1':'0';
     fixedPanel.style.opacity=isIn?'1':'0';
-    fixedPanel.style.pointerEvents=isIn?'auto':'none';
     if(isIn){
       var blocks=wrapper.querySelectorAll('[data-img-block]');
       var center=vh/2;
@@ -259,57 +258,29 @@
 
         <!-- 이미지 슬롯 0 — 높이 150vh -->
         <div data-img-block="0" style="width:100%;height:150vh;display:flex;align-items:center;justify-content:flex-start;flex-shrink:0">
-          <div style="position:relative;width:130%;height:900px;flex-shrink:0">
-            <div style="position:absolute;top:5%;left:10%;width:350px;height:350px;border-radius:50%;background:#2563eb;filter:blur(90px);opacity:0.15;z-index:0"></div>
-            <div style="position:absolute;bottom:-5%;right:0;width:250px;height:250px;background-image:radial-gradient(rgba(0,0,0,0.15) 2px,transparent 2px);background-size:24px 24px;z-index:0;opacity:0.8"></div>
-            <div style="border-radius:24px;width:100%;position:absolute;bottom:0;left:0;box-shadow:0 40px 80px rgba(0,0,0,0.26),0 10px 28px rgba(0,0,0,0.14);overflow:hidden;z-index:2;transform:perspective(1800px) rotateY(2.5deg) rotateX(1deg);line-height:0">
-              <img src="/feature-1.png" alt="AI 엔진 개인화 면접 질문 생성" loading="lazy" decoding="async" style="width:100%;height:auto;display:block"/>
-            </div>
-            <div style="border-radius:18px;width:70%;position:absolute;bottom:340px;right:0;box-shadow:0 24px 52px rgba(0,0,0,0.28),0 6px 20px rgba(0,0,0,0.16);overflow:hidden;z-index:3;transform:perspective(1800px) rotateY(-3.5deg) rotateX(-1deg);line-height:0">
-              <img src="/feature-1-sub.png" alt="AI 면접 질문 상세" loading="lazy" decoding="async" style="width:100%;height:auto;display:block"/>
-            </div>
+          <div style="position:relative;width:100%;border-radius:24px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.26),0 10px 28px rgba(0,0,0,0.14);line-height:0">
+            <img src="/feature-1.png" alt="AI 엔진 개인화 면접 질문 생성" loading="lazy" decoding="async" style="width:100%;height:auto;display:block"/>
           </div>
         </div>
 
         <!-- 이미지 슬롯 1 — 높이 150vh -->
         <div data-img-block="1" style="width:100%;height:150vh;display:flex;align-items:center;justify-content:flex-start;flex-shrink:0">
-          <div style="position:relative;width:130%;height:900px;flex-shrink:0">
-            <div style="position:absolute;top:5%;left:10%;width:350px;height:350px;border-radius:50%;background:#3b82f6;filter:blur(90px);opacity:0.3;z-index:0"></div>
-            <div style="position:absolute;bottom:-5%;right:0;width:250px;height:250px;background-image:radial-gradient(rgba(255,255,255,0.15) 2px,transparent 2px);background-size:24px 24px;z-index:0;opacity:0.8"></div>
-            <div style="border-radius:24px;width:100%;position:absolute;bottom:0;left:0;box-shadow:0 40px 80px rgba(0,0,0,0.26),0 10px 28px rgba(0,0,0,0.14);overflow:hidden;z-index:2;transform:perspective(1800px) rotateY(2.5deg) rotateX(1deg);line-height:0">
-              <img src="/feature-2.png" alt="AI 아바타 면접관 실전 환경" loading="lazy" decoding="async" style="width:100%;height:auto;display:block"/>
-            </div>
-            <div style="border-radius:18px;width:70%;position:absolute;bottom:315px;right:0;box-shadow:0 24px 52px rgba(0,0,0,0.28),0 6px 20px rgba(0,0,0,0.16);overflow:hidden;z-index:3;transform:perspective(1800px) rotateY(-3.5deg) rotateX(-1deg);line-height:0">
-              <img src="/feature-2-sub.png" alt="AI 아바타 면접 상세" loading="lazy" decoding="async" style="width:100%;height:auto;display:block"/>
-            </div>
+          <div style="position:relative;width:100%;border-radius:24px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.26),0 10px 28px rgba(0,0,0,0.14);line-height:0">
+            <img src="/feature-2.png" alt="AI 아바타 면접관 실전 환경" loading="lazy" decoding="async" style="width:100%;height:auto;display:block"/>
           </div>
         </div>
 
         <!-- 이미지 슬롯 2 — 높이 150vh -->
         <div data-img-block="2" style="width:100%;height:150vh;display:flex;align-items:center;justify-content:flex-start;flex-shrink:0">
-          <div style="position:relative;width:130%;height:900px;flex-shrink:0">
-            <div style="position:absolute;top:5%;left:10%;width:350px;height:350px;border-radius:50%;background:#0ea5e9;filter:blur(90px);opacity:0.3;z-index:0"></div>
-            <div style="position:absolute;bottom:-5%;right:0;width:250px;height:250px;background-image:radial-gradient(rgba(255,255,255,0.15) 2px,transparent 2px);background-size:24px 24px;z-index:0;opacity:0.8"></div>
-            <div style="border-radius:24px;width:100%;position:absolute;bottom:0;left:0;box-shadow:0 40px 80px rgba(0,0,0,0.26),0 10px 28px rgba(0,0,0,0.14);overflow:hidden;z-index:2;transform:perspective(1800px) rotateY(2.5deg) rotateX(1deg);line-height:0">
-              <img src="/feature-3.png" alt="회사별 맞춤 면접 카테고리 선택" loading="lazy" decoding="async" style="width:100%;height:auto;display:block"/>
-            </div>
-            <div style="border-radius:18px;width:52%;position:absolute;bottom:255px;right:0;box-shadow:0 24px 52px rgba(0,0,0,0.28),0 6px 20px rgba(0,0,0,0.16);overflow:hidden;z-index:3;transform:perspective(1800px) rotateY(-3.5deg) rotateX(-1deg);line-height:0">
-              <img src="/feature-3-sub.png" alt="맞춤 면접 카테고리 상세" loading="lazy" decoding="async" style="width:100%;height:auto;display:block"/>
-            </div>
+          <div style="position:relative;width:100%;border-radius:24px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.26),0 10px 28px rgba(0,0,0,0.14);line-height:0">
+            <img src="/feature-3.png" alt="회사별 맞춤 면접 카테고리 선택" loading="lazy" decoding="async" style="width:100%;height:auto;display:block"/>
           </div>
         </div>
 
         <!-- 이미지 슬롯 3 — 높이 150vh -->
         <div data-img-block="3" style="width:100%;height:150vh;display:flex;align-items:center;justify-content:flex-start;flex-shrink:0">
-          <div style="position:relative;width:130%;height:900px;flex-shrink:0">
-            <div style="position:absolute;top:5%;left:10%;width:350px;height:350px;border-radius:50%;background:#334155;filter:blur(90px);opacity:0.15;z-index:0"></div>
-            <div style="position:absolute;bottom:-5%;right:0;width:250px;height:250px;background-image:radial-gradient(rgba(0,0,0,0.15) 2px,transparent 2px);background-size:24px 24px;z-index:0;opacity:0.8"></div>
-            <div style="border-radius:24px;width:100%;position:absolute;bottom:0;left:0;box-shadow:0 40px 80px rgba(0,0,0,0.26),0 10px 28px rgba(0,0,0,0.14);overflow:hidden;z-index:2;transform:perspective(1800px) rotateY(2.5deg) rotateX(1deg);line-height:0">
-              <img src="/feature-4.png" alt="면접 결과 분석 리포트" loading="lazy" decoding="async" style="width:100%;height:auto;display:block"/>
-            </div>
-            <div style="border-radius:18px;width:70%;position:absolute;bottom:260px;right:0;box-shadow:0 24px 52px rgba(0,0,0,0.28),0 6px 20px rgba(0,0,0,0.16);overflow:hidden;z-index:3;transform:perspective(1800px) rotateY(-3.5deg) rotateX(-1deg);line-height:0">
-              <img src="/feature-4-sub.png" alt="면접 리포트 상세" loading="lazy" decoding="async" style="width:100%;height:auto;display:block"/>
-            </div>
+          <div style="position:relative;width:100%;border-radius:24px;overflow:hidden;box-shadow:0 40px 80px rgba(0,0,0,0.26),0 10px 28px rgba(0,0,0,0.14);line-height:0">
+            <img src="/feature-4.png" alt="면접 결과 분석 리포트" loading="lazy" decoding="async" style="width:100%;height:auto;display:block"/>
           </div>
         </div>
 

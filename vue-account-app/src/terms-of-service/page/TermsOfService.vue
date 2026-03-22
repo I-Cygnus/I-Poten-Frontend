@@ -221,7 +221,7 @@
         <div :style="contactInfoStyle">
           <div :style="contactItemStyle">
             <span :style="contactLabelStyle">이메일</span>
-            <a href="mailto:ggcura259@gmail.com" :style="contactValueStyle">ggcura259@gmail.com</a>
+            <a href="mailto:iptoensupport@gmail.com" :style="contactValueStyle">iptoensupport@gmail.com</a>
           </div>
           <div :style="contactItemStyle">
             <span :style="contactLabelStyle">회사명</span>

@@ -135,7 +135,7 @@ export default function SiteFooter() {
         {/* 하단 회사 정보 */}
         <BottomSection>
           <CompanyText>
-            서울특별시 송파구 새말로8길
+            iptoensupport@gmail.com
           </CompanyText>
           <CopyrightText>
             Copyright © 2025 AQ. All rights reserved.
