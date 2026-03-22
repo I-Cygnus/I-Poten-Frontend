@@ -61,9 +61,9 @@
   <meta property="og:locale" content="ko_KR" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:image" content={img} />
-  <script type="application/ld+json">{JSON.stringify(productJsonLd)}</script>
-  <script type="application/ld+json">{JSON.stringify(faqJsonLd)}</script>
-  <script type="application/ld+json">{JSON.stringify(breadcrumbJsonLd)}</script>
+  {@html `<script type="application/ld+json">${JSON.stringify(productJsonLd)}</script>`}
+  {@html `<script type="application/ld+json">${JSON.stringify(faqJsonLd)}</script>`}
+  {@html `<script type="application/ld+json">${JSON.stringify(breadcrumbJsonLd)}</script>`}
 </svelte:head>
 
 <main>

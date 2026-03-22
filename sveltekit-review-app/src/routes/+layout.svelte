@@ -19,7 +19,6 @@
 </script>
 
 <svelte:head>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta property="og:site_name" content="아이포텐(I-Poten)" />
   <meta property="og:image" content={ogImage} />
   <meta property="og:locale" content="ko_KR" />
@@ -29,7 +28,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
 
   <!-- Sitelinks SearchBox -->
-  <script type="application/ld+json">{JSON.stringify(websiteJsonLd)}</script>
+  {@html `<script type="application/ld+json">${JSON.stringify(websiteJsonLd)}</script>`}
 </svelte:head>
 
 {@render children?.()}
