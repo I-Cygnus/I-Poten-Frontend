@@ -16,7 +16,7 @@ import { deleteUserFolder, deleteUserFoldersBulk, renameUserFolder } from "../..
 import { useCategoryTree, Category } from "../../hooks/useCategoryTree";
 import { markLastActivity } from "../../utils/activity.ts";
 
-import potenWordMark from "../../assets/hero/potenword-mark.png";
+import potenWordMark from "../../assets/hero/PotenWord-mark.png";
 
 import sampleLiquidGlass from "../../assets/wordcards/liquid-glass.png";
 import sampleAgenticAI from "../../assets/wordcards/agentic-ai.png";
