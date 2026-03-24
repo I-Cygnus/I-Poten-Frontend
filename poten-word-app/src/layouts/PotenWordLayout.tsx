@@ -8,10 +8,8 @@ import PotenNoteHeroBanner from "../components/note/PotenNoteHeroBanner.tsx";
 import PotenBookHeroBanner from "../components/book/PotenBookHeroBanner.tsx";
 import PotenQuizHeroBanner from "../components/quiz/PotenQuizHeroBanner.tsx";
 import { NarrowLeft } from "../styles/layout";
-import icon1 from "../assets/hero/icon-1.png";
 import icon2 from "../assets/hero/icon-2.png";
 import icon3 from "../assets/hero/icon-3.png";
-import icon4 from "../assets/hero/icon-4.png";
 import icon5 from "../assets/hero/icon-5.png";
 import book1 from "../assets/hero/book-1.png";
 import {FilterSelection} from "../components/word/ExploreFilterBar.tsx";
@@ -222,7 +220,7 @@ export default function PotenWordLayout() {
                         align="left"
                         narrow
                         offsetLeft={HERO_NAV_TEXT_OFFSET}
-                        floatingIcons={[icon1]}
+                        // floatingIcons={[icon1]}
                         iconProps={{
                             width: "360px",
                             height: "240px",
@@ -238,20 +236,9 @@ export default function PotenWordLayout() {
 
                 {showNoteHero && (
                     <PotenNoteHeroBanner
-                        align="left"
+                        align="center"
                         narrow
-                        offsetLeft={HERO_NAV_TEXT_OFFSET}
-                        floatingIcons={[icon1]}
-                        iconProps={{
-                            width: "360px",
-                            height: "240px",
-                            top: "75px",
-                            rightOffset: -150,
-                            maxIconWidthPercent: 100,
-                            positions: [{ left: 30, top: 22 }],
-                            scales: [0.9],
-                            withShadow: false,
-                        }}
+                        offsetLeft={0}
                     />
                 )}
 

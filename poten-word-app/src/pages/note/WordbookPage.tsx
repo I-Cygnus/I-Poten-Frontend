@@ -65,6 +65,20 @@ const UI = {
     font: { h2: "22px", body: "15px", tiny: "12px" },
 };
 
+const PageWrap = styled.div`
+    font-family:
+        "Pretendard",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Apple SD Gothic Neo",
+        "Noto Sans KR",
+        "Segoe UI",
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+`;
+
 /* ---------- 상단 툴바 ---------- */
 const ChipRow = styled.div` display:flex; flex-wrap:wrap; gap:10px; align-items:center; `;
 
@@ -2732,6 +2746,7 @@ export default function WordbookPage() {
 
     return (
         <NarrowLeft style={{ padding: "8px 0 24px" }}>  {/* SearchBar와 동일 폭/정렬 */}
+            <PageWrap>
             {/* 상단 */}
             <LearningPageHeader
                 title={wordbookName}
@@ -3213,6 +3228,7 @@ export default function WordbookPage() {
                     setNotebooks(await fetchUserFolders());
                 }}
             />
+            </PageWrap>
         </NarrowLeft>
 
     );

@@ -33,6 +33,20 @@ const UI = {
     font: { h2: "22px", body: "15px", tiny: "12px" },
 };
 
+const PageWrap = styled.div`
+  font-family:
+    "Pretendard",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Apple SD Gothic Neo",
+    "Noto Sans KR",
+    "Segoe UI",
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+`;
+
 /* ===== 상단 툴바 (WordbookFolderPage 스타일) ===== */
 const Toolbar = styled.div`
   position: sticky;
@@ -1162,6 +1176,7 @@ export default function PotenNoteHomePage() {
 
     return (
         <NarrowLeft style={{ padding: "8px 0 24px" }}>
+            <PageWrap>
             {/* 상단 툴바 */}
             <Toolbar>
                 <RowFlex>
@@ -1358,6 +1373,7 @@ export default function PotenNoteHomePage() {
                     setSystemMessage(null);
                 }}
             />
+            </PageWrap>
         </NarrowLeft>
     );
 }
