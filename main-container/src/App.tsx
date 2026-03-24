@@ -144,7 +144,6 @@ function InnerApp() {
             "/vue-ai-interview/ai-interview/personality-form",
             "/vue-ai-interview/ai-interview/personality-result",
             "/vue-ai-interview/ai-interview/personality",
-            "/event/1",
         ];
 
         const hiddenLayoutsFooters = [
@@ -163,7 +162,6 @@ function InnerApp() {
             "/vue-ai-interview/ai-interview/personality-form",
             "/vue-ai-interview/ai-interview/personality-result",
             "/vue-ai-interview/ai-interview/personality",
-            "/event/1",
         ];
         const hideLayout = hiddenLayouts.some((path) =>
             currentPath.startsWith(path)
