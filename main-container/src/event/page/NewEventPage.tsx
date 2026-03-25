@@ -156,7 +156,7 @@ const Thumb = styled.img`
 // 둥근 배지
 const Badge = styled.div<{ $type: BadgeType }>`
     position: absolute;
-    top: -16px;
+    top: -24px;
     left: 12px;
 
     width: 52px;
