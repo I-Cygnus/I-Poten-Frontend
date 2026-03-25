@@ -38,33 +38,37 @@ const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
     // 오픈베타 - 02.jpg
     2: [
         {
-            x1: 470,
-            x2: 780,
+            x1: 496,
+            x2: 900,
             y1: 873,
             y2: 940,
             to: "/vue-account/account/login",
-            label: "오픈베타 02 첫 번째 바로가기 : AI 면접 체험권 1회 증정",
+            label: "오픈베타 02 첫 번째 바로가기 : 크레딧",
         },
         {
-            x1: 800,
-            x2: 1110,
+            x1: 1023,
+            x2: 1430,
             y1: 873,
             y2: 940,
             to: "/event/2",
             label: "오픈베타 02 두 번째 바로가기 : 포텐 리뷰어",
         },
-        {
-            x1: 1136,
-            x2: 1448,
-            y1: 873,
-            y2: 940,
-            to: "/vue-account/account/login",
-            label: "오픈베타 02 세 번째 바로가기 : 크레딧",
-        },
     ],
 
     // 오픈베타 - 03.jpg
     3: [
+        {
+            x1: 796,
+            x2: 1122,
+            y1: 903.72,
+            y2: 985.72,
+            to: "/vue-account/account/login",
+            label: "오픈베타 05 바로가기 : 크레딧 제공",
+        },
+    ],
+
+    // 오픈베타 - 04.jpg
+    4: [
         {
             x1: 568,
             x2: 896,
@@ -83,18 +87,6 @@ const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
         },
     ],
 
-    // 오픈베타 - 04.jpg
-    4: [
-        {
-            x1: 796,
-            x2: 1122,
-            y1: 903.72,
-            y2: 985.72,
-            to: "/event/2",
-            label: "오픈베타 04 바로가기 : 포텐 리뷰어",
-        },
-    ],
-
     // 오픈베타 - 05.jpg
     5: [
         {
@@ -102,8 +94,8 @@ const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
             x2: 1122,
             y1: 903.72,
             y2: 985.72,
-            to: "/vue-account/account/login",
-            label: "오픈베타 05 바로가기 : 크레딧 제공",
+            to: "/event/2",
+            label: "오픈베타 04 바로가기 : 포텐 리뷰어",
         },
     ],
 };
