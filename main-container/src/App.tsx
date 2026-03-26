@@ -180,7 +180,6 @@ function InnerApp() {
             "/vue-ai-interview",
             "/mypage",
             "/sveltekit-review",
-            "/learning/",
         ];
         const noindex = noindexPrefixes.some((p) =>
             location.pathname.startsWith(p)

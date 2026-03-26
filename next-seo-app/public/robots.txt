@@ -3,6 +3,7 @@ User-agent: *
 Allow: /
 
 # Disallow authenticated pages (handled by main-container)
+Allow: /vue-account/account/terms-of-service
 Disallow: /vue-account/
 Disallow: /mypage/
 Disallow: /vue-ai-interview/
