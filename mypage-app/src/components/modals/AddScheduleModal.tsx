@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import styled from "styled-components";
-import type { Schedule, ScheduleUpsertRequest } from "../../api/userScheduleApi.ts";
+import type { Schedule, ScheduleUpsertRequest } from "../../api/ScheduleApi.ts";
 import { CalendarDays } from "lucide-react";
 
 type Props = {
