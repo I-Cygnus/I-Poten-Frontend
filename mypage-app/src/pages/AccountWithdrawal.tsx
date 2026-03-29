@@ -3,7 +3,8 @@ import styled, { css } from "styled-components";
 import { Clock3, FileText, LogOut, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { withdrawAccount } from "../api/withdrawalApi.ts";
-import { clearAuthStorage } from "../utils/authStorage.ts";
+import SystemMessageModal, { type SystemMessage } from "../components/common/SystemMessageModal.tsx";
+import { completeWithdrawal } from "../utils/withdrawalFlow.ts";
 import { notifyError, notifyInfo, notifySuccess } from "../utils/toast.ts";
 
 const pretendard = css`
@@ -44,9 +45,21 @@ const palette = {
 export default function AccountWithdrawal() {
     const [withdrawAgreed, setWithdrawAgreed] = useState(false);
     const [withdrawing, setWithdrawing] = useState(false);
+    const [sysOpen, setSysOpen] = useState(false);
+    const [sysMsg, setSysMsg] = useState<SystemMessage | null>(null);
     const navigate = useNavigate();
 
-    const handleWithdraw = async () => {
+    const openSys = (message: SystemMessage) => {
+        setSysMsg(message);
+        setSysOpen(true);
+    };
+
+    const closeSys = () => {
+        setSysOpen(false);
+        setSysMsg(null);
+    };
+
+    const performWithdraw = async () => {
         if (withdrawing) {
             return;
         }
@@ -59,15 +72,42 @@ export default function AccountWithdrawal() {
         try {
             setWithdrawing(true);
             await withdrawAccount();
-            clearAuthStorage();
+            completeWithdrawal(navigate);
             notifySuccess("회원 탈퇴가 완료되었습니다.");
-            navigate("/vue-account/account/login", { replace: true });
         } catch (error) {
             console.error(error);
-            notifyError("회원 탈퇴 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+            notifyError(error instanceof Error ? error.message : "회원 탈퇴 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.");
         } finally {
             setWithdrawing(false);
         }
+    };
+
+    const handleWithdraw = () => {
+        if (withdrawing) {
+            return;
+        }
+
+        if (!withdrawAgreed) {
+            notifyInfo("회원 탈퇴 안내에 동의한 뒤 다시 진행해 주세요.");
+            return;
+        }
+
+        openSys({
+            tone: "warning",
+            title: "정말 회원 탈퇴를 진행할까요?",
+            description: "탈퇴 후에는 학습 이력과 면접 기록을 되돌릴 수 없으며, 30일 동안 동일한 계정으로 재가입이 제한됩니다.",
+            actions: [
+                {
+                    label: "취소",
+                    tone: "normal",
+                },
+                {
+                    label: "회원 탈퇴",
+                    tone: "danger",
+                    onClick: performWithdraw,
+                },
+            ],
+        });
     };
 
     return (
@@ -77,7 +117,7 @@ export default function AccountWithdrawal() {
                     <SectionEyebrow>WITHDRAW</SectionEyebrow>
                     <SectionTitle>회원 탈퇴</SectionTitle>
                     <SectionDescription>
-                        탈퇴 전 삭제되는 정보와 유지되는 범위를 한 번 더 확인해 주세요.
+                        삭제되는 항목과 복구 불가 내용을 확인한 뒤 진행해 주세요.
                     </SectionDescription>
                 </div>
             </SectionHeader>
@@ -89,10 +129,9 @@ export default function AccountWithdrawal() {
 
                 <WithdrawHeroContent>
                     <WithdrawHeroBadge>WITHDRAW GUIDE</WithdrawHeroBadge>
-                    <WithdrawHeroTitle>탈퇴 전에 확인하면 좋은 내용이에요.</WithdrawHeroTitle>
+                    <WithdrawHeroTitle>탈퇴 시 삭제되는 항목을 확인해 주세요.</WithdrawHeroTitle>
                     <WithdrawHeroDesc>
-                        회원 탈퇴를 진행하면 학습 이력, AI 모의 면접 기록, 일부 개인 설정 정보가 함께
-                        정리될 수 있습니다. 필요한 내용이 남아 있지 않은지 아래 안내를 먼저 확인해 주세요.
+                        회원 탈퇴를 진행하면 학습 기록, AI 모의 면접 기록, 계정 설정 정보가 함께 정리됩니다.
                     </WithdrawHeroDesc>
                 </WithdrawHeroContent>
             </WithdrawHero>
@@ -118,8 +157,7 @@ export default function AccountWithdrawal() {
                         <WithdrawMiniTitle>AI 모의 면접 기록</WithdrawMiniTitle>
                     </WithdrawMiniHead>
                     <WithdrawMiniDesc>
-                        AI 모의 면접 결과와 피드백, 진행 히스토리도 함께 정리될 수 있으니 필요한 내용은 미리
-                        확인해 주세요.
+                        AI 모의 면접 결과와 피드백, 진행 히스토리도 함께 정리될 수 있으니 필요한 내용은 미리 확인해 주세요.
                     </WithdrawMiniDesc>
                 </WithdrawMiniCard>
 
@@ -131,8 +169,7 @@ export default function AccountWithdrawal() {
                         <WithdrawMiniTitle>계정 설정</WithdrawMiniTitle>
                     </WithdrawMiniHead>
                     <WithdrawMiniDesc>
-                        알림 설정, 관심 분야, 개인화된 추천 정보도 초기화되며 일부 정보는 다시 복원되지 않을 수
-                        있어요.
+                        알림 설정, 관심 분야, 개인화 추천 정보도 초기화되며 일부 정보는 다시 복원되지 않을 수 있어요.
                     </WithdrawMiniDesc>
                 </WithdrawMiniCard>
             </WithdrawInfoGrid>
@@ -144,18 +181,18 @@ export default function AccountWithdrawal() {
                     </DangerIconWrap>
 
                     <DangerTopText>
-                        <DangerTitle>진행 전에 한 번 더 확인해 주세요.</DangerTitle>
+                        <DangerTitle>최종 확인</DangerTitle>
                         <DangerLead>
-                            아래 내용을 확인한 뒤 진행해 주세요. 중요한 데이터가 남아 있다면 먼저 확인하는 것을
-                            권장합니다.
+                            아래 세 가지를 확인했다면 회원 탈퇴를 진행해 주세요.
                         </DangerLead>
                     </DangerTopText>
                 </DangerTop>
 
                 <DangerList>
-                    <li>저장된 AI 모의 면접 기록과 퀴즈 학습 기록이 삭제될 수 있습니다.</li>
-                    <li>재가입 시에도 일부 데이터는 복구되지 않을 수 있습니다.</li>
+                    <li>학습 기록과 AI 모의 면접 기록은 삭제 후 복구할 수 없습니다.</li>
+                    <li>계정 설정과 개인화 정보도 함께 초기화됩니다.</li>
                     <li>구독 또는 결제 이력이 있다면 먼저 확인이 필요합니다.</li>
+                    <li>회원 탈퇴 후 30일 동안 동일한 계정으로 재가입이 제한됩니다.</li>
                 </DangerList>
 
                 <WithdrawConfirmPanel>
@@ -170,7 +207,7 @@ export default function AccountWithdrawal() {
                     </DangerCheckbox>
 
                     <WithdrawHelperText>
-                        탈퇴 버튼을 누르기 전에 정말 필요한 정보가 남아 있지 않은지 다시 확인해 주세요.
+                        탈퇴 버튼을 누르면 현재 세션이 즉시 종료되며, 30일 동안 동일한 계정으로 재가입이 제한됩니다.
                     </WithdrawHelperText>
                 </WithdrawConfirmPanel>
 
@@ -181,12 +218,13 @@ export default function AccountWithdrawal() {
                     <DangerButton
                         type="button"
                         disabled={!withdrawAgreed || withdrawing}
-                        onClick={() => void handleWithdraw()}
+                        onClick={handleWithdraw}
                     >
                         {withdrawing ? "처리 중..." : "회원 탈퇴 진행"}
                     </DangerButton>
                 </DangerActionRow>
             </DangerCard>
+            <SystemMessageModal open={sysOpen} message={sysMsg} onClose={closeSys} />
         </PageShell>
     );
 }

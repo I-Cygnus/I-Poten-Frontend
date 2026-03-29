@@ -7,17 +7,9 @@ import { getTheme, onThemeChange, type Theme as BridgeTheme } from "@jobspoon/th
 import MyPage from "./pages/MyPage.tsx";
 import InterviewRecordListPage from "./pages/InterviewRecordListPage.tsx";
 import InterviewRecordDetailPage from "./pages/InterviewRecordDetailPage.tsx";
-import MyPageLayout from "./components/layout/MyPageLayout.tsx";
 
-import AccountProfilePage from "./pages/old/AccountProfilePage.tsx";
-import InterviewResultList from "./pages/old/InterviewHistoryPage.tsx";
-import AccountWithdrawal from "./pages/old/AccountWithdrawal.tsx";
-import MembershipPage from "./pages/old/MemebershipPage.tsx";
+import AccountWithdrawal from "./pages/AccountWithdrawal.tsx";
 import SchedulePage from "./pages/SchedulePage.tsx";
-import MyPostsPage from "./pages/old/MyPostsPage.tsx";
-import InquiryPage from "./pages/old/InquiryPage.tsx";
-import MyReportsPage from "./pages/old/MyReportsPage.tsx";
-import SettingPage from "./pages/old/SettingPage.tsx";
 
 const AppShell = styled.div.attrs({ "data-app": "mypage" })`
     min-height: 100vh;
@@ -108,15 +100,8 @@ export default function App() {
                             element={<InterviewRecordDetailPage />}
                         />
 
-                        <Route path="account/edit" element={<AccountProfilePage />} />
-                        <Route path="interview/history" element={<InterviewResultList />} />
                         <Route path="withdrawal" element={<AccountWithdrawal />} />
-                        <Route path="membership" element={<MembershipPage />} />
-                        <Route path="setting" element={<SettingPage />} />
-                        <Route path="my-posts" element={<MyPostsPage />} />
                         <Route path="schedule" element={<SchedulePage />} />
-                        <Route path="inquiry" element={<InquiryPage />} />
-                        <Route path="my-reports" element={<MyReportsPage />} />
                     </Route>
                 </Routes>
             </AppShell>

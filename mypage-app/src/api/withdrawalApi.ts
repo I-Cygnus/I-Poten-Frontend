@@ -31,27 +31,40 @@ function detectApiBase(): string {
 const API_BASE = detectApiBase();
 
 async function readErrorMessage(response: Response) {
+    if (response.status === 401) {
+        return "로그인 상태를 확인한 뒤 다시 시도해 주세요.";
+    }
+
+    if (response.status === 403) {
+        return "회원 탈퇴 권한이 없습니다.";
+    }
+
     try {
-        const data = await response.json();
-        if (typeof data?.message === "string" && data.message.trim()) {
-            return data.message.trim();
-        }
-        if (typeof data?.error === "string" && data.error.trim()) {
-            return data.error.trim();
+        const contentType = response.headers.get("content-type") ?? "";
+
+        if (contentType.includes("application/json")) {
+            const data = await response.json();
+            if (typeof data?.message === "string" && data.message.trim()) {
+                return data.message.trim();
+            }
+            if (typeof data?.error === "string" && data.error.trim()) {
+                return data.error.trim();
+            }
+        } else {
+            const text = await response.text();
+            if (text.trim()) {
+                return text.trim();
+            }
         }
     } catch {}
 
-    return `Withdraw request failed: ${response.status}`;
+    return "회원 탈퇴 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.";
 }
 
 export async function withdrawAccount() {
     const response = await fetch(`${API_BASE}/account/withdraw`, {
         method: "POST",
         credentials: "include",
-        headers: {
-            "Content-Type": "application/json",
-        },
-        body: JSON.stringify({}),
     });
 
     if (!response.ok) {
