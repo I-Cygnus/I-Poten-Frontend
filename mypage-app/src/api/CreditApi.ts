@@ -29,6 +29,7 @@ function detectApiBase(): string {
 }
 
 const API_BASE = detectApiBase();
+const API_ROOT = API_BASE.replace(/\/api$/, "");
 
 export type CreditAccountSummary = {
     balance: number;
@@ -39,6 +40,14 @@ export type CreditAccountSummary = {
 
 function pickNumber(...values: unknown[]): number | null {
     for (const value of values) {
+        if (value === null || value === undefined) {
+            continue;
+        }
+
+        if (typeof value === "string" && !value.trim()) {
+            continue;
+        }
+
         const parsed = Number(value);
         if (Number.isFinite(parsed)) {
             return parsed;
@@ -92,13 +101,35 @@ function normalizeCreditAccount(raw: any): CreditAccountSummary {
 }
 
 export async function getCreditAccountSummary(): Promise<CreditAccountSummary> {
-    const response = await fetch(`${API_BASE}/credit/account`, {
-        method: "GET",
-        credentials: "include",
-    });
+    const candidates = Array.from(
+        new Set([
+            `${API_ROOT}/credit/account`,
+            `${API_BASE}/credit/account`,
+        ])
+    );
 
-    if (!response.ok) {
-        throw new Error(`Credit account request failed: ${response.status}`);
+    let response: Response | null = null;
+
+    for (const url of candidates) {
+        const current = await fetch(url, {
+            method: "GET",
+            credentials: "include",
+        });
+
+        if (current.ok) {
+            response = current;
+            break;
+        }
+
+        if (current.status !== 404) {
+            throw new Error(`Credit account request failed: ${current.status}`);
+        }
+
+        response = current;
+    }
+
+    if (!response?.ok) {
+        throw new Error(`Credit account request failed: ${response?.status ?? "unknown"}`);
     }
 
     const text = await response.text();

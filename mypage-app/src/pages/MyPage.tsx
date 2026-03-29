@@ -60,7 +60,7 @@ import {
 import { getInterviewResultList, type InterviewSummary } from "../api/InterviewApi.ts";
 import { getMyProfileSummary } from "../api/MyProfileApi.ts";
 import { getCreditAccountSummary, type CreditAccountSummary } from "../api/CreditApi.ts";
-import { getMySchedules, type Schedule } from "../api/userScheduleApi.ts";
+import { getMySchedules, type Schedule } from "../api/ScheduleApi.ts";
 import {
     getInterests,
     getMyInterests,
@@ -69,7 +69,11 @@ import {
     updateMyInterests,
     validateUpdateMyInterestsRequest,
 } from "../api/interestsApi.ts";
+import { withdrawAccount } from "../api/withdrawalApi.ts";
 import { getLastActivityAt, getMostRecentActivityAt, LAST_ACTIVITY_EVENT } from "../utils/activity.ts";
+import { clearAuthStorage, AUTH_STORAGE_CLEARED_EVENT } from "../utils/authStorage.ts";
+import { completeWithdrawal } from "../utils/withdrawalFlow.ts";
+import { notifyError, notifySuccess } from "../utils/toast.ts";
 import SystemMessageModal, { type SystemMessage } from "../components/common/SystemMessageModal.tsx";
 
 type MenuKey = "profile" | "interview" | "quiz" | "schedule" | "interest field" | "inquiry" | "withdraw";
@@ -133,9 +137,9 @@ const menuItems = [
     { key: "interview" as const, label: "AI 모의 면접 기록", icon: Bot },
     { key: "quiz" as const, label: "포텐퀴즈 기록", icon: FileText },
     { key: "schedule" as const, label: "일정 관리", icon: CalendarDays },
-    { key: "interest field" as const, label: "관심 분야 설정", icon: Sparkles },
+    // { key: "interest field" as const, label: "관심 분야 설정", icon: Sparkles },
     { key: "inquiry" as const, label: "문의하기", icon: CircleHelp },
-    // { key: "withdraw" as const, label: "회원 탈퇴", icon: LogOut },
+    { key: "withdraw" as const, label: "회원 탈퇴", icon: LogOut },
 ];
 
 type InquiryTypeKey = "" | InquiryType;
@@ -459,6 +463,7 @@ export default function MyPage() {
     const [selectedInquiryId, setSelectedInquiryId] = useState<number | null>(null);
     const [selectedInquiryDetail, setSelectedInquiryDetail] = useState<InquiryDetail | null>(null);
     const [selectedInquiryLoading, setSelectedInquiryLoading] = useState(false);
+    const [withdrawSubmitting, setWithdrawSubmitting] = useState(false);
     const [sysOpen, setSysOpen] = useState(false);
     const [sysMsg, setSysMsg] = useState<SystemMessage | null>(null);
     const [isEditingInterestFields, setIsEditingInterestFields] = useState(false);
@@ -479,6 +484,47 @@ export default function MyPage() {
     const closeSys = () => {
         setSysOpen(false);
         setSysMsg(null);
+    };
+
+    const performWithdrawal = async () => {
+        if (withdrawSubmitting) {
+            return;
+        }
+
+        try {
+            setWithdrawSubmitting(true);
+            await withdrawAccount();
+            notifySuccess("회원 탈퇴가 완료되었습니다.");
+            completeWithdrawal(navigate);
+        } catch (error) {
+            console.error(error);
+            notifyError(error instanceof Error ? error.message : "회원 탈퇴 처리 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.");
+        } finally {
+            setWithdrawSubmitting(false);
+        }
+    };
+
+    const handleWithdrawRequest = () => {
+        if (withdrawSubmitting) {
+            return;
+        }
+
+        openSys({
+            tone: "warning",
+            title: "정말 회원 탈퇴를 진행할까요?",
+            description: "탈퇴 후에는 학습 이력과 면접 기록을 되돌릴 수 없으며, 30일 동안 동일한 계정으로 재가입이 제한됩니다.",
+            actions: [
+                {
+                    label: "취소",
+                    tone: "normal",
+                },
+                {
+                    label: "회원 탈퇴",
+                    tone: "danger",
+                    onClick: performWithdrawal,
+                },
+            ],
+        });
     };
 
     const openInterestFieldEditor = () => {
@@ -571,18 +617,6 @@ export default function MyPage() {
             setInterestSaving(false);
         }
     };
-
-    const mockCreditSummary = useMemo(
-        () => ({
-            balance: creditLoading ? 0 : creditSummary.balance,
-            monthlyEarned: creditLoading ? 0 : creditSummary.monthlyEarned,
-            monthlyUsed: creditLoading ? 0 : creditSummary.monthlyUsed,
-            expiresAt: creditLoading
-                ? "조회 중"
-                : (formatCreditExpiryDate(creditSummary.expiresAt) ?? "-"),
-        }),
-        [creditLoading, creditSummary]
-    );
 
     const selectedInquiryOption =
         inquiryTypeOptions.find((option) => option.value === inquiryType) ?? null;
@@ -745,6 +779,21 @@ export default function MyPage() {
             window.removeEventListener("storage", syncUserProfile);
             window.removeEventListener("focus", syncUserProfile);
             window.removeEventListener(LAST_ACTIVITY_EVENT, syncUserProfile as EventListener);
+        };
+    }, []);
+
+    useEffect(() => {
+        const handleAuthStorageCleared = () => {
+            setUserProfile({
+                ...defaultUserProfile,
+                lastActivityAt: null,
+            });
+        };
+
+        window.addEventListener(AUTH_STORAGE_CLEARED_EVENT, handleAuthStorageCleared as EventListener);
+
+        return () => {
+            window.removeEventListener(AUTH_STORAGE_CLEARED_EVENT, handleAuthStorageCleared as EventListener);
         };
     }, []);
 
@@ -1432,7 +1481,9 @@ export default function MyPage() {
                                         <HeroMetaRow>
                                             <HeroMetaChip>
                                                 <Clock3 size={14} />
-                                                최근 활동 {lastActivityLabel}
+                                                {lastActivityLabel === "최근 활동 없음"
+                                                    ? lastActivityLabel
+                                                    : `최근 활동 ${lastActivityLabel}`}
                                             </HeroMetaChip>
                                         </HeroMetaRow>
                                     </HeroTextGroup>
@@ -1450,8 +1501,9 @@ export default function MyPage() {
 
                                         <CreditBalanceRow>
                                             <CreditBalanceCopy>
+                                                <CreditSummaryLabel>잔액</CreditSummaryLabel>
                                                 <CreditBalanceValue>
-                                                    {creditLoading ? "..." : mockCreditSummary.balance}
+                                                    {creditLoading ? "..." : creditSummary.balance.toLocaleString("ko-KR")}
                                                 </CreditBalanceValue>
                                                 <CreditBalanceUnit>credits</CreditBalanceUnit>
                                             </CreditBalanceCopy>
@@ -2034,7 +2086,7 @@ export default function MyPage() {
                                 <SectionEyebrow>WITHDRAW</SectionEyebrow>
                                 <SectionTitle>회원 탈퇴</SectionTitle>
                                 <SectionDescription>
-                                    탈퇴 전 삭제되는 정보와 유지되는 범위를 한 번 더 확인해 주세요.
+                                    삭제되는 항목과 복구 불가 내용을 확인한 뒤 진행해 주세요.
                                 </SectionDescription>
                             </div>
                         </SectionHeader>
@@ -2046,10 +2098,9 @@ export default function MyPage() {
 
                             <WithdrawHeroContent>
                                 <WithdrawHeroBadge>WITHDRAW GUIDE</WithdrawHeroBadge>
-                                <WithdrawHeroTitle>탈퇴 전에 확인하면 좋은 내용이에요.</WithdrawHeroTitle>
+                                <WithdrawHeroTitle>탈퇴 시 삭제되는 항목을 확인해 주세요.</WithdrawHeroTitle>
                                 <WithdrawHeroDesc>
-                                    회원 탈퇴를 진행하면 학습 이력, AI 모의 면접 기록, 일부 개인 설정 정보가 함께 정리될 수 있습니다.
-                                    필요한 내용이 남아 있지 않은지 아래 안내를 먼저 확인해 주세요.
+                                    회원 탈퇴를 진행하면 학습 기록, AI 모의 면접 기록, 계정 설정 정보가 함께 정리됩니다.
                                 </WithdrawHeroDesc>
                             </WithdrawHeroContent>
                         </WithdrawHero>
@@ -2063,7 +2114,7 @@ export default function MyPage() {
                                     <WithdrawMiniTitle>학습 기록</WithdrawMiniTitle>
                                 </WithdrawMiniHead>
                                 <WithdrawMiniDesc>
-                                    퀴즈 풀이 기록, 학습 이력, 오답노트 관련 데이터가 삭제되거나 복구되지 않을 수 있어요.
+                                    퀴즈 풀이 기록, 학습 이력, 오답노트 관련 데이터가 삭제되거나 복구되지 않아요.
                                 </WithdrawMiniDesc>
                             </WithdrawMiniCard>
 
@@ -2075,7 +2126,7 @@ export default function MyPage() {
                                     <WithdrawMiniTitle>AI 모의 면접 기록</WithdrawMiniTitle>
                                 </WithdrawMiniHead>
                                 <WithdrawMiniDesc>
-                                    AI 모의 면접 결과와 피드백, 진행 히스토리도 함께 정리될 수 있으니 필요한 내용은 미리 확인해 주세요.
+                                    AI 모의 면접 결과와 피드백, 진행 히스토리도 함께 정리되니 필요한 내용은 미리 확인해 주세요.
                                 </WithdrawMiniDesc>
                             </WithdrawMiniCard>
 
@@ -2087,7 +2138,7 @@ export default function MyPage() {
                                     <WithdrawMiniTitle>계정 설정</WithdrawMiniTitle>
                                 </WithdrawMiniHead>
                                 <WithdrawMiniDesc>
-                                    알림 설정, 관심 분야, 개인화된 추천 정보도 초기화되며 일부 정보는 다시 복원되지 않을 수 있어요.
+                                    알림 설정, 관심 분야, 개인화된 추천 정보도 초기화되며 정보는 다시 복원되지 않을 수 있어요.
                                 </WithdrawMiniDesc>
                             </WithdrawMiniCard>
                         </WithdrawInfoGrid>
@@ -2099,33 +2150,25 @@ export default function MyPage() {
                                 </DangerIconWrap>
 
                                 <DangerTopText>
-                                    <DangerTitle>진행 전에 한 번 더 확인해 주세요.</DangerTitle>
+                                    <DangerTitle>최종 확인</DangerTitle>
                                     <DangerLead>
-                                        아래 내용을 확인한 뒤 진행해 주세요. 중요한 데이터가 남아 있다면 먼저 확인하는 것을 권장합니다.
+                                        아래 사항을 확인했다면 회원 탈퇴를 진행해 주세요.
                                     </DangerLead>
                                 </DangerTopText>
                             </DangerTop>
 
                             <DangerList>
-                                <li>저장된 AI 모의 면접 기록과 퀴즈 학습 기록이 삭제될 수 있습니다.</li>
-                                <li>재가입 시에도 일부 데이터는 복구되지 않을 수 있습니다.</li>
+                                <li>학습 기록과 AI 모의 면접 기록은 삭제 후 복구할 수 없습니다.</li>
+                                <li>계정 설정과 개인화 정보도 함께 초기화됩니다.</li>
                                 <li>구독 또는 결제 이력이 있다면 먼저 확인이 필요합니다.</li>
+                                <li>탈퇴 후 30일 동안 동일한 계정으로 재가입할 수 없습니다.</li>
                             </DangerList>
 
-                            <WithdrawConfirmPanel>
-                                <DangerCheckbox>
-                                    <input type="checkbox" id="withdraw-check" />
-                                    <label htmlFor="withdraw-check">안내 내용을 모두 확인했고 회원 탈퇴에 동의합니다.</label>
-                                </DangerCheckbox>
-
-                                <WithdrawHelperText>
-                                    탈퇴 버튼을 누르기 전에 정말 필요한 정보가 남아 있지 않은지 다시 확인해 주세요.
-                                </WithdrawHelperText>
-                            </WithdrawConfirmPanel>
-
                             <DangerActionRow>
-                                <GhostButton>이전으로</GhostButton>
-                                <DangerButton>회원 탈퇴 진행</DangerButton>
+                                <GhostButton type="button" onClick={() => setActiveMenu("profile")}>이전으로</GhostButton>
+                                <DangerButton type="button" onClick={handleWithdrawRequest} disabled={withdrawSubmitting}>
+                                    {withdrawSubmitting ? "처리 중..." : "회원 탈퇴 진행"}
+                                </DangerButton>
                             </DangerActionRow>
                         </DangerCard>
                     </Section>
@@ -4007,27 +4050,6 @@ const WithdrawConfirmPanel = styled.div`
     margin-bottom: 20px;
 `;
 
-const DangerCheckbox = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 14px;
-    line-height: 1.5;
-    color: #334155;
-
-    input {
-        width: 16px;
-        height: 16px;
-        accent-color: ${palette.primaryStrong};
-        cursor: pointer;
-    }
-
-    label {
-        cursor: pointer;
-        font-weight: 600;
-    }
-`;
-
 const WithdrawHelperText = styled.p`
     margin: 12px 0 0;
     font-size: 13px;
@@ -4045,22 +4067,22 @@ const DangerActionRow = styled.div`
     }
 `;
 
-const DangerButton = styled.button`
+const DangerButton = styled.button<{ disabled?: boolean }>`
     height: 44px;
     padding: 0 16px;
     border: none;
     border-radius: 12px;
-    background: ${palette.danger};
+    background: ${({ disabled }) => (disabled ? "#fca5a5" : palette.danger)};
     color: #ffffff;
     font-size: 14px;
     font-weight: 700;
     letter-spacing: -0.015em;
-    cursor: pointer;
+    cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
     transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
 
     &:hover {
-        transform: translateY(-1px);
-        background: #dc2626;
-        box-shadow: 0 10px 20px rgba(239, 68, 68, 0.14);
+        transform: ${({ disabled }) => (disabled ? "none" : "translateY(-1px)")};
+        background: ${({ disabled }) => (disabled ? "#fca5a5" : "#dc2626")};
+        box-shadow: ${({ disabled }) => (disabled ? "none" : "0 10px 20px rgba(239, 68, 68, 0.14)")};
     }
 `;
