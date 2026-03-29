@@ -1,4 +1,4 @@
-import styled from "styled-components";
+﻿import styled, { css } from "styled-components";
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import http, { authHeader } from "../../utils/http.ts";
 import SystemMessageModal, { SystemMessage } from "../../components/common/SystemMessageModal.tsx";
@@ -6,7 +6,7 @@ import { SelectToggleChip } from "../../components/common/SelectToggleChip";
 import {useLocation, useNavigate, useNavigationType} from "react-router-dom";
 import LearningPageHeader from "../../components/common/LearningPageHeader.tsx";
 
-/* ====== UI 토큰 (QuizHomePage 톤 유지) ====== */
+/* ====== UI 토큰 ====== */
 const UI = {
     panelBgSoft: "#f4f8ff",
     panelLineSoft: "#d9e6ff",
@@ -29,7 +29,12 @@ type Difficulty = "EASY" | "MEDIUM" | "HARD" | "MIX" | string;
 
 type WrongItem = {
     reviewId: number;
+    wrongNoteId: number;
     questionId: number;
+    wrongCount: number;
+    badgeLabel?: string | null;
+    wrongAt?: string | null;
+    reviewIds: number[];
     questionType: QuestionType;
     difficulty?: Difficulty;
     prompt: string;
@@ -44,9 +49,15 @@ type WrongItem = {
     sessionTitle?: string | null;
     answeredAt?: string | null;
     resolved?: boolean;
+    status?: string | null;
 };
 
-type SortKey = "RECENT" | "OLDEST";
+type SortKey = "RECENT" | "OLDEST" | "MOST_WRONG";
+
+function toBackendSort(sort?: SortKey): Exclude<SortKey, "MOST_WRONG"> | undefined {
+    if (sort === "MOST_WRONG") return "RECENT";
+    return sort;
+}
 
 type WrongNoteCache = {
     v: 1;
@@ -91,6 +102,27 @@ type FilterOption<T extends string> = {
     label: string;
 };
 
+const pretendard = css`
+    font-family:
+        "Pretendard",
+        -apple-system,
+        BlinkMacSystemFont,
+        "Apple SD Gothic Neo",
+        "Noto Sans KR",
+        "Segoe UI",
+        sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    word-break: keep-all;
+`;
+
+const readableText = css`
+    ${pretendard};
+    letter-spacing: -0.014em;
+    line-height: 1.6;
+`;
+
 const TYPE_OPTIONS: FilterOption<Filters["type"]>[] = [
     { value: "ALL", label: "유형 전체" },
     { value: "CHOICE", label: "객관식" },
@@ -107,7 +139,8 @@ const DIFFICULTY_OPTIONS: FilterOption<Filters["difficulty"]>[] = [
 
 const SORT_OPTIONS: FilterOption<SortKey>[] = [
     { value: "RECENT", label: "최신순" },
-    { value: "OLDEST", label: "오래된순" },
+    { value: "OLDEST", label: "오래된 순" },
+    { value: "MOST_WRONG", label: "많이 틀린 순" },
 ];
 
 const readCache = (k: string): WrongNoteCache | null => {
@@ -127,6 +160,21 @@ const writeCache = (k: string, d: WrongNoteCache) => {
 
 function safeStr(v: any) {
     return String(v ?? "").trim();
+}
+
+function toValidNumber(v: any) {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+}
+
+function toTimeMs(v?: string | null) {
+    if (!v) return Number.NaN;
+    const ms = new Date(v).getTime();
+    return Number.isFinite(ms) ? ms : Number.NaN;
+}
+
+function buildWrongBadgeLabel(wrongCount: number) {
+    return wrongCount >= 2 ? String(wrongCount) + "\uD68C \uC624\uB2F5" : null;
 }
 
 function normalizeWrongItem(raw: any): WrongItem | null {
@@ -175,9 +223,25 @@ function normalizeWrongItem(raw: any): WrongItem | null {
             .filter(Boolean) as Array<{ key: string; text: string }>)
         : undefined;
 
+    const explicitWrongCount = toValidNumber(raw.wrongCount ?? raw.wrong_count ?? raw.repeatWrongCount);
+    const wrongCount = explicitWrongCount && explicitWrongCount > 0 ? explicitWrongCount : 1;
+    const wrongAt =
+        raw.wrongAt ?? raw.wrong_at ?? raw.answeredAt ?? raw.submittedAt ?? raw.createdAt ?? null;
+    const reviewIdsRaw =
+        raw.reviewIds ?? raw.review_ids ?? raw.wrongNoteIds ?? raw.wrong_note_ids ?? raw.reviewIdList ?? null;
+    const reviewIds = Array.isArray(reviewIdsRaw)
+        ? reviewIdsRaw.map(toValidNumber).filter((v): v is number => v != null)
+        : [reviewId];
+    const status = safeStr(raw.status ?? raw.reviewStatus ?? "").toUpperCase() || null;
+
     return {
         reviewId,
+        wrongNoteId: reviewId,
         questionId,
+        wrongCount,
+        badgeLabel: safeStr(raw.badgeLabel ?? raw.badge_label) || buildWrongBadgeLabel(wrongCount),
+        wrongAt,
+        reviewIds: reviewIds.length ? Array.from(new Set(reviewIds)) : [reviewId],
         questionType: (qType || "CHOICE") as QuestionType,
         difficulty: (difficulty || undefined) as Difficulty,
         prompt,
@@ -191,8 +255,7 @@ function normalizeWrongItem(raw: any): WrongItem | null {
         explanation:
             raw.explanation ?? raw.description ?? raw.reason ?? raw.question?.explanation ?? null,
         sessionId: raw.sessionId ?? raw.quizSessionId ?? raw.quizSession?.id ?? null,
-        answeredAt:
-            raw.answeredAt ?? raw.wrongAt ?? raw.submittedAt ?? raw.createdAt ?? null,
+        answeredAt: wrongAt,
         termId: raw.termId ?? raw.term?.id ?? null,
         termTitle: raw.termTitle ?? raw.term?.title ?? null,
         categoryLabel:
@@ -201,10 +264,81 @@ function normalizeWrongItem(raw: any): WrongItem | null {
         resolved: Boolean(
             raw.resolved ??
             raw.isResolved ??
-            (String(raw.status ?? "").toUpperCase() === "RESOLVED") ??
-            false
+            (String(raw.status ?? "").toUpperCase() === "RESOLVED")
         ),
+        status,
     };
+}
+
+function pickRepresentative(current: WrongItem, candidate: WrongItem, sort: SortKey) {
+    const currentTime = toTimeMs(current.wrongAt ?? current.answeredAt);
+    const candidateTime = toTimeMs(candidate.wrongAt ?? candidate.answeredAt);
+
+    if (Number.isNaN(currentTime)) return candidate;
+    if (Number.isNaN(candidateTime)) return current;
+
+    if (sort === "OLDEST") {
+        return candidateTime < currentTime ? candidate : current;
+    }
+
+    return candidateTime > currentTime ? candidate : current;
+}
+
+function compareWrongItems(a: WrongItem, b: WrongItem, sort: SortKey) {
+    const aTime = toTimeMs(a.wrongAt ?? a.answeredAt);
+    const bTime = toTimeMs(b.wrongAt ?? b.answeredAt);
+
+    if (sort === "MOST_WRONG") {
+        if (b.wrongCount !== a.wrongCount) return b.wrongCount - a.wrongCount;
+        if (Number.isNaN(aTime) && Number.isNaN(bTime)) return (b.reviewId ?? 0) - (a.reviewId ?? 0);
+        if (Number.isNaN(aTime)) return 1;
+        if (Number.isNaN(bTime)) return -1;
+        if (bTime !== aTime) return bTime - aTime;
+        return (b.reviewId ?? 0) - (a.reviewId ?? 0);
+    }
+
+    if (Number.isNaN(aTime) && Number.isNaN(bTime)) return (b.reviewId ?? 0) - (a.reviewId ?? 0);
+    if (Number.isNaN(aTime)) return 1;
+    if (Number.isNaN(bTime)) return -1;
+    if (aTime !== bTime) return sort === "OLDEST" ? aTime - bTime : bTime - aTime;
+    if (b.wrongCount !== a.wrongCount) return b.wrongCount - a.wrongCount;
+    return (b.reviewId ?? 0) - (a.reviewId ?? 0);
+}
+
+function mergeWrongItems(items: WrongItem[], sort: SortKey) {
+    const grouped = new Map<number, WrongItem>();
+
+    items.forEach((item) => {
+        const existing = grouped.get(item.questionId);
+        if (!existing) {
+            grouped.set(item.questionId, {
+                ...item,
+                reviewIds: item.reviewIds?.length ? Array.from(new Set(item.reviewIds)) : [item.reviewId],
+                badgeLabel: item.badgeLabel ?? buildWrongBadgeLabel(item.wrongCount),
+            });
+            return;
+        }
+
+        const representative = pickRepresentative(existing, item, sort);
+        const mergedWrongCount = existing.wrongCount + item.wrongCount;
+        const mergedReviewIds = Array.from(new Set([...(existing.reviewIds || [existing.reviewId]), ...(item.reviewIds || [item.reviewId])]));
+        const resolved = Boolean(existing.resolved) && Boolean(item.resolved);
+
+        grouped.set(item.questionId, {
+            ...representative,
+            reviewId: representative.reviewId,
+            wrongNoteId: representative.wrongNoteId ?? representative.reviewId,
+            wrongCount: mergedWrongCount,
+            badgeLabel: buildWrongBadgeLabel(mergedWrongCount),
+            wrongAt: representative.wrongAt ?? representative.answeredAt ?? null,
+            answeredAt: representative.wrongAt ?? representative.answeredAt ?? null,
+            reviewIds: mergedReviewIds,
+            resolved,
+            status: resolved ? "RESOLVED" : (representative.status ?? "UNRESOLVED"),
+        });
+    });
+
+    return Array.from(grouped.values()).sort((a, b) => compareWrongItems(a, b, sort));
 }
 
 function ExpandChevronIcon({
@@ -263,7 +397,7 @@ function fmtDate(iso?: string | null) {
     const dd = String(d.getDate()).padStart(2, "0");
     const hh = String(d.getHours()).padStart(2, "0");
     const mi = String(d.getMinutes()).padStart(2, "0");
-    return `${yy}.${mm}.${dd} ${hh}:${mi}`;
+    return yy + "." + mm + "." + dd + " " + hh + ":" + mi;
 }
 
 function getChoiceDisplayLabel(idx: number) {
@@ -345,7 +479,7 @@ async function apiFetchWrongNotes(params: {
     difficulty?: string;          // "EASY" | "MEDIUM" | "HARD"
     unresolvedOnly?: boolean;
     q?: string;
-    sort?: "RECENT" | "OLDEST";
+    sort?: SortKey;
     sessionId?: number | null;
     from?: string | null;         // "2026-01-01"
     to?: string | null;           // "2026-01-06"
@@ -359,13 +493,14 @@ async function apiFetchWrongNotes(params: {
     if (typeof params.unresolvedOnly === "boolean") query.set("unresolvedOnly", String(params.unresolvedOnly));
     const qq = (params.q ?? "").trim();
     if (qq) query.set("q", qq);
-    if (params.sort) query.set("sort", params.sort);
+    const backendSort = toBackendSort(params.sort);
+    if (backendSort) query.set("sort", backendSort);
     if (params.sessionId != null) query.set("sessionId", String(params.sessionId));
     if (params.from) query.set("from", params.from);
     if (params.to) query.set("to", params.to);
     query.set("includeAnswers", String(params.includeAnswers ?? true));
 
-    const url = `/me/quiz/reviews/wrong?${query.toString()}`;
+    const url = "/me/quiz/reviews/wrong?" + query.toString();
 
     const { data } = await http.get(url, {
         headers: { ...authHeader(), Accept: "application/json" },
@@ -392,33 +527,48 @@ async function apiFetchWrongNotes(params: {
 
     const page = Number(root?.page ?? root?.number ?? params.page ?? 0);
     const size = Number(root?.size ?? root?.pageSize ?? params.size ?? 20);
-    const total = Number(root?.totalElements ?? root?.total ?? root?.totalCount ?? rawItems.length);
+    const rawTotal = Number(
+        root?.questionTotal ??
+        root?.distinctQuestionCount ??
+        root?.groupTotal ??
+        root?.groupedTotal ??
+        root?.totalElements ??
+        root?.total ??
+        root?.totalCount ??
+        rawItems.length
+    );
 
     // 4) 파싱 드랍 체크 로그(원인 바로 보임)
     const normalized = (Array.isArray(rawItems) ? rawItems : []).map(normalizeWrongItem);
-    const items = normalized.filter(Boolean) as WrongItem[];
-    const dropped = normalized.length - items.length;
+    const normalizedItems = normalized.filter(Boolean) as WrongItem[];
+    const groupedItems = mergeWrongItems(normalizedItems, params.sort ?? "RECENT");
+    const dropped = normalized.length - normalizedItems.length;
 
     console.log("[wrongnote] raw/ok/drop", {
         rawLen: Array.isArray(rawItems) ? rawItems.length : -1,
-        okLen: items.length,
+        okLen: groupedItems.length,
         dropped,
         sample: Array.isArray(rawItems) && rawItems[0] ? rawItems[0] : null,
     });
 
+    const total = Number.isFinite(rawTotal) ? rawTotal : groupedItems.length;
     const hasMore = (page + 1) * size < total;
-    return { items, page, size, total, hasMore };
+    return { items: groupedItems, page, size, total, hasMore };
 }
 
-async function apiToggleResolved(reviewId: number, resolved: boolean) {
-    const url = `/me/quiz/reviews/${reviewId}`;
-    await http.patch(
-        url,
-        { resolved },
-        {
-            headers: authHeader(),
-            withCredentials: true,
-        }
+async function apiToggleResolved(reviewIds: number[], resolved: boolean) {
+    const ids = Array.from(new Set((reviewIds || []).filter(Number.isFinite)));
+    await Promise.all(
+        ids.map((reviewId) =>
+            http.patch(
+                "/me/quiz/reviews/" + reviewId,
+                { resolved },
+                {
+                    headers: authHeader(),
+                    withCredentials: true,
+                }
+            )
+        )
     );
 }
 
@@ -427,7 +577,7 @@ async function apiDeleteWrongReviews(reviewIds: number[]) {
     if (!ids.length) return;
 
     try {
-        await http.delete(`/me/quiz/reviews/wrong`, {
+        await http.delete("/me/quiz/reviews/wrong", {
             headers: { ...authHeader(), "Content-Type": "application/json" },
             data: { reviewIds: ids },
             withCredentials: true,
@@ -439,7 +589,7 @@ async function apiDeleteWrongReviews(reviewIds: number[]) {
 
     await Promise.all(
         ids.map((rid) =>
-            http.delete(`/me/quiz/reviews/${rid}`, {
+            http.delete("/me/quiz/reviews/" + rid, {
                 headers: authHeader(),
                 withCredentials: true,
             })
@@ -448,7 +598,7 @@ async function apiDeleteWrongReviews(reviewIds: number[]) {
 }
 
 async function apiStartWrongOnlySession(questionIds: number[]) {
-    const url = `/me/quiz/sessions/start`;
+    const url = "/me/quiz/sessions/start";
     const { data } = await http.post(
         url,
         { source: "wrong_note", questionIds, customTitle: "오답노트 선택 복습" },
@@ -464,7 +614,7 @@ export default function QuizWrongNotePage() {
     const navType = useNavigationType();
     const location = useLocation();
 
-    const cacheKey = useMemo(() => `quiz_wrong_note:v1:${location.pathname}`, [location.pathname]);
+    const cacheKey = useMemo(() => "quiz_wrong_note:v1:" + location.pathname, [location.pathname]);
 
     const [draft, setDraft] = useState<Filters>(DEFAULT_FILTERS);
     const [applied, setApplied] = useState<Filters>(DEFAULT_FILTERS);
@@ -674,6 +824,18 @@ export default function QuizWrongNotePage() {
         return Array.from(map.keys());
     }, [checkedReviewIds, items]);
 
+    const checkedDeleteReviewIds = useMemo(() => {
+        const ids = new Set<number>();
+        const byReviewId = new Map(items.map((it) => [it.reviewId, it]));
+        checkedReviewIds.forEach((rid) => {
+            const it = byReviewId.get(rid);
+            (it?.reviewIds?.length ? it.reviewIds : [rid]).forEach((id) => {
+                if (Number.isFinite(id)) ids.add(id);
+            });
+        });
+        return Array.from(ids);
+    }, [checkedReviewIds, items]);
+
     // 전체선택(visible 기준)도 reviewId로
     const allVisibleChecked = useMemo(() => {
         if (!displayedItems.length) return false;
@@ -705,15 +867,19 @@ export default function QuizWrongNotePage() {
         const next = !prev;
         setItems((prevItems) =>
             prevItems.map((x) =>
-                x.reviewId === it.reviewId ? { ...x, resolved: next } : x
+                x.reviewId === it.reviewId
+                    ? { ...x, resolved: next, status: next ? "RESOLVED" : "UNRESOLVED" }
+                    : x
             )
         );
         try {
-            await apiToggleResolved(it.reviewId, next);
+            await apiToggleResolved(it.reviewIds?.length ? it.reviewIds : [it.reviewId], next);
         } catch (e: any) {
             setItems((prevItems) =>
                 prevItems.map((x) =>
-                    x.reviewId === it.reviewId ? { ...x, resolved: prev } : x
+                    x.reviewId === it.reviewId
+                        ? { ...x, resolved: prev, status: prev ? "RESOLVED" : "UNRESOLVED" }
+                        : x
                 )
             );
             const { message } = getApiError(e);
@@ -729,7 +895,7 @@ export default function QuizWrongNotePage() {
 
         try {
             const { sessionId } = await apiStartWrongOnlySession(checkedQuestionIds);
-            nav(`/learning/quiz/play?sessionId=${sessionId}`, {
+            nav("/learning/quiz/play?sessionId=" + sessionId, {
                 replace: true,
                 state: { sessionId, source: "wrong_note", pickedQuestionIds: checkedQuestionIds },
             });
@@ -772,7 +938,7 @@ export default function QuizWrongNotePage() {
                             setItems((prev) => prev.filter((x) => !delSet.has(x.reviewId)));
                             setSelected({});
 
-                            await apiDeleteWrongReviews(checkedReviewIds);
+                            await apiDeleteWrongReviews(checkedDeleteReviewIds);
                             await fetchPage(page, appliedRef.current);
 
                             openSys({ tone: "success", title: "삭제 완료", description: "선택한 기록을 삭제했어요." } as any);
@@ -782,7 +948,7 @@ export default function QuizWrongNotePage() {
 
                             const { message } = getApiError(e);
                             openSys({ tone: "error", title: "삭제 실패", description: message } as any);
-                            throw e; // (모달에서 catch로 삼켜도 되고, 여기서 throw 안 해도 됨)
+                            throw e;
                         } finally {
                             setDeleting(false);
                         }
@@ -793,6 +959,7 @@ export default function QuizWrongNotePage() {
         } as any);
     }, [
         checkedReviewIds,
+        checkedDeleteReviewIds,
         openSys,
         closeSys,
         fetchPage,
@@ -928,326 +1095,328 @@ export default function QuizWrongNotePage() {
 
             <Content>
                 <Panel>
-                <FilterRow>
-                    <SearchBox>
-                        <SearchInput
-                            value={draft.q}
-                            onChange={(e) => setDraft((p) => ({ ...p, q: e.target.value }))}
-                            onKeyDown={onSearchKeyDown}
-                            placeholder="문제/해설/용어로 검색"
-                        />
-                        <SearchBtn onClick={() => applyAndSearch()} disabled={loading}>
-                            검색
-                        </SearchBtn>
-                    </SearchBox>
+                    <FilterRow>
+                        <SearchBox>
+                            <SearchInput
+                                value={draft.q}
+                                onChange={(e) => setDraft((p) => ({ ...p, q: e.target.value }))}
+                                onKeyDown={onSearchKeyDown}
+                                placeholder="문제/해설/용어로 검색"
+                            />
+                            <SearchBtn onClick={() => applyAndSearch()} disabled={loading}>
+                                검색
+                            </SearchBtn>
+                        </SearchBox>
 
-                    <Filters ref={filtersRef}>
-                        <FilterDropdown
-                            label="유형"
-                            value={draft.type}
-                            options={TYPE_OPTIONS}
-                            open={openFilterMenu === "type"}
-                            active={draft.type !== "ALL"}
-                            onToggle={() =>
-                                setOpenFilterMenu((prev) => (prev === "type" ? null : "type"))
-                            }
-                            onSelect={(value) => {
-                                const next = {
-                                    ...draft,
-                                    type: value,
-                                };
-                                setDraft(next);
-                                applyAndSearch(next);
-                            }}
-                        />
+                        <Filters ref={filtersRef}>
+                            <FilterDropdown
+                                label="유형"
+                                value={draft.type}
+                                options={TYPE_OPTIONS}
+                                open={openFilterMenu === "type"}
+                                active={draft.type !== "ALL"}
+                                onToggle={() =>
+                                    setOpenFilterMenu((prev) => (prev === "type" ? null : "type"))
+                                }
+                                onSelect={(value) => {
+                                    const next = {
+                                        ...draft,
+                                        type: value,
+                                    };
+                                    setDraft(next);
+                                    applyAndSearch(next);
+                                }}
+                            />
 
-                        <FilterDropdown
-                            label="난이도"
-                            value={draft.difficulty}
-                            options={DIFFICULTY_OPTIONS}
-                            open={openFilterMenu === "difficulty"}
-                            active={draft.difficulty !== "ALL"}
-                            onToggle={() =>
-                                setOpenFilterMenu((prev) => (prev === "difficulty" ? null : "difficulty"))
-                            }
-                            onSelect={(value) => {
-                                const next = {
-                                    ...draft,
-                                    difficulty: value,
-                                };
-                                setDraft(next);
-                                applyAndSearch(next);
-                            }}
-                        />
+                            <FilterDropdown
+                                label="난이도"
+                                value={draft.difficulty}
+                                options={DIFFICULTY_OPTIONS}
+                                open={openFilterMenu === "difficulty"}
+                                active={draft.difficulty !== "ALL"}
+                                onToggle={() =>
+                                    setOpenFilterMenu((prev) => (prev === "difficulty" ? null : "difficulty"))
+                                }
+                                onSelect={(value) => {
+                                    const next = {
+                                        ...draft,
+                                        difficulty: value,
+                                    };
+                                    setDraft(next);
+                                    applyAndSearch(next);
+                                }}
+                            />
 
-                        <FilterDropdown
-                            label="정렬"
-                            value={draft.sort}
-                            options={SORT_OPTIONS}
-                            open={openFilterMenu === "sort"}
-                            active={draft.sort !== "RECENT"}
-                            onToggle={() =>
-                                setOpenFilterMenu((prev) => (prev === "sort" ? null : "sort"))
-                            }
-                            onSelect={(value) => {
-                                const next = {
-                                    ...draft,
-                                    sort: value,
-                                };
-                                setDraft(next);
-                                applyAndSearch(next);
-                            }}
-                        />
+                            <FilterDropdown
+                                label="정렬"
+                                value={draft.sort}
+                                options={SORT_OPTIONS}
+                                open={openFilterMenu === "sort"}
+                                active={draft.sort !== "RECENT"}
+                                onToggle={() =>
+                                    setOpenFilterMenu((prev) => (prev === "sort" ? null : "sort"))
+                                }
+                                onSelect={(value) => {
+                                    const next = {
+                                        ...draft,
+                                        sort: value,
+                                    };
+                                    setDraft(next);
+                                    applyAndSearch(next);
+                                }}
+                            />
 
-                        <ToggleBtn
-                            $on={draft.unresolvedOnly}
-                            onClick={() => {
-                                const next = {
-                                    ...draft,
-                                    unresolvedOnly: !draft.unresolvedOnly,
-                                };
-                                setDraft(next);
-                                applyAndSearch(next);
-                            }}
-                            aria-pressed={draft.unresolvedOnly}
-                        >
-                            미해결만
-                        </ToggleBtn>
+                            <ToggleBtn
+                                $on={draft.unresolvedOnly}
+                                onClick={() => {
+                                    const next = {
+                                        ...draft,
+                                        unresolvedOnly: !draft.unresolvedOnly,
+                                    };
+                                    setDraft(next);
+                                    applyAndSearch(next);
+                                }}
+                                aria-pressed={draft.unresolvedOnly}
+                            >
+                                미해결만
+                            </ToggleBtn>
 
-                        <GhostBtn onClick={clearFilters} disabled={loading}>
-                            초기화
-                        </GhostBtn>
-                    </Filters>
-                </FilterRow>
+                            <GhostBtn onClick={clearFilters} disabled={loading}>
+                                초기화
+                            </GhostBtn>
+                        </Filters>
+                    </FilterRow>
 
-                <BulkRow>
-                    <BulkLeft>
-                        <CheckAll>
-                            <ToggleSlot>
-                                <SelectToggleChip
-                                    checked={allVisibleChecked}
-                                    top={0}
-                                    left={0}
-                                    ariaLabel={allVisibleChecked ? "전체 선택 해제" : "전체 선택"}
-                                    title={allVisibleChecked ? "전체 선택 해제" : "전체 선택"}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        toggleAllVisible();
-                                    }}
-                                />
-                            </ToggleSlot>
-                            <span>전체 선택</span>
-                        </CheckAll>
+                    <BulkRow>
+                        <BulkLeft>
+                            <CheckAll>
+                                <ToggleSlot>
+                                    <SelectToggleChip
+                                        checked={allVisibleChecked}
+                                        top={0}
+                                        left={0}
+                                        ariaLabel={allVisibleChecked ? "전체 선택 해제" : "전체 선택"}
+                                        title={allVisibleChecked ? "전체 선택 해제" : "전체 선택"}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            toggleAllVisible();
+                                        }}
+                                    />
+                                </ToggleSlot>
+                                <span>전체 선택</span>
+                            </CheckAll>
 
-                        <BulkInfo>
-                            선택 <strong>{checkedReviewIds.length}</strong>개 · 현재 페이지{" "}
-                            <strong>{displayedItems.length}</strong>개 · 전체{" "}
-                            <strong>{total}</strong>개
-                        </BulkInfo>
-                    </BulkLeft>
+                            <BulkInfo>
+                                선택 <strong>{checkedReviewIds.length}</strong>개 · 현재 페이지{' '}
+                                <strong>{displayedItems.length}</strong>개 · 전체{' '}
+                                <strong>{total}</strong>개
+                            </BulkInfo>
+                        </BulkLeft>
 
-                    <BulkRight>
-                        <PrimaryBtn
-                            onClick={onRetrySelected}
-                            disabled={!checkedQuestionIds.length || deleting}
-                        >
-                            선택 오답 다시풀기
-                        </PrimaryBtn>
+                        <BulkRight>
+                            <PrimaryBtn
+                                onClick={onRetrySelected}
+                                disabled={!checkedQuestionIds.length || deleting}
+                            >
+                                선택 오답 다시풀기
+                            </PrimaryBtn>
 
-                        <DangerBtn
-                            onClick={onDeleteSelected}
-                            disabled={deleting}
-                        >
-                            {deleting ? "삭제 중..." : "기록 삭제"}
-                        </DangerBtn>
-                    </BulkRight>
-                </BulkRow>
-            </Panel>
+                            <DangerBtn
+                                onClick={onDeleteSelected}
+                                disabled={deleting}
+                            >
+                                {deleting ? "삭제 중..." : "기록 삭제"}
+                            </DangerBtn>
+                        </BulkRight>
+                    </BulkRow>
+                </Panel>
 
-            <List>
-                {displayedItems.map((it) => {
-                    const isOpen = Boolean(expanded[it.reviewId]);
-                    const checked = Boolean(selected[it.reviewId]);
+                <List>
+                    {displayedItems.map((it) => {
+                        const isOpen = Boolean(expanded[it.reviewId]);
+                        const checked = Boolean(selected[it.reviewId]);
 
-                    return (
-                        <Card key={it.reviewId}>
-                            <CardHead>
-                                <Left>
-                                    <ToggleSlot>
-                                        <SelectToggleChip
-                                            checked={checked}
-                                            top={0}
-                                            left={0}
-                                            ariaLabel={checked ? "선택 해제" : "선택"}
-                                            title={checked ? "선택 해제" : "선택"}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelected((p) => ({
-                                                    ...p,
-                                                    [it.reviewId]: !p[it.reviewId],
-                                                }));
-                                            }}
-                                        />
-                                    </ToggleSlot>
-                                    <Meta>
-                                        <MetaTopRow>
-                                            <Badges>
-                                                <Badge $tone="wrong">오답</Badge>
-                                                <Badge $tone="type">{toTypeLabel(String(it.questionType))}</Badge>
-                                                <Badge $tone="diff">{toDiffLabel(String(it.difficulty))}</Badge>
-                                                {it.resolved ? (
-                                                    <Badge $tone="ok">해결 완료</Badge>
-                                                ) : (
-                                                    <Badge $tone="pending">미해결</Badge>
-                                                )}
-                                            </Badges>
+                        return (
+                            <Card key={it.reviewId}>
+                                <CardHead>
+                                    <Left>
+                                        <ToggleSlot>
+                                            <SelectToggleChip
+                                                checked={checked}
+                                                top={0}
+                                                left={0}
+                                                ariaLabel={checked ? "선택 해제" : "선택"}
+                                                title={checked ? "선택 해제" : "선택"}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelected((p) => ({
+                                                        ...p,
+                                                        [it.reviewId]: !p[it.reviewId],
+                                                    }));
+                                                }}
+                                            />
+                                        </ToggleSlot>
+                                        <Meta>
+                                            <MetaTopRow>
+                                                <Badges>
+                                                    <Badge $tone="wrong">
+                                                        {it.wrongCount >= 2 && it.badgeLabel ? it.badgeLabel : "오답"}
+                                                    </Badge>
+                                                    <Badge $tone="type">{toTypeLabel(String(it.questionType))}</Badge>
+                                                    <Badge $tone="diff">{toDiffLabel(String(it.difficulty))}</Badge>
+                                                    {it.resolved ? (
+                                                        <Badge $tone="ok">해결 완료</Badge>
+                                                    ) : (
+                                                        <Badge $tone="pending">미해결</Badge>
+                                                    )}
+                                                </Badges>
 
-                                            <TopMeta>
-                                                <span>{it.categoryLabel ? it.categoryLabel : "카테고리 없음"}</span>
+                                                <TopMeta>
+                                                    <span>{it.categoryLabel ? it.categoryLabel : "카테고리 없음"}</span>
 
-                                                {it.answeredAt ? <Dot /> : null}
-                                                {it.answeredAt ? <span>{fmtDate(it.answeredAt)}</span> : null}
+                                                    {it.wrongAt ? <Dot /> : null}
+                                                    {it.wrongAt ? <span>{fmtDate(it.wrongAt)}</span> : null}
 
-                                                {it.sessionTitle ? <Dot /> : null}
-                                                {it.sessionTitle ? (
-                                                    <span title={it.sessionTitle}>{it.sessionTitle}</span>
-                                                ) : null}
-                                            </TopMeta>
-                                        </MetaTopRow>
-                                    </Meta>
-                                </Left>
+                                                    {it.sessionTitle ? <Dot /> : null}
+                                                    {it.sessionTitle ? (
+                                                        <span title={it.sessionTitle}>{it.sessionTitle}</span>
+                                                    ) : null}
+                                                </TopMeta>
+                                            </MetaTopRow>
+                                        </Meta>
+                                    </Left>
 
-                                <Right>
-                                    <MiniBtn onClick={() => onToggleResolved(it)} $tone={it.resolved ? "ok" : "pending"}>
-                                        {it.resolved ? "해결 완료" : "미해결"}
-                                    </MiniBtn>
-                                    <IconToggleBtn
-                                        type="button"
-                                        onClick={() => toggleExpand(it.reviewId)}
-                                        $active={isOpen}
-                                        data-tip={isOpen ? "접기" : "정답 / 해설"}
-                                        title={isOpen ? "접기" : "정답 / 해설"}
-                                        aria-label={isOpen ? "접기" : "정답 / 해설"}
-                                        aria-expanded={isOpen}
-                                    >
-                                        <ExpandChevronIcon open={isOpen} />
-                                    </IconToggleBtn>
-                                </Right>
-                            </CardHead>
+                                    <Right>
+                                        <MiniBtn onClick={() => onToggleResolved(it)} $tone={it.resolved ? "ok" : "pending"}>
+                                            {it.resolved ? "해결 완료" : "미해결"}
+                                        </MiniBtn>
+                                        <IconToggleBtn
+                                            type="button"
+                                            onClick={() => toggleExpand(it.reviewId)}
+                                            $active={isOpen}
+                                            data-tip={isOpen ? "접기" : "정답 / 해설"}
+                                            title={isOpen ? "접기" : "정답 / 해설"}
+                                            aria-label={isOpen ? "접기" : "정답 / 해설"}
+                                            aria-expanded={isOpen}
+                                        >
+                                            <ExpandChevronIcon open={isOpen} />
+                                        </IconToggleBtn>
+                                    </Right>
+                                </CardHead>
 
-                            <Prompt title={it.prompt}>{it.prompt}</Prompt>
+                                <Prompt title={it.prompt}>{it.prompt}</Prompt>
 
-                            {isOpen && (
-                                <Detail>
-                                    <Grid>
-                                        <Box>
-                                            <BoxTitle>내 답</BoxTitle>
-                                            <BoxValue>{toDisplayedAnswer(it.userAnswer, it.choices)}</BoxValue>
-                                        </Box>
-                                        <Box>
-                                            <BoxTitle>정답</BoxTitle>
-                                            <BoxValue $accent>
-                                                {toDisplayedAnswer(it.correctAnswer, it.choices)}
-                                            </BoxValue>
-                                        </Box>
-                                        <Box>
-                                            <BoxTitle>연관 용어</BoxTitle>
-                                            <BoxValue>
-                                                {it.termTitle ? (
-                                                    <LinkBtn
-                                                        onClick={() => {
-                                                            persistCache();
-                                                            const keyword = safeStr(it.termTitle);
-                                                            if (!keyword) {
-                                                                openSys({ title: "이동 불가", message: "termTitle이 없습니다." } as any);
-                                                                return;
-                                                            }
-                                                            nav(`/learning/word?q=${encodeURIComponent(keyword)}`);
-                                                        }}
-                                                    >
-                                                        {it.termTitle}
-                                                    </LinkBtn>
-                                                ) : (
-                                                    "-"
-                                                )}
-                                            </BoxValue>
-                                        </Box>
-                                    </Grid>
-
-                                    {it.choices?.length ? (
-                                        <Choices>
-                                            <ChoicesTitle>보기</ChoicesTitle>
-                                            <ChoicesList>
-                                                {it.choices.map((c, idx) => {
-                                                    const displayKey = getChoiceDisplayLabel(idx);
-
-                                                    const isCorrect =
-                                                        safeStr(it.correctAnswer).toUpperCase() ===
-                                                        safeStr(c.key).toUpperCase() ||
-                                                        safeStr(it.correctAnswer) === safeStr(c.text) ||
-                                                        safeStr(it.correctAnswer) === displayKey;
-
-                                                    const isMine =
-                                                        safeStr(it.userAnswer).toUpperCase() ===
-                                                        safeStr(c.key).toUpperCase() ||
-                                                        safeStr(it.userAnswer) === safeStr(c.text) ||
-                                                        safeStr(it.userAnswer) === displayKey;
-
-                                                    return (
-                                                        <ChoiceItem
-                                                            key={c.key}
-                                                            $correct={isCorrect}
-                                                            $mine={isMine}
+                                {isOpen && (
+                                    <Detail>
+                                        <Grid>
+                                            <Box>
+                                                <BoxTitle>내 답</BoxTitle>
+                                                <BoxValue>{toDisplayedAnswer(it.userAnswer, it.choices)}</BoxValue>
+                                            </Box>
+                                            <Box>
+                                                <BoxTitle>정답</BoxTitle>
+                                                <BoxValue $accent>
+                                                    {toDisplayedAnswer(it.correctAnswer, it.choices)}
+                                                </BoxValue>
+                                            </Box>
+                                            <Box>
+                                                <BoxTitle>연관 용어</BoxTitle>
+                                                <BoxValue>
+                                                    {it.termTitle ? (
+                                                        <LinkBtn
+                                                            onClick={() => {
+                                                                persistCache();
+                                                                const keyword = safeStr(it.termTitle);
+                                                                if (!keyword) {
+                                                                    openSys({ title: "이동 불가", message: "termTitle이 없습니다." } as any);
+                                                                    return;
+                                                                }
+                                                                nav("/learning/word?q=" + encodeURIComponent(keyword));
+                                                            }}
                                                         >
-                                                            <span className="k">{displayKey}</span>
-                                                            <span className="t">{c.text}</span>
-                                                            {isCorrect ? (
-                                                                <span className="tag">정답</span>
-                                                            ) : null}
-                                                            {isMine && !isCorrect ? (
-                                                                <span className="tag mine">내 답</span>
-                                                            ) : null}
-                                                        </ChoiceItem>
-                                                    );
-                                                })}
-                                            </ChoicesList>
-                                        </Choices>
-                                    ) : null}
+                                                            {it.termTitle}
+                                                        </LinkBtn>
+                                                    ) : (
+                                                        "-"
+                                                    )}
+                                                </BoxValue>
+                                            </Box>
+                                        </Grid>
 
-                                    {it.explanation ? (
-                                        <Explain>
-                                            <ExplainTitle>해설</ExplainTitle>
-                                            <ExplainBody>{it.explanation}</ExplainBody>
-                                        </Explain>
-                                    ) : (
-                                        <Explain>
-                                            <ExplainTitle>해설</ExplainTitle>
-                                            <ExplainBody $muted>해설이 아직 없습니다.</ExplainBody>
-                                        </Explain>
-                                    )}
-                                </Detail>
+                                        {it.choices?.length ? (
+                                            <Choices>
+                                                <ChoicesTitle>보기</ChoicesTitle>
+                                                <ChoicesList>
+                                                    {it.choices.map((c, idx) => {
+                                                        const displayKey = getChoiceDisplayLabel(idx);
+
+                                                        const isCorrect =
+                                                            safeStr(it.correctAnswer).toUpperCase() ===
+                                                            safeStr(c.key).toUpperCase() ||
+                                                            safeStr(it.correctAnswer) === safeStr(c.text) ||
+                                                            safeStr(it.correctAnswer) === displayKey;
+
+                                                        const isMine =
+                                                            safeStr(it.userAnswer).toUpperCase() ===
+                                                            safeStr(c.key).toUpperCase() ||
+                                                            safeStr(it.userAnswer) === safeStr(c.text) ||
+                                                            safeStr(it.userAnswer) === displayKey;
+
+                                                        return (
+                                                            <ChoiceItem
+                                                                key={c.key}
+                                                                $correct={isCorrect}
+                                                                $mine={isMine}
+                                                            >
+                                                                <span className="k">{displayKey}</span>
+                                                                <span className="t">{c.text}</span>
+                                                                {isCorrect ? (
+                                                                    <span className="tag">정답</span>
+                                                                ) : null}
+                                                                {isMine && !isCorrect ? (
+                                                                    <span className="tag mine">내 답</span>
+                                                                ) : null}
+                                                            </ChoiceItem>
+                                                        );
+                                                    })}
+                                                </ChoicesList>
+                                            </Choices>
+                                        ) : null}
+
+                                        {it.explanation ? (
+                                            <Explain>
+                                                <ExplainTitle>해설</ExplainTitle>
+                                                <ExplainBody>{it.explanation}</ExplainBody>
+                                            </Explain>
+                                        ) : (
+                                            <Explain>
+                                                <ExplainTitle>해설</ExplainTitle>
+                                                <ExplainBody $muted>해설이 아직 없습니다.</ExplainBody>
+                                            </Explain>
+                                        )}
+                                    </Detail>
+                                )}
+                            </Card>
+                        );
+                    })}
+
+                    {items.length === 0 && !loading && (
+                        <Empty>
+                            {hasActiveFilter ? (
+                                <>
+                                    <h3>조건에 맞는 오답이 없어요</h3>
+                                    <p>필터를 조정하거나 초기화를 눌러보세요.</p>
+                                </>
+                            ) : (
+                                <>
+                                    <h3>오답이 아직 없어요</h3>
+                                    <p>퀴즈를 풀고 틀린 문제는 여기에서 모아볼 수 있어요.</p>
+                                </>
                             )}
-                        </Card>
-                    );
-                })}
+                        </Empty>
+                    )}
 
-                {items.length === 0 && !loading && (
-                    <Empty>
-                        {hasActiveFilter ? (
-                            <>
-                                <h3>조건에 맞는 오답이 없어요</h3>
-                                <p>필터를 조정하거나 초기화를 눌러보세요.</p>
-                            </>
-                        ) : (
-                            <>
-                                <h3>오답이 아직 없어요</h3>
-                                <p>퀴즈를 풀고 틀린 문제는 여기에서 모아볼 수 있어요.</p>
-                            </>
-                        )}
-                    </Empty>
-                )}
-
-            </List>
+                </List>
 
                 {items.length > 0 && pages > 1 && (
                     <BottomGrid>
@@ -1284,7 +1453,7 @@ export default function QuizWrongNotePage() {
                                         $active={p === page}
                                         onClick={() => movePage(p)}
                                         aria-current={p === page ? "page" : undefined}
-                                        aria-label={`${p + 1}페이지`}
+                                        aria-label={String(p + 1) + "페이지"}
                                         type="button"
                                     >
                                         {p + 1}
@@ -1300,7 +1469,7 @@ export default function QuizWrongNotePage() {
                                         $active={page === pages - 1}
                                         onClick={goLastPage}
                                         aria-current={page === pages - 1 ? "page" : undefined}
-                                        aria-label={`${pages}페이지`}
+                                        aria-label={String(pages) + "페이지"}
                                         type="button"
                                     >
                                         {pages}
@@ -1327,6 +1496,7 @@ export default function QuizWrongNotePage() {
 
 /* ====== Styles ====== */
 const Wrap = styled.div`
+    ${readableText};
     width: 100%;
     min-height: 100%;
     box-sizing: border-box;
@@ -1335,10 +1505,7 @@ const Wrap = styled.div`
     margin: 0 auto;
 
     color: ${UI.text};
-    letter-spacing: -0.012em;
     font-variant-numeric: tabular-nums;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
 `;
 
 const Content = styled.div`
@@ -1371,23 +1538,24 @@ const SearchBox = styled.div`
 `;
 
 const SearchInput = styled.input`
+    ${pretendard};
     flex: 1 1 auto;
-    height: 42px;
+    height: 44px;
     border-radius: 14px;
     border: 1px solid ${UI.chipLine};
     background: #fff;
-    padding: 0 12px;
+    padding: 0 14px;
     color: ${UI.text};
     outline: none;
 
     font-size: 14px;
     font-weight: 500;
-    letter-spacing: -0.01em;
+    line-height: 1.4;
+    letter-spacing: -0.012em;
 
     &::placeholder {
-        color: rgba(107,114,128,0.85);
+        color: rgba(107,114,128,0.82);
         font-weight: 500;
-        letter-spacing: -0.008em;
     }
 
     &:focus {
@@ -1397,17 +1565,19 @@ const SearchInput = styled.input`
 `;
 
 const SearchBtn = styled.button`
+    ${pretendard};
     flex: 0 0 auto;
-    height: 42px;
-    padding: 0 14px;
+    height: 44px;
+    padding: 0 16px;
     border-radius: 14px;
     border: 1px solid ${UI.primaryBlue};
     background: ${UI.primaryBlue};
     color: #fff;
     font-size: 14px;
-    font-weight: 650;
+    font-weight: 700;
+    line-height: 1;
     cursor: pointer;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.012em;
 
     &:hover {
         filter: brightness(0.97);
@@ -1642,6 +1812,7 @@ const BulkRight = styled.div`
 `;
 
 const PrimaryBtn = styled.button`
+    ${pretendard};
     height: 40px;
     padding: 0 14px;
     border-radius: 12px;
@@ -1649,9 +1820,9 @@ const PrimaryBtn = styled.button`
     background: ${UI.primaryBlue};
     color: #fff;
     font-size: 13px;
-    font-weight: 650;
+    font-weight: 700;
+    letter-spacing: -0.012em;
     cursor: pointer;
-    letter-spacing: -0.01em;
 
     &:hover {
         filter: brightness(0.97);
@@ -1663,29 +1834,21 @@ const PrimaryBtn = styled.button`
 `;
 
 const DangerBtn = styled.button`
+    ${pretendard};
     height: 40px;
     padding: 0 14px;
     border-radius: 12px;
     border: 1px solid rgba(239, 68, 68, 0.35);
     background: rgba(239, 68, 68, 0.10);
     color: ${UI.danger};
-
     font-size: 13px;
     font-weight: 700;
+    letter-spacing: -0.012em;
     cursor: pointer;
-    letter-spacing: -0.01em;
 
     &:hover {
         background: rgba(239, 68, 68, 0.14);
         border-color: rgba(239, 68, 68, 0.45);
-    }
-    &:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-    }
-    &:focus-visible {
-        outline: 3px solid rgba(239, 68, 68, 0.18);
-        outline-offset: 2px;
     }
 `;
 
@@ -1696,14 +1859,16 @@ const List = styled.div`
 `;
 
 const Card = styled.article`
+    ${pretendard};
     background: #fff;
     border: 1px solid ${UI.panelLineSoft};
     border-radius: 18px;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
-    padding: 14px 14px 12px;
+    padding: 16px 16px 14px;
 
     font-size: 14px;
-    line-height: 1.45;
+    line-height: 1.62;
+    color: ${UI.text};
 `;
 
 const CardHead = styled.div`
@@ -1889,7 +2054,7 @@ const IconToggleBtn = styled.button<{ $active?: boolean }>`
     border-radius: 999px;
 
     border: 0;
-    background: transparent;   /* 기본은 동그라미 없음 */
+    background: transparent;
     color: #6b7280;
 
     cursor: pointer;
@@ -1898,13 +2063,11 @@ const IconToggleBtn = styled.button<{ $active?: boolean }>`
     justify-content: center;
     position: relative;
 
-    /* hover 시만 살짝 배경 */
     &:hover {
         background: rgba(15, 23, 42, 0.06);
         color: #111827;
     }
 
-    /* 펼쳐진 상태(open)에서는 눌린 느낌 유지 */
     ${({ $active }) =>
             $active &&
             `
@@ -1966,11 +2129,12 @@ const IconToggleBtn = styled.button<{ $active?: boolean }>`
 `;
 
 const Prompt = styled.h3`
+    ${pretendard};
     margin: 10px 0 0;
-    font-size: 15px;
-    line-height: 1.6;
-    letter-spacing: -0.01em;
-    font-weight: 650;
+    font-size: 16px;
+    line-height: 1.68;
+    letter-spacing: -0.016em;
+    font-weight: 700;
     color: ${UI.text};
 
     display: -webkit-box;
@@ -2005,19 +2169,22 @@ const Box = styled.div`
 `;
 
 const BoxTitle = styled.div`
+    ${pretendard};
     font-size: 12px;
-    color: ${UI.sub};
-    font-weight: 600;
+    color: ${UI.text};
+    font-weight: 800;
+    line-height: 1.4;
     letter-spacing: -0.01em;
 `;
 
 const BoxValue = styled.div<{ $accent?: boolean }>`
+    ${pretendard};
     margin-top: 6px;
     font-size: 14px;
-    line-height: 1.55;
+    line-height: 1.65;
     color: ${({ $accent }) => ($accent ? UI.primaryBlue : UI.text)};
     font-weight: 600;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.012em;
     white-space: pre-wrap;
     word-break: break-word;
 `;
@@ -2061,9 +2228,10 @@ const ChoicesList = styled.div`
 `;
 
 const ChoiceItem = styled.div<{ $correct?: boolean; $mine?: boolean }>`
+    ${pretendard};
     border: 1px solid #e5e7eb;
     border-radius: 14px;
-    padding: 10px 10px;
+    padding: 12px 12px;
     display: grid;
     grid-template-columns: 32px 1fr auto;
     gap: 10px;
@@ -2086,18 +2254,19 @@ const ChoiceItem = styled.div<{ $correct?: boolean; $mine?: boolean }>`
     .k {
         font-weight: 700;
         font-size: 13px;
+        line-height: 1.3;
     }
 
     .t {
         font-size: 15px;
-        line-height: 1.6;
-        letter-spacing: -0.01em;
+        line-height: 1.68;
+        letter-spacing: -0.012em;
         font-weight: 500;
     }
 
     .tag {
         font-size: 12px;
-        font-weight: 650;
+        font-weight: 700;
         color: ${UI.success};
         background: rgba(16, 185, 129, 0.1);
         border: 1px solid rgba(16, 185, 129, 0.22);
@@ -2127,10 +2296,11 @@ const ExplainTitle = styled.div`
 `;
 
 const ExplainBody = styled.p<{ $muted?: boolean }>`
+    ${pretendard};
     margin: 0;
     font-size: 14px;
-    line-height: 1.72;
-    letter-spacing: -0.008em;
+    line-height: 1.76;
+    letter-spacing: -0.012em;
     font-weight: 400;
     color: ${({ $muted }) => ($muted ? "rgba(107,114,128,0.92)" : UI.text)};
     white-space: pre-wrap;

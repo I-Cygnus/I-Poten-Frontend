@@ -8,7 +8,6 @@ import SystemMessageModal, {
 import ScheduleDetailPopover, {
     type ScheduleDetailAnchor,
 } from "../components/schedule/ScheduleDetailPopover.tsx";
-import Spinner from "../components/common/Spinner.tsx";
 import {
     createMySchedule,
     deleteMySchedule,
@@ -17,7 +16,7 @@ import {
     updateMySchedule,
     type Schedule,
     type ScheduleUpsertRequest,
-} from "../api/userScheduleApi.ts";
+} from "../api/ScheduleApi.ts";
 
 const pretendard = css`
   font-family:

@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import type { Schedule } from "../../api/userScheduleApi.ts";
+import type { Schedule } from "../../api/ScheduleApi.ts";
 
 export type ScheduleDetailAnchor = {
     top: number;
