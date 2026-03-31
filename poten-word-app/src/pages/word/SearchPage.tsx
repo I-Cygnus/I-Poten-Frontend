@@ -2556,23 +2556,23 @@ export default function SearchPage() {
             {/* 필터/검색 없을 때: 새로 도착한 포텐워드 */}
             {!hasFilter && (
                 <>
-                    <NewArrivalsMarquee
-                        items={NEW_ARRIVALS_SAMPLE}
-                        speedPxPerSec={60}
-                        onClickItem={(item) => {
-                            const sp = new URLSearchParams(params);
-                            sp.set("q", buildCardSearchQuery(item.title));
-                            sp.set("page", "0");
-                            sp.set("size", String(size || 20));
+                    {/*<NewArrivalsMarquee*/}
+                    {/*    items={NEW_ARRIVALS_SAMPLE}*/}
+                    {/*    speedPxPerSec={60}*/}
+                    {/*    onClickItem={(item) => {*/}
+                    {/*        const sp = new URLSearchParams(params);*/}
+                    {/*        sp.set("q", buildCardSearchQuery(item.title));*/}
+                    {/*        sp.set("page", "0");*/}
+                    {/*        sp.set("size", String(size || 20));*/}
 
-                            sp.delete("initial");
-                            sp.delete("alpha");
-                            sp.delete("symbol");
-                            sp.delete("tag");
+                    {/*        sp.delete("initial");*/}
+                    {/*        sp.delete("alpha");*/}
+                    {/*        sp.delete("symbol");*/}
+                    {/*        sp.delete("tag");*/}
 
-                            navigate({ search: `?${sp.toString()}` });
-                        }}
-                    />
+                    {/*        navigate({ search: `?${sp.toString()}` });*/}
+                    {/*    }}*/}
+                    {/*/>*/}
 
                     <TrendingWrap>
                         <TrendingInner>
