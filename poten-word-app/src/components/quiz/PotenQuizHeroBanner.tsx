@@ -128,6 +128,15 @@ const HeroWrap = styled.section`
                 0 80px 150px -40px rgb(var(--dash-purple) / 0.25),
                 inset 0 -30px 60px rgba(255, 255, 255, 0.4);
     }
+
+    @media (max-width: 768px) {
+        margin-bottom: 8px;
+        padding-block: 24px 28px;
+    }
+
+    @media (max-width: 480px) {
+        padding-block: 20px 24px;
+    }
 `;
 
 const OverlayLink = styled(Link)`
@@ -176,28 +185,61 @@ const HeroNarrow = styled.div<{ $narrow: boolean }>`
 `;
 
 const TextWrap = styled.div`
-  position: relative;
-  z-index: 2;
+    position: relative;
+    z-index: 2;
+
+    @media (max-width: 768px) {
+        max-width: 100%;
+    }
 `;
 
 const HeroTitle = styled.h1`
-  margin: 0;
-  font-weight: 760;
-  letter-spacing: -0.06em;
-  font-size: clamp(28px, 6vw, 56px);
-  line-height: 1.08;
-  color: var(--title-color);
+    margin: 0;
+    font-weight: 760;
+    letter-spacing: -0.06em;
+    font-size: clamp(28px, 6vw, 56px);
+    line-height: 1.08;
+    color: var(--title-color);
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
 
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.45);
+    @media (max-width: 768px) {
+        font-size: 32px;
+        line-height: 1.12;
+        letter-spacing: -0.05em;
+    }
+
+    @media (max-width: 480px) {
+        font-size: 26px;
+        line-height: 1.16;
+    }
 `;
 
 const HeroSub = styled.p`
-  margin: 12px 0 0 0;
-  letter-spacing: -0.06em;
-  font-size: clamp(14px, 2.6vw, 20px);
-  line-height: 1.6;
-  color: var(--sub-color);
-  max-width: 64ch;
+    margin: 12px 0 0 0;
+    letter-spacing: -0.06em;
+    font-size: clamp(14px, 2.6vw, 20px);
+    line-height: 1.6;
+    color: var(--sub-color);
+    max-width: 64ch;
+
+    @media (max-width: 768px) {
+        margin-top: 10px;
+        font-size: 15px;
+        line-height: 1.55;
+        max-width: 36ch;
+    }
+
+    @media (max-width: 480px) {
+        font-size: 14px;
+        line-height: 1.5;
+        max-width: 30ch;
+    }
+`;
+
+const FloatingIconsWrap = styled.div`
+  @media (max-width: 480px) {
+    display: none;
+  }
 `;
 
 export default function PotenQuizHeroBanner({
@@ -236,7 +278,13 @@ export default function PotenQuizHeroBanner({
             </Inset>
 
             {/* 아이콘 레이어 */}
-            <HeroFloatingIcons srcs={srcs} assetHost={assetHost} {...(iconProps ?? {})} />
+            <FloatingIconsWrap>
+                <HeroFloatingIcons
+                    srcs={srcs}
+                    assetHost={assetHost}
+                    {...(iconProps ?? {})}
+                />
+            </FloatingIconsWrap>
 
             {/* 전면 클릭 링크 */}
             <OverlayLink to={linkTo} aria-label="포텐퀴즈로 이동" />

@@ -208,29 +208,34 @@ const Card = styled.section`
       width: 100%;
       border-radius: 18px;
   }
-`;
 
-const Header = styled.div`
-  display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
-  column-gap: clamp(10px, 2vw, 16px);
-  margin: 6px 0 18px;
-  min-width: 0;
+    @media (max-width: 768px){
+        --wm-size: 30px;
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+
+        aspect-ratio: auto;
+        min-height: auto;
+        height: auto;
+
+        padding: 16px;
+        padding-top: calc(16px + 6px);
+
+        --dock-space: auto;
+        --choices-top-gap: 16px;
+        --choices-raise: 0px;
+        --cta-raise: 0px;
+
+        &[data-showresult="true"]{
+            padding-bottom: 16px;
+        }
+    }
 `;
 
 const QBox = styled.div`
   position: relative;
   margin-left: clamp(-6px, -0.5vw, -2px);
-`;
-
-const QLabel = styled.span`
-  font-family: "GhanaChocolate", "Pretendard", "Noto Sans KR", system-ui, sans-serif;
-  font-weight: 400;
-  font-size: var(--wm-size);
-  line-height: 1;
-  color: #121212;
-  display: block;
 `;
 
 const TitleWrap = styled.div`
@@ -241,43 +246,6 @@ const TitleWrap = styled.div`
   transform: translateY(var(--q-shift));
   min-width: 0;
   overflow-wrap: anywhere;
-`;
-
-const MeaningfulWrap = css`
-  white-space: pre-wrap;      /* \n, 문장 단위 개행 유지 */
-  word-break: keep-all;       /* 한국어 단어 중간(가나다라) 쪼개짐 방지 */
-  overflow-wrap: break-word;  /* URL/긴영단어/코드 같은 긴 토큰은 줄 넘치면 분해 */
-  line-break: strict;         /* CJK 줄바꿈 품질 개선(지원 브라우저에서만 적용) */
-  hyphens: auto;              /* 영문 하이픈 분할(가능할 때) */
-`;
-
-const Title = styled.h2`
-  margin: 0;
-  font-size: clamp(18px, 2.4vw, 26px);
-  font-weight: 750;
-  color: ${UI.text};
-  letter-spacing: -0.02em;
-  line-height: 1.25;
-  ${MeaningfulWrap}
-`;
-
-const Emblem = styled.img`
-    --emblem-size: clamp(110px, 15vw, 210px);
-    --emblem-nudge-x: clamp(12px, 1.2vw, 30px);
-
-    position: absolute;
-    right: 0;
-    bottom: calc(100% + clamp(6px, 1vw, 12px));
-    width: var(--emblem-size);
-    height: auto;
-
-    user-select: none;
-    pointer-events: none;
-    z-index: 0;
-    filter: drop-shadow(0 6px 14px rgba(0,0,0,.12));
-    transform: translateX(var(--emblem-nudge-x));
-
-    @media (max-width: 640px) { display: none; }
 `;
 
 /* 우측 진행 뱃지 (객관식과 동일 톤) */
@@ -301,6 +269,100 @@ const StatusTray = styled.div`
     --o-scale: .55;
     --o-inset: calc(var(--stat-inset) * var(--o-scale));
     --mark-alpha: .75;
+`;
+
+const RightCol = styled.div`
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: clamp(6px, .9vw, 10px);
+    transform: translateY(var(--q-shift));
+
+    & ${StatusTray} {
+        transform: none;
+    }
+`;
+
+const Header = styled.div`
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    column-gap: clamp(10px, 2vw, 16px);
+    margin: 6px 0 18px;
+    min-width: 0;
+
+    @media (max-width: 768px){
+        grid-template-columns: 1fr;
+        row-gap: 10px;
+        margin: 0 0 12px;
+
+        & ${QBox}{
+            margin-left: 0;
+        }
+
+        & ${TitleWrap}{
+            width: 100%;
+            transform: none;
+        }
+
+        & ${RightCol}{
+            justify-self: start;
+            align-items: flex-start;
+            transform: none;
+        }
+    }
+`;
+
+const QLabel = styled.span`
+  font-family: "GhanaChocolate", "Pretendard", "Noto Sans KR", system-ui, sans-serif;
+  font-weight: 400;
+  font-size: var(--wm-size);
+  line-height: 1;
+  color: #121212;
+  display: block;
+`;
+
+const MeaningfulWrap = css`
+  white-space: pre-wrap;      /* \n, 문장 단위 개행 유지 */
+  word-break: keep-all;       /* 한국어 단어 중간(가나다라) 쪼개짐 방지 */
+  overflow-wrap: break-word;  /* URL/긴영단어/코드 같은 긴 토큰은 줄 넘치면 분해 */
+  line-break: strict;         /* CJK 줄바꿈 품질 개선(지원 브라우저에서만 적용) */
+  hyphens: auto;              /* 영문 하이픈 분할(가능할 때) */
+`;
+
+const Title = styled.h2`
+    margin: 0;
+    font-size: clamp(18px, 2.4vw, 26px);
+    font-weight: 750;
+    color: ${UI.text};
+    letter-spacing: -0.02em;
+    line-height: 1.25;
+    ${MeaningfulWrap}
+
+    @media (max-width: 768px){
+    font-size: 17px;
+    line-height: 1.45;
+}
+`;
+
+const Emblem = styled.img`
+    --emblem-size: clamp(110px, 15vw, 210px);
+    --emblem-nudge-x: clamp(12px, 1.2vw, 30px);
+
+    position: absolute;
+    right: 0;
+    bottom: calc(100% + clamp(6px, 1vw, 12px));
+    width: var(--emblem-size);
+    height: auto;
+
+    user-select: none;
+    pointer-events: none;
+    z-index: 0;
+    filter: drop-shadow(0 6px 14px rgba(0,0,0,.12));
+    transform: translateX(var(--emblem-nudge-x));
+
+    @media (max-width: 640px) { display: none; }
 `;
 
 const StatusNum = styled.span`
@@ -370,39 +432,45 @@ const XMark = styled.span`
     }
 `;
 
-const RightCol = styled.div`
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: clamp(6px, .9vw, 10px);
-    transform: translateY(var(--q-shift));
+/* O / X 선택 영역 */
+const Choices = styled.div`
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(16px, 3vw, 36px);
+    align-items: start;
+    justify-items: center;
+    margin: calc(var(--choices-top-gap) - var(--choices-raise)) 0 28px;
 
-    & ${StatusTray} {
-        transform: none;
+    @media (max-width: 768px){
+        gap: 14px;
+        margin: 16px 0 20px;
+    }
+
+    @media (max-width: 480px){
+        gap: 10px;
     }
 `;
 
-/* O / X 선택 영역 */
-const Choices = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(16px, 3vw, 36px);
-  align-items: start;
-  justify-items: center;
-  margin: calc(var(--choices-top-gap) - var(--choices-raise)) 0 28px;
-`;
-
 const circleBase = css`
-  width: clamp(120px, 22vw, 180px);
-  height: clamp(120px, 22vw, 180px);
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  background: #5670f1;
-  box-shadow: 0 10px 24px rgba(29, 78, 216, 0.25),
+    width: clamp(120px, 22vw, 180px);
+    height: clamp(120px, 22vw, 180px);
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: #5670f1;
+    box-shadow: 0 10px 24px rgba(29, 78, 216, 0.25),
     inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  border: 1px solid rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+
+    @media (max-width: 768px){
+        width: 108px;
+        height: 108px;
+    }
+
+    @media (max-width: 480px){
+        width: 96px;
+        height: 96px;
+    }
 `;
 
 const OXButton = styled.button<{
@@ -564,17 +632,20 @@ const fadeInUp = keyframes`
 const FloatingNext = styled.div<{ $showDock?: boolean }>`
     position: absolute;
     right: var(--pad);
-
     bottom: ${({ $showDock }) =>
             $showDock
-                    ? `calc(
-          var(--pad) + var(--dock-space)
-          - var(--cta-raise)
-        )`
+                    ? `calc(var(--pad) + var(--dock-space) - var(--cta-raise))`
                     : "var(--pad)"};
-
     z-index: 6;
     animation: ${fadeInUp} 0.18s ease-out both;
+
+    @media (max-width: 768px){
+        position: relative;
+        right: auto;
+        bottom: auto;
+        margin-top: 14px;
+        display: flex;
+    }
 `;
 
 const NextButton = styled.button`
@@ -647,6 +718,12 @@ const NextButton = styled.button`
     &:active { transform: translateY(0); }
     &:focus-visible { outline: 3px solid rgba(62,99,224,.35); outline-offset: 3px; }
     &:disabled{ opacity: .55; cursor: not-allowed; transform: none; }
+
+    @media (max-width: 768px){
+        width: 100%;
+        min-width: 0;
+        height: 48px;
+    }
 `;
 
 const ResultDockIn = styled.section`
@@ -691,6 +768,19 @@ const ResultDockIn = styled.section`
     pointer-events: none;
     box-shadow: inset 0 6px 12px rgba(255, 255, 255, 0.35);
   }
+
+    @media (max-width: 768px){
+        position: relative;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transform: none;
+        margin-top: 18px;
+        border-radius: 16px;
+        min-height: auto;
+        max-height: none;
+        padding: 18px 16px;
+    }
 `;
 
 const RRow = styled.div`

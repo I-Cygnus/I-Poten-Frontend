@@ -119,6 +119,11 @@ const Stage = styled.div`
         padding: 0;
         place-items: stretch;
     }
+
+    @media (max-width: 768px){
+        align-items: stretch;
+        padding: 12px;
+    }
 `;
 const Shell = styled.div`
     width: 100%;
@@ -138,6 +143,13 @@ const Shell = styled.div`
         place-items: stretch;
         transform: none;
         margin: 0;
+    }
+
+    @media (max-width: 768px){
+        min-height: auto;
+        gap: 0;
+        place-items: stretch;
+        transform: none;
     }
 `;
 const Card = styled.section`
@@ -165,24 +177,54 @@ const Card = styled.section`
     border-radius: ${UI.radius}px; box-shadow: ${UI.shadow};
     padding: var(--pad); padding-top: calc(var(--pad) + var(--card-top-inset));
     overflow: hidden;
-    aspect-ratio: 16/9; min-height: clamp(520px, 56vw, 760px);
-
-    body[data-card-modal="true"] & {
-        min-height: 0;
-        height: 100%;
-        width: 100%;
-        border-radius: 18px; /* 모달 라운드와 맞추고 싶으면 */
-    }
+    aspect-ratio: 16/9;
+    min-height: clamp(520px, 56vw, 760px);
 
     &[data-showresult="true"]{
         padding-bottom: calc(var(--pad) + var(--dock-space));
     }
+
+    @media (max-width: 1180px){
+        aspect-ratio: auto;
+        min-height: auto;
+        height: auto;
+        max-width: 920px;
+        margin: 0 auto;
+
+        --dock-space: auto;
+        --cta-raise: 0px;
+
+        &[data-showresult="true"]{
+            padding-bottom: 20px;
+        }
+    }
+
+    @media (max-width: 768px){
+        --wm-size: 30px;
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+
+        aspect-ratio: auto;
+        min-height: auto;
+        height: auto;
+
+        padding: 16px;
+        padding-top: calc(16px + var(--card-top-inset));
+
+        border-radius: 18px;
+
+        --dock-space: auto;
+        --card-top-inset: 6px;
+        --choices-top-gap: 14px;
+        --cta-raise: 0px;
+
+        &[data-showresult="true"]{
+            padding-bottom: 16px;
+        }
+    }
 `;
-const Header = styled.div`
-    display: grid; grid-template-columns: auto 1fr auto;
-    align-items: center; column-gap: clamp(10px, 2vw, 16px);
-    margin: 6px 0 18px; min-width: 0;
-`;
+
 const QBox = styled.div`
     position: relative; margin-left: clamp(-6px,-.5vw,-2px);
 `;
@@ -201,40 +243,74 @@ const MeaningfulWrap = css`
 const TitleWrap = styled.div`
     display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
     transform: translateY(var(--q-shift)); min-width: 0; overflow-wrap: anywhere;
+
+    @media (max-width: 768px){
+        align-items: flex-start;
+        transform: none;
+    }
 `;
+
 const Title = styled.h2`
-    margin: 0; font-size: clamp(18px,2.4vw,26px); font-weight: 750;
-    color: ${UI.text}; letter-spacing: -.02em; line-height: 1.25;
+    margin: 0;
+    font-size: clamp(18px, 2.4vw, 26px);
+    font-weight: 750;
+    color: ${UI.text};
+    letter-spacing: -.02em;
+    line-height: 1.25;
+    word-break: keep-all;
+    overflow-wrap: break-word;
+
+    @media (max-width: 768px){
+        font-size: 17px;
+        line-height: 1.45;
+    }
 `;
 
 /* ====== 우측 진행 뱃지 + 엠블럼 (참고 통일) ====== */
 const StatusTray = styled.div`
-    display: inline-flex; align-items: center;
+    display: inline-flex;
+    align-items: center;
     gap: clamp(6px, .9vw, 10px);
     transform: translateY(var(--q-shift));
     font-family: 'GhanaChocolate','Pretendard','Noto Sans KR',system-ui,sans-serif;
-    font-weight: 400; letter-spacing: -.02em;
+    font-weight: 400;
+    letter-spacing: -.02em;
     -webkit-font-smoothing: antialiased;
     font-variant-numeric: tabular-nums;
-    --stat-size:  clamp(34px, 2.6vw, 42px);
-    --stat-font:  clamp(17px, 1.8vw, 24px);
+
+    --stat-size: clamp(34px, 2.6vw, 42px);
+    --stat-font: clamp(17px, 1.8vw, 24px);
     --stat-inset: clamp(5px, .7vw, 8px);
-    --stat-ring:  clamp(4px, .6vw, 6px);
-    --x-width: 78%; --x-thick: clamp(4px, .6vw, 6px);
-    --o-scale: .55; --o-inset: calc(var(--stat-inset) * var(--o-scale));
+    --stat-ring: clamp(4px, .6vw, 6px);
+    --x-width: 78%;
+    --x-thick: clamp(4px, .6vw, 6px);
+    --o-scale: .55;
+    --o-inset: calc(var(--stat-inset) * var(--o-scale));
     --mark-alpha: .75;
+
+    @media (max-width: 768px){
+        --stat-size: 28px;
+        --stat-font: 14px;
+        --stat-inset: 4px;
+        --stat-ring: 3px;
+        --x-thick: 3px;
+        --o-inset: 3px;
+        gap: 6px;
+    }
 `;
+
 const StatusNum = styled.span`
     position: relative;
     z-index: 2;
 `;
 const OMark = styled.span`
     position: absolute;
-    inset: var(--o-inset, var(--stat-inset));
+    inset: var(--o-inset, 4px);
     border-radius: 999px;
     pointer-events: none;
     z-index: 1;
-    border: var(--stat-ring) solid rgba(249,93,93,var(--mark-alpha,.75));
+    border: var(--stat-ring, 3px) solid rgba(249,93,93,var(--mark-alpha,.75));
+    box-sizing: border-box;
 `;
 const StatusBtn = styled.button<{ $state?: Judge; $active?: boolean }>`
     all: unset; /* span과 동일한 초기화 */
@@ -267,7 +343,43 @@ const RightCol = styled.div`
     gap: clamp(6px, .9vw, 10px);
     transform: translateY(var(--q-shift));
     & ${/* sc-selector */StatusTray} { transform: none; }
+
+    @media (max-width: 768px){
+        align-items: flex-start;
+        gap: 8px;
+        transform: none;
+    }
 `;
+
+const Header = styled.div`
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    column-gap: clamp(10px, 2vw, 16px);
+    margin: 6px 0 18px;
+    min-width: 0;
+
+    @media (max-width: 768px){
+        grid-template-columns: 1fr;
+        row-gap: 10px;
+        margin: 0 0 12px;
+
+        & ${QBox}{
+            margin-left: 0;
+        }
+
+        & ${TitleWrap}{
+            width: 100%;
+        }
+
+        & ${RightCol}{
+            grid-column: auto;
+            justify-self: start;
+            align-items: flex-start;
+        }
+    }
+`;
+
 const Emblem = styled.img`
     --emblem-size: clamp(110px, 15vw, 210px);
     --emblem-nudge-x: clamp(12px, 1.2vw, 30px);
@@ -297,7 +409,13 @@ const List = styled.ul`
     margin-left: calc(-1 * (var(--opt-left-nudge) + var(--bullet-shift)));
 
     @media (max-width: 480px){
-        --bullet-shift: 1.2cm;
+        margin-left: 0;
+    }
+
+    @media (max-width: 768px){
+        gap: 12px;
+        margin-top: 18px;
+        margin-left: 0;
     }
 `;
 const OptionWrap = styled.li`
@@ -324,6 +442,18 @@ const NumBullet = styled.button<{ $active?: boolean }>`
     &:focus-visible { outline: 3px solid rgba(62,99,224,.35); }
     &:disabled{ opacity: .55; cursor: not-allowed; }
     svg { width: 70%; height: 70%; }
+`;
+
+const PillSlot = styled.div`
+    position: relative;
+    z-index: 2;
+    grid-column: 1 / 2;
+    display: grid;
+    align-items: center;
+    justify-items: start;
+    width: var(--pill-col);
+    min-height: clamp(24px, 3.6vw, 32px);
+    pointer-events: none;
 `;
 
 let OptionRow: IStyledComponentBase<
@@ -366,9 +496,51 @@ OptionRow = styled.div<{
     & ${OptText} { margin-left: calc(-1 * var(--numtext-tighten)); }
 
     @media (max-width: 480px){
-        --pill-col: clamp(68px, 18vw, 104px);
-        --num-left-nudge: clamp(8px, 1.2vw, 10px);
-        --numtext-tighten: clamp(8px, 1.8vw, 14px);
+        grid-template-columns: auto 1fr;
+        padding-left: 8px;
+
+        & ${PillSlot}{
+            grid-column: 1 / -1;
+            margin-bottom: 4px;
+        }
+
+        & ${NumBullet}{
+            margin-left: 0;
+        }
+
+        & ${OptText}{
+            margin-left: 0;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+    }
+
+    @media (max-width: 768px){
+        --pill-col: auto;
+        grid-template-columns: auto 1fr;
+        column-gap: 12px;
+        align-items: start;
+        padding: 12px;
+        border-radius: 16px;
+        background: #f8fbff;
+        border: 1px solid #e4ecff;
+
+        & ${PillSlot}{
+            grid-column: 1 / -1;
+            width: 100%;
+            min-height: 0;
+            margin-bottom: 2px;
+        }
+
+        & ${NumBullet}{
+            margin-left: 0;
+        }
+
+        & ${OptText}{
+            margin-left: 0;
+            font-size: 17px;
+            line-height: 1.45;
+        }
     }
 `;
 
@@ -429,17 +601,6 @@ const SelectedMark = styled.span`
         stroke='%233E63E0' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'>
         <path d='M5 12.5 L10 17.5 L19 7.5'/></svg>");
         }
-`;
-const PillSlot = styled.div`
-    position: relative;
-    z-index: 2;
-    grid-column: 1 / 2;
-    display: grid;
-    align-items: center;
-    justify-items: start;
-    width: var(--pill-col);
-    min-height: clamp(24px, 3.6vw, 32px);
-    pointer-events: none;
 `;
 
 /* 정답/오답 Pill (OX와 동일 톤) */
@@ -526,6 +687,32 @@ const ResultDockIn = styled.section<{ $correct?: boolean }>`
         pointer-events:none;
         box-shadow: inset 0 6px 12px rgba(255,255,255,.35);
     }
+
+    @media (max-width: 1180px){
+        position: relative;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transform: none;
+        margin-top: 18px;
+        border-radius: 16px;
+        min-height: auto;
+        max-height: none;
+        padding: 18px 18px;
+    }
+
+    @media (max-width: 768px){
+        position: relative;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        transform: none;
+        margin-top: 18px;
+        border-radius: 16px;
+        min-height: auto;
+        max-height: none;
+        padding: 18px 16px;
+    }
 `;
 const RRow = styled.div`
     display: grid;
@@ -533,6 +720,11 @@ const RRow = styled.div`
     align-items: baseline;
     gap: 12px;
     & + & { margin-top: clamp(10px, 1.2vw, 14px); }
+
+    @media (max-width: 768px){
+        grid-template-columns: 1fr;
+        gap: 6px;
+    }
 `;
 const RKey = styled.span`
     font-family: 'GhanaChocolate','Pretendard','Noto Sans KR',system-ui,sans-serif;
@@ -580,6 +772,22 @@ const FloatingNext = styled.div<{ $showDock?: boolean }>`
 
     z-index: 6;
     animation: ${fadeInUp} 0.18s ease-out both;
+
+    @media (max-width: 1180px){
+        position: relative;
+        right: auto;
+        bottom: auto;
+        margin-top: 16px;
+        display: flex;
+    }
+
+    @media (max-width: 768px){
+        position: relative;
+        right: auto;
+        bottom: auto;
+        margin-top: 16px;
+        display: flex;
+    }
 `;
 const NextButton = styled.button`
     appearance: none; border: 0;
@@ -650,6 +858,12 @@ const NextButton = styled.button`
     &:active { transform: translateY(0); }
     &:focus-visible { outline: 3px solid rgba(62,99,224,.35); outline-offset: 3px; }
     &:disabled{ opacity: .55; cursor: not-allowed; transform: none; }
+
+    @media (max-width: 768px){
+        width: 100%;
+        min-width: 0;
+        height: 48px;
+    }
 `;
 
 /* ====== 컴포넌트 ====== */

@@ -90,7 +90,8 @@ const HeroWrap = styled.section`
     background-repeat: no-repeat;
 
     @media (max-width: 640px) {
-        min-height: 220px;
+        min-height: 320px;
+        padding-block: 40px 72px;
 
         background:
             radial-gradient(
@@ -189,6 +190,12 @@ const HeroNarrow = styled.div<{ $narrow: boolean }>`
     @media (max-width: 768px) {
         min-height: 240px;
     }
+
+    @media (max-width: 640px) {
+        min-height: 208px;
+        align-items: flex-start;
+        justify-content: flex-start;
+    }
 `;
 
 const TextWrap = styled.div`
@@ -203,6 +210,23 @@ const TextWrap = styled.div`
     text-align: center;
     gap: 6px;
     transform: translate(-50%, -50%);
+
+    @media (max-width: 768px) {
+        top: 46%;
+        width: calc(100% - 32px);
+        gap: 4px;
+    }
+
+    @media (max-width: 640px) {
+        position: relative;
+        top: auto;
+        left: auto;
+        transform: none;
+        width: min(100%, 560px);
+        align-items: flex-start;
+        text-align: left;
+        gap: 6px;
+    }
 `;
 
 const BrandTitle = styled.h1`
@@ -212,6 +236,12 @@ const BrandTitle = styled.h1`
     color: var(--title-color);
     letter-spacing: -0.02em;
     line-height: 1.1;
+
+    @media (max-width: 640px) {
+        margin-bottom: 6px;
+        font-size: 44px;
+        line-height: 1;
+    }
 `;
 
 const HeroTitle = styled.h2`
@@ -221,9 +251,16 @@ const HeroTitle = styled.h2`
     letter-spacing: -0.02em;
     color: var(--title-color);
     line-height: 1.25;
+
     opacity: 0;
     animation: ${fadeUp} 0.55s ease forwards;
     animation-delay: 0.12s;
+
+    @media (max-width: 640px) {
+        font-size: 28px;
+        line-height: 1.25;
+        word-break: keep-all;
+    }
 `;
 
 const HeroDesc = styled.p`
@@ -237,6 +274,11 @@ const HeroDesc = styled.p`
     opacity: 0;
     animation: ${fadeUp} 0.55s ease forwards;
     animation-delay: 0.2s;
+
+    @media (max-width: 640px) {
+        font-size: 15px;
+        line-height: 1.6;
+    }
 `;
 
 const HeroIconWrap = styled.div<{ $align: "left" | "center" }>`
@@ -250,6 +292,11 @@ const HeroIconWrap = styled.div<{ $align: "left" | "center" }>`
     pointer-events: none;
     transform: translateX(-50%);
     width: 105vw;
+
+    @media (max-width: 640px) {
+        bottom: 0;
+        width: min(1400px, 92vw);
+    }
 `;
 
 const HeroIcon = styled.img<{ $width: string; $height?: string; $scale: number }>`
@@ -261,6 +308,13 @@ const HeroIcon = styled.img<{ $width: string; $height?: string; $scale: number }
     opacity: 0.18;
     transform: translateY(48px) scale(${({ $scale }) => $scale});
     transform-origin: center bottom;
+
+    @media (max-width: 640px) {
+        opacity: 0.16;
+        filter: saturate(1.15) contrast(1.1) brightness(0.99) drop-shadow(0 10px 22px rgba(15, 23, 42, 0.08));
+        -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 100%);
+        mask-image: linear-gradient(180deg, transparent 0%, #000 18%, #000 100%);
+    }
 `;
 
 function absolutize(src: string, hostOrigin?: string): string {

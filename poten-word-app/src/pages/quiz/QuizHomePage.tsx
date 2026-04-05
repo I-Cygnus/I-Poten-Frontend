@@ -1240,25 +1240,18 @@ const HeroPanel = styled.div`
     padding: clamp(16px, 3vw, 24px) clamp(20px, 4vw, 32px);
     padding-left: calc(clamp(20px, 4vw, 32px) + max(0px, var(--arrow-safe) - var(--content-nudge)));
     margin-top: 25px;
-    display: flex; align-items: center;
+    display: flex;
+    align-items: center;
     overflow: visible;
     --art-w: min(280px, 28vw);
     --art-right: clamp(12px, 3vw, 28px);
     --art-pop: -22px;
     --art-space: calc(var(--art-w) + var(--art-right) + 8px);
 
-    &[data-slide="initials"] {
-        --art-right: clamp(22px, 9.6vw, 40px); /* 오른쪽 여유 4~6px 증가 */
-        --art-nudge-x: -10px;
-        /* 필요하면 아주 미세하게 축소
-            --art-scale: 0.84;
-        */
-    }
-
-    &::before{
-        content:""; position:absolute; inset:0; border-radius:inherit;
-        background: radial-gradient(900px 400px at 50% -180px, rgba(67,105,229,.06) 0%, rgba(67,105,229,0) 60%);
-        pointer-events:none;
+    @media (max-width: 760px) {
+        min-height: 190px;
+        padding: 18px 18px 18px 18px;
+        border-radius: 20px;
     }
 `;
 
@@ -1349,32 +1342,53 @@ const Title = styled.h1`
     letter-spacing: -0.03em;
     color: ${UI.text};
     font-weight: 700;
+
+    @media (max-width: 760px) {
+        font-size: 24px;
+        line-height: 1.28;
+    }
+
+    @media (max-width: 420px) {
+        font-size: 21px;
+    }
 `;
+
 const Em = styled.span` color: ${UI.primaryBlue}; font-weight: 750; letter-spacing: -0.02em `;
 const Subtitle = styled.p`
-    margin: 0; color: ${UI.sub}; font-size: clamp(14px, 1.6vw, 16px); letter-spacing: -0.02em;
+    margin: 0;
+    color: ${UI.sub};
+    font-size: clamp(14px, 1.6vw, 16px);
+    letter-spacing: -0.02em;
+
+    @media (max-width: 760px) {
+        font-size: 13px;
+        line-height: 1.5;
+    }
 `;
 
 /* 배너 CTA: QuizCta 동일 */
 const CTA = styled.button<{ $size?: "sm" | "md" }>`
-    /* 기존 토큰 */
-    --cta-h: 48px; --cta-px: 18px; --cta-fs: 16px; --cta-ic: 28px;
+    --cta-h: 48px;
+    --cta-px: 18px;
+    --cta-fs: 16px;
+    --cta-ic: 28px;
+    --cta-w: auto;
 
     ${({ $size }) => $size === "sm" && `
-    --cta-h: 40px; --cta-px: 14px; --cta-fs: 14px; --cta-ic: 24px;
-  `}
+      --cta-h: 40px;
+      --cta-px: 14px;
+      --cta-fs: 14px;
+      --cta-ic: 24px;
+    `}
 
-        /* ⬇ 가로 길이 고정/제한용 변수 추가 */
-    --cta-w: auto;           /* 예: 120px 로 덮어쓰면 고정폭 버튼 */
     width: var(--cta-w);
     max-width: 100%;
     text-align: left;
-
     margin-top: 15px;
 
     position: relative;
     isolation: isolate;
-    overflow: hidden;         /* 말줄임을 위해 필요 */
+    overflow: hidden;
     height: var(--cta-h);
     padding: 0 var(--cta-px);
     border: 0;
@@ -1385,33 +1399,48 @@ const CTA = styled.button<{ $size?: "sm" | "md" }>`
     font-size: var(--cta-fs);
     letter-spacing: -0.02em;
     cursor: pointer;
-    display: inline-flex; align-items: center; gap: 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     -webkit-tap-highlight-color: transparent;
     transition: transform 80ms ease;
 
-    /* 텍스트만 줄어들게 (아이콘은 유지) */
     & > strong{
         font-weight: 600;
         flex: 1 1 auto;
-        min-width: 0;              /* flex 아이템 말줄임 핵심 */
+        min-width: 0;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 
     & > * { position: relative; z-index: 1; }
+
     &::before{
-        content:""; position:absolute; inset:0;
+        content:"";
+        position:absolute;
+        inset:0;
         background:${UI.color.quizHover};
-        transform:scaleX(0); transform-origin:left center;
+        transform:scaleX(0);
+        transform-origin:left center;
         transition: transform 260ms ease;
-        z-index:-1; pointer-events:none;
+        z-index:-1;
+        pointer-events:none;
     }
-    &:hover::before, &:focus-visible::before { transform: scaleX(1); }
+
+    &:hover::before,
+    &:focus-visible::before { transform: scaleX(1); }
+
     &:active { transform: scale(0.98); }
     &:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(79,118,241,.28); }
 
-    @media (prefers-reduced-motion: reduce) { &::before{ transition: none; } }
+    @media (max-width: 760px) {
+        --cta-h: 42px;
+        --cta-fs: 14px;
+        --cta-ic: 24px;
+        --cta-w: 210px;
+        margin-top: 10px;
+    }
 `;
 
 const CtaIcon = styled.span`
@@ -1427,25 +1456,35 @@ const CtaIcon = styled.span`
 
 /* ◀/▶ 애로우 버튼 */
 const ArrowButton = styled.button<{ $side: "left" | "right" }>`
-    position: absolute; top: 50%;
+    position: absolute;
+    top: 50%;
     ${(p) => (p.$side === "left" ? "left: 20px;" : "right: 20px;")}
     transform: translateY(-50%);
-    width: 44px; height: 44px;
-    border-radius: 10px; border: 0; background: transparent;
-    display: grid; place-items: center; cursor: pointer;
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 0;
+    background: transparent;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    z-index: 3;
 
-    z-index: 3; /* 패널/텍스트 위로 */
-    /* 모바일에서 누르기 쉽게 히트영역 확장 */
     &::after{
-        content:""; position:absolute; inset:-6px; border-radius:12px;
+        content:"";
+        position:absolute;
+        inset:-6px;
+        border-radius:12px;
     }
 
     &:hover svg { stroke: ${UI.arrowHover}; }
     &:active { transform: translateY(-50%) scale(0.98); }
     &:focus-visible { outline: 3px solid rgba(143,178,255,.6); outline-offset: 2px; }
 
-    @media (min-width: 1280px) {
-        ${(p) => (p.$side === "left" ? "left: 10px;" : "right: 10px;")}
+    @media (max-width: 760px) {
+        width: 36px;
+        height: 36px;
+        ${(p) => (p.$side === "left" ? "left: 8px;" : "right: 8px;")}
     }
 `;
 
@@ -1718,7 +1757,7 @@ const IconImg = styled.img<{ $big?: boolean }>`
 const ActionItem = styled.button`
     appearance: none;
     width: 100%;
-    min-height: 96px;          /* 기존 110px */
+    min-height: 96px;
     padding: 15px 18px 13px;
     border-radius: 22px;
     border: 1px solid #d7dbe4;
@@ -1733,6 +1772,12 @@ const ActionItem = styled.button`
             box-shadow 180ms ease,
             border-color 180ms ease,
             background-color 180ms ease;
+
+    @media (max-width: 640px) {
+        min-height: 88px;
+        padding: 14px 14px 12px;
+        border-radius: 18px;
+    }
 `;
 
 const ActionHeader = styled.div`
@@ -1797,15 +1842,20 @@ const ActionLabel = styled.span`
 `;
 
 const ActionDesc = styled.span`
-    display: block;
+    display: -webkit-box;
     width: 100%;
     font-size: 13px;
-    line-height: 1.3;
+    line-height: 1.4;
     color: #b8bec9;
     letter-spacing: -0.02em;
-    white-space: nowrap;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
+
+    @media (max-width: 640px) {
+        font-size: 12px;
+        line-height: 1.35;
+    }
 `;
 
 /* ===== 직무별 퀴즈 영역 ===== */
@@ -1953,19 +2003,26 @@ const TagPill = styled.span<{ $tone: ToneKey }>`
 `;
 
 const StartPill = styled.span<{ $tone: ToneKey }>`
-    display: inline-flex; align-items: center; justify-content: center;
-    height: 32px; padding: 0 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 32px;
+    padding: 0 14px;
     border-radius: 10px;
     background: ${p => tones[p.$tone].startBg};
-    color: #fff; font-weight: 750; font-size: 15px; letter-spacing: -.01em;
+    color: #fff;
+    font-weight: 750;
+    font-size: 15px;
+    letter-spacing: -.01em;
     box-shadow: 0 6px 14px ${p => tones[p.$tone].shadow};
     user-select: none;
+    white-space: nowrap;
+    flex: 0 0 auto;
 
-    white-space: nowrap;   /* “시작” 절대 줄바꿈 안 되게 */
-    flex: 0 0 auto;        /* 줄어들지 않도록 고정 */
-
-    @media (hover:hover) and (pointer:fine) {
-        &:hover { background: ${p => tones[p.$tone].startHover}; }
+    @media (max-width: 480px) {
+        height: 30px;
+        padding: 0 12px;
+        font-size: 14px;
     }
 `;
 
@@ -1976,6 +2033,12 @@ const CardRow = styled.div`
     align-items: center;
     justify-content: space-between;
     gap: 12px;
+
+    @media (max-width: 480px) {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+    }
 `;
 
 /* 제목 */
@@ -1994,17 +2057,19 @@ const CardTitle = styled.h3`
     font-weight: 700;
     letter-spacing: -0.015em;
     color: ${UI.text};
-
     flex: 1 1 auto;
     min-width: 0;
-
     word-break: keep-all;
     overflow-wrap: normal;
-
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
     overflow: hidden;
+
+    @media (max-width: 480px) {
+        margin-left: 0;
+        font-size: 16px;
+    }
 `;
 
 const MoreRow = styled.div`
@@ -2107,25 +2172,41 @@ const Scrim = styled.div`
 `;
 
 const Sheet = styled.div`
-    position: fixed; z-index: 1001;
-    top: 50%; left: 50%; transform: translate(-50%, -50%);
+    position: fixed;
+    z-index: 1001;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
     width: min(760px, calc(100% - 32px));
     max-height: min(84vh, calc(100vh - 32px));
-    display: flex; flex-direction: column;
-
+    display: flex;
+    flex-direction: column;
     background: #fff;
     border: 1px solid ${MODAL.sheetBorder};
     border-radius: ${MODAL.sheetRadius};
     box-shadow: ${MODAL.sheetShadow};
     overflow: hidden;
+
+    @media (max-width: 640px) {
+        width: calc(100% - 20px);
+        max-height: calc(100vh - 20px);
+        border-radius: 16px;
+    }
 `;
 
 const SheetHeader = styled.div`
     position: relative;
     padding: 18px 20px 14px;
-    display:flex; align-items:center; gap:12px;
+    display:flex;
+    align-items:center;
+    gap:12px;
     border-bottom: 1px solid ${MODAL.sheetBorder};
     background: ${MODAL.headerBg};
+
+    @media (max-width: 640px) {
+        padding: 14px 14px 12px;
+        gap: 10px;
+    }
 `;
 
 const TitleWrap = styled.div`
@@ -2155,7 +2236,12 @@ const CloseX = styled.button`
 `;
 const SheetBody = styled.div`
     padding: 16px 20px 8px;
-    overflow: auto; scrollbar-gutter: stable;
+    overflow: auto;
+    scrollbar-gutter: stable;
+
+    @media (max-width: 640px) {
+        padding: 14px 14px 6px;
+    }
 `;
 const Section = styled.section`
     &:not(:first-child){ margin-top: 16px; }
@@ -2185,11 +2271,20 @@ const Select = styled.select`
 `;
 
 const SheetFooter = styled.div`
-    position: sticky; bottom: 0;
-    display:flex; justify-content:flex-end; gap:10px;
+    position: sticky;
+    bottom: 0;
+    display:flex;
+    justify-content:flex-end;
+    gap:10px;
     padding: 12px 20px;
     background: linear-gradient(180deg, rgba(255,255,255,.85), #fff 60%);
     border-top: 1px solid #e5e7eb;
+
+    @media (max-width: 640px) {
+        padding: 10px 14px 14px;
+        flex-direction: column;
+        align-items: stretch;
+    }
 `;
 
 const Ghost = styled.button`
@@ -2197,10 +2292,8 @@ const Ghost = styled.button`
     padding: 0 14px;
     border-radius: ${MODAL.btnRadius};
     min-width: 72px;
-
     font-weight: 800;
     letter-spacing: -0.02em;
-
     background: #fff;
     color: ${UI.primaryBlue};
     border: 1px solid ${UI.primaryBlue};
@@ -2208,6 +2301,10 @@ const Ghost = styled.button`
 
     &:hover { background: #eef2ff; }
     &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.18); }
+
+    @media (max-width: 640px) {
+        width: 100%;
+    }
 `;
 
 const Primary = styled.button`
@@ -2215,10 +2312,8 @@ const Primary = styled.button`
     padding: 0 16px;
     border-radius: ${MODAL.btnRadius};
     min-width: 96px;
-
     font-weight: 800;
     letter-spacing: -0.02em;
-
     background: ${UI.primaryBlue};
     border: 1px solid ${UI.primaryBlue};
     color: #fff;
@@ -2226,6 +2321,10 @@ const Primary = styled.button`
 
     &:hover { filter: brightness(0.96); }
     &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.18); }
+
+    @media (max-width: 640px) {
+        width: 100%;
+    }
 `;
 
 const TitleInputRow = styled.div`

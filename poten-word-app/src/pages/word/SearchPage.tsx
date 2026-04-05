@@ -443,6 +443,10 @@ const PaginationRow = styled.div`
     padding-top: 6px;
     width: fit-content;
     margin: 0 auto;
+
+    @media (max-width: 640px) {
+        width: 100%;
+    }
 `;
 
 const PaginationBar = styled.nav`
@@ -451,6 +455,14 @@ const PaginationBar = styled.nav`
     justify-content: center;
     gap: 6px;
     padding: 6px;
+
+    @media (max-width: 640px) {
+        width: 100%;
+        justify-content: flex-start;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+    }
 `;
 
 const PagePill = styled.button<{ $active?: boolean }>`
@@ -668,6 +680,12 @@ const AlignWithCheck = styled.div`
     article {
         border-color: ${FILTER_TAB_OUTLINE} !important;
     }
+
+    @media (max-width: 640px) {
+        article h3[id^="term-"] {
+            margin-left: 36px !important;
+        }
+    }
 `;
 
 const SelectToggle = styled.button<{ $on?: boolean }>`
@@ -704,6 +722,11 @@ const SelectToggle = styled.button<{ $on?: boolean }>`
     &:focus-visible {
         outline: none;
         box-shadow: 0 0 0 3px rgba(79, 118, 241, 0.35);
+    }
+
+    @media (max-width: 640px) {
+        top: 18px;
+        left: 16px;
     }
 `;
 
@@ -824,11 +847,20 @@ const Tray = styled.div`
     padding: 10px 14px;
     border-radius: 12px;
     margin-top: 14px;
+
+    @media (max-width: 640px) {
+        align-items: stretch;
+        flex-direction: column;
+    }
 `;
 
 const TrayBtns = styled.div`
     display: flex;
     gap: 8px;
+
+    @media (max-width: 640px) {
+        width: 100%;
+    }
 `;
 
 const TrayGhostBtn = styled.button`
@@ -839,6 +871,10 @@ const TrayGhostBtn = styled.button`
     border-radius: 8px;
     font-weight: 700;
     cursor: pointer;
+
+    @media (max-width: 640px) {
+        flex: 1 1 0;
+    }
 `;
 
 const TrayPrimary = styled.button`
@@ -851,6 +887,10 @@ const TrayPrimary = styled.button`
     letter-spacing: 0.01em;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
     cursor: pointer;
+
+    @media (max-width: 640px) {
+        flex: 1 1 0;
+    }
 `;
 
 const InfoRow = styled.div`
@@ -864,6 +904,10 @@ const InfoRow = styled.div`
     -webkit-overflow-scrolling: touch;
     font-size: ${TOKENS.font.base};
     color: ${TOKENS.color.textMuted};
+
+    @media (max-width: 640px) {
+        font-size: 13px;
+    }
 `;
 
 const Spacer = styled.div`
@@ -2795,6 +2839,10 @@ const Wrapper = styled.div`
     flex-direction: column;
     align-items: center;
     position: relative;
+
+    @media (max-width: 640px) {
+        padding: 56px 20px 92px;
+    }
 `;
 
 const HeroWatermark = styled.div`
@@ -2892,6 +2940,12 @@ const SearchTitle = styled.h2`
     opacity: 0;
     animation: ${fadeUp} 0.55s ease forwards;
     animation-delay: 0.12s;
+
+    @media (max-width: 640px) {
+        font-size: 28px;
+        line-height: 1.25;
+        word-break: keep-all;
+    }
 `;
 
 const SearchDesc = styled.p`
@@ -3303,6 +3357,11 @@ const JobTermsModalCard = styled.div`
   box-shadow: 0 28px 90px rgba(15, 23, 42, 0.24);
   display: flex;
   flex-direction: column;
+
+  @media (max-width: 640px) {
+    max-height: min(88vh, 760px);
+    border-radius: 18px;
+  }
 `;
 
 const JobTermsModalHead = styled.div`
@@ -3312,6 +3371,11 @@ const JobTermsModalHead = styled.div`
   gap: 16px;
   padding: 24px 24px 18px;
   border-bottom: 1px solid #e5e7eb;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    padding: 18px 18px 14px;
+  }
 `;
 
 const JobTermsModalEyebrow = styled.div`
@@ -3353,6 +3417,11 @@ const JobTermsHeaderActions = styled.div`
   align-items: center;
   gap: 10px;
   flex-shrink: 0;
+
+  @media (max-width: 640px) {
+    width: 100%;
+    justify-content: space-between;
+  }
 `;
 
 const JobTermsCloseButton = styled.button`
@@ -3377,11 +3446,20 @@ const JobTermsSaveAllButton = styled.button`
     font-weight: 700;
     letter-spacing: -0.01em;
     cursor: pointer;
+
+    @media (max-width: 640px) {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
 `;
 
 const JobTermsModalBody = styled.div`
   padding: 16px 24px 24px;
   overflow: auto;
+
+  @media (max-width: 640px) {
+    padding: 14px 18px 18px;
+  }
 `;
 
 const JobTermsState = styled.div<{ $error?: boolean }>`
@@ -3407,6 +3485,12 @@ const JobTermsItem = styled.div`
   border: 1px solid #e5e7eb;
   border-radius: 18px;
   background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+  }
 `;
 
 const JobTermsItemMain = styled.div`
@@ -3452,6 +3536,10 @@ const JobTermsItemAction = styled.button`
         cursor: not-allowed;
         background: #cbd5e1;
         color: #f8fafc;
+    }
+
+    @media (max-width: 640px) {
+        align-self: flex-end;
     }
 `;
 
@@ -3584,6 +3672,11 @@ const TrendingRowContent = styled.div`
 
     padding-left: 12px;
     padding-right: 0;
+
+    @media (max-width: 640px) {
+        gap: 12px;
+        padding-left: 0;
+    }
 `;
 
 const RankPill = styled.span<{ $rank: number }>`
@@ -3607,6 +3700,12 @@ const RankPill = styled.span<{ $rank: number }>`
         if ($rank <= 3) return top3;
         return "#0b0b0b";
     }};
+
+    @media (max-width: 640px) {
+        min-width: 48px;
+        padding: 0 10px;
+        font-size: 12px;
+    }
 `;
 
 const RowTitle = styled.div`
@@ -3646,6 +3745,11 @@ const SubTitle = styled.div`
     opacity: 0;
     animation: ${fadeUp} 0.5s ease forwards;
     animation-delay: 0.05s;
+
+    @media (max-width: 640px) {
+        font-size: 18px;
+        text-align: center;
+    }
 `;
 
 const Title = styled.div`
@@ -3666,6 +3770,11 @@ const Title = styled.div`
     opacity: 0;
     animation: ${fadeUp} 0.55s ease forwards;
     animation-delay: 0.18s;
+
+    @media (max-width: 640px) {
+        font-size: 28px;
+        line-height: 1.3;
+    }
 `;
 
 const Cards = styled.div`
@@ -3827,6 +3936,10 @@ const JobCardHeader = styled.div`
     align-items: flex-start;
     gap: 12px;
     margin-bottom: 10px;
+
+    @media (max-width: 640px) {
+        gap: 10px;
+    }
 `;
 
 const JobTitle = styled.h4`

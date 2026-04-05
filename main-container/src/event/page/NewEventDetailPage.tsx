@@ -74,6 +74,10 @@ const Container = styled.div`
     width: min(1120px, 100%);
     margin: 0 auto;
     padding: 28px 24px 0;
+
+    @media (max-width: 640px) {
+        padding: 18px 16px 0;
+    }
 `;
 
 const HeaderRow = styled.div`
@@ -83,6 +87,13 @@ const HeaderRow = styled.div`
     justify-content: flex-start;
     min-height: 56px;
     margin-bottom: 24px;
+
+    @media (max-width: 640px) {
+        min-height: auto;
+        padding-top: 4px;
+        padding-bottom: 4px;
+        margin-bottom: 18px;
+    }
 `;
 
 const BackButton = styled.button`
@@ -106,6 +117,12 @@ const BackButton = styled.button`
     &:hover {
         background: rgba(0, 0, 0, 0.05);
     }
+
+    @media (max-width: 640px) {
+        width: 36px;
+        height: 36px;
+        flex: 0 0 36px;
+    }
 `;
 
 const Title = styled.h1`
@@ -123,6 +140,17 @@ const Title = styled.h1`
     color: #111111;
     text-align: center;
     word-break: keep-all;
+
+    @media (max-width: 640px) {
+        position: static;
+        transform: none;
+        width: 100%;
+        padding: 0 12px 0 8px;
+        margin-left: 4px;
+        font-size: 22px;
+        line-height: 1.35;
+        text-align: left;
+    }
 `;
 
 const FullBleedContent = styled.div`
