@@ -3,10 +3,10 @@
   import { PUBLIC_BASE_URL } from '$env/static/public';
 
   const BASE  = PUBLIC_BASE_URL.replace(/\/+$/, '');
-  const title = '잡스푼 | AI 인터뷰 · 면접 스터디 · 기술 용어 학습';
-  const desc  = '개발자 면접 준비 올인원: AI 모의면접, 오프라인/온라인 면접 스터디, 기술 용어 학습/정리.';
+  const title = '아이포텐(I-Poten) | AI 모의면접 · 면접 준비 플랫폼';
+  const desc  = 'AI 모의면접, 기술 면접 준비, IT 용어 학습을 한 곳에서. 아이포텐과 함께 취업 준비를 시작하세요.';
   const url   = `${BASE}/`;
-  const imgOg = `${BASE}/og/home-hero.png`;
+  const imgOg = `${BASE}/og-image.png`;
 </script>
 
 <svelte:head>
@@ -34,8 +34,8 @@
 
   <!-- JS 꺼짐/봇 전용 텍스트 -->
   <noscript>
-    <h1>잡스푼 — 개발자 면접 준비 플랫폼</h1>
-    <p>AI 모의면접 · 면접 스터디 · 기술 용어 학습</p>
+    <h1>아이포텐(I-Poten) — AI 모의면접 · 면접 준비 플랫폼</h1>
+    <p>AI 모의면접, 기술 면접 준비, IT 용어 학습을 한 곳에서.</p>
   </noscript>
 </main>
 

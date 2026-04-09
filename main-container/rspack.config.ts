@@ -81,6 +81,16 @@ export default defineConfig({
         type: "asset/resource",
         generator: { filename: "assets/[name].[contenthash:6][ext]" }
       },
+      {
+        test: /\.(woff2?|eot|ttf|otf)$/i,
+        type: "asset/resource",
+        generator: { filename: "assets/fonts/[name].[contenthash:6][ext]" }
+      },
+      {
+        test: /\.(mp4|webm|ogg)$/i,
+        type: "asset/resource",
+        generator: { filename: "assets/videos/[name].[contenthash:6][ext]" }
+      },
       { test: /\.css$/, use: ["postcss-loader"], type: "css" },
       {
         test: /\.(jsx?|tsx?)$/,

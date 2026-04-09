@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     siteName: '아이포텐 - 모의면접 AI 플랫폼',
     images: [
       {
-        url: '/og-main.jpg',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
       },
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '모의면접 AI - 면접준비 면접연습 면접 잘 보는 법',
     description: 'AI모의면접으로 실전 면접연습! 면접 잘 보는 법과 면접준비를 한 번에',
-    images: ['/twitter-main.jpg'],
+    images: ['/og-image.png'],
   },
   alternates: {
     canonical: 'https://i-poten.com',

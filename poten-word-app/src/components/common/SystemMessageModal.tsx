@@ -100,12 +100,23 @@ const ToneIcon: React.FC<{ tone: SystemMessageTone }> = ({ tone }) => {
     );
 };
 
+const fadeIn = keyframes`
+    from { opacity: 0; }
+    to   { opacity: 1; }
+`;
+
+const slideUp = keyframes`
+    from { opacity: 0; transform: translate(-50%, calc(-50% + 16px)); }
+    to   { opacity: 1; transform: translate(-50%, -50%); }
+`;
+
 const Scrim = styled.div<{ $zIndex: number }>`
     position: fixed;
     inset: 0;
     z-index: ${({ $zIndex }) => $zIndex};
-    background: rgba(15, 23, 42, 0.45);
-    backdrop-filter: saturate(120%) blur(2px);
+    background: rgba(15, 23, 42, 0.5);
+    backdrop-filter: saturate(140%) blur(3px);
+    animation: ${fadeIn} 0.18s ease;
 `;
 
 type SheetProps = {
@@ -123,20 +134,21 @@ const Sheet = styled.div<SheetProps>`
     display: inline-flex;
     flex-direction: column;
 
-    width: auto;
-    min-width: 320px;
-    max-width: ${({ $size }) =>
-            $size === "wide"
-                    ? "min(720px, calc(100% - 32px))"
-                    : "min(480px, calc(100% - 32px))"};
+    width: ${({ $size }) => ($size === "wide" ? "min(620px, calc(100% - 40px))" : "min(460px, calc(100% - 40px))")};
 
-    max-height: min(80vh, calc(100vh - 48px));
+    max-height: min(85vh, calc(100vh - 48px));
 
-    background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
-    border-radius: 16px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', system-ui, sans-serif;
+
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.07);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.6) inset,
+        0 8px 24px rgba(15, 23, 42, 0.08),
+        0 32px 72px rgba(15, 23, 42, 0.2);
     overflow: hidden;
+    animation: ${slideUp} 0.22s cubic-bezier(0.22, 1, 0.36, 1);
 `;
 
 type SheetHeaderProps = { $hasDescription: boolean };
@@ -146,9 +158,8 @@ const SheetHeader = styled.div<SheetHeaderProps>`
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
-    padding: 20px 20px 16px;
-    border-bottom: none;
+    gap: 12px;
+    padding: 36px 28px 24px;
     background: transparent;
 `;
 
@@ -182,7 +193,7 @@ const iconRing = keyframes`
 
 const IconBox = styled.span<IconBoxProps>`
     position: relative;
-    margin-bottom: 6px;
+    margin-bottom: 16px;
     flex: 0 0 auto;
     width: 76px;
     height: 76px;
@@ -217,135 +228,148 @@ const IconBox = styled.span<IconBoxProps>`
 const TitleWrap = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding-top: 10px;
+    gap: 6px;
     text-align: center;
     align-items: center;
 
     h3 {
-        margin: 0;
-        font-size: 17px;
-        line-height: 1.4;
-        letter-spacing: -0.02em;
-        color: #111827;
+        margin: 2px;
+        font-size: 24px;
+        font-weight: 900;
+        line-height: 1.1;
+        letter-spacing: -0.035em;
+        color: #0f172a;
+        word-break: keep-all;
     }
 
     small {
         margin: 0;
         font-size: 13px;
-        line-height: 1.5;
-        color: #6b7280;
+        font-weight: 450;
+        line-height: 1.55;
+        letter-spacing: -0.01em;
+        color: #64748b;
+        word-break: keep-all;
     }
 `;
 
 const CloseX = styled.button`
     position: absolute;
-    top: 10px;
-    right: 10px;
+    top: 14px;
+    right: 14px;
     border: 0;
     background: transparent;
     cursor: pointer;
-    width: 30px;
-    height: 30px;
+    width: 34px;
+    height: 34px;
     border-radius: 999px;
     display: grid;
     place-items: center;
-    font-size: 18px;
-    color: #9ca3af;
+    font-size: 20px;
+    color: #94a3b8;
     transition: background 0.12s ease, color 0.12s ease, transform 0.08s ease;
 
     &:hover {
-        background: #f3f4f6;
-        color: #4b5563;
+        background: #f1f5f9;
+        color: #475569;
     }
     &:active {
-        transform: scale(0.96);
+        transform: scale(0.93);
     }
 `;
 
 const SheetBody = styled.div`
-    padding: 8px 20px 12px;
+    padding: 0 28px 24px;
     overflow: auto;
-    background: transparent;
 `;
 
 const BulletList = styled.ul`
-    margin: 8px 0 0;
-    padding-left: 18px;
-    font-size: 13px;
-    line-height: 1.6;
-    color: #4b5563;
+    margin: 0;
+    padding-left: 20px;
+    font-size: 13.5px;
+    font-weight: 450;
+    line-height: 1.7;
+    letter-spacing: -0.01em;
+    color: #475569;
     text-align: left;
+    word-break: keep-all;
 `;
 
 const BulletItem = styled.li`
     &:not(:last-child) {
-        margin-bottom: 4px;
+        margin-bottom: 6px;
     }
 `;
 
-type SheetFooterProps = { $hasDescription: boolean };
+type SheetFooterProps = { $hasDescription: boolean; $single: boolean };
 
 const SheetFooter = styled.div<SheetFooterProps>`
     display: flex;
-    justify-content: flex-end;
-    gap: 8px;
-    padding: 10px 16px 12px;
+    flex-direction: ${({ $single }) => ($single ? "column" : "row")};
+    justify-content: ${({ $single }) => ($single ? "stretch" : "flex-end")};
+    gap: 10px;
+    padding: ${({ $hasDescription }) => ($hasDescription ? "16px 24px 24px" : "4px 24px 28px")};
 
     border-top: ${({ $hasDescription }) =>
-            $hasDescription ? "1px solid #f3f4f6" : "none"};
-
-    background: ${({ $hasDescription }) =>
-            $hasDescription
-                    ? "linear-gradient(180deg, rgba(255, 255, 255, 0.95), #ffffff 100%)"
-                    : "transparent"};
+            $hasDescription ? "1px solid #f1f5f9" : "none"};
 `;
 
-const Ghost = styled.button`
-    height: 34px;
-    padding: 0 16px;
-    border-radius: 6px;
-    border: 1px solid #3E63E0;
-    background: #ffffff;
-    color: #3E63E0;
+const BaseBtn = styled.button`
+    height: 44px;
+    padding: 0 24px;
+    border-radius: 12px;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', system-ui, sans-serif;
+    font-size: 14.5px;
     font-weight: 700;
+    letter-spacing: -0.025em;
     cursor: pointer;
     transition:
-            background 0.12s ease,
-            color 0.12s ease,
-            transform 0.08s ease,
-            box-shadow 0.12s ease;
+        background 0.14s ease,
+        filter 0.14s ease,
+        transform 0.08s ease,
+        box-shadow 0.14s ease;
 
-    &:hover {
-        background: #EEF2FF;
-    }
     &:active {
         transform: translateY(1px);
     }
     &:focus-visible {
         outline: none;
-        box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.25);
+        box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.28);
     }
 `;
 
-const Primary = styled(Ghost)`
-    border-color: #3E63E0;
-    background: #3E63E0;
-    color: #fff;
+const Ghost = styled(BaseBtn)`
+    border: 1.5px solid #e2e8f0;
+    background: #f8fafc;
+    color: #475569;
 
     &:hover {
-        background: #3E63E0;
-        border-color: #3E63E0;
-        filter: brightness(0.96);
+        background: #f1f5f9;
+        border-color: #cbd5e1;
     }
 `;
 
-const Danger = styled(Ghost)`
-  border-color: rgba(239, 68, 68, 0.45);
-  background: rgba(239, 68, 68, 0.12);
-  color: #DC2626;
+const Primary = styled(BaseBtn)`
+    border: none;
+    background: #3E63E0;
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(62, 99, 224, 0.3);
 
-  &:hover { background: rgba(239, 68, 68, 0.16); }
+    &:hover {
+        filter: brightness(1.06);
+        box-shadow: 0 4px 14px rgba(62, 99, 224, 0.38);
+    }
+`;
+
+const Danger = styled(BaseBtn)`
+    border: 1.5px solid rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.06);
+    color: #DC2626;
+
+    &:hover {
+        background: rgba(239, 68, 68, 0.12);
+        border-color: rgba(239, 68, 68, 0.5);
+    }
 `;
 
 const checkDraw = keyframes`
@@ -371,11 +395,14 @@ const SuccessIconSvg = styled.svg`
 
 const PlainBody = styled.div`
     margin-top: 0;
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1.65;
+    letter-spacing: -0.015em;
     color: #4b5563;
     white-space: pre-wrap;
     text-align: center;
+    word-break: keep-all;
 `;
 
 const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
@@ -484,7 +511,7 @@ const SystemMessageModal: React.FC<SystemMessageModalProps> = ({
                 )}
 
 
-                <SheetFooter $hasDescription={hasDescription}>
+                <SheetFooter $hasDescription={hasDescription} $single={actions.length === 1}>
                     {actions.map((a, idx) => {
                         const Btn = renderActionBtn(a);
                         return (

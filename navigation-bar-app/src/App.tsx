@@ -1,12 +1,172 @@
 // NavigationBar.tsx
 import React, { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import styled from "styled-components";
+import styled, { keyframes } from "styled-components";
 import springAxiosInst from "./utility/AxiosInst.ts";
 import {logoutRequest, tokenVerification} from "./utility/AccountApi.ts";
 
 // 로고 이미지
 import logoBlack from "./assets/Logo2.png";
+
+/* ─── Modal Styles (Perfectly matched to screenshot) ────────────────────────── */
+
+const iconPop = keyframes`
+    0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
+    100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+`;
+
+const ModalScrim = styled.div<{ $zIndex: number }>`
+    position: fixed;
+    inset: 0;
+    z-index: ${({ $zIndex }) => $zIndex};
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(8px);
+`;
+
+const ModalSheet = styled.div<{ $zIndex: number }>`
+    position: fixed;
+    z-index: ${({ $zIndex }) => $zIndex + 1};
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    width: 480px;
+    max-width: calc(100% - 32px);
+    background: #ffffff;
+    border-radius: 40px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+    font-family: 'Pretendard', -apple-system, sans-serif;
+    animation: ${iconPop} 0.25s ease-out;
+`;
+
+const CloseIconButton = styled.button`
+    position: absolute;
+    top: 28px;
+    right: 28px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #94A3B8;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.2s;
+    z-index: 10;
+
+    &:hover {
+        transform: scale(1.1);
+        color: #64748B;
+    }
+`;
+
+const ModalHeader = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 56px 32px 20px;
+`;
+
+const ModalIconBox = styled.div`
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FDF8F1;
+    margin-bottom: 28px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+`;
+
+const ModalTitleWrap = styled.div`
+    text-align: center;
+    
+    h3 {
+        margin: 0;
+        font-size: 28px;
+        color: #0F172A;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+    }
+`;
+
+const ModalBody = styled.div`
+    padding: 0 40px 48px;
+    text-align: center;
+`;
+
+const ModalPlainBody = styled.p`
+    margin: 0;
+    font-size: 18px;
+    line-height: 1.6;
+    color: #475569;
+    font-weight: 600;
+    letter-spacing: -0.03em;
+`;
+
+const ModalFooter = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    padding: 0 32px 32px;
+`;
+
+const ModalGhostBtn = styled.button`
+    height: 56px;
+    min-width: 90px;
+    padding: 0 24px;
+    border-radius: 16px;
+    border: 1.5px solid #E2E8F0;
+    background: #ffffff;
+    color: #475569;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+
+    &:hover {
+        background: #F8FAFC;
+    }
+`;
+
+const ModalPrimaryBtn = styled.button`
+    height: 56px;
+    padding: 0 32px;
+    border-radius: 16px;
+    border: none;
+    background: #4F6EF3;
+    color: #ffffff;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 8px 20px rgba(79, 110, 243, 0.3);
+
+    &:hover {
+        background: #3F5ED3;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 25px rgba(79, 110, 243, 0.4);
+    }
+`;
+
+const WarningIcon = () => (
+    <svg width="44" height="44" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 9V14M12 17.01L12.01 16.998" stroke="#B47D3C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+        <path d="M10.29 3.86L1.82 18C1.64531 18.3024 1.55299 18.645 1.5522 18.9935C1.55141 19.3419 1.64218 19.6841 1.81546 19.9858C1.98874 20.2874 2.2384 20.5375 2.53949 20.7108C2.84059 20.8841 3.18241 20.9749 3.53 20.975H20.47C20.8176 20.9749 21.1594 20.8841 21.4605 20.7108C21.7616 20.5375 22.0113 20.2874 22.1845 19.9858C22.3578 19.6841 22.4486 19.3419 22.4478 18.9935C22.447 18.645 22.3547 18.3024 22.18 18L13.71 3.86C13.5317 3.56611 13.2807 3.32319 12.9812 3.15449C12.6817 2.98579 12.3437 2.89746 12 2.89746C11.6563 2.89746 11.3183 2.98579 11.0188 3.15449C10.7193 3.32319 10.4683 3.56611 10.29 3.86V3.86Z" stroke="#B47D3C" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+);
+
+const CloseXIcon = () => (
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+    </svg>
+);
+
+/* ─── Navigation Styles ─────────────────────────────────────────────────── */
 
 // 모바일 메뉴 오버레이
 const MobileMenuOverlay = styled.div<{ $isOpen: boolean }>`
@@ -92,7 +252,7 @@ const HamburgerButton = styled.button`
   cursor: pointer;
   padding: 8px;
   z-index: 1001;
-  
+
   @media (max-width: 768px) {
     display: flex;
     flex-direction: column;
@@ -274,11 +434,11 @@ const Inner = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  
+
   @media (max-width: 1024px) {
     padding: 0 24px;
   }
-  
+
   @media (max-width: 768px) {
     padding: 0 16px;
   }
@@ -297,11 +457,7 @@ const Brand = styled(Link)`
 `;
 
 const LogoImg = styled.img`
-  //width: clamp(70px, 6.458333vw, 300px);
-  //height: clamp(40px, 3.680556vw, 200px);
-  //margin-top: 15px;
   width: 150px;
-  //height: 130px;
   height: auto;
   object-fit: contain;
   display: block;
@@ -311,11 +467,11 @@ const Nav = styled.nav`
   display: flex;
   align-items: center;
   gap: 8px;
-  
+
   @media (max-width: 1024px) {
     gap: 4px;
   }
-  
+
   @media (max-width: 768px) {
     display: none;
   }
@@ -336,7 +492,7 @@ const NavLink = styled(Link) <{ $active?: boolean }>`
   transition: all 0.2s ease;
   letter-spacing: -0.3px;
   white-space: nowrap;
-  
+
   &:hover {
     color: #1a1a1a;
     background: ${({ $active }) =>
@@ -346,7 +502,7 @@ const NavLink = styled(Link) <{ $active?: boolean }>`
 };
     transform: translateY(-1px);
   }
-  
+
   @media (max-width: 1024px) {
     font-size: 14px;
     padding: 8px 12px;
@@ -376,7 +532,7 @@ const AuthButton = styled.button`
   &:active {
     transform: translateY(0);
   }
-  
+
   @media (max-width: 1024px) {
     font-size: 13px;
     padding: 8px 18px;
@@ -388,6 +544,11 @@ const App: React.FC = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isServiceNavMode, setIsServiceNavMode] = useState(false);
+  
+  // Login Required Modal State
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingReturnUrl, setPendingReturnUrl] = useState("/");
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -484,55 +645,57 @@ const App: React.FC = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-
-    if(isLoggedIn){
-      setIsLoggedIn(true);
-    }
-
     const checkLogin = async () => {
       try {
-        const result = await tokenVerificationRequest(); // await 필수
-
-        console.log(result);
+        const result = await tokenVerificationRequest();
 
         if (result.status === false) {
-          // result가 false일 때 처리
-          console.log("로그인 인증 실패");
           localStorage.removeItem("nickname");
           localStorage.removeItem("isLoggedIn");
-
+          setIsLoggedIn(false);
         } else if (result.status === true) {
           localStorage.setItem("nickname", result.nickname);
           localStorage.setItem("isLoggedIn", "dsds-ww-sdx-s>W??");
           setIsLoggedIn(true);
         }
-
-
-        const token = localStorage.getItem("isLoggedIn");
-        setIsLoggedIn(!!token); // 값이 있으면 true, 없으면 false
       } catch (err: any) {
-        if (err.response) {
-          if(err.response.status === 429) {
-            setIsLoggedIn(true);
-          }
-          else{
-            localStorage.removeItem("isLoggedIn");
-            localStorage.removeItem("nickname");
-            setIsLoggedIn(false);}
+        if (err.response && err.response.status === 429) {
+          setIsLoggedIn(true);
+        } else {
+          localStorage.removeItem("isLoggedIn");
+          localStorage.removeItem("nickname");
+          setIsLoggedIn(false);
         }
-
       }
     };
 
     checkLogin();
   }, [location]);
 
-  const tokenVerificationRequest = async () => {
+  // Handle cross-app login required state
+  useEffect(() => {
+    if (location.state?.loginRequired) {
+      setPendingReturnUrl(location.state.returnUrl || "/");
+      setShowLoginModal(true);
 
+      // Clear only the modal-triggering route state while preserving router history metadata.
+      const nextState = { ...(location.state ?? {}) };
+      delete nextState.loginRequired;
+      delete nextState.returnUrl;
+
+      navigate(
+        `${location.pathname}${location.search}${location.hash}`,
+        {
+          replace: true,
+          state: Object.keys(nextState).length > 0 ? nextState : null,
+        }
+      );
+    }
+  }, [location, navigate]);
+
+  const tokenVerificationRequest = async () => {
     const axiosResponse = await tokenVerification();
     return axiosResponse.data;
-
-
   }
 
   const handleLogout = async () => {
@@ -562,6 +725,20 @@ const App: React.FC = () => {
     closeMobileMenu();
   };
 
+  const handleProtectedClick = (e: React.MouseEvent, to: string) => {
+    if (!isLoggedIn) {
+      e.preventDefault();
+      setPendingReturnUrl(to);
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleLoginConfirm = () => {
+    setShowLoginModal(false);
+    const loginUrl = `/vue-account/account/login?returnUrl=${encodeURIComponent(pendingReturnUrl)}`;
+    navigate(loginUrl);
+  };
+
   // 모바일 메뉴가 열릴 때 스크롤 방지
   useEffect(() => {
     if (isMobileMenuOpen) {
@@ -588,14 +765,24 @@ const App: React.FC = () => {
             </Brand>
 
             <Nav>
-              <NavLink to="/vue-ai-interview/ai-interview/landing" $active={isActive("/vue-ai-interview")}>
+              <NavLink 
+                to="/vue-ai-interview/ai-interview/landing" 
+                $active={isActive("/vue-ai-interview")}
+                onClick={(e) => handleProtectedClick(e, "/vue-ai-interview/ai-interview/landing")}
+              >
                 AI 인터뷰
               </NavLink>
               <NavLink to="/learning/word" $active={isActive("/learning/word")}>포텐워드</NavLink>
               <NavLink to="/learning/note" $active={isActive("/learning/note")}>포텐노트</NavLink>
               <NavLink to="/learning/quiz/home" $active={isActive("/learning/quiz/home")}>포텐퀴즈</NavLink>
               <NavLink to="/event" $active={isActive("/event")}>이벤트</NavLink>
-              <NavLink to="/mypage" $active={isActive("/mypage")}>MyPage</NavLink>
+              <NavLink 
+                to="/mypage" 
+                $active={isActive("/mypage")}
+                onClick={(e) => handleProtectedClick(e, "/mypage")}
+              >
+                MyPage
+              </NavLink>
               {!isLoggedIn ? (
                   <NavLink to="/vue-account/account/login" $active={isActive("/vue-account")}>
                     로그인
@@ -623,6 +810,7 @@ const App: React.FC = () => {
               <BottomNavLink
                   to="/vue-ai-interview/ai-interview/landing"
                   $active={isActive("/vue-ai-interview")}
+                  onClick={(e) => handleProtectedClick(e, "/vue-ai-interview/ai-interview/landing")}
               >
                 AI 인터뷰
               </BottomNavLink>
@@ -638,7 +826,11 @@ const App: React.FC = () => {
               <BottomNavLink to="/event" $active={isActive("/event")}>
                 이벤트
               </BottomNavLink>
-              <BottomNavLink to="/mypage" $active={isActive("/mypage")}>
+              <BottomNavLink 
+                to="/mypage" 
+                $active={isActive("/mypage")}
+                onClick={(e) => handleProtectedClick(e, "/mypage")}
+              >
                 MyPage
               </BottomNavLink>
             </BottomNav>
@@ -654,7 +846,11 @@ const App: React.FC = () => {
         <MobileMenuOverlay $isOpen={isMobileMenuOpen} onClick={closeMobileMenu} />
         <MobileMenu $isOpen={isMobileMenuOpen}>
 
-          <MobileNavLink to="/vue-ai-interview/ai-interview/landing" $active={isActive("/vue-ai-interview")}>
+          <MobileNavLink 
+            to="/vue-ai-interview/ai-interview/landing" 
+            $active={isActive("/vue-ai-interview")}
+            onClick={(e) => handleProtectedClick(e, "/vue-ai-interview/ai-interview/landing")}
+          >
             AI 인터뷰
           </MobileNavLink>
 
@@ -670,7 +866,11 @@ const App: React.FC = () => {
           <MobileNavLink to="/event" $active={isActive("/event")}>
             이벤트
           </MobileNavLink>
-          <MobileNavLink to="/mypage" $active={isActive("/mypage")}>
+          <MobileNavLink 
+            to="/mypage" 
+            $active={isActive("/mypage")}
+            onClick={(e) => handleProtectedClick(e, "/mypage")}
+          >
             MyPage
           </MobileNavLink>
           {!isLoggedIn ? (
@@ -681,6 +881,42 @@ const App: React.FC = () => {
               <MobileAuthButton onClick={handleMobileLogout}>로그아웃</MobileAuthButton>
           )}
         </MobileMenu>
+
+        {/* Global Login Required Modal */}
+        {showLoginModal && (
+            <>
+                <ModalScrim $zIndex={10000} onClick={() => setShowLoginModal(false)} />
+                <ModalSheet role="dialog" aria-modal="true" $zIndex={10000}>
+                    <CloseIconButton onClick={() => setShowLoginModal(false)} aria-label="닫기">
+                        <CloseXIcon />
+                    </CloseIconButton>
+                    
+                    <ModalHeader>
+                        <ModalIconBox>
+                            <WarningIcon />
+                        </ModalIconBox>
+                        <ModalTitleWrap>
+                            <h3>로그인이 필요합니다</h3>
+                        </ModalTitleWrap>
+                    </ModalHeader>
+
+                    <ModalBody>
+                        <ModalPlainBody>
+                            로그인 후 이용하실 수 있어요.
+                        </ModalPlainBody>
+                    </ModalBody>
+
+                    <ModalFooter>
+                        <ModalGhostBtn type="button" onClick={() => setShowLoginModal(false)}>
+                            닫기
+                        </ModalGhostBtn>
+                        <ModalPrimaryBtn type="button" onClick={handleLoginConfirm}>
+                            로그인하러 가기
+                        </ModalPrimaryBtn>
+                    </ModalFooter>
+                </ModalSheet>
+            </>
+        )}
       </>
   );
 };

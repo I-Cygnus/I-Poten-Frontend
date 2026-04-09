@@ -299,6 +299,7 @@ const answerCardDark = ref(true); // 내 답변 카드 다크/라이트 모드
 const textMode = ref(false); // 키보드 텍스트 입력 모드
 
 const start = ref(false);
+const bypassLeaveGuard = ref(false);
 const visible = ref(true);
 const isLoading = ref(false);
 const finished = ref(false);
@@ -340,6 +341,7 @@ const scrollToTop = () => {
 };
 
 const mapCompanyName = (original) => {
+  if (!original) return "";
   const mapping = {
     당근마켓: "danggeun",
     Toss: "toss",
@@ -733,7 +735,8 @@ const handleStartInterview = async () => {
 
   if (!info.job || !info.career) {
     showAlert("면접 정보를 찾을 수 없습니다. 처음으로 돌아갑니다.");
-    router.push("/ai-interview");
+    bypassLeaveGuard.value = true;
+    router.push("/ai-interview/select");
     return;
   }
 
@@ -769,9 +772,9 @@ const handleStartInterview = async () => {
 
       // 첫 번째 질문 시작
       interviewSequence.value = 1;
-      currentAIMessage.value = "안녕하세요 자기소개 부탁드립니다.";
+      currentAIMessage.value = "안녕하세요 간단하게 자기소개 부탁드릴게요";
       // 지정해주신 첫 번째 질문 오디오 URL
-      currentAudioUrl.value = "https://cdn.i-poten.com/questions/v1/6b1f8915-8dde-47a2-8f15-49668a67139e.mp3";
+      currentAudioUrl.value = "https://cdn.i-poten.com/questions/fix/3aa8f8fd-db2d-475a-819f-2e61dc1d635a.mp3";
 
       selectRandomVideo(); // 랜덤 영상 선택
       showStartMessage();
@@ -937,24 +940,31 @@ onBeforeUnmount(() => {
 });
 
 onBeforeRouteLeave((to, from, next) => {
-  console.log("인터뷰 끝남 여부 : " + isEnded.value);
-  if (start.value && !finished.value) {
-    if (interviewSequence.value !== 6) {
-      const answer = window.confirm(
-          "면접이 진행 중입니다. 페이지를 나가시겠습니까?"
-      );
-      if (answer) {
-        // 사용자가 나가기를 확인한 경우 세션 토큰 삭제
-        clearInterviewSessionToken();
-        next();
-      } else {
-        next(false);
-      }
-    } else {
-      next();
-    }
-  } else {
+  // 코드에서 강제 이동하는 경우 (정보 없음 등) 경고 없이 통과
+  if (bypassLeaveGuard.value) {
+    bypassLeaveGuard.value = false;
     next();
+    return;
+  }
+
+  // 면접 종료 후 결과 페이지로 이동하는 경우 경고 없이 통과
+  if (interviewSequence.value === 6 || to.path === '/ai-interview/end') {
+    next();
+    return;
+  }
+
+  const message = start.value
+    ? "면접이 진행 중입니다. 페이지를 나가면 면접이 종료됩니다. 나가시겠습니까?"
+    : "면접 페이지를 나가시겠습니까? 면접 정보가 초기화됩니다.";
+
+  const answer = window.confirm(message);
+  if (answer) {
+    if (start.value) {
+      clearInterviewSessionToken();
+    }
+    next();
+  } else {
+    next(false);
   }
 });
 const playRecording = () => {

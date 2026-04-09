@@ -14,6 +14,45 @@ const mapCompanyName = (original: string): string => {
     return mapping[original] || original.toLowerCase().replace(/[\s-]+/g, "_");
 };
 
+// ✅ 면접 유형 매핑 (한글 → Java enum)
+const mapInterviewType = (original: string): string => {
+    const mapping: Record<string, string> = {
+        "전형별": "TECHNICAL",
+        "기업별": "COMPANY",
+        "인성": "PERSONAL",
+    };
+    return mapping[original] || original;
+};
+
+// ✅ 기술 스택 매핑 (한글 displayName → Java enum name)
+const mapTechStack = (original: string): string => {
+    const mapping: Record<string, string> = {
+        "풀스택": "FULLSTACK",
+        "백엔드/서버개발": "BACKEND",
+        "프론트엔드": "FRONTEND",
+        "웹개발": "WEB",
+        "Flutter": "FLUTTER",
+        "Java": "JAVA",
+        "JavaScript": "JAVASCRIPT",
+        "Python": "PYTHON",
+        "Vue.js": "VUEJS",
+        "API": "API",
+        "MYSQL": "MYSQL",
+        "AWS": "AWS",
+        "ReactJS": "REACTJS",
+        "ASP": "ASP",
+        "Angular": "ANGULAR",
+        "Bootstrap": "BOOTSTRAP",
+        "Node.js": "NODEJS",
+        "jQuery": "JQUERY",
+        "PHP": "PHP",
+        "JSP": "JSP",
+        "GraphQL": "GRAPHQL",
+        "HTML5": "HTML5",
+    };
+    return mapping[original] || original;
+};
+
 export const aiInterviewActions = {
     //첫 질문
     async requestCreateInterviewToSpring(payload: {
@@ -35,7 +74,10 @@ export const aiInterviewActions = {
 
         const transformedPayload = {
             ...payload,
+            interviewType: mapInterviewType(payload.interviewType),
             company: payload.company ? mapCompanyName(payload.company) : "",
+            projectExp: payload.projectExp === ("있음" as any) ? true : payload.projectExp === ("없음" as any) ? false : payload.projectExp,
+            techStacks: payload.techStacks.map(mapTechStack),
         };
 
         try {
@@ -101,10 +143,14 @@ export const aiInterviewActions = {
         interviewSequence: number;
     }): Promise<any> {
         const { springAxiosInstance } = axiosUtility.createAxiosInstances();
+        const transformedPayload = {
+            ...payload,
+            interviewType: mapInterviewType(payload.interviewType),
+        };
         try {
             const res: AxiosResponse = await springAxiosInstance.post(
                 "/api/interview/progress",
-                payload,
+                transformedPayload,
                 {
                     withCredentials: true
                 }

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     siteName: '아이포텐',
     images: [
       {
-        url: '/og-event.jpg',
+        url: '/og-image.png',
         width: 1200,
         height: 630,
       },
@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: '리뷰 이벤트 - 최대 6,000P 혜택',
     description: '아이포텐 AI 면접 리뷰를 작성하고 최대 6,000P를 받으세요!',
-    images: ['/twitter-event.jpg'],
+    images: ['/og-image.png'],
   },
   alternates: {
     canonical: 'https://i-poten.com/event',
@@ -48,12 +48,12 @@ export default function EventPage() {
             eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
             location: {
               '@type': 'VirtualLocation',
-              url: 'https://yourdomain.com/event',
+              url: 'https://i-poten.com/event',
             },
             organizer: {
               '@type': 'Organization',
               name: '아이포텐',
-              url: 'https://yourdomain.com',
+              url: 'https://i-poten.com',
             },
             offers: {
               '@type': 'Offer',

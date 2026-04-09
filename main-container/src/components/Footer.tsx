@@ -35,11 +35,23 @@ const TopSection = styled.div`
   :root[data-theme="dark"] & {
     border-bottom: 1px solid #2d3139;
   }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+  }
 `;
 
 const Nav = styled.nav`
   display: flex;
   gap: 32px;
+  flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    gap: 16px 24px;
+  }
 `;
 
 const NavLink = styled(Link)`
@@ -135,7 +147,7 @@ export default function SiteFooter() {
         {/* 하단 회사 정보 */}
         <BottomSection>
           <CompanyText>
-            서울특별시 송파구 새말로8길
+            iptoensupport@gmail.com
           </CompanyText>
           <CopyrightText>
             Copyright © 2025 AQ. All rights reserved.

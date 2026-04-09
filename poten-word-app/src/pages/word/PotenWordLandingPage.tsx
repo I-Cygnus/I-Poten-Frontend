@@ -835,6 +835,10 @@ const Wrapper = styled.div`
     flex-direction: column;
     align-items: center;
     position: relative;
+
+    @media (max-width: 640px) {
+        padding: 48px 16px 80px;
+    }
 `;
 
 const TopSection = styled.div`
@@ -854,6 +858,10 @@ const SubTitle = styled.div`
     opacity: 0;
     animation: ${fadeUp} 0.5s ease forwards;
     animation-delay: 0.05s;
+
+    @media (max-width: 640px) {
+        font-size: 17px;
+    }
 `;
 
 const Title = styled.div`
@@ -874,6 +882,10 @@ const Title = styled.div`
     opacity: 0;
     animation: ${fadeUp} 0.55s ease forwards;
     animation-delay: 0.18s;
+
+    @media (max-width: 640px) {
+        font-size: 24px;
+    }
 `;
 
 const Cards = styled.div`
@@ -986,6 +998,12 @@ const MoreSection = styled.section`
     display: flex;
     flex-direction: column;
     gap: 96px;
+
+    @media (max-width: 640px) {
+        margin-top: 64px;
+        margin-bottom: 64px;
+        gap: 56px;
+    }
 `;
 
 const FeatureRow = styled.div<{
@@ -1046,6 +1064,10 @@ const LabelTitle = styled.h3`
     font-weight: 800;
     color: #0f172a;
     letter-spacing: -0.02em;
+
+    @media (max-width: 640px) {
+        font-size: 20px;
+    }
 `;
 
 const Dots = styled.div<{ $align?: "left" | "right" }>`
@@ -1260,6 +1282,10 @@ const SearchTitle = styled.h2`
     font-weight: 700;
     color: #0f172a;
     letter-spacing: -0.02em;
+
+    @media (max-width: 640px) {
+        font-size: 24px;
+    }
 `;
 
 const SearchDesc = styled.p`

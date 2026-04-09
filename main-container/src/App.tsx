@@ -1,10 +1,10 @@
 // src/App.tsx
-import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import ReactDOM from "react-dom/client";
 
 import { CircularProgress, CssBaseline, GlobalStyles } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { RecoilRoot, useRecoilValue } from "recoil";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 
@@ -29,14 +29,42 @@ import ThemeSync from "./ThemeSync";
 import ThemeToggleButton from "./ThemeToggleButton";
 import { themeAtom } from "@jobspoon/app-state";
 import RequireLogin from "./RequireLogin.tsx";
+import MobileServiceGuard from "./components/MobileServiceGuard.tsx";
 import OpenBetaEventLanding from "./event/page/OpenBetaEventLanding.tsx";
 import PotenReviewerEventLanding from "./event/page/PotenReviewerEventLanding.tsx";
+import AdminPage from "./admin/AdminPage.tsx";
 
 const eventBus = mitt();
 
 const NavigationBarApp = lazy(() => import("navigationBarApp/App"));
 const MyPageApp = lazy(() => import("myPageApp/App"));
 const PotenWordApp = lazy(() => import("potenWordApp/App"));
+
+function subscribeToBrowserPath(onStoreChange: () => void) {
+    window.addEventListener("popstate", onStoreChange);
+    window.addEventListener("vue-route-change", onStoreChange as EventListener);
+
+    return () => {
+        window.removeEventListener("popstate", onStoreChange);
+        window.removeEventListener("vue-route-change", onStoreChange as EventListener);
+    };
+}
+
+function getBrowserPathSnapshot() {
+    return window.location.pathname;
+}
+
+function getBrowserPathServerSnapshot() {
+    return "/";
+}
+
+function useBrowserPathname() {
+    return useSyncExternalStore(
+        subscribeToBrowserPath,
+        getBrowserPathSnapshot,
+        getBrowserPathServerSnapshot
+    );
+}
 
 function InnerApp() {
     const [isNavigationBarLoaded, setIsNavigationBarLoaded] = useState(false);
@@ -97,25 +125,29 @@ function InnerApp() {
     }, []);
 
     function AppRoutes() {
-        const location = useLocation();
-        const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
+        const pathname = useBrowserPathname();
 
         useEffect(() => {
-            setCurrentPath(window.location.pathname);
-        }, [location]);
-
-        useEffect(() => {
-            const update = () => setCurrentPath(window.location.pathname);
-            window.addEventListener("vue-route-change", update);
-            window.addEventListener("popstate", update);
-            return () => {
-                window.removeEventListener("vue-route-change", update);
-                window.removeEventListener("popstate", update);
-            };
-        }, []);
+            // GTM 페이지뷰 추적
+            try {
+                (window as any).dataLayer = (window as any).dataLayer || [];
+                (window as any).dataLayer.push({
+                    event: "page_view",
+                    event_category: "system",
+                    event_action: "page_view",
+                    page_path: pathname,
+                    page_title: document.title,
+                    page_section: "main-container",
+                    login_status: localStorage.getItem("isLoggedIn") === "true" ? "logged_in" : "guest",
+                });
+            } catch (e) {
+                console.warn("[GTM]", e);
+            }
+        }, [pathname]);
 
         // 네비게이션바 숨길 경로
         const hiddenLayouts = [
+            "/admin",
             "/vue-account/account/login",
             "/vue-account/account/privacy",
             "/vue-account/account/admin",
@@ -129,10 +161,10 @@ function InnerApp() {
             "/vue-ai-interview/ai-interview/personality-form",
             "/vue-ai-interview/ai-interview/personality-result",
             "/vue-ai-interview/ai-interview/personality",
-            "/event/1",
         ];
 
         const hiddenLayoutsFooters = [
+            "/admin",
             "/mypage/",
             "/mypage",
             "/vue-account/account/login",
@@ -148,33 +180,27 @@ function InnerApp() {
             "/vue-ai-interview/ai-interview/personality-form",
             "/vue-ai-interview/ai-interview/personality-result",
             "/vue-ai-interview/ai-interview/personality",
-            "/event/1",
         ];
         const hideLayout = hiddenLayouts.some((path) =>
-            currentPath.startsWith(path)
+            pathname.startsWith(path)
         );
 
         const hideLayoutFooter = hiddenLayoutsFooters.some((path) =>
-            currentPath.startsWith(path)
+            pathname.startsWith(path)
         );
 
         const shouldHideNavbar = hideLayout;
         const shouldShowFooter = !hideLayoutFooter;
 
-        // 🔒 SPA 하위 경로는 noindex (정적 랜딩은 인덱싱 허용)
-        // - '/studies' (정적 랜딩) → index 허용
-        // - '/studies/...'(리모트 SPA) → noindex
-        // - '/spoon-word'도 동일 정책
         const noindexPrefixes = [
+            "/admin",
             "/vue-account",
             "/vue-ai-interview",
             "/mypage",
             "/sveltekit-review",
-            "/studies/", // 슬래시 포함 → 정확히 하위만 매칭
-            "/learning/",
         ];
         const noindex = noindexPrefixes.some((p) =>
-            location.pathname.startsWith(p)
+            pathname.startsWith(p)
         );
 
         return (
@@ -187,38 +213,41 @@ function InnerApp() {
                 )}
 
                 {!shouldHideNavbar && <NavigationBarApp />}
-                <Routes>
-                    <Route path="/" element={<Main />} />
-                    <Route path="/review-survey" element={<ReviewSurveyPage />} />
-                    <Route path="/event" element={<NewEventPage />} />
-                    <Route path="/event/:id" element={<NewEventDetailPage />} />
-                    <Route path="/event/winner/:id" element={<NewWinnerDetailPage />} />
-                    <Route
-                        path="/vue-account/*"
-                        element={<VueAccountAppWrapper eventBus={eventBus} />}
-                    />
-                    <Route path="/learning/*" element={<PotenWordApp />} />
-                    <Route
-                        path="/vue-ai-interview/*"
-                        element={
-                            <RequireToken loginPath="/vue-account/account/login">
-                                <VueAiInterviewAppWrapper eventBus={eventBus} />
-                            </RequireToken>
-                        }
-                    />
-                    <Route
-                        path="/mypage/*"
-                        element={
-                            <RequireLogin loginPath="/vue-account/account/login">
-                                <MyPageApp />
-                            </RequireLogin>
-                        }
-                    />
-                    <Route
-                        path="/sveltekit-review/*"
-                        element={<SvelteKitReviewAppWrapper />}
-                    />
-                </Routes>
+                <MobileServiceGuard>
+                    <Routes>
+                        <Route path="/" element={<Main />} />
+                        <Route path="/admin" element={<AdminPage />} />
+                        <Route path="/review-survey" element={<ReviewSurveyPage />} />
+                        <Route path="/event" element={<NewEventPage />} />
+                        <Route path="/event/:id" element={<NewEventDetailPage />} />
+                        <Route path="/event/winner/:id" element={<NewWinnerDetailPage />} />
+                        <Route
+                            path="/vue-account/*"
+                            element={<VueAccountAppWrapper eventBus={eventBus} />}
+                        />
+                        <Route path="/learning/*" element={<PotenWordApp />} />
+                        <Route
+                            path="/vue-ai-interview/*"
+                            element={
+                                <RequireToken loginPath="/vue-account/account/login" fallback={<Main />}>
+                                    <VueAiInterviewAppWrapper eventBus={eventBus} />
+                                </RequireToken>
+                            }
+                        />
+                        <Route
+                            path="/mypage/*"
+                            element={
+                                <RequireToken loginPath="/vue-account/account/login" fallback={<Main />}>
+                                    <MyPageApp />
+                                </RequireToken>
+                            }
+                        />
+                        <Route
+                            path="/sveltekit-review/*"
+                            element={<SvelteKitReviewAppWrapper />}
+                        />
+                    </Routes>
+                </MobileServiceGuard>
 
                 {shouldShowFooter && <Footer />}
             </Suspense>
