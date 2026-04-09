@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import styled from "styled-components";
 import { useLocation, useNavigate } from "react-router-dom";
 import http, { authHeader } from "../../utils/http.ts";
@@ -8,6 +8,7 @@ import { markLastActivity } from "../../utils/activity.ts";
 import { NarrowLeft } from "../../styles/layout.ts";
 import { usePotenDialog } from "../../components/common/PotenDialog.tsx";
 import SystemMessageModal, { SystemMessage } from "../../components/common/SystemMessageModal.tsx";
+import LearningPageHeader from "../../components/common/LearningPageHeader.tsx";
 
 /* ===== UI tokens (WordbookFolderPage와 일치) ===== */
 const UI = {
@@ -47,49 +48,53 @@ const PageWrap = styled.div`
   text-rendering: optimizeLegibility;
 `;
 
+const PageContainer = styled(NarrowLeft)`
+  padding: 8px 0 24px;
+
+  @media (max-width: 720px) {
+    padding: 8px 16px 24px;
+  }
+`;
+
 /* ===== 상단 툴바 (WordbookFolderPage 스타일) ===== */
-const Toolbar = styled.div`
-  position: sticky;
-  top: 0;
-  z-index: 5;
-  background: ${UI.color.bg};
-  padding: 12px 8px;
-  margin-bottom: 16px;
-`;
-
-const RowFlex = styled.div`
-  display: flex;
+const HeaderMeta = styled.div`
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
+  flex-wrap: wrap;
+
+  @media (max-width: 720px) {
+    order: 3;
+    width: 100%;
+    gap: 8px;
+  }
 `;
 
-const BackBtn = styled.button`
-  appearance: none;
-  border: 0;
-  background: transparent;
-  font-size: 22px;
-  line-height: 1;
-  cursor: pointer;
-  padding: 6px 8px;
+const HeaderRight = styled.div`
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    @media (max-width: 720px) {
+        order: 2;
+        width: 100%;
+        margin-left: 0;
+    }
 `;
 
-const Title = styled.h2`
-  margin: 0;
-  font-size: ${UI.font.h2};
-  letter-spacing: -0.01em;
-  color: ${UI.color.text};
-`;
+const HeaderActions = styled.div`
+    display: flex;
+    align-items: center;
+    gap: 12px;
 
-const Count = styled.span`
-  margin-left: 8px;
-  font-size: ${UI.font.body};
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  color: ${UI.color.muted};
-  line-height: 1;
+    @media (max-width: 720px) {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
 `;
-
-const Spacer = styled.div` flex: 1 1 auto; `;
 
 /* ===== 인라인 정렬 팝업 (WordbookFolderPage 포맷) ===== */
 const SortInlineWrap = styled.span`
@@ -97,6 +102,11 @@ const SortInlineWrap = styled.span`
   display: inline-flex;
   align-items: center;
   isolation: isolate;
+
+  @media (max-width: 720px) {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
 `;
 const SortInlineBtn = styled.button`
     position: relative;
@@ -124,7 +134,21 @@ const SortInlineBtn = styled.button`
     &:focus-visible::after,
     &[aria-expanded="true"]::after { opacity:1; }
     &:focus-visible { outline:none; box-shadow:0 0 0 3px rgba(79,118,241,.25); }
+
+    @media (max-width: 720px) {
+        width: 100%;
+        min-height: 38px;
+        padding: 0 12px;
+        border: 1px solid ${UI.color.line};
+        background: #f8fafc;
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-start;
+        text-align: left;
+        border-radius: 12px;
+    }
 `;
+
 const SortPopup = styled.div`
   position: absolute;
   top: 22px; left: -8px;
@@ -134,6 +158,12 @@ const SortPopup = styled.div`
   border-radius: 12px;
   box-shadow: ${UI.shadow.menu};
   padding: 6px; z-index: 8;
+
+  @media (max-width: 768px) {
+    left: 0;
+    right: auto;
+    min-width: min(240px, calc(100vw - 32px));
+  }
 `;
 const RadioItem = styled.button<{ $checked?: boolean }>`
   width: 100%;
@@ -148,7 +178,14 @@ const RadioItem = styled.button<{ $checked?: boolean }>`
     background: ${({$checked}) => $checked ? UI.gradient.brand : "transparent"};
   }
 `;
-const Sep = styled.span` margin: 0 8px; color: ${UI.color.muted}; `;
+const Sep = styled.span`
+  margin: 0 8px;
+  color: ${UI.color.muted};
+
+  @media (max-width: 720px) {
+    display: none;
+  }
+`;
 
 /* ===== 검색/버튼 ===== */
 const SearchInput = styled.input`
@@ -160,6 +197,10 @@ const SearchInput = styled.input`
   background: #fff url("data:image/svg+xml,%3Csvg width='18' height='18' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Ccircle cx='11' cy='11' r='7' stroke='%239aa0a6' stroke-width='2'/%3E%3Cpath d='M20 20l-3.2-3.2' stroke='%239aa0a6' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat 10px 50%;
   font-size: 14px;
   &:focus { outline: none; border-color: ${UI.color.primaryStrong}; box-shadow: 0 0 0 3px rgba(62,99,224,.16); }
+
+  @media (max-width: 768px) {
+    width: 100%;
+  }
 `;
 
 const Primary = styled.button`
@@ -188,16 +229,25 @@ const Primary = styled.button`
         justify-content: center;
         line-height: 0;
     }
+
+    @media (max-width: 768px) {
+        width: 100%;
+        justify-content: center;
+    }
 `;
 
 /* ===== 목록 패널 ===== */
 const Panel = styled.div`
-  border: 1px solid ${UI.color.line};
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: ${UI.shadow.card};
-  overflow: visible;
-  position: relative;
+    border: 1px solid ${UI.color.line};
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: ${UI.shadow.card};
+    overflow: visible;
+    position: relative;
+
+    @media (max-width: 768px) {
+        border-radius: 16px;
+    }
 `;
 
 const HeadRow = styled.div`
@@ -210,21 +260,43 @@ const HeadRow = styled.div`
   background: #f8fafc;
   font-weight: 750;
   letter-spacing: -0.02em;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
 `;
 
 const Row = styled.div`
-  display: grid;
-  grid-template-columns: 64px 1fr 120px 220px 160px 48px;
-  align-items: center;
-  gap: 8px;
-  padding: 18px;
-  border-bottom: 1px solid #eef2f7;
-  &:last-child { border-bottom: 0; }
+    display: grid;
+    grid-template-columns: 64px 1fr 120px 220px 160px 48px;
+    align-items: center;
+    gap: 8px;
+    padding: 18px;
+    border-bottom: 1px solid #eef2f7;
+    &:last-child { border-bottom: 0; }
+
+    @media (max-width: 768px) {
+        grid-template-columns: minmax(0, 1fr) auto;
+        grid-template-areas:
+      "select action"
+      "name name"
+      "terms terms"
+      "progress progress"
+      "date date";
+        gap: 12px;
+        padding: 16px;
+        background: #fff;
+    }
 `;
 
 const Cell = styled.div<{ $muted?: boolean }>`
   color: ${({ $muted }) => ($muted ? UI.color.muted : UI.color.text)};
   overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  min-width: 0;
+
+  @media (max-width: 768px) {
+    white-space: normal;
+  }
 `;
 
 const Checkbox = styled.input.attrs({ type: "checkbox" })`
@@ -298,6 +370,10 @@ const WordbookName = styled.button`
   font-size: 18px; font-weight: 700; letter-spacing: -0.02em;
   text-align: left; cursor: pointer; color: ${UI.color.text};
   &:hover { text-decoration: underline; }
+
+  @media (max-width: 768px) {
+    font-size: 17px;
+  }
 `;
 
 /* 진행률 바 · 컬러 통일 */
@@ -333,8 +409,22 @@ const ProgressText = styled.div<{ $pct: number }>`
 `;
 
 const Kebab = styled.button`
-  appearance: none; border: 0; background: transparent;
-  font-size: 22px; line-height: 1; cursor: pointer; color: ${UI.color.muted};
+    appearance: none;
+    border: 0;
+    background: transparent;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    color: ${UI.color.muted};
+
+    @media (max-width: 768px) {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
 `;
 
 /* ---------- Pagination (WordbookFolderPage 스타일) ---------- */
@@ -351,6 +441,10 @@ const PaginationRow = styled.div`
     padding-top: 6px;
     width: fit-content;
     margin: 0 auto;
+
+    @media (max-width: 768px) {
+        width: 100%;
+    }
 `;
 
 const PaginationBar = styled.nav`
@@ -359,6 +453,14 @@ const PaginationBar = styled.nav`
     justify-content: center;
     gap: 6px;
     padding: 6px;
+
+    @media (max-width: 768px) {
+        width: 100%;
+        gap: 4px;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding: 6px 0;
+    }
 `;
 
 const PagePill = styled.button<{ $active?: boolean }>`
@@ -586,6 +688,69 @@ const CenterStack = styled.div`
     gap: 6px;
     justify-items: stretch;   
     text-align: center;
+
+    @media (max-width: 768px) {
+        text-align: left;
+    }
+`;
+
+const MobileField = styled.div`
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    width: 100%;
+
+    @media (min-width: 769px) {
+        display: block;
+    }
+`;
+
+const MobileLabel = styled.span`
+    display: none;
+    color: ${UI.color.muted};
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+
+    @media (max-width: 768px) {
+        display: inline-flex;
+        flex: 0 0 auto;
+    }
+`;
+
+const SelectCell = styled(Cell)`
+    @media (max-width: 768px) {
+        grid-area: select;
+        overflow: visible;
+    }
+`;
+
+const NameCell = styled(Cell)`
+    @media (max-width: 768px) {
+        grid-area: name;
+    }
+`;
+
+const TermsCell = styled(CellCenter)`
+    @media (max-width: 768px) {
+        grid-area: terms;
+        text-align: left;
+    }
+`;
+
+const ProgressCell = styled(CellCenter)`
+    @media (max-width: 768px) {
+        grid-area: progress;
+        text-align: left;
+    }
+`;
+
+const DateCell = styled(CellCenter)`
+    @media (max-width: 768px) {
+        grid-area: date;
+        text-align: left;
+    }
 `;
 
 /* ===== 케밥 메뉴 ===== */
@@ -593,6 +758,10 @@ const CellAction = styled.div`
     position: relative;
     text-align: right;
     overflow: visible;
+
+    @media (max-width: 768px) {
+        grid-area: action;
+    }
 `;
 
 const MenuPopup = styled.div`
@@ -606,6 +775,11 @@ const MenuPopup = styled.div`
   box-shadow: ${UI.shadow.menu};
   padding: 6px;
   z-index: 20;
+
+  @media (max-width: 768px) {
+    top: calc(100% + 6px);
+    min-width: 180px;
+  }
 `;
 
 const MenuItemBtn = styled.button`
@@ -705,7 +879,16 @@ const EmptyDesc = styled.p`
 `;
 
 const EmptyActions = styled.div`
-  display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    @media (max-width: 720px) {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
 `;
 
 const GhostBtn = styled.button`
@@ -1175,67 +1358,68 @@ export default function PotenNoteHomePage() {
     }
 
     return (
-        <NarrowLeft style={{ padding: "8px 0 24px" }}>
+        <PageContainer>
             <PageWrap>
             {/* 상단 툴바 */}
-            <Toolbar>
-                <RowFlex>
-                    <BackBtn onClick={() => nav(-1)} aria-label="뒤로 가기">←</BackBtn>
+            <LearningPageHeader
+                title="내 포텐노트"
+                count={`${total.toLocaleString()}개`}
+                onBack={() => nav(-1)}
+                meta={
+                    <HeaderMeta>
+                        <Sep aria-hidden="true">|</Sep>
 
-                    <Title>내 포텐노트</Title>
-                    <Count>{total}개</Count>
+                        <SortInlineWrap>
+                            <SortInlineBtn
+                                type="button"
+                                aria-haspopup="menu"
+                                aria-expanded={sortOpen}
+                                onClick={() => setSortOpen(v => !v)}
+                            >
+                                {sortLabel}
+                            </SortInlineBtn>
 
-                    <Sep aria-hidden>|</Sep>
-
-                    <SortInlineWrap>
-                        <SortInlineBtn
-                            type="button"
-                            aria-haspopup="menu"
-                            aria-expanded={sortOpen}
-                            onClick={() => setSortOpen(v => !v)}
-                        >
-                            {sortLabel}
-                        </SortInlineBtn>
-
-                        {sortOpen && (
-                            <SortPopup role="menu" aria-label="정렬하기">
-                                <RadioItem $checked={sortKey === "updated_desc"} onClick={() => { setSortKey("updated_desc"); setSortOpen(false); }}>
-                                    <span /> 최근 업데이트
-                                </RadioItem>
-                                <RadioItem $checked={sortKey === "updated_asc"} onClick={() => { setSortKey("updated_asc"); setSortOpen(false); }}>
-                                    <span /> 오래된 업데이트
-                                </RadioItem>
-                                <RadioItem $checked={sortKey === "title_asc"} onClick={() => { setSortKey("title_asc"); setSortOpen(false); }}>
-                                    <span /> 제목순
-                                </RadioItem>
-                                <RadioItem $checked={sortKey === "terms_desc"} onClick={() => { setSortKey("terms_desc"); setSortOpen(false); }}>
-                                    <span /> 단어 수 많은순
-                                </RadioItem>
-                                <RadioItem $checked={sortKey === "terms_asc"} onClick={() => { setSortKey("terms_asc"); setSortOpen(false); }}>
-                                    <span /> 단어 수 적은순
-                                </RadioItem>
-                                <RadioItem $checked={sortKey === "studied_desc"} onClick={() => { setSortKey("studied_desc"); setSortOpen(false); }}>
-                                    <span /> 최근 학습
-                                </RadioItem>
-                            </SortPopup>
-                        )}
-                    </SortInlineWrap>
-
-                    <Spacer />
-
-                    <RowFlex>
-                        <SearchInput
-                            placeholder="폴더 검색"
-                            value={q}
-                            onChange={(e) => setQ(e.target.value)}
-                        />
-                        <Primary onClick={createFolder}>
-                            <span className="icon"><FolderIcon /></span>
-                            새 폴더
-                        </Primary>
-                    </RowFlex>
-                </RowFlex>
-            </Toolbar>
+                            {sortOpen && (
+                                <SortPopup role="menu" aria-label="정렬하기">
+                                    <RadioItem $checked={sortKey === "updated_desc"} onClick={() => { setSortKey("updated_desc"); setSortOpen(false); }}>
+                                        <span /> 최근 업데이트
+                                    </RadioItem>
+                                    <RadioItem $checked={sortKey === "updated_asc"} onClick={() => { setSortKey("updated_asc"); setSortOpen(false); }}>
+                                        <span /> 오래된 업데이트
+                                    </RadioItem>
+                                    <RadioItem $checked={sortKey === "title_asc"} onClick={() => { setSortKey("title_asc"); setSortOpen(false); }}>
+                                        <span /> 제목순
+                                    </RadioItem>
+                                    <RadioItem $checked={sortKey === "terms_desc"} onClick={() => { setSortKey("terms_desc"); setSortOpen(false); }}>
+                                        <span /> 단어 수 많은 순
+                                    </RadioItem>
+                                    <RadioItem $checked={sortKey === "terms_asc"} onClick={() => { setSortKey("terms_asc"); setSortOpen(false); }}>
+                                        <span /> 단어 수 적은 순
+                                    </RadioItem>
+                                    <RadioItem $checked={sortKey === "studied_desc"} onClick={() => { setSortKey("studied_desc"); setSortOpen(false); }}>
+                                        <span /> 최근 학습
+                                    </RadioItem>
+                                </SortPopup>
+                            )}
+                        </SortInlineWrap>
+                    </HeaderMeta>
+                }
+                right={
+                    <HeaderRight>
+                        <HeaderActions>
+                            <SearchInput
+                                placeholder="폴더 검색"
+                                value={q}
+                                onChange={(e) => setQ(e.target.value)}
+                            />
+                            <Primary onClick={createFolder}>
+                                <span className="icon"><FolderIcon /></span>
+                                새 폴더
+                            </Primary>
+                        </HeaderActions>
+                    </HeaderRight>
+                }
+            />
 
             {/* 목록 */}
             {(total === 0 && all.length === 0 && !q) ? (
@@ -1273,14 +1457,14 @@ export default function PotenNoteHomePage() {
                 <>
                     <Panel role="table" aria-label="폴더 목록">
                         <HeadRow role="row">
-                            <Cell>
+                            <SelectCell>
                                 <Checkbox
                                     ref={masterRef}
                                     aria-label="전체 선택"
                                     checked={selected.size === display.length && display.length > 0}
                                     onChange={(e) => toggleAll(e.currentTarget.checked)}
                                 />
-                            </Cell>
+                            </SelectCell>
                             <Cell>선택 항목</Cell>
                             <CellCenter>단어 수</CellCenter>
                             <CellCenter>학습 완료율</CellCenter>
@@ -1295,38 +1479,51 @@ export default function PotenNoteHomePage() {
 
                             return (
                                 <Row key={f.id} role="row">
-                                    <Cell>
+                                    <SelectCell>
                                         <Checkbox
                                             aria-label={`${f.name} 선택`}
                                             checked={selected.has(f.id)}
                                             onChange={(e) => toggleOne(f.id, e.currentTarget.checked)}
                                         />
-                                    </Cell>
+                                    </SelectCell>
 
-                                    <Cell>
+                                    <NameCell>
                                         <WordbookName
                                             onClick={() => nav(`/learning/folders/${f.id}`, { state: { wordbookName: f.name } })}
                                             aria-label={`${f.name} 폴더 열기`}
                                             >
                                             {f.name}
                                         </WordbookName>
-                                    </Cell>
+                                    </NameCell>
 
-                                    <CellCenter>{total}</CellCenter>
+                                    <TermsCell>
+                                        <MobileField>
+                                            <MobileLabel>단어 수</MobileLabel>
+                                            <span>{total}</span>
+                                        </MobileField>
+                                    </TermsCell>
 
-                                    <CellCenter>
+                                    <ProgressCell>
                                         <CenterStack>
-                <span style={{ color: UI.color.muted, fontWeight: 600 }}>
-                  {done}/{total}
-                </span>
+                                            <MobileField>
+                                                <MobileLabel>학습 완료율</MobileLabel>
+                                                <span style={{ color: UI.color.muted, fontWeight: 600 }}>
+                                                 {done}/{total}
+                                                </span>
+                                            </MobileField>
                                             <ProgressBar aria-label="학습 진행률">
                                                 <ProgressFill $pct={pct} />
                                                 <ProgressText $pct={pct}>{pct}%</ProgressText>
                                             </ProgressBar>
                                         </CenterStack>
-                                    </CellCenter>
+                                    </ProgressCell>
 
-                                    <CellCenter>{formatKR(f.lastStudiedAt || f.updatedAt)}</CellCenter>
+                                    <DateCell>
+                                        <MobileField>
+                                            <MobileLabel>최근 학습일</MobileLabel>
+                                            <span>{formatKR(f.lastStudiedAt || f.updatedAt)}</span>
+                                        </MobileField>
+                                    </DateCell>
 
                                     <CellAction>
                                         <Kebab
@@ -1374,6 +1571,6 @@ export default function PotenNoteHomePage() {
                 }}
             />
             </PageWrap>
-        </NarrowLeft>
+        </PageContainer>
     );
 }

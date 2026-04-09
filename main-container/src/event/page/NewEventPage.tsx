@@ -56,16 +56,26 @@ const PAGE = styled.div`
 `;
 
 const Container = styled.div`
-  width: min(1120px, 100%);
-  margin: 0 auto;
-  padding: 64px 24px 80px;
+    width: min(1120px, 100%);
+    margin: 0 auto;
+    padding: 64px 24px 80px;
+
+    @media (max-width: 640px) {
+        padding: 40px 16px 56px;
+    }
 `;
 
 const HeaderRow = styled.div`
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 16px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 14px;
+    }
 `;
 
 const Title = styled.h1`
@@ -74,12 +84,22 @@ const Title = styled.h1`
     font-weight: 700;
     letter-spacing: -0.8px;
     color: #111111;
+
+    @media (max-width: 640px) {
+        font-size: 32px;
+        letter-spacing: -0.5px;
+    }
 `;
 
 const Tabs = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+
+    @media (max-width: 640px) {
+        gap: 8px;
+    }
 `;
 
 const TabBtn = styled.button<{ $active?: boolean }>`
@@ -98,11 +118,16 @@ const TabBtn = styled.button<{ $active?: boolean }>`
     color: #111111;
 
     box-shadow: ${({ $active }) =>
-    $active ? "inset 0 0 0 2px #111111" : "none"};
+            $active ? "inset 0 0 0 2px #111111" : "none"};
     opacity: ${({ $active }) => ($active ? 1 : 0.7)};
 
     &:hover {
         opacity: 1;
+    }
+
+    @media (max-width: 640px) {
+        font-size: 14px;
+        padding: 9px 14px;
     }
 `;
 
@@ -193,6 +218,14 @@ const Badge = styled.div<{ $type: BadgeType }>`
         if ($type === "ALWAYS") return "#ff4d4d";
         return "#527cea";
     }};
+
+    @media (max-width: 640px) {
+        width: 44px;
+        height: 44px;
+        top: -18px;
+        left: 10px;
+        font-size: 11px;
+    }
 `;
 
 // const Badge = styled.div<{ $type: BadgeType }>`
@@ -318,6 +351,10 @@ const WinnerHead = styled.div`
     font-size: 15px;
     font-weight: 600;
     color: #111111;
+
+    @media (max-width: 640px) {
+        display: none;
+    }
 `;
 
 const WinnerHeadCell = styled.div`
@@ -336,6 +373,12 @@ const WinnerRow = styled.a`
 
     &:hover {
         background: rgba(0, 0, 0, 0.02);
+    }
+
+    @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 16px 14px;
     }
 `;
 
@@ -379,6 +422,11 @@ const WinnerDate = styled.div`
     font-weight: 400;
     color: rgba(0, 0, 0, 0.65);
     text-align: center;
+
+    @media (max-width: 640px) {
+        text-align: left;
+        font-size: 13px;
+    }
 `;
 
 const WinnerFooter = styled.div`
@@ -449,46 +497,60 @@ const SearchBar = styled.div`
 `;
 
 const SearchBox = styled.div`
-  width: min(480px, 100%);
-  height: 48px;
-  border-radius: 999px;
-  border: 1px solid rgba(0,0,0,0.14);
+    width: min(480px, 100%);
+    height: 48px;
+    border-radius: 999px;
+    border: 1px solid rgba(0,0,0,0.14);
 
-  display: grid;
-  grid-template-columns: 120px 1fr 54px;
-  align-items: center;
-  overflow: hidden;
+    display: grid;
+    grid-template-columns: 120px 1fr 54px;
+    align-items: center;
+    overflow: hidden;
+
+    @media (max-width: 640px) {
+        grid-template-columns: 84px 1fr 48px;
+        height: 44px;
+    }
 `;
 
 const SearchSelect = styled.div`
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 
-  font-size: 14px;
-  font-weight: 600;
-  color: rgba(0,0,0,0.65);
-  letter-spacing: -0.02em;
+    font-size: 14px;
+    font-weight: 600;
+    color: rgba(0,0,0,0.65);
+    letter-spacing: -0.02em;
 
-  border-right: 1px solid rgba(0,0,0,0.10);
+    border-right: 1px solid rgba(0,0,0,0.10);
+
+    @media (max-width: 640px) {
+        font-size: 13px;
+    }
 `;
 
 const SearchInput = styled.input`
-  height: 100%;
-  border: 0;
-  outline: none;
-  background: transparent;
+    height: 100%;
+    border: 0;
+    outline: none;
+    background: transparent;
 
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #111111;
-  letter-spacing: -0.02em;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #111111;
+    letter-spacing: -0.02em;
 
-  &::placeholder {
-    color: rgba(0,0,0,0.35);
-  }
+    &::placeholder {
+        color: rgba(0,0,0,0.35);
+    }
+
+    @media (max-width: 640px) {
+        padding: 0 12px;
+        font-size: 13px;
+    }
 `;
 
 const SearchButton = styled.button`

@@ -55,19 +55,29 @@ const Header = styled.div`
     display: flex;
     align-items: flex-start;
     gap: ${TOKENS.space(12)};
+    min-width: 0;
 `;
 
 const Title = styled.h3`
+    flex: 1 1 auto;
+    min-width: 0;
     font-size: ${TOKENS.font.h3};
     font-weight: 700;
     letter-spacing: -0.01em;
     color: ${TOKENS.color.textPrimary};
     margin: 0 0 0 ${TOKENS.space(CONTENT_INSET)};
     word-break: keep-all;
+
+    @media (max-width: 640px) {
+        font-size: 18px;
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+    }
 `;
 
 const AddBtn = styled.button`
     margin-left: auto;
+    flex: 0 0 auto;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -110,6 +120,12 @@ const Description = styled.p`
     margin: 0;
     white-space: pre-wrap;
     word-break: keep-all;
+
+    @media (max-width: 640px) {
+        font-size: 15px;
+        line-height: 1.65;
+        overflow-wrap: anywhere;
+    }
 `;
 
 const TagsRow = styled.div`
@@ -122,6 +138,10 @@ const TagsRow = styled.div`
     overflow-x: auto;
     overflow-y: hidden;
     -webkit-overflow-scrolling: touch;
+
+    @media (max-width: 640px) {
+        margin-left: 0;
+    }
 `;
 
 const TagLabelInline = styled.span`
