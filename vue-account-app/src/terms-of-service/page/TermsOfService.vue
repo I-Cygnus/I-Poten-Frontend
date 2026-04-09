@@ -221,7 +221,7 @@
         <div :style="contactInfoStyle">
           <div :style="contactItemStyle">
             <span :style="contactLabelStyle">이메일</span>
-            <a href="mailto:ggcura259@gmail.com" :style="contactValueStyle">ggcura259@gmail.com</a>
+            <a href="mailto:iptoensupport@gmail.com" :style="contactValueStyle">iptoensupport@gmail.com</a>
           </div>
           <div :style="contactItemStyle">
             <span :style="contactLabelStyle">회사명</span>
@@ -250,45 +250,53 @@
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 const router = useRouter();
+
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1200);
+const isMobile = computed(() => windowWidth.value <= 640);
+const onResize = () => { windowWidth.value = window.innerWidth; };
+onMounted(() => { window.addEventListener('resize', onResize); });
+onUnmounted(() => { window.removeEventListener('resize', onResize); });
 
 const goBack = () => {
   router.back();
 };
 
-const containerStyle = {
+const containerStyle = computed(() => ({
   maxWidth: '1100px',
   margin: '0 auto',
-  padding: '80px 40px',
+  padding: isMobile.value ? '40px 16px' : '80px 40px',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", "Noto Sans KR", Roboto, "Helvetica Neue", Arial, sans-serif',
   lineHeight: '1.8',
   color: '#2c3e50',
   background: 'linear-gradient(to bottom, #f5f7fa 0%, #ffffff 100%)',
   minHeight: '100vh',
-};
+}));
 
-const headerStyle = {
+const headerStyle = computed(() => ({
   textAlign: 'center' as const,
-  marginBottom: '64px',
-  padding: '48px 40px',
+  marginBottom: isMobile.value ? '36px' : '64px',
+  padding: isMobile.value ? '32px 20px' : '48px 40px',
   background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-  borderRadius: '20px',
+  borderRadius: isMobile.value ? '14px' : '20px',
   boxShadow: '0 12px 48px rgba(102, 126, 234, 0.35)',
   position: 'relative' as const,
   overflow: 'hidden' as const,
-};
+}));
 
-const h1Style = {
-  fontSize: '40px',
+const h1Style = computed(() => ({
+  fontSize: isMobile.value ? '26px' : '40px',
   fontWeight: '800',
   color: '#ffffff',
-  marginBottom: '28px',
+  marginBottom: isMobile.value ? '20px' : '28px',
   letterSpacing: '-0.8px',
   position: 'relative' as const,
   zIndex: 1,
   textShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-};
+  wordBreak: 'keep-all' as const,
+}));
 
 const metaInfoStyle = {
   fontSize: '15px',
@@ -314,25 +322,26 @@ const contentStyle = {
   marginBottom: '48px',
 };
 
-const sectionStyle = {
+const sectionStyle = computed(() => ({
   marginBottom: '36px',
-  padding: '40px 44px',
+  padding: isMobile.value ? '24px 18px' : '40px 44px',
   background: '#ffffff',
-  borderRadius: '18px',
+  borderRadius: isMobile.value ? '14px' : '18px',
   boxShadow: '0 3px 16px rgba(0, 0, 0, 0.07)',
   border: '1px solid rgba(0, 0, 0, 0.06)',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-};
+}));
 
-const h2Style = {
-  fontSize: '28px',
+const h2Style = computed(() => ({
+  fontSize: isMobile.value ? '21px' : '28px',
   fontWeight: '700',
   color: '#1a1a2e',
-  marginBottom: '28px',
+  marginBottom: isMobile.value ? '20px' : '28px',
   paddingBottom: '18px',
   borderBottom: '3px solid #667eea',
   letterSpacing: '-0.5px',
-};
+  wordBreak: 'keep-all' as const,
+}));
 
 const h3Style = {
   fontSize: '21px',
@@ -385,34 +394,34 @@ const liStyle = {
   letterSpacing: '-0.2px',
 };
 
-const serviceItemStyle = {
+const serviceItemStyle = computed(() => ({
   margin: '28px 0',
-  padding: '28px 32px',
+  padding: isMobile.value ? '20px 16px' : '28px 32px',
   background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
   borderLeft: '6px solid #667eea',
   borderRadius: '14px',
   boxShadow: '0 3px 12px rgba(0, 0, 0, 0.06)',
   transition: 'all 0.3s ease',
-};
+}));
 
-const infoCollectionStyle = {
+const infoCollectionStyle = computed(() => ({
   margin: '28px 0',
-  padding: '32px',
+  padding: isMobile.value ? '20px 16px' : '32px',
   background: 'linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%)',
   borderRadius: '14px',
   border: '2px solid #e9ecef',
   boxShadow: '0 2px 10px rgba(0, 0, 0, 0.04)',
-};
+}));
 
-const contactSectionStyle = {
+const contactSectionStyle = computed(() => ({
   marginBottom: '36px',
-  padding: '40px 44px',
+  padding: isMobile.value ? '24px 18px' : '40px 44px',
   background: 'linear-gradient(135deg, #f0f4ff 0%, #e3f2fd 100%)',
-  borderRadius: '18px',
+  borderRadius: isMobile.value ? '14px' : '18px',
   boxShadow: '0 4px 20px rgba(102, 126, 234, 0.15)',
   border: '2px solid #667eea',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-};
+}));
 
 const contactInfoStyle = {
   margin: '28px 0',
@@ -443,25 +452,25 @@ const contactValueStyle = {
   textDecoration: 'none',
 };
 
-const appendixStyle = {
+const appendixStyle = computed(() => ({
   marginBottom: '36px',
-  padding: '40px 44px',
+  padding: isMobile.value ? '24px 18px' : '40px 44px',
   background: 'linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)',
-  borderRadius: '18px',
+  borderRadius: isMobile.value ? '14px' : '18px',
   boxShadow: '0 3px 16px rgba(76, 175, 80, 0.15)',
   borderLeft: '6px solid #4caf50',
   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-};
+}));
 
-const appendixH2Style = {
-  fontSize: '28px',
+const appendixH2Style = computed(() => ({
+  fontSize: isMobile.value ? '21px' : '28px',
   fontWeight: '700',
   color: '#1a1a2e',
-  marginBottom: '28px',
+  marginBottom: isMobile.value ? '20px' : '28px',
   paddingBottom: '18px',
   borderBottom: '3px solid #4caf50',
   letterSpacing: '-0.5px',
-};
+}));
 
 const footerStyle = {
   textAlign: 'center' as const,

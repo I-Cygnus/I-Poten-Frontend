@@ -116,7 +116,21 @@ router.beforeEach((to, from, next) => {
     next();
 });
 
-router.afterEach(() => {
+router.afterEach((to) => {
+    try {
+        (window as any).dataLayer = (window as any).dataLayer || [];
+        (window as any).dataLayer.push({
+            event: "page_view",
+            event_category: "system",
+            event_action: "page_view",
+            page_path: "/vue-ai-interview" + to.path,
+            page_title: document.title,
+            page_section: "vue-ai-interview-app",
+            login_status: localStorage.getItem("isLoggedIn") === "true" ? "logged_in" : "guest",
+        });
+    } catch (e) {
+        console.warn("[GTM]", e);
+    }
     window.dispatchEvent(new CustomEvent("vue-route-change"));
 });
 

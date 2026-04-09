@@ -71,7 +71,7 @@
           </div>
 
           <!-- 면접 시작 버튼 -->
-          <div :style="buttonContainerStyle">
+    <div :style="buttonContainerStyle">
             <button
               :style="[startButtonStyle, (!selectedStatus || isLoading) ? { opacity: 0.5, cursor: 'not-allowed' } : {}]"
               :disabled="!selectedStatus || isLoading"
@@ -103,7 +103,23 @@
       </div>
     </div>
 
-    <AlertPopup v-model="alertVisible" :message="alertMessage" />
+    <!-- 커스텀 시스템 메시지 모달 -->
+    <div v-if="alertVisible" :style="modalOverlayStyle" @click="alertVisible = false">
+      <div :style="modalContentStyle" @click.stop>
+        <div :style="modalIconContainerStyle">
+          <div :style="modalIconCircleStyle">
+            <v-icon color="white" size="32">mdi-alert-circle-outline</v-icon>
+          </div>
+        </div>
+        <h2 :style="modalTitleStyle">알림</h2>
+        <p :style="modalMessageStyle">{{ alertMessage }}</p>
+        <div :style="modalButtonGroupStyle">
+          <button :style="modalConfirmButtonStyle" @click="alertVisible = false">
+            확인
+          </button>
+        </div>
+      </div>
+    </div>
   </main>
 </template>
 
@@ -169,7 +185,13 @@ const router = useRouter();
 const isLoading = ref(false);
 const alertVisible = ref(false);
 const alertMessage = ref('');
-const showAlert = (msg) => { alertMessage.value = msg; alertVisible.value = true; };
+const showSystemModal = ref(false);
+const onConfirm = ref(() => {});
+const showAlert = (msg) => { 
+  alertMessage.value = msg; 
+  onConfirm.value = () => { alertVisible.value = false; };
+  alertVisible.value = true; 
+};
 
 const selectedStatus = ref('');
 const selfConcern = ref('');
@@ -549,5 +571,89 @@ const noticeItemStyle = {
   fontSize: '15px',
   lineHeight: '1.6',
   fontWeight: '500',
+};
+
+// ========== 모달 스타일 ========== //
+const modalOverlayStyle = {
+  position: 'fixed',
+  top: '0',
+  left: '0',
+  right: '0',
+  bottom: '0',
+  backgroundColor: 'rgba(15, 23, 42, 0.75)',
+  backdropFilter: 'blur(8px)',
+  WebkitBackdropFilter: 'blur(8px)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  zIndex: 9999,
+  padding: '20px',
+  animation: 'fadeIn 0.3s ease-out'
+};
+
+const modalContentStyle = {
+  background: '#ffffff',
+  borderRadius: '32px',
+  padding: '48px 40px',
+  maxWidth: '400px',
+  width: '100%',
+  boxShadow: '0 30px 60px rgba(0, 0, 0, 0.15)',
+  textAlign: 'center',
+  position: 'relative',
+  animation: 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+  border: '1px solid rgba(0, 0, 0, 0.05)',
+};
+
+const modalIconContainerStyle = {
+  display: 'flex',
+  justifyContent: 'center',
+  marginBottom: '24px'
+};
+
+const modalIconCircleStyle = {
+  width: '80px',
+  height: '80px',
+  borderRadius: '50%',
+  background: 'linear-gradient(135deg, #5B6BFF 0%, #3b82f6 100%)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  boxShadow: '0 8px 24px rgba(91, 107, 255, 0.3)'
+};
+
+const modalTitleStyle = {
+  fontSize: '22px',
+  fontWeight: '800',
+  color: '#0f172a',
+  marginBottom: '16px',
+  letterSpacing: '-0.02em'
+};
+
+const modalMessageStyle = {
+  fontSize: '16px',
+  color: '#64748b',
+  lineHeight: '1.6',
+  marginBottom: '32px',
+  fontWeight: '500',
+  wordBreak: 'keep-all'
+};
+
+const modalButtonGroupStyle = {
+  display: 'flex',
+  justifyContent: 'center'
+};
+
+const modalConfirmButtonStyle = {
+  width: '100%',
+  padding: '16px',
+  borderRadius: '16px',
+  border: 'none',
+  background: '#1e293b',
+  color: '#ffffff',
+  fontSize: '16px',
+  fontWeight: '700',
+  cursor: 'pointer',
+  transition: 'all 0.2s ease',
+  boxShadow: '0 4px 12px rgba(30, 41, 59, 0.2)',
 };
 </script>

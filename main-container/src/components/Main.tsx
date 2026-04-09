@@ -207,6 +207,11 @@ const Page = styled.main`
   @media (max-width: 768px) {
     padding: 0;
     scroll-snap-type: none;
+
+    & > section {
+      scroll-snap-align: none;
+      scroll-snap-stop: normal;
+    }
   }
 
   [data-reveal] {
@@ -321,8 +326,14 @@ const ProgressSection = styled.section`
   }
 
   @media (max-width: 768px) {
-    min-height: 100vh;
-    padding: 40px 16px;
+    margin-top: 160px;
+    min-height: auto;
+    padding: 60px 16px;
+  }
+
+  @media (max-width: 480px) {
+    margin-top: 100px;
+    padding: 48px 12px;
   }
 `;
 
@@ -397,8 +408,8 @@ const FaqSection = styled.section`
   box-sizing: border-box;
 
   @media (max-width: 768px) {
-    min-height: 100vh;
-    padding: 100px 16px 40px;
+    min-height: auto;
+    padding: 80px 16px 40px;
   }
 `;
 
@@ -544,8 +555,8 @@ const ShowcaseSection = styled.section`
   box-sizing: border-box;
 
   @media (max-width: 768px) {
-    min-height: 100vh;
-    padding: 40px 16px;
+    min-height: auto;
+    padding: 60px 16px;
   }
 `;
 
@@ -578,6 +589,8 @@ const ScheduleShowcaseTitle = styled.h2`
 
   @media (max-width: 640px) {
     margin-bottom: 28px;
+    text-align: center;
+    font-size: 28px;
   }
 `;
 
@@ -669,7 +682,10 @@ const ScheduleLightCaption = styled.div`
   @media (max-width: 640px) {
     bottom: 28px;
     width: min(92%, 520px);
-    font-size: 20px;
+    font-size: 22px;
+    text-align: center;
+    left: 50%;
+    transform: translateX(-50%);
   }
 `;
 
@@ -682,6 +698,10 @@ const ScheduleLightCaptionMuted = styled.div`
   :root[data-theme="dark"] & {
     color: rgba(226, 232, 240, 0.5);
   }
+
+  @media (max-width: 640px) {
+    text-align: center;
+  }
 `;
 
 const ScheduleLightCaptionStrong = styled.div`
@@ -692,6 +712,10 @@ const ScheduleLightCaptionStrong = styled.div`
 
   :root[data-theme="dark"] & {
     color: rgba(248, 250, 252, 0.92);
+  }
+
+  @media (max-width: 640px) {
+    text-align: center;
   }
 `;
 
@@ -706,6 +730,13 @@ const SchedulePhoneFrame = styled.div`
   z-index: 1;
 
   @media (max-width: 640px) {
+    right: -80px;
+    bottom: -40px;
+    width: 420px;
+    height: 420px;
+  }
+
+  @media (max-width: 400px) {
     right: 50%;
     bottom: -12px;
     transform: translateX(50%);
@@ -744,6 +775,7 @@ const ScheduleDarkContent = styled.div`
   @media (max-width: 640px) {
     top: 32px;
     width: min(92%, 520px);
+    text-align: center;
   }
 `;
 
@@ -807,8 +839,8 @@ const InsightsSection = styled.section`
   box-sizing: border-box;
 
   @media (max-width: 768px) {
-    min-height: 100vh;
-    padding: 40px 16px;
+    min-height: auto;
+    padding: 60px 16px;
   }
 `;
 
@@ -823,6 +855,8 @@ const InsightsTitle = styled.h2`
 
   @media (max-width: 640px) {
     margin-bottom: 28px;
+    text-align: center;
+    font-size: 28px;
   }
 `;
 
@@ -853,6 +887,10 @@ const InsightsPanel = styled.div`
   overflow: hidden;
   position: relative;
   background-color: #E2E8F0;
+
+  @media (max-width: 640px) {
+    border-radius: 24px;
+  }
   //background-color: #DDEAF3;
   //background-color: transparent;
   //background: linear-gradient(
@@ -974,6 +1012,12 @@ const InsightsLeft = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+
+  @media (max-width: 1024px) {
+    align-items: center;
+    text-align: center;
+    max-width: 100%;
+  }
 `;
 
 const InsightsKicker = styled.div`
@@ -1002,6 +1046,10 @@ const InsightsBody = styled.p`
   :root[data-theme="dark"] & {
     color: rgba(226, 232, 240, 0.7);
   }
+
+  @media (max-width: 1024px) {
+    text-align: center;
+  }
 `;
 
 const TextHiright = styled.div`
@@ -1027,6 +1075,11 @@ const InsightsLeftTitle = styled.div`
 
   :root[data-theme="dark"] & {
     color: ${BRAND.blueDark};
+  }
+
+  @media (max-width: 1024px) {
+    font-size: 32px;
+    text-align: center;
   }
 `;
 
@@ -1272,7 +1325,8 @@ const ShowcaseGrid = styled.div<{ $reverse?: boolean }>`
     grid-template-columns: 1fr;
     gap: 44px;
     display: flex;
-    flex-direction: ${props => props.$reverse ? "column-reverse" : "column"};
+    flex-direction: column;
+    align-items: center;
   }
 `;
 
@@ -1287,6 +1341,7 @@ const ShowcaseVisual = styled.div`
 
   @media (max-width: 1024px) {
     min-height: 520px;
+    justify-content: center;
   }
 
   @media (max-width: 640px) {
@@ -1303,7 +1358,7 @@ const ShowcaseFrameStack = styled.div<{ $reverse?: boolean }>`
   transform: translateX(-300px);
 
   @media (max-width: 1024px) {
-    transform: translateX(-120px);
+    transform: translateX(-60px);
     margin-top: 0;
   }
 
@@ -1430,10 +1485,17 @@ const ShowcaseContent = styled.div<{ $reverse?: boolean; $shiftX?: number }>`
     `}
 
   @media (max-width: 1024px) {
-  text-align: left;
-  left: 0;
-  width: 100%;
-}
+    text-align: left;
+    left: 0;
+    width: 100%;
+  }
+
+  @media (max-width: 640px) {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
 const ShowcaseTitle = styled.h2`
@@ -1452,6 +1514,7 @@ const ShowcaseTitle = styled.h2`
 
 const ShowcaseTitleLine = styled.span`
   display: block;
+  white-space: nowrap;
 
   @media (max-width: 640px) {
     white-space: normal;
@@ -1482,6 +1545,10 @@ const ShowcaseSubTitle = styled.h3`
   @media (max-width: 1024px) {
     max-width: 100%;
   }
+
+  @media (max-width: 640px) {
+    text-align: center;
+  }
 `;
 
 const ShowcaseDescription = styled.p`
@@ -1502,6 +1569,12 @@ const ShowcaseDescription = styled.p`
   @media (max-width: 1024px) {
     max-width: 100%;
     min-height: auto;
+  }
+
+  @media (max-width: 640px) {
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.7;
   }
 `;
 
@@ -1567,6 +1640,12 @@ const ProgressStepLabel = styled.div<{ $leftPct: number; $active?: boolean; $edg
 
   :root[data-theme="dark"] & {
     color: ${props => (props.$active ? "rgba(96, 165, 250, 1)" : "rgba(148, 163, 184, 0.75)")};
+  }
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    top: -32px;
   }
 `;
 
@@ -1638,6 +1717,18 @@ const ProgressBottomDescription = styled.p`
 
   :root[data-theme="dark"] & {
     color: #cbd5e1;
+  }
+
+  @media (max-width: 768px) {
+    margin-top: 60px;
+    font-size: 22px;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 480px) {
+    margin-top: 40px;
+    font-size: 18px;
+    line-height: 1.5;
   }
 `;
 
@@ -1725,6 +1816,11 @@ const HeroSection = styled.section`
     100% { transform: scale(1.1) translate(-1%, -1%); }
   }
 
+  @media (max-width: 768px) {
+    height: 100svh;
+    min-height: 580px;
+  }
+
   @media (max-width: 900px) {
     height: auto;
     min-height: unset;
@@ -1750,25 +1846,32 @@ const HeroInner = styled.div`
 
   @media (max-width: 900px) {
     flex-direction: column;
-    align-items: flex-start;
-    text-align: left;
+    text-align: center;
     padding: 0 20px;
-    gap: 28px;
+    gap: 40px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 0 16px;
   }
 `;
 
 const HeroContent = styled.div`
   flex: 1;
   color: #1a1a1a;
-  text-shadow: none; /* 배경과 자연스럽게 어울리도록 텍스트 그림자 제거 */
-  transform: translateY(-40px) translateX(-60px); /* 왼쪽 위로 이동 */
+  text-shadow: none; 
+  transform: translateY(-40px) translateX(-60px);
   @media (max-width: 1100px) {
     transform: translateY(-16px) translateX(0);
   }
-
   @media (max-width: 900px) {
-    width: 100%;
     transform: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
   }
 `;
 
@@ -1822,6 +1925,11 @@ const HeroLogoLine = styled.div`
     gap: 8px;
     flex-wrap: wrap;
   }
+
+  @media (max-width: 640px) {
+    gap: 8px;
+    margin-left: 0;
+  }
 `;
 
 const HeroLogoImg = styled.img`
@@ -1836,6 +1944,10 @@ const HeroLogoImg = styled.img`
 
   @media (max-width: 640px) {
     height: 72px;
+  }
+  
+  @media (max-width: 380px) {
+    height: 56px;
   }
 `;
 
@@ -1852,7 +1964,11 @@ const HeroLogoX = styled.span`
   }
 
   @media (max-width: 640px) {
-    font-size: 56px;
+    font-size: 48px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 36px;
   }
 `;
 
@@ -1871,8 +1987,13 @@ const HeroLogoAIText = styled.span`
   }
 
   @media (max-width: 640px) {
-    font-size: 48px;
+    font-size: 44px;
     margin-top: 8px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 34px;
+    margin-top: 6px;
   }
 `;
 
@@ -1885,6 +2006,14 @@ const HeroMainSlogan = styled.div`
   margin-bottom: 16px;
   letter-spacing: -0.025em;
   font-family: 'IncheonEducation', 'Pretendard', sans-serif;
+
+  @media (max-width: 640px) {
+    font-size: 28px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 24px;
+  }
 `;
 
 /* 설명 문구 */
@@ -1901,8 +2030,9 @@ const HeroDescText = styled.p`
   text-wrap: pretty;
 
   @media (max-width: 900px) {
-    margin-left: 0;
-    margin-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
   }
 
   @media (max-width: 640px) {
@@ -1910,6 +2040,12 @@ const HeroDescText = styled.p`
     line-height: 1.64;
     letter-spacing: -0.01em;
     max-width: 100%;
+    margin-bottom: 28px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 13px;
+    margin-bottom: 24px;
   }
 `;
 
@@ -1919,8 +2055,14 @@ const HeroBtnRow = styled.div`
   gap: 12px;
   flex-wrap: wrap;
 
-  @media (max-width: 640px) {
+  @media (max-width: 900px) {
+    justify-content: center;
     width: 100%;
+  }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: center;
   }
 `;
 
@@ -1948,8 +2090,14 @@ const HeroBtn = styled.button`
   }
 
   @media (max-width: 640px) {
+    height: 48px;
+    padding: 0 22px;
+    font-size: 14px;
     width: 100%;
+    max-width: 280px;
     justify-content: center;
+    display: flex;
+    align-items: center;
   }
 `;
 
@@ -2120,6 +2268,7 @@ const SearchTitle2 = styled.h2`
   margin-bottom: 400px;
   position: relative;
   z-index: 1;
+
   font-size: 48px;
   font-weight: 800;
   line-height: 1.35;
@@ -2145,6 +2294,13 @@ const SearchTitle2 = styled.h2`
     font-weight: 700;
     line-height: 1.5;
     padding: 0 16px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+    margin-top: 120px;
+    margin-bottom: 120px;
+    padding: 0 8px;
   }
 `;
 
@@ -2202,7 +2358,7 @@ const ProductsSection = styled.section<{ $isVisible?: boolean }>`
   transform: translateY(${props => props.$isVisible ? '0' : '40px'});
   transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
-
+  
   @media (max-width: 1024px) {
     margin: 140px auto 200px;
     padding: 0 20px;
@@ -2211,6 +2367,10 @@ const ProductsSection = styled.section<{ $isVisible?: boolean }>`
   @media (max-width: 768px) {
     margin: 120px auto 180px;
     padding: 0 16px;
+  }
+
+  @media (max-width: 480px) {
+    margin: 80px auto 100px;
   }
 `;
 
@@ -2296,6 +2456,11 @@ const ProductCard = styled.div<{ $bgColor?: string; $delay?: number; $featured?:
     padding: 34px 24px;
     border-radius: 24px;
   }
+
+  @media (max-width: 480px) {
+    min-height: 340px;
+    padding: 32px 20px;
+  }
 `;
 
 const ProductTitle = styled.h3<{ $color?: string; $featured?: boolean }>`
@@ -2369,7 +2534,7 @@ const ProductImageWrap = styled.div`
 
   @media (max-width: 768px) {
     img {
-      max-height: 170px;
+      filter: brightness(1.1) drop-shadow(0 20px 40px rgba(59, 130, 246, 0.15));
     }
   }
 `;
@@ -2489,11 +2654,18 @@ const PrimaryButton = styled.a`
     transform: translateY(0);
   }
 
+  @media (max-width: 768px) {
+    font-size: 18px;
+    height: 52px;
+    padding: 14px 28px;
+  }
+
   @media (max-width: 640px) {
     width: 100%;
     max-width: 100%;
-    padding: 16px 32px;
+    padding: 14px 28px;
     font-size: 16px;
+    height: 48px;
     border-radius: 12px;
     box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
   }
@@ -3043,6 +3215,10 @@ const SubTextStyle = styled.span`
   color: #A7ABB3;
   letter-spacing: -0.02em;   /* 두께 체감 ↑ */
   -webkit-text-stroke: 0.2px currentColor; /* 윤곽 강조 */
+
+  @media (max-width: 640px) {
+    font-size: 18px;
+  }
 `;
 
 const SubTextStyle2 = styled.span`
@@ -3058,6 +3234,11 @@ const SubTextStyle2 = styled.span`
   text-decoration-color: rgba(59, 130, 246, 0.3);
   text-decoration-thickness: 4px;
   text-underline-offset: 6px;
+
+  @media (max-width: 640px) {
+    font-size: 18px;
+    text-decoration-thickness: 3px;
+  }
 `;
 
 const StepsContainer = styled.div`
@@ -3259,6 +3440,10 @@ const FeatureContent = styled.div<{ $reverse?: boolean; $isVisible?: boolean }>`
     order: 1;
     padding-left: 0;
     transform: translateX(0);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   @media (max-width: 640px) {
@@ -3479,6 +3664,10 @@ const HomeFiveSection = styled.section`
       width: calc(100% - 32px);
     }
   }
+
+  @media (max-width: 480px) {
+    margin: 80px auto 60px;
+  }
 `;
 
 const COMPANY_LOGOS = [
@@ -3655,6 +3844,10 @@ const Companies = styled.div`
     padding-top: 18px;
     padding-bottom: 16px;
   }
+
+  @media (max-width: 480px) {
+    margin: 80px auto 100px;
+  }
 `;
 
 const CompaniesEyebrow = styled.span`
@@ -3760,8 +3953,12 @@ const CoreValueSection = styled.section`
   }
 
   @media (max-width: 768px) {
-    min-height: 100vh;
+    min-height: auto;
     padding: 80px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 60px 16px;
   }
 `;
 
@@ -3775,6 +3972,10 @@ const CoreValueHeader = styled.div`
   margin-bottom: 80px;
   position: relative;
   z-index: 1;
+
+  @media (max-width: 768px) {
+    margin-bottom: 48px;
+  }
 
   @media (max-width: 1024px) {
     margin-bottom: 56px;
@@ -3885,8 +4086,13 @@ const CoreValueRow = styled.div<{ $reverse?: boolean }>`
 
   @media (max-width: 1024px) {
     grid-template-columns: 1fr;
-    gap: 28px;
-    width: 100%;
+    gap: 32px;
+    text-align: center;
+    direction: ltr !important;
+
+    > * {
+      direction: ltr !important;
+    }
   }
 
   ${props => props.$reverse && `
@@ -3965,6 +4171,11 @@ const CoreValueContent = styled.div`
   flex-direction: column;
   gap: 20px;
   width: 100%;
+
+  @media (max-width: 900px) {
+    align-items: center;
+    text-align: center;
+  }
 `;
 
 const CoreValueCardTitle = styled.h3`
@@ -3990,6 +4201,11 @@ const CoreValueCardTitle = styled.h3`
 
 const CoreValueCardTitleLine = styled.span`
   display: block;
+
+  @media (max-width: 900px) {
+    font-size: 22px;
+    text-align: center;
+  }
 `;
 
 const CoreValueCardDesc = styled.p`
@@ -3997,6 +4213,11 @@ const CoreValueCardDesc = styled.p`
   color: #64748b;
   line-height: 1.8;
   margin: 0;
+
+  @media (max-width: 900px) {
+    font-size: 15px;
+    text-align: center;
+  }
 `;
 
 /* ========== GROWTH 섹션 ========== */
@@ -4023,8 +4244,12 @@ const GrowthSection = styled.section`
   }
 
   @media (max-width: 768px) {
-    min-height: 100vh;
+    min-height: auto;
     padding: 80px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 60px 16px;
   }
 `;
 
@@ -4038,6 +4263,10 @@ const GrowthHeader = styled.div`
   margin-left: auto;
   margin-right: auto;
   position: relative;
+
+  @media (max-width: 768px) {
+    margin-bottom: 48px;
+  }
 
   &::after {
     content: '';
@@ -4255,7 +4484,12 @@ const ScrollSection = styled.section<{ $bgColor: string; $zIndex: number }>`
 
   @media (max-width: 768px) {
     padding: 60px 20px;
-    height: 100vh;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  @media (max-width: 480px) {
+    padding: 40px 16px;
   }
 `;
 
@@ -4545,12 +4779,19 @@ const MobilePromoImage = styled.img`
     width: min(520px, 58%);
   }
 
+  @media (max-width: 768px) {
+    position: relative;
+    top: -10px;
+    right: auto;
+    width: min(560px, 96%);
+    margin: 0 auto -10px;
+  }
+  
   @media (max-width: 640px) {
     right: -8px;
     bottom: 8px;
     width: min(290px, 88%);
     margin: 0;
-  }
 `;
 
 const MobilePromoLogo = styled.img`
@@ -4563,6 +4804,7 @@ const MobilePromoLogo = styled.img`
   @media (max-width: 768px) {
     width: 120px;
     margin-bottom: 14px;
+    align-self: center;
   }
 `;
 
@@ -4580,6 +4822,11 @@ const MobilePromoContent = styled.div`
     max-width: 100%;
     align-self: start;
     text-align: left;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
 `;
 
@@ -4635,6 +4882,7 @@ const MobileStoreRow = styled.div`
   @media (max-width: 480px) {
     flex-direction: column;
     align-items: stretch;
+    justify-content: center;
   }
 `;
 
@@ -5131,6 +5379,8 @@ export default function Main() {
       setProgressValue(next);
     };
 
+    let touchStartY = 0;
+
     const onWheel = (e: WheelEvent) => {
       if (!isProgressPinnedRef.current) return;
 
@@ -5140,6 +5390,35 @@ export default function Main() {
       e.preventDefault();
 
       const speed = 1200;
+      const next = clamp(progressValueRef.current + delta / speed, 0, 1);
+      setProgress(next);
+
+      if (next >= 1 && delta > 0) {
+        unlockProgressScroll("down");
+      }
+
+      if (next <= 0 && delta < 0) {
+        unlockProgressScroll("up");
+      }
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (!isProgressPinnedRef.current) return;
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isProgressPinnedRef.current) return;
+
+      e.preventDefault();
+
+      const touchY = e.touches[0].clientY;
+      const delta = touchStartY - touchY; // positive = scroll down
+      touchStartY = touchY;
+
+      if (delta === 0) return;
+
+      const speed = 400;
       const next = clamp(progressValueRef.current + delta / speed, 0, 1);
       setProgress(next);
 
@@ -5170,6 +5449,8 @@ export default function Main() {
       document.body.style.width = "100%";
 
       window.addEventListener("wheel", onWheel, { passive: false });
+      window.addEventListener("touchstart", onTouchStart, { passive: true });
+      window.addEventListener("touchmove", onTouchMove, { passive: false });
     };
 
     const unlockProgressScroll = (direction: "down" | "up" = "down") => {
@@ -5177,6 +5458,8 @@ export default function Main() {
 
       isProgressPinnedRef.current = false;
       window.removeEventListener("wheel", onWheel as any);
+      window.removeEventListener("touchstart", onTouchStart as any);
+      window.removeEventListener("touchmove", onTouchMove as any);
 
       document.body.style.position = "";
       document.body.style.top = "";
@@ -5812,20 +6095,20 @@ export default function Main() {
                         />
                       </ShowcaseBaseFrame>
 
-                      <ShowcaseOverlayFrame
-                          data-reveal
-                          data-reveal-variant="fade"
-                          style={revealStyle(180)}
-                      >
-                        <ShowcaseImage
-                            src={quiz01}
-                            alt="포텐퀴즈 메인 화면"
-                            draggable={false}
-                        />
-                      </ShowcaseOverlayFrame>
-                    </ShowcaseFrameStack>
-                  </div>
-                </ShowcaseVisual>
+                    <ShowcaseOverlayFrame
+                        data-reveal
+                        data-reveal-variant="fade"
+                        style={revealStyle(180)}
+                    >
+                      <ShowcaseImage
+                          src={quiz01}
+                          alt="포텐퀴즈 메인 화면"
+                          draggable={false}
+                      />
+                    </ShowcaseOverlayFrame>
+                  </ShowcaseFrameStack>
+                </div>
+              </ShowcaseVisual>
 
                 <ShowcaseContent $shiftX={-100} data-reveal style={revealStyle(100)}>
                   <ShowcaseTitle>

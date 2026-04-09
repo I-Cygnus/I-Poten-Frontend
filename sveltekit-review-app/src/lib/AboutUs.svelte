@@ -654,6 +654,16 @@
 	}
 
 	/* ===== Responsive ===== */
+	@media (max-width: 768px) {
+		.hero h1 { font-size: 26px; }
+		.hero { padding: 48px 16px 32px; }
+		.section { margin: 80px auto; padding: 0 16px; }
+		.section:last-of-type { margin-bottom: 80px; }
+		.section h2 { font-size: 20px; }
+		.quicklinks { gap: 12px; }
+		.quickbtn { padding: 8px 12px; font-size: 14px; }
+		.about { padding-bottom: 100px; }
+	}
 	@media (max-width: 1100px) {
 		.cards {
 			grid-template-columns: repeat(2, 1fr);
@@ -699,6 +709,8 @@
 		.kpis {
 			grid-template-columns: repeat(2, 1fr);
 		}
+		.caption strong { font-size: 14px; }
+		.caption .role { font-size: 11px; }
 	}
 
 	/* 마지막 섹션과 푸터 사이 여백 */

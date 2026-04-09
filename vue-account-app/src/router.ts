@@ -108,7 +108,21 @@ const router = createRouter({
 //전역 가드 등록
 router.beforeEach(adminBeforeEach);
 
-router.afterEach(() => {
+router.afterEach((to) => {
+  try {
+    (window as any).dataLayer = (window as any).dataLayer || [];
+    (window as any).dataLayer.push({
+      event: "page_view",
+      event_category: "system",
+      event_action: "page_view",
+      page_path: "/vue-account" + to.path,
+      page_title: document.title,
+      page_section: "vue-account-app",
+      login_status: localStorage.getItem("isLoggedIn") === "true" ? "logged_in" : "guest",
+    });
+  } catch (e) {
+    console.warn("[GTM]", e);
+  }
   window.dispatchEvent(new CustomEvent("vue-route-change"));
 });
 

@@ -271,7 +271,7 @@ export default function InterviewRecordListPage() {
                                         </PdfIconButton>
                                         <DetailButton
                                             type="button"
-                                            onClick={() => navigate(`/mypage/interview/${record.interviewId}`)}
+                                            onClick={() => handlePdfOpen(record)}
                                             disabled={!record.finished}
                                         >
                                             상세 보기

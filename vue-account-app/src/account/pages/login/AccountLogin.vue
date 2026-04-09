@@ -1,151 +1,104 @@
 <template>
-  <!-- 좌상단 로고 -->
-
-
-
   <div class="w-full overflow-hidden flex items-center justify-center min-h-screen bg-white">
 
-
-
-      <div :style="backgroundTextContainerStyle">
-        <div :style="backgroundTextStyle">
-          <span> I-POTEN · I-POTEN · I-POTEN · I-POTEN · I-POTEN· I-POTEN · I-POTEN · I-POTEN · </span>
-          <span> I-POTEN · I-POTEN · I-POTEN · I-POTEN · I-POTEN· I-POTEN · I-POTEN · I-POTEN · </span>
-        </div>
+    <!-- 배경 텍스트 애니메이션 -->
+    <div :style="backgroundTextContainerStyle">
+      <div :style="backgroundTextStyle">
+        <span> I-POTEN · I-POTEN · I-POTEN · I-POTEN · I-POTEN· I-POTEN · I-POTEN · I-POTEN · </span>
+        <span> I-POTEN · I-POTEN · I-POTEN · I-POTEN · I-POTEN· I-POTEN · I-POTEN · I-POTEN · </span>
       </div>
-      <!-- 컨테이너 전체 -->
-      <div :style="loginBoxStyle" @mouseenter="Object.assign(loginBoxStyle, loginBoxHoverStyle)" @mouseleave="loginBoxStyle.boxShadow = '0 10px 30px rgba(31, 38, 135, 0.4)'">
-        <div style="display: flex; justify-content: center; height: 100px; margin-bottom: 30px" @click="goHome">
-          <img :src="logoBlack" :style="{ width: 'auto', height: '75%', marginLeft:'10px', marginTop: '30px' }" alt="Logo" />
-        </div>
+    </div>
 
+    <!-- 로그인 카드 -->
+    <div :style="loginBoxStyle" @mouseenter="Object.assign(loginBoxStyle, loginBoxHoverStyle)" @mouseleave="loginBoxStyle.boxShadow = '0 10px 30px rgba(31, 38, 135, 0.4)'">
 
-        <!-- 상단 텍스트 -->
-        <div :style="titleStyle">
-          <span :style="titleSpanStyle">로그인</span>
-        </div>
-        <div :style="subtitleStyle">
-          클릭 한번으로 I-Poten과 함께 하세요
-        </div>
-        <div :style="subtitleLastStyle">
-          클릭하여 <span :style="registerLinkStyle">간편 회원가입!</span>
-        </div>
-        <!-- 소셜 로그인 버튼 컨테이너 -->
-        <div :style="buttonContainerStyle">
-          <!-- Kakao Login Button -->
-          <button :style="buttonContainerStyle">
-            <img
-                :src="kakaoBtn"
-                alt="Kakao Login"
-                :style="{
-                    height: '73%',
-                    objectFit: 'contain',
-                    display: 'block',
-                    borderRadius: '0.5rem',
-                    transform: hoverKakao ? 'scale(1.05)' : 'scale(1)',
-                    transition: 'all 0.3s ease',
-                  }"
-                @mouseenter="hoverKakao = true"
-                @mouseleave="hoverKakao = false"
-                @click="() => goToPrivacyAgreementPage('KAKAO')"
-            />
-          </button>
+      <!-- 로고 -->
+      <div :style="logoWrapStyle" @click="goHome">
+        <img :src="logoBlack" :style="logoImgStyle" alt="I-Poten Logo" />
+      </div>
 
-          <!-- Naver Login Button -->
+      <!-- 타이틀 -->
+      <div :style="titleStyle">
+        <span :style="titleSpanStyle">로그인</span>
+      </div>
+      <div :style="subtitleStyle">클릭 한번으로 I-Poten과 함께 하세요</div>
+      <div :style="subtitleLastStyle">
+        클릭하여 <span :style="registerLinkStyle">간편 회원가입!</span>
+      </div>
 
-          <button :style="buttonContainerStyle">
-            <img
-                :src="naverBtn"
-                alt="Naver Login"
-                :style="{
-                    height: '73%',
-                    objectFit: 'contain',
-                    display: 'block',
-                    borderRadius: '0.5rem',
-                    transform: hoverNaver ? 'scale(1.05)' : 'scale(1)',
-                    transition: 'all 0.3s ease',
-                  }"
-                @mouseenter="hoverNaver = true"
-                @mouseleave="hoverNaver = false"
-                @click="() => goToPrivacyAgreementPage('NAVER')"
-            />
-          </button>
+      <!-- 소셜 로그인 버튼들 -->
+      <div :style="socialBtnGroupStyle">
 
-          <!-- Google Login Button -->
+        <!-- 카카오 -->
+        <button
+            :style="kakaoBtnNewStyle"
+            @mouseenter="hoverKakao = true"
+            @mouseleave="hoverKakao = false"
+            @click="() => goToPrivacyAgreementPage('KAKAO')"
+        >
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+            <path d="M10 2C5.029 2 1 5.134 1 8.998c0 2.467 1.632 4.632 4.093 5.862l-.698 2.588c-.058.215.188.384.378.26l3.1-2.07c.7.1 1.418.156 2.127.156 4.971 0 9-3.134 9-6.996S14.971 2 10 2z" fill="#181600"/>
+          </svg>
+          <span>카카오로 시작하기</span>
+        </button>
 
-          <button :style="buttonContainerStyle">
-            <img
-                :src="googleBtn"
-                alt="Google Login"
-                :style="{
-                    height: '73%',
-                    width: 'auto',
-                    objectFit: 'contain',
-                    display: 'block',
-                    borderRadius: '0.5rem',
-                    transform: hoverGoogle ? 'scale(1.05)' : 'scale(1)',
-                    transition: 'all 0.3s ease',
-                    border: hoverGoogle
-                      ? '1.5px solid rgba(0, 0, 0, 0.25)' // hover 시 조금 진하게
-                      : '1px solid rgba(0, 0, 0, 0.15)',  // 기본은 아주 연하게
-                  }"
-                @mouseenter="hoverGoogle = true"
-                @mouseleave="hoverGoogle = false"
-                @click="() => goToPrivacyAgreementPage('GOOGLE')"
-            />
-          </button>
+        <!-- 네이버 -->
+        <button
+            :style="naverBtnNewStyle"
+            @mouseenter="hoverNaver = true"
+            @mouseleave="hoverNaver = false"
+            @click="() => goToPrivacyAgreementPage('NAVER')"
+        >
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+            <path d="M12.194 9.57L5.553 0H0v18h5.806V8.43L12.447 18H18V0h-5.806v9.57z" fill="#fff"/>
+          </svg>
+          <span>네이버로 시작하기</span>
+        </button>
 
+        <!-- 구글 -->
+        <button
+            :style="googleBtnNewStyle"
+            @mouseenter="hoverGoogle = true"
+            @mouseleave="hoverGoogle = false"
+            @click="() => goToPrivacyAgreementPage('GOOGLE')"
+        >
+          <svg width="20" height="20" viewBox="0 0 48 48">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          <span>Google로 시작하기</span>
+        </button>
 
-          <button :style="buttonContainerStyle2">
-            <img
-                :src="metaBtn"
-                alt="Meta Login"
-                :style="{
-                    height: '35%',
-                    objectFit: 'contain',
-                    display: 'block',
-                    borderRadius: '0.5rem',
-                    transform: hoverMeta ? 'scale(1.05)' : 'scale(1)',
-                    transition: 'all 0.3s ease',
-
-                  }"
-                @mouseenter="hoverMeta = true"
-                @mouseleave="hoverMeta = false"
-                @click="() => goToPrivacyAgreementPage('META')"
-            />
-          </button>
-
-          <!-- 관리자(GitHub) 버튼: Alt 키를 누를 때만 노출, 우상단에서 '빼꼼' -->
-          <button
-              v-show="altPressed"
-              @click="goToAdminLogin"
-              aria-label="관리자 로그인"
-              title="관리자 로그인"
-              class="absolute top-3 z-10 rounded-full shadow-lg border border-white/20 hover:scale-105 transition-transform focus:outline-none"
-              style="
-          right:-12px;               /* 컨테이너 밖으로 살짝(빼꼼) */
-          width:48px;height:48px;
-          background: white;
-          display:flex;align-items:center;justify-content:center;
-          opacity:0.95;
-        "
-          >
-            <img :src="githubIcon" alt="" style="width:26px;height:26px;" />
-          </button>
-
-
-
-
-        </div>
-
-
+        <!-- Meta -->
+        <button
+            :style="metaBtnNewStyle"
+            @mouseenter="hoverMeta = true"
+            @mouseleave="hoverMeta = false"
+            @click="() => goToPrivacyAgreementPage('META')"
+        >
+          <svg width="20" height="20" viewBox="0 0 36 36" fill="none">
+            <path d="M8.143 12.475c-1.573 2.352-2.476 5.358-2.476 7.774 0 3.578 1.588 5.755 4.216 5.755 1.438 0 2.95-.916 4.57-3.16.962-1.333 1.974-3.108 2.713-4.285l1.395-2.216c.978-1.555 2.11-3.283 3.39-4.694C23.534 9.908 25.254 9 26.95 9c3.086 0 5.832 2.402 7.17 6.106.957 2.654 1.453 5.757 1.453 9.102 0 2.1-.35 3.683-1.058 4.805C33.854 30.05 32.68 30.5 31.2 30.5v-3.5c1.723 0 1.91-1.94 1.91-3.25 0-2.85-.408-5.553-1.19-7.84-.92-2.694-2.594-4.41-4.571-4.41-1.34 0-2.735 1.06-4.233 3.148-.795 1.107-1.595 2.455-2.496 4.015l-1.072 1.853c-1.942 3.352-2.618 4.366-3.616 5.663C14.04 28.682 12.266 30 9.883 30 6.7 30 4.167 27.7 3.173 24.1c-.49-1.778-.74-3.78-.74-5.805 0-3.1 1.05-6.576 3.04-9.6l2.67 3.78z" fill="#fff"/>
+          </svg>
+          <span>Meta로 시작하기</span>
+        </button>
 
       </div>
 
+      <!-- 관리자(GitHub) 버튼: Alt 키를 누를 때만 노출 -->
+      <button
+          v-show="altPressed"
+          @click="goToAdminLogin"
+          aria-label="관리자 로그인"
+          title="관리자 로그인"
+          :style="adminFloatStyle"
+      >
+        <img :src="githubIcon" alt="" style="width:22px;height:22px;" />
+      </button>
 
+    </div>
   </div>
-
-
 </template>
 
 <script setup lang="ts">
@@ -190,10 +143,14 @@ const hoverNaver = ref(false)
 const hoverAdmin = ref(false)
 
 // 로그인 박스 스타일
-const loginBoxStyle = {
-  width: '400px',
-  height: '650px',
+const loginBoxStyle = reactive({
+  width: '100%',
+  maxWidth: '420px',
+  height: 'auto',
   paddingTop: '2.5rem',
+  paddingLeft: '2rem',
+  paddingRight: '2rem',
+  paddingBottom: '2.5rem',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -205,7 +162,9 @@ const loginBoxStyle = {
   transition: 'all 0.3s',
   position: 'relative',
   overflow: 'hidden',
-}
+  margin: '0 16px',
+  boxSizing: 'border-box',
+})
 
 const loginBoxHoverStyle = {
   boxShadow: '0 15px 35px rgba(31, 38, 135, 0.45)'
@@ -242,6 +201,19 @@ const decorCircleBottomStyle = {
   borderRadius: '9999px',
   background: 'linear-gradient(to bottom right, rgba(168, 85, 247, 0.2), rgba(236, 72, 153, 0.2))',
   filter: 'blur(16px)',
+}
+
+// 로고 스타일
+const logoWrapStyle = {
+  display: 'flex',
+  justifyContent: 'center',
+  cursor: 'pointer',
+  marginBottom: '16px',
+}
+
+const logoImgStyle = {
+  width: 'auto',
+  height: '52px',
 }
 
 // 텍스트 스타일
@@ -319,83 +291,95 @@ onMounted(() => {
 })
 
 
-// 버튼 컨테이너 스타일
-const buttonContainerStyle2 = {
+// 소셜 버튼 공통 스타일
+const socialBtnGroupStyle = {
   width: '100%',
-  maxWidth: '500px',
   display: 'flex',
   flexDirection: 'column',
-  // gap: '1rem',
+  gap: '12px',
   position: 'relative',
-  marginTop: '1rem',
   zIndex: '10',
 }
 
-const buttonContainerStyle = {
-  width: 'fit-content',
-  maxWidth: '500px',
+const socialBtnBase = {
+  width: 'clamp(240px, 85%, 300px)',
+  height: 'clamp(46px, 7vw, 56px)',
+  margin: '0 auto',
+  border: 'none',
+  borderRadius: '14px',
   display: 'flex',
-  flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  margin: '0 auto',
-  // gap: '1rem',
-  position: 'relative',
+  gap: '10px',
+  cursor: 'pointer',
+  fontSize: 'clamp(12px, 1.4vw, 13px)',
+  fontWeight: '700',
+  letterSpacing: '-0.02em',
+  transition: 'all 0.2s ease',
+  outline: 'none',
+  fontFamily: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
+}
+
+const kakaoBtnNewStyle = computed(() => ({
+  ...socialBtnBase,
+  background: hoverKakao.value ? '#F5DC00' : '#FEE500',
+  color: '#191919',
+  boxShadow: hoverKakao.value
+    ? '0 6px 20px rgba(254, 229, 0, 0.4)'
+    : '0 2px 8px rgba(254, 229, 0, 0.25)',
+  transform: hoverKakao.value ? 'translateY(-2px)' : 'translateY(0)',
+}))
+
+const naverBtnNewStyle = computed(() => ({
+  ...socialBtnBase,
+  background: hoverNaver.value ? '#00B843' : '#03C75A',
+  color: '#ffffff',
+  boxShadow: hoverNaver.value
+    ? '0 6px 20px rgba(3, 199, 90, 0.4)'
+    : '0 2px 8px rgba(3, 199, 90, 0.25)',
+  transform: hoverNaver.value ? 'translateY(-2px)' : 'translateY(0)',
+}))
+
+const googleBtnNewStyle = computed(() => ({
+  ...socialBtnBase,
+  background: hoverGoogle.value ? '#f5f5f5' : '#ffffff',
+  color: '#3c4043',
+  border: '1px solid ' + (hoverGoogle.value ? '#d0d0d0' : '#dadce0'),
+  boxShadow: hoverGoogle.value
+    ? '0 6px 20px rgba(0, 0, 0, 0.1)'
+    : '0 1px 4px rgba(0, 0, 0, 0.08)',
+  transform: hoverGoogle.value ? 'translateY(-2px)' : 'translateY(0)',
+}))
+
+const metaBtnNewStyle = computed(() => ({
+  ...socialBtnBase,
+  background: hoverMeta.value
+    ? 'linear-gradient(135deg, #0062E0 0%, #19AFFF 100%)'
+    : 'linear-gradient(135deg, #0081FB 0%, #19AFFF 100%)',
+  color: '#ffffff',
+  boxShadow: hoverMeta.value
+    ? '0 6px 20px rgba(0, 129, 251, 0.4)'
+    : '0 2px 8px rgba(0, 129, 251, 0.25)',
+  transform: hoverMeta.value ? 'translateY(-2px)' : 'translateY(0)',
+}))
+
+const adminFloatStyle = {
+  position: 'absolute',
+  top: '12px',
+  right: '-12px',
+  width: '44px',
+  height: '44px',
+  borderRadius: '999px',
+  background: '#ffffff',
+  border: '1px solid rgba(0,0,0,0.08)',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
   zIndex: '10',
+  transition: 'transform 0.15s ease',
 }
-
-// 공통/버튼 스타일 (보존)
-const btnCommon = {
-  width: '100%',
-  height: '50px',
-  margin: '1.3vh auto',
-  backgroundSize: 'contain',
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'center',
-  borderRadius: '1.4vh',
-}
-
-const guestBtnStyle = computed(() => ({
-  ...btnCommon,
-  backgroundColor: hoverGuest.value ? '#00c0ef' : '#00d0ff',
-  color: 'white',
-}))
-
-const kakaoBtnStyle = computed(() => ({
-  ...btnCommon,
-  backgroundImage: `url('${kakaoBtn}')`,
-  backgroundColor: hoverKakao.value ? '#f6db00' : '#ffea00',
-  marginBottom: '1vh',
-}))
-
-const googleBtnStyle = computed(() => ({
-  ...btnCommon,
-  backgroundImage: `url('${googleBtn}')`,
-  backgroundColor: hoverGoogle.value ? '#f7f7f7' : '#fff',
-  marginBottom: '1vh',
-}))
-
-const naverBtnStyle = computed(() => ({
-  ...btnCommon,
-  backgroundImage: `url('${naverBtn}')`,
-  backgroundColor: hoverNaver.value ? '#02b04f' : '#03c75a',
-}))
-
-const adminBtnStyle = computed(() => ({
-  width: '70px',
-  height: '50px',
-  backgroundImage: `url('${githubIcon}')`,
-  backgroundColor: 'transparent',
-  boxShadow: 'none',
-  padding: 0,
-  margin: '10px auto',
-  display: 'block',
-  minWidth: 0,
-  backgroundSize: 'contain',
-  backgroundRepeat: 'no-repeat',
-  backgroundPosition: 'center',
-  filter: hoverAdmin.value ? 'brightness(0.9)' : 'none',
-}))
 
 // Alt 키 감지 상태
 const altPressed = ref(false)

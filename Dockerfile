@@ -32,6 +32,7 @@ COPY vue-account-app/package.json vue-account-app/
 COPY vue-ai-interview-app/package.json vue-ai-interview-app/
 COPY mypage-app/package.json mypage-app/
 COPY poten-word-app/package.json poten-word-app/
+COPY sveltekit-review-app/package.json sveltekit-review-app/
 COPY packages/app-state/package.json packages/app-state/
 COPY packages/theme-bridge/package.json packages/theme-bridge/
 
@@ -57,6 +58,11 @@ RUN npm -ws run build -w @jobspoon/theme-bridge -w @jobspoon/app-state
 RUN npm run build:next-seo
 RUN npm run build:remotes && npm run build:host
 
+# SvelteKit SEO 정적 페이지 빌드 (postbuild:ssg의 zip-mf-types는 SSG에 불필요하므로 직접 실행)
+ENV PUBLIC_BASE_URL=https://i-poten.com
+ENV PATH="/app/node_modules/.bin:${PATH}"
+RUN cd sveltekit-review-app && rimraf build-static && node scripts/run-sveltekit.cjs sync && vite build
+
 # 2단계: Nginx
 FROM nginx:alpine
 
@@ -71,6 +77,7 @@ COPY --from=builder /app/navigation-bar-app/dist /usr/share/nginx/html/navigatio
 COPY --from=builder /app/vue-account-app/dist /usr/share/nginx/html/vue-account-app
 COPY --from=builder /app/vue-ai-interview-app/dist /usr/share/nginx/html/vue-ai-interview-app
 COPY --from=builder /app/poten-word-app/dist /usr/share/nginx/html/poten-word-app
+COPY --from=builder /app/sveltekit-review-app/build-static /usr/share/nginx/html/sveltekit-review-app
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

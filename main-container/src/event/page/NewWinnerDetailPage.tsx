@@ -43,6 +43,10 @@ const Container = styled.div`
   width: min(1120px, 100%);
   margin: 0 auto;
   padding: 64px 24px 80px;
+
+  @media (max-width: 640px) {
+    padding: 36px 16px 60px;
+  }
 `;
 
 const TopRow = styled.div`
@@ -58,6 +62,10 @@ const PageTitle = styled.h1`
   font-weight: 700;
   letter-spacing: -0.8px;
   color: #111111;
+
+  @media (max-width: 640px) {
+    font-size: 30px;
+  }
 `;
 
 const Divider = styled.div`
@@ -79,6 +87,10 @@ const PostTitle = styled.h2`
   font-weight: 700;
   letter-spacing: -0.6px;
   color: #111111;
+
+  @media (max-width: 640px) {
+    font-size: 21px;
+  }
 `;
 
 const MetaRow = styled.div`
@@ -97,6 +109,7 @@ const MetaLeft = styled.div`
   color: rgba(0, 0, 0, 0.65);
   font-size: 14px;
   font-weight: 450;
+  flex-wrap: wrap;
 `;
 
 const Dot = styled.span`

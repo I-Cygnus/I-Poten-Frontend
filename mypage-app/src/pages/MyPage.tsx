@@ -644,10 +644,6 @@ export default function MyPage() {
             setInquiryList([]);
             setSelectedInquiryId(null);
             setSelectedInquiryDetail(null);
-            openSys({
-                tone: "error",
-                title: "문의 목록을 불러오지 못했습니다.",
-            });
         } finally {
             setInquiryListLoading(false);
         }
@@ -880,19 +876,14 @@ export default function MyPage() {
                     setDraftInterestSelection(DEFAULT_INTEREST_SELECTION);
                 }
             } catch (error) {
-                console.error(error);
+            console.error(error);
 
-                if (mounted) {
-                    setInterestOptions([]);
-                    setInterestSelection(DEFAULT_INTEREST_SELECTION);
-                    setDraftInterestSelection(DEFAULT_INTEREST_SELECTION);
-                    openSys({
-                        tone: "error",
-                        title: "관심사 목록을 불러오지 못했습니다.",
-                    });
-                }
-            } finally {
-                if (mounted) {
+            if (mounted) {
+                setInterestOptions([]);
+                setInterestSelection(DEFAULT_INTEREST_SELECTION);
+                setDraftInterestSelection(DEFAULT_INTEREST_SELECTION);
+            }
+            } finally {                if (mounted) {
                     setInterestOptionsLoading(false);
                 }
             }
@@ -2253,6 +2244,10 @@ const Page = styled.div`
     @media (max-width: 768px) {
         padding: 20px;
     }
+
+    @media (max-width: 480px) {
+        padding: 12px;
+    }
 `;
 
 const PageInner = styled.div`
@@ -2265,6 +2260,10 @@ const PageInner = styled.div`
     @media (max-width: 1080px) {
         grid-template-columns: 1fr;
     }
+
+    @media (max-width: 480px) {
+        gap: 14px;
+    }
 `;
 
 const Sidebar = styled.aside`
@@ -2276,12 +2275,26 @@ const Sidebar = styled.aside`
     display: flex;
     flex-direction: column;
     gap: 22px;
+
+    @media (max-width: 1080px) {
+        padding: 18px 14px;
+        gap: 16px;
+    }
+
+    @media (max-width: 480px) {
+        padding: 14px 12px;
+        border-radius: 12px;
+    }
 `;
 
 const BrandArea = styled.div`
     display: flex;
     flex-direction: column;
     gap: 10px;
+
+    @media (max-width: 1080px) {
+        gap: 6px;
+    }
 `;
 
 const BrandBadge = styled.span`
@@ -2302,6 +2315,10 @@ const BrandTitle = styled.h1`
     line-height: 1.38;
     letter-spacing: -0.03em;
     color: #0f172a;
+
+    @media (max-width: 640px) {
+        font-size: 19px;
+    }
 `;
 
 const BrandDescription = styled.p`
@@ -2316,6 +2333,12 @@ const MenuList = styled.div`
     display: flex;
     flex-direction: column;
     gap: 10px;
+
+    @media (max-width: 1080px) {
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
 `;
 
 const MenuButton = styled.button<{ $active: boolean }>`
@@ -2332,13 +2355,13 @@ const MenuButton = styled.button<{ $active: boolean }>`
     border: 1px solid ${palette.border};
 
     ${({ $active }) =>
-            $active &&
-            css`
-                background: ${palette.primary};
-                color: #ffffff;
-                border-color: ${palette.primary};
-                box-shadow: 0 4px 14px rgba(79, 118, 241, 0.18);
-            `}
+        $active &&
+        css`
+            background: ${palette.primary};
+            color: #ffffff;
+            border-color: ${palette.primary};
+            box-shadow: 0 4px 14px rgba(79, 118, 241, 0.18);
+        `}
 
     &:hover {
         transform: translateY(-1px);
@@ -2348,6 +2371,22 @@ const MenuButton = styled.button<{ $active: boolean }>`
     span,
     svg {
         color: inherit;
+    }
+
+    @media (max-width: 1080px) {
+        width: auto;
+        padding: 10px 14px;
+        border-radius: 999px;
+        white-space: nowrap;
+
+        > svg:last-child {
+            display: none;
+        }
+    }
+
+    @media (max-width: 480px) {
+        padding: 8px 12px;
+        font-size: 13px;
     }
 `;
 
@@ -2367,6 +2406,10 @@ const SidebarBottomCard = styled.div`
     padding: 18px;
     background: linear-gradient(180deg, #eef7fd 0%, #f2fbf8 100%);
     border: 1px solid rgba(115, 174, 184, 0.18);
+
+    @media (max-width: 1080px) {
+        display: none;
+    }
 `;
 
 const SidebarBottomTitle = styled.strong`
@@ -2417,6 +2460,10 @@ const SectionTitle = styled.h2`
     font-weight: 750;
     line-height: 1.32;
     letter-spacing: -0.035em;
+
+    @media (max-width: 640px) {
+        font-size: 22px;
+    }
 `;
 
 const SectionDescription = styled.p`
@@ -2448,6 +2495,11 @@ const HeroLeft = styled.div`
     display: flex;
     align-items: flex-start;
     gap: 18px;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        gap: 14px;
+    }
 `;
 
 const HeroRight = styled.div`
@@ -2461,6 +2513,10 @@ const HeroRight = styled.div`
         width: 100%;
         min-width: 0;
         flex: 1 1 auto;
+    }
+
+    @media (max-width: 480px) {
+        min-width: 0;
     }
 `;
 
@@ -2611,6 +2667,12 @@ const AvatarWrap = styled.div`
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+
+    @media (max-width: 480px) {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+    }
 `;
 
 
@@ -2627,6 +2689,10 @@ const HeroTitle = styled.h3`
     line-height: 1.4;
     letter-spacing: -0.03em;
     color: #0f172a;
+
+    @media (max-width: 640px) {
+        font-size: 19px;
+    }
 `;
 
 const HeroSub = styled.p`
@@ -2787,6 +2853,11 @@ const PanelCard = styled.div`
     background: #ffffff;
     box-shadow: 0 6px 16px rgba(30, 41, 59, 0.05);
     padding: 22px;
+
+    @media (max-width: 640px) {
+        padding: 16px;
+        border-radius: 10px;
+    }
 `;
 
 const PanelHeader = styled.div`
@@ -3793,6 +3864,10 @@ const InquiryDetailTitle = styled.h3`
     line-height: 1.4;
     letter-spacing: -0.02em;
     color: ${palette.text};
+
+    @media (max-width: 640px) {
+        font-size: 18px;
+    }
 `;
 
 const InquiryTimeline = styled.div`
@@ -3885,6 +3960,10 @@ const WithdrawHeroTitle = styled.h3`
     line-height: 1.35;
     letter-spacing: -0.03em;
     color: ${palette.text};
+
+    @media (max-width: 640px) {
+        font-size: 20px;
+    }
 `;
 
 const WithdrawHeroDesc = styled.p`
@@ -3997,6 +4076,10 @@ const DangerTitle = styled.h3`
     font-weight: 800;
     line-height: 1.35;
     color: ${palette.text};
+
+    @media (max-width: 640px) {
+        font-size: 20px;
+    }
 `;
 
 const DangerLead = styled.p`

@@ -743,7 +743,11 @@ function removeDynamicStyle() {
 onMounted(async () => {
   injectDynamicStyle();
   userToken.value = localStorage.getItem("userToken");
-  if (!interviewId.value) { alert("인터뷰 ID가 없습니다."); return; }
+  if (!interviewId.value) { 
+    Swal.fire({ title: "알림", text: "인터뷰 ID가 없습니다.", icon: "error", confirmButtonText: "확인" })
+      .then(() => { router.push('/'); });
+    return; 
+  }
   await getScoreResultList(interviewId.value);
   const saveUrl = localStorage.getItem("interviewRecordingUrl");
   if (saveUrl) downloadUrl.value = saveUrl;

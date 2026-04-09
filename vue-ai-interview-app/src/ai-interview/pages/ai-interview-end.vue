@@ -204,7 +204,7 @@ const submitEmail = async () => {
     showSuccessDialog.value = true;
   } catch (error) {
     console.error("면접 종료 요청 실패:", error);
-    alert("결과 전송에 실패했습니다. 다시 시도해주세요.");
+    emailError.value = "결과 전송에 실패했습니다. 다시 시도해주세요.";
   } finally {
     isSubmitting.value = false;
   }
