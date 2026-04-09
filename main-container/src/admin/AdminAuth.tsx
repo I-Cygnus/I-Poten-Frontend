@@ -198,21 +198,27 @@ interface AdminAuthProps {
 export default function AdminAuth({ onSuccess }: AdminAuthProps) {
     const mode = useRecoilValue(themeAtom);
     const dark = mode === "dark";
+    const [step, setStep] = useState<"phone" | "birth">("phone");
     const [code, setCode] = useState<string[]>(Array(11).fill(""));
+    const [birthCode, setBirthCode] = useState<string[]>(Array(6).fill(""));
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [shaking, setShaking] = useState(false);
     const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+    const birthRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     useEffect(() => {
-        inputRefs.current[0]?.focus();
-    }, []);
+        if (step === "phone") {
+            inputRefs.current[0]?.focus();
+        } else {
+            birthRefs.current[0]?.focus();
+        }
+    }, [step]);
 
     const handleChange = (index: number, value: string) => {
         if (!/^\d*$/.test(value)) return;
         const newCode = [...code];
         if (value.length > 1) {
-            // paste
             const digits = value.replace(/\D/g, "").split("");
             digits.forEach((d, i) => {
                 if (index + i < 11) newCode[index + i] = d;
@@ -228,42 +234,90 @@ export default function AdminAuth({ onSuccess }: AdminAuthProps) {
         setError("");
     };
 
+    const handleBirthChange = (index: number, value: string) => {
+        if (!/^\d*$/.test(value)) return;
+        const newCode = [...birthCode];
+        if (value.length > 1) {
+            const digits = value.replace(/\D/g, "").split("");
+            digits.forEach((d, i) => {
+                if (index + i < 6) newCode[index + i] = d;
+            });
+            setBirthCode(newCode);
+            const nextIdx = Math.min(index + digits.length, 5);
+            birthRefs.current[nextIdx]?.focus();
+        } else {
+            newCode[index] = value;
+            setBirthCode(newCode);
+            if (value && index < 5) birthRefs.current[index + 1]?.focus();
+        }
+        setError("");
+    };
+
     const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-        if (e.key === "Backspace" && !code[index] && index > 0) {
-            inputRefs.current[index - 1]?.focus();
+        if (step === "phone") {
+            if (e.key === "Backspace" && !code[index] && index > 0) {
+                inputRefs.current[index - 1]?.focus();
+            }
+        } else {
+            if (e.key === "Backspace" && !birthCode[index] && index > 0) {
+                birthRefs.current[index - 1]?.focus();
+            }
         }
         if (e.key === "Enter") handleSubmit();
     };
 
     const handleSubmit = async () => {
-        const fullCode = code.join("");
-        if (fullCode.length !== 11) {
-            setError("11자리 코드를 입력해주세요");
-            return;
-        }
-        setLoading(true);
-        try {
-            const res = await fetch("/spring/api/admin/dashboard/verify-code", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ code: fullCode }),
-            });
-            const data = await res.json();
-            if (data.verified) {
-                sessionStorage.setItem("adminCode", fullCode);
-                onSuccess();
-            } else {
-                setError("잘못된 코드입니다");
+        if (step === "phone") {
+            const fullCode = code.join("");
+            if (fullCode.length !== 11) {
+                setError("11자리 코드를 입력해주세요");
+                return;
+            }
+            setLoading(true);
+            try {
+                const res = await fetch("/spring/api/admin/dashboard/verify-code", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ code: fullCode }),
+                });
+                const data = await res.json();
+                if (data.verified) {
+                    setStep("birth");
+                    setError("");
+                } else {
+                    setError("잘못된 코드입니다");
+                    setShaking(true);
+                    setTimeout(() => setShaking(false), 400);
+                }
+            } catch {
+                setError("서버 연결 실패");
                 setShaking(true);
                 setTimeout(() => setShaking(false), 400);
             }
-        } catch {
-            setError("서버 연결 실패");
-            setShaking(true);
-            setTimeout(() => setShaking(false), 400);
+            setLoading(false);
+        } else {
+            const fullBirth = birthCode.join("");
+            if (fullBirth.length !== 6) {
+                setError("6자리 생년월일을 입력해주세요");
+                return;
+            }
+            if (fullBirth === "990823") {
+                sessionStorage.setItem("adminCode", code.join(""));
+                onSuccess();
+            } else {
+                setError("잘못된 생년월일입니다");
+                setShaking(true);
+                setTimeout(() => setShaking(false), 400);
+            }
         }
-        setLoading(false);
     };
+
+    const stepLabels = {
+        phone: { title: "관리자 콘솔", subtitle: "관리자 인증 코드를 입력하세요", btn: "다음", stepText: "1단계: 전화번호 인증" },
+        birth: { title: "2차 인증", subtitle: "생년월일 6자리를 입력하세요", btn: "인증하기", stepText: "2단계: 생년월일 인증" },
+    };
+
+    const current = stepLabels[step];
 
     return (
         <Wrapper $dark={dark}>
@@ -273,42 +327,70 @@ export default function AdminAuth({ onSuccess }: AdminAuthProps) {
 
             <Card $dark={dark} $shake={shaking}>
                 <Logo $dark={dark}>I-POTEN</Logo>
-                <Title $dark={dark}>Admin Console</Title>
-                <Subtitle $dark={dark}>관리자 인증 코드를 입력하세요</Subtitle>
+                <Title $dark={dark}>{current.title}</Title>
+                <Subtitle $dark={dark}>{current.subtitle}</Subtitle>
 
-                <CodeContainer>
-                    {code.map((digit, i) => (
-                        <React.Fragment key={i}>
-                            {(i === 3 || i === 7) && (
-                                <span style={{ color: dark ? "#555" : "#ccc", fontSize: 20, alignSelf: "center" }}>-</span>
-                            )}
-                            <CodeInput
-                                ref={(el) => { inputRefs.current[i] = el; }}
-                                $dark={dark}
-                                $filled={!!digit}
-                                type="text"
-                                inputMode="numeric"
-                                maxLength={1}
-                                value={digit}
-                                onChange={(e) => handleChange(i, e.target.value)}
-                                onKeyDown={(e) => handleKeyDown(i, e)}
-                                onPaste={(e) => {
-                                    e.preventDefault();
-                                    const paste = e.clipboardData.getData("text").replace(/\D/g, "");
-                                    handleChange(i, paste);
-                                }}
-                            />
-                        </React.Fragment>
-                    ))}
-                </CodeContainer>
+                {step === "phone" ? (
+                    <CodeContainer>
+                        {code.map((digit, i) => (
+                            <React.Fragment key={i}>
+                                {(i === 3 || i === 7) && (
+                                    <span style={{ color: dark ? "#555" : "#ccc", fontSize: 20, alignSelf: "center" }}>-</span>
+                                )}
+                                <CodeInput
+                                    ref={(el) => { inputRefs.current[i] = el; }}
+                                    $dark={dark}
+                                    $filled={!!digit}
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    value={digit}
+                                    onChange={(e) => handleChange(i, e.target.value)}
+                                    onKeyDown={(e) => handleKeyDown(i, e)}
+                                    onPaste={(e) => {
+                                        e.preventDefault();
+                                        const paste = e.clipboardData.getData("text").replace(/\D/g, "");
+                                        handleChange(i, paste);
+                                    }}
+                                />
+                            </React.Fragment>
+                        ))}
+                    </CodeContainer>
+                ) : (
+                    <CodeContainer>
+                        {birthCode.map((digit, i) => (
+                            <React.Fragment key={i}>
+                                {(i === 2 || i === 4) && (
+                                    <span style={{ color: dark ? "#555" : "#ccc", fontSize: 20, alignSelf: "center" }}>/</span>
+                                )}
+                                <CodeInput
+                                    ref={(el) => { birthRefs.current[i] = el; }}
+                                    $dark={dark}
+                                    $filled={!!digit}
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    value={digit}
+                                    onChange={(e) => handleBirthChange(i, e.target.value)}
+                                    onKeyDown={(e) => handleKeyDown(i, e)}
+                                    onPaste={(e) => {
+                                        e.preventDefault();
+                                        const paste = e.clipboardData.getData("text").replace(/\D/g, "");
+                                        handleBirthChange(i, paste);
+                                    }}
+                                />
+                            </React.Fragment>
+                        ))}
+                    </CodeContainer>
+                )}
 
                 {error && <ErrorMsg>{error}</ErrorMsg>}
 
                 <SubmitButton $dark={dark} $loading={loading} onClick={handleSubmit} disabled={loading}>
-                    {loading ? "확인 중..." : "인증하기"}
+                    {loading ? "확인 중..." : current.btn}
                 </SubmitButton>
 
-                <SecurityBadge $dark={dark}>보안 인증 필요</SecurityBadge>
+                <SecurityBadge $dark={dark}>{current.stepText}</SecurityBadge>
             </Card>
         </Wrapper>
     );
