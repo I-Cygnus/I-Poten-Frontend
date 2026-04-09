@@ -677,10 +677,21 @@ const App: React.FC = () => {
     if (location.state?.loginRequired) {
       setPendingReturnUrl(location.state.returnUrl || "/");
       setShowLoginModal(true);
-      // Clean state
-      window.history.replaceState({}, document.title);
+
+      // Clear only the modal-triggering route state while preserving router history metadata.
+      const nextState = { ...(location.state ?? {}) };
+      delete nextState.loginRequired;
+      delete nextState.returnUrl;
+
+      navigate(
+        `${location.pathname}${location.search}${location.hash}`,
+        {
+          replace: true,
+          state: Object.keys(nextState).length > 0 ? nextState : null,
+        }
+      );
     }
-  }, [location]);
+  }, [location, navigate]);
 
   const tokenVerificationRequest = async () => {
     const axiosResponse = await tokenVerification();
@@ -891,7 +902,7 @@ const App: React.FC = () => {
 
                     <ModalBody>
                         <ModalPlainBody>
-                            로그인하신 후 새 폴더를 만들 수 있어요.
+                            로그인 후 이용하실 수 있어요.
                         </ModalPlainBody>
                     </ModalBody>
 

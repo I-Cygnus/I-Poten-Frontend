@@ -1,10 +1,10 @@
 // src/App.tsx
-import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import ReactDOM from "react-dom/client";
 
 import { CircularProgress, CssBaseline, GlobalStyles } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { RecoilRoot, useRecoilValue } from "recoil";
 import { Helmet, HelmetProvider } from "react-helmet-async";
 
@@ -39,6 +39,32 @@ const eventBus = mitt();
 const NavigationBarApp = lazy(() => import("navigationBarApp/App"));
 const MyPageApp = lazy(() => import("myPageApp/App"));
 const PotenWordApp = lazy(() => import("potenWordApp/App"));
+
+function subscribeToBrowserPath(onStoreChange: () => void) {
+    window.addEventListener("popstate", onStoreChange);
+    window.addEventListener("vue-route-change", onStoreChange as EventListener);
+
+    return () => {
+        window.removeEventListener("popstate", onStoreChange);
+        window.removeEventListener("vue-route-change", onStoreChange as EventListener);
+    };
+}
+
+function getBrowserPathSnapshot() {
+    return window.location.pathname;
+}
+
+function getBrowserPathServerSnapshot() {
+    return "/";
+}
+
+function useBrowserPathname() {
+    return useSyncExternalStore(
+        subscribeToBrowserPath,
+        getBrowserPathSnapshot,
+        getBrowserPathServerSnapshot
+    );
+}
 
 function InnerApp() {
     const [isNavigationBarLoaded, setIsNavigationBarLoaded] = useState(false);
@@ -99,11 +125,9 @@ function InnerApp() {
     }, []);
 
     function AppRoutes() {
-        const location = useLocation();
-        const [currentPath, setCurrentPath] = useState(() => window.location.pathname);
+        const pathname = useBrowserPathname();
 
         useEffect(() => {
-            setCurrentPath(window.location.pathname);
             // GTM 페이지뷰 추적
             try {
                 (window as any).dataLayer = (window as any).dataLayer || [];
@@ -111,7 +135,7 @@ function InnerApp() {
                     event: "page_view",
                     event_category: "system",
                     event_action: "page_view",
-                    page_path: window.location.pathname,
+                    page_path: pathname,
                     page_title: document.title,
                     page_section: "main-container",
                     login_status: localStorage.getItem("isLoggedIn") === "true" ? "logged_in" : "guest",
@@ -119,17 +143,7 @@ function InnerApp() {
             } catch (e) {
                 console.warn("[GTM]", e);
             }
-        }, [location]);
-
-        useEffect(() => {
-            const update = () => setCurrentPath(window.location.pathname);
-            window.addEventListener("vue-route-change", update);
-            window.addEventListener("popstate", update);
-            return () => {
-                window.removeEventListener("vue-route-change", update);
-                window.removeEventListener("popstate", update);
-            };
-        }, []);
+        }, [pathname]);
 
         // 네비게이션바 숨길 경로
         const hiddenLayouts = [
@@ -168,11 +182,11 @@ function InnerApp() {
             "/vue-ai-interview/ai-interview/personality",
         ];
         const hideLayout = hiddenLayouts.some((path) =>
-            currentPath.startsWith(path)
+            pathname.startsWith(path)
         );
 
         const hideLayoutFooter = hiddenLayoutsFooters.some((path) =>
-            currentPath.startsWith(path)
+            pathname.startsWith(path)
         );
 
         const shouldHideNavbar = hideLayout;
@@ -186,7 +200,7 @@ function InnerApp() {
             "/sveltekit-review",
         ];
         const noindex = noindexPrefixes.some((p) =>
-            location.pathname.startsWith(p)
+            pathname.startsWith(p)
         );
 
         return (
