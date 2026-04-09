@@ -193,6 +193,12 @@ const Page = styled.main`
 
   @media (max-width: 768px) {
     padding: 0;
+    scroll-snap-type: none;
+
+    & > section {
+      scroll-snap-align: none;
+      scroll-snap-stop: normal;
+    }
   }
 
   [data-reveal] {
@@ -308,13 +314,13 @@ const ProgressSection = styled.section`
 
   @media (max-width: 768px) {
     margin-top: 160px;
-    min-height: 100vh;
-    padding: 40px 16px;
+    min-height: auto;
+    padding: 60px 16px;
   }
 
   @media (max-width: 480px) {
     margin-top: 100px;
-    padding: 32px 12px;
+    padding: 48px 12px;
   }
 `;
 
@@ -389,8 +395,8 @@ const FaqSection = styled.section`
   box-sizing: border-box;
 
   @media (max-width: 768px) {
-    min-height: 100vh;
-    padding: 100px 16px 40px;
+    min-height: auto;
+    padding: 80px 16px 40px;
   }
 `;
 
@@ -536,8 +542,8 @@ const ShowcaseSection = styled.section`
   box-sizing: border-box;
 
   @media (max-width: 768px) {
-    min-height: 100vh;
-    padding: 40px 16px;
+    min-height: auto;
+    padding: 60px 16px;
   }
 `;
 
@@ -570,6 +576,8 @@ const ScheduleShowcaseTitle = styled.h2`
 
   @media (max-width: 640px) {
     margin-bottom: 28px;
+    text-align: center;
+    font-size: 28px;
   }
 `;
 
@@ -662,6 +670,9 @@ const ScheduleLightCaption = styled.div`
     bottom: 28px;
     width: min(92%, 520px);
     font-size: 22px;
+    text-align: center;
+    left: 50%;
+    transform: translateX(-50%);
   }
 `;
 
@@ -674,6 +685,10 @@ const ScheduleLightCaptionMuted = styled.div`
   :root[data-theme="dark"] & {
     color: rgba(226, 232, 240, 0.5);
   }
+
+  @media (max-width: 640px) {
+    text-align: center;
+  }
 `;
 
 const ScheduleLightCaptionStrong = styled.div`
@@ -684,6 +699,10 @@ const ScheduleLightCaptionStrong = styled.div`
 
   :root[data-theme="dark"] & {
     color: rgba(248, 250, 252, 0.92);
+  }
+
+  @media (max-width: 640px) {
+    text-align: center;
   }
 `;
 
@@ -741,6 +760,7 @@ const ScheduleDarkContent = styled.div`
   @media (max-width: 640px) {
     top: 32px;
     width: min(92%, 520px);
+    text-align: center;
   }
 `;
 
@@ -799,8 +819,8 @@ const InsightsSection = styled.section`
   box-sizing: border-box;
 
   @media (max-width: 768px) {
-    min-height: 100vh;
-    padding: 40px 16px;
+    min-height: auto;
+    padding: 60px 16px;
   }
 `;
 
@@ -815,6 +835,8 @@ const InsightsTitle = styled.h2`
 
   @media (max-width: 640px) {
     margin-bottom: 28px;
+    text-align: center;
+    font-size: 28px;
   }
 `;
 
@@ -945,6 +967,12 @@ const InsightsLeft = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
+
+  @media (max-width: 1024px) {
+    align-items: center;
+    text-align: center;
+    max-width: 100%;
+  }
 `;
 
 const InsightsKicker = styled.div`
@@ -973,6 +1001,10 @@ const InsightsBody = styled.p`
   :root[data-theme="dark"] & {
     color: rgba(226, 232, 240, 0.7);
   }
+
+  @media (max-width: 1024px) {
+    text-align: center;
+  }
 `;
 
 const TextHiright = styled.div`
@@ -992,8 +1024,13 @@ const InsightsLeftTitle = styled.div`
     color: ${BRAND.blueDark};
   }
 
+  @media (max-width: 1024px) {
+    font-size: 32px;
+    text-align: center;
+  }
+
   @media (max-width: 640px) {
-    font-size: 28px;
+    font-size: 26px;
   }
 `;
 
@@ -1209,7 +1246,8 @@ const ShowcaseGrid = styled.div<{ $reverse?: boolean }>`
     grid-template-columns: 1fr;
     gap: 44px;
     display: flex;
-    flex-direction: ${props => props.$reverse ? "column-reverse" : "column"};
+    flex-direction: column;
+    align-items: center;
   }
 `;
 
@@ -1224,6 +1262,7 @@ const ShowcaseVisual = styled.div`
 
   @media (max-width: 1024px) {
     min-height: 520px;
+    justify-content: center;
   }
 
   @media (max-width: 640px) {
@@ -1238,16 +1277,13 @@ const ShowcaseFrameStack = styled.div<{ $reverse?: boolean }>`
   transform: translateX(-300px);
 
   @media (max-width: 1024px) {
-    transform: translateX(-120px);
+    transform: translateX(-60px);
     margin-top: 0;
   }
 
   @media (max-width: 640px) {
-    transform: translateX(-56px);
-  }
-
-  @media (max-width: 480px) {
-    transform: translateX(-24px);
+    transform: none;
+    width: 100%;
   }
 `;
 
@@ -1356,10 +1392,17 @@ const ShowcaseContent = styled.div<{ $reverse?: boolean; $shiftX?: number }>`
     `}
 
   @media (max-width: 1024px) {
-  text-align: left;
-  left: 0;
-  width: 100%;
-}
+    text-align: left;
+    left: 0;
+    width: 100%;
+  }
+
+  @media (max-width: 640px) {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
 const ShowcaseTitle = styled.h2`
@@ -1409,6 +1452,10 @@ const ShowcaseSubTitle = styled.h3`
   @media (max-width: 1024px) {
     max-width: 100%;
   }
+
+  @media (max-width: 640px) {
+    text-align: center;
+  }
 `;
 
 const ShowcaseDescription = styled.p`
@@ -1429,6 +1476,12 @@ const ShowcaseDescription = styled.p`
   @media (max-width: 1024px) {
     max-width: 100%;
     min-height: auto;
+  }
+
+  @media (max-width: 640px) {
+    text-align: center;
+    font-size: 14px;
+    line-height: 1.7;
   }
 `;
 
@@ -1675,10 +1728,7 @@ const HeroContent = styled.div`
     align-items: center;
     width: 100%;
     max-width: 100%;
-  }
-
-  @media (max-width: 480px) {
-    align-items: flex-start;
+    text-align: center;
   }
 `;
 
@@ -1731,7 +1781,7 @@ const HeroLogoLine = styled.div`
     justify-content: center;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 640px) {
     gap: 8px;
     margin-left: 0;
   }
@@ -1823,6 +1873,7 @@ const HeroDescText = styled.p`
   @media (max-width: 900px) {
     margin-left: auto;
     margin-right: auto;
+    text-align: center;
   }
 
   @media (max-width: 640px) {
@@ -1847,11 +1898,12 @@ const HeroBtnRow = styled.div`
 
   @media (max-width: 900px) {
     justify-content: center;
+    width: 100%;
   }
 
-  @media (max-width: 480px) {
-    justify-content: flex-start;
-    width: 100%;
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: center;
   }
 `;
 
@@ -1879,9 +1931,14 @@ const HeroBtn = styled.button`
   }
 
   @media (max-width: 640px) {
-    height: 44px;
+    height: 48px;
     padding: 0 22px;
-    font-size: 13px;
+    font-size: 14px;
+    width: 100%;
+    max-width: 280px;
+    justify-content: center;
+    display: flex;
+    align-items: center;
   }
 `;
 
@@ -3191,6 +3248,10 @@ const FeatureContent = styled.div<{ $reverse?: boolean; $isVisible?: boolean }>`
     order: 1;
     padding-left: 0;
     transform: translateX(0);
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   @media (max-width: 640px) {
@@ -3789,11 +3850,17 @@ const CoreValueRow = styled.div<{ $reverse?: boolean }>`
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
     gap: 32px;
+    text-align: center;
+    direction: ltr !important;
+
+    > * {
+      direction: ltr !important;
+    }
   }
 
   ${props => props.$reverse && `
     direction: rtl;
-    
+
     > * {
       direction: ltr;
     }
@@ -3861,6 +3928,11 @@ const CoreValueContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
+
+  @media (max-width: 900px) {
+    align-items: center;
+    text-align: center;
+  }
 `;
 
 const CoreValueCardTitle = styled.h3`
@@ -3870,6 +3942,11 @@ const CoreValueCardTitle = styled.h3`
   margin: 0;
   line-height: 1.4;
   letter-spacing: -0.02em;
+
+  @media (max-width: 900px) {
+    font-size: 22px;
+    text-align: center;
+  }
 `;
 
 const CoreValueCardDesc = styled.p`
@@ -3877,6 +3954,11 @@ const CoreValueCardDesc = styled.p`
   color: #64748b;
   line-height: 1.8;
   margin: 0;
+
+  @media (max-width: 900px) {
+    font-size: 15px;
+    text-align: center;
+  }
 `;
 
 /* ========== GROWTH 섹션 ========== */
@@ -4391,7 +4473,7 @@ const MobilePromoImage = styled.img`
     top: -10px;
     right: auto;
     width: min(560px, 96%);
-    margin: 0 0 -10px auto;
+    margin: 0 auto -10px;
   }
 `;
 
@@ -4405,6 +4487,7 @@ const MobilePromoLogo = styled.img`
   @media (max-width: 768px) {
     width: 120px;
     margin-bottom: 14px;
+    align-self: center;
   }
 `;
 
@@ -4416,7 +4499,11 @@ const MobilePromoContent = styled.div`
 
   @media (max-width: 768px) {
     max-width: 100%;
-    align-self: start;
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
   }
 `;
 
@@ -4466,6 +4553,7 @@ const MobileStoreRow = styled.div`
 
   @media (max-width: 768px) {
     margin-top: 22px;
+    justify-content: center;
   }
 `;
 
