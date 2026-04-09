@@ -203,7 +203,7 @@
 </template>
 
 <script setup>
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { useKakaoAuthenticationStore } from "../../../kakao/stores/kakaoAuthenticationStore";
 import { useGoogleAuthenticationStore } from "../../../google/stores/googleAuthenticationStore";
@@ -232,6 +232,12 @@ useHead({
 });
 
 const router = useRouter();
+
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1200);
+const isMobile = computed(() => windowWidth.value <= 640);
+const onResize = () => { windowWidth.value = window.innerWidth; };
+onMounted(() => { window.addEventListener('resize', onResize); });
+onUnmounted(() => { window.removeEventListener('resize', onResize); });
 const kakaoAuthentication = useKakaoAuthenticationStore();
 const googleAuthentication = useGoogleAuthenticationStore();
 const naverAuthentication = useNaverAuthenticationStore();
@@ -370,15 +376,15 @@ const containerStyle = {
   marginBottom: "40px",
 };
 
-const titleContainerStyle = {
-  textAlign: "left",
-  marginBottom: "24px",
-  background: "rgba(255,255,255,0.9)",
-  border: "1px solid rgba(15, 23, 42, 0.08)",
-  borderRadius: "24px",
-  padding: "32px",
-  boxShadow: "0 18px 48px rgba(15, 23, 42, 0.07)",
-};
+const titleContainerStyle = computed(() => ({
+  textAlign: 'left',
+  marginBottom: '24px',
+  background: 'rgba(255,255,255,0.9)',
+  border: '1px solid rgba(15, 23, 42, 0.08)',
+  borderRadius: isMobile.value ? '18px' : '24px',
+  padding: isMobile.value ? '20px 16px' : '32px',
+  boxShadow: '0 18px 48px rgba(15, 23, 42, 0.07)',
+}));
 
 const badgeRowStyle = {
   display: "flex",
@@ -412,14 +418,15 @@ const stepBadgeStyle = {
   fontWeight: 700,
 };
 
-const mainTitleStyle = {
-  fontSize: "2.1rem",
+const mainTitleStyle = computed(() => ({
+  fontSize: isMobile.value ? '1.5rem' : '2.1rem',
   fontWeight: 800,
-  color: "#111827",
-  marginBottom: "14px",
-  lineHeight: "1.25",
-  letterSpacing: "-0.03em",
-};
+  color: '#111827',
+  marginBottom: '14px',
+  lineHeight: '1.25',
+  letterSpacing: '-0.03em',
+  wordBreak: 'keep-all',
+}));
 
 const subtitleStyle = {
   fontSize: "1rem",
@@ -428,12 +435,12 @@ const subtitleStyle = {
   margin: "6px 0",
 };
 
-const summaryGridStyle = {
-  display: "grid",
-  gridTemplateColumns: "1.2fr 1fr",
-  gap: "14px",
-  marginBottom: "18px",
-};
+const summaryGridStyle = computed(() => ({
+  display: 'grid',
+  gridTemplateColumns: isMobile.value ? '1fr' : '1.2fr 1fr',
+  gap: '14px',
+  marginBottom: '18px',
+}));
 
 const summaryPrimaryCardStyle = {
   background: "linear-gradient(135deg, #527cea, #6b93f5)",
@@ -539,13 +546,13 @@ const allAgreeStateStyle = {
   color: "#ffffff",
 };
 
-const sectionWrapStyle = {
-  backgroundColor: "#ffffff",
-  border: "1px solid rgba(15, 23, 42, 0.08)",
-  borderRadius: "24px",
-  padding: "24px",
-  boxShadow: "0 18px 48px rgba(15, 23, 42, 0.07)",
-};
+const sectionWrapStyle = computed(() => ({
+  backgroundColor: '#ffffff',
+  border: '1px solid rgba(15, 23, 42, 0.08)',
+  borderRadius: isMobile.value ? '18px' : '24px',
+  padding: isMobile.value ? '16px' : '24px',
+  boxShadow: '0 18px 48px rgba(15, 23, 42, 0.07)',
+}));
 
 const sectionHeaderStyle = {
   marginBottom: "18px",
@@ -801,10 +808,10 @@ const bottomActionStyle = {
   boxShadow: "0 18px 48px rgba(15, 23, 42, 0.07)",
 };
 
-const bottomGuideBoxStyle = {
+const bottomGuideBoxStyle = computed(() => ({
   flex: 1,
-  minWidth: "260px",
-};
+  minWidth: isMobile.value ? '0' : '260px',
+}));
 
 const bottomGuideTitleStyle = {
   fontSize: "15px",

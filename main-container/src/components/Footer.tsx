@@ -35,11 +35,23 @@ const TopSection = styled.div`
   :root[data-theme="dark"] & {
     border-bottom: 1px solid #2d3139;
   }
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 28px;
+    padding-bottom: 20px;
+  }
 `;
 
 const Nav = styled.nav`
   display: flex;
   gap: 32px;
+  flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    gap: 16px 24px;
+  }
 `;
 
 const NavLink = styled(Link)`

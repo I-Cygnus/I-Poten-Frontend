@@ -29,6 +29,7 @@ import ThemeSync from "./ThemeSync";
 import ThemeToggleButton from "./ThemeToggleButton";
 import { themeAtom } from "@jobspoon/app-state";
 import RequireLogin from "./RequireLogin.tsx";
+import MobileServiceGuard from "./components/MobileServiceGuard.tsx";
 import OpenBetaEventLanding from "./event/page/OpenBetaEventLanding.tsx";
 import PotenReviewerEventLanding from "./event/page/PotenReviewerEventLanding.tsx";
 
@@ -174,7 +175,6 @@ function InnerApp() {
         const shouldHideNavbar = hideLayout;
         const shouldShowFooter = !hideLayoutFooter;
 
-        // 🔒 SPA 하위 경로는 noindex (정적 SEO 랜딩은 Nginx에서 직접 서빙)
         const noindexPrefixes = [
             "/vue-account",
             "/vue-ai-interview",
@@ -195,38 +195,40 @@ function InnerApp() {
                 )}
 
                 {!shouldHideNavbar && <NavigationBarApp />}
-                <Routes>
-                    <Route path="/" element={<Main />} />
-                    <Route path="/review-survey" element={<ReviewSurveyPage />} />
-                    <Route path="/event" element={<NewEventPage />} />
-                    <Route path="/event/:id" element={<NewEventDetailPage />} />
-                    <Route path="/event/winner/:id" element={<NewWinnerDetailPage />} />
-                    <Route
-                        path="/vue-account/*"
-                        element={<VueAccountAppWrapper eventBus={eventBus} />}
-                    />
-                    <Route path="/learning/*" element={<PotenWordApp />} />
-                    <Route
-                        path="/vue-ai-interview/*"
-                        element={
-                            <RequireToken loginPath="/vue-account/account/login" fallback={<Main />}>
-                                <VueAiInterviewAppWrapper eventBus={eventBus} />
-                            </RequireToken>
-                        }
-                    />
-                    <Route
-                        path="/mypage/*"
-                        element={
-                            <RequireToken loginPath="/vue-account/account/login" fallback={<Main />}>
-                                <MyPageApp />
-                            </RequireToken>
-                        }
-                    />
-                    <Route
-                        path="/sveltekit-review/*"
-                        element={<SvelteKitReviewAppWrapper />}
-                    />
-                </Routes>
+                <MobileServiceGuard>
+                    <Routes>
+                        <Route path="/" element={<Main />} />
+                        <Route path="/review-survey" element={<ReviewSurveyPage />} />
+                        <Route path="/event" element={<NewEventPage />} />
+                        <Route path="/event/:id" element={<NewEventDetailPage />} />
+                        <Route path="/event/winner/:id" element={<NewWinnerDetailPage />} />
+                        <Route
+                            path="/vue-account/*"
+                            element={<VueAccountAppWrapper eventBus={eventBus} />}
+                        />
+                        <Route path="/learning/*" element={<PotenWordApp />} />
+                        <Route
+                            path="/vue-ai-interview/*"
+                            element={
+                                <RequireToken loginPath="/vue-account/account/login" fallback={<Main />}>
+                                    <VueAiInterviewAppWrapper eventBus={eventBus} />
+                                </RequireToken>
+                            }
+                        />
+                        <Route
+                            path="/mypage/*"
+                            element={
+                                <RequireToken loginPath="/vue-account/account/login" fallback={<Main />}>
+                                    <MyPageApp />
+                                </RequireToken>
+                            }
+                        />
+                        <Route
+                            path="/sveltekit-review/*"
+                            element={<SvelteKitReviewAppWrapper />}
+                        />
+                    </Routes>
+                </MobileServiceGuard>
 
                 {shouldShowFooter && <Footer />}
             </Suspense>

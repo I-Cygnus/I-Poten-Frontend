@@ -87,6 +87,19 @@
       <div :style="rightColStyle">
         <div v-for="(feature, idx) in features" :key="'img-'+idx"
           :style="imgSlotStyle" :data-img-block="idx">
+
+          <!-- Mobile/Tablet inline text (visible only when fixed panel is hidden) -->
+          <div v-if="isTablet" :style="mobileFeatureTextStyle">
+            <div :style="featureBadgeStyle(idx)">{{ feature.badge }}</div>
+            <h3 :style="featureTitleStyle(idx)" v-html="feature.title"></h3>
+            <p :style="featureDescStyle(idx)" v-html="feature.desc"></p>
+            <div :style="dotsWrapStyle">
+              <div :style="dotRowStyle" v-for="(dot, di) in feature.dots" :key="di">
+                <div :style="dotLineStyle(idx)"></div>
+                <span :style="dotLabelStyle(idx)">{{ dot }}</span>
+              </div>
+            </div>
+          </div>
           
           <div :style="imageGroupWrapperStyle">
             <!-- 배경 장식 엘리먼트 -->
@@ -134,6 +147,9 @@ const activeFeatureIndex = ref(0);
 const isInFeatureSection = ref(false);
 const featureWrapperRef = ref(null);
 const pageRef = ref(null);
+const windowWidth = ref(typeof window !== 'undefined' ? window.innerWidth : 1200);
+const isMobile = computed(() => windowWidth.value <= 768);
+const isTablet = computed(() => windowWidth.value <= 1024);
 
 const features = ref([
   {
@@ -239,12 +255,15 @@ const tick = () => {
   rafId = requestAnimationFrame(tick);
 };
 
+const onResize = () => { windowWidth.value = window.innerWidth; };
 onMounted(() => {
   setTimeout(() => { isPageLoaded.value = true; }, 50);
   rafId = requestAnimationFrame(tick);
+  window.addEventListener('resize', onResize);
 });
 onUnmounted(() => {
   if (rafId) cancelAnimationFrame(rafId);
+  window.removeEventListener('resize', onResize);
 });
 
 // ========== 스타일 정의 ==========
@@ -258,19 +277,28 @@ const pageStyle = {
 
 // 히어로
 const heroSectionStyle = { position: 'relative', zIndex: 10 };
-const heroInnerStyle = { maxWidth: '1200px', width: '100%', minHeight: '100vh', margin: '0 auto', display: 'flex', flexDirection: 'row', gap: '60px', alignItems: 'center', justifyContent: 'space-between', padding: '0 40px' };
+const heroInnerStyle = computed(() => ({
+  maxWidth: '1200px', width: '100%', minHeight: isMobile.value ? 'auto' : '100vh',
+  margin: '0 auto', display: 'flex',
+  flexDirection: isMobile.value ? 'column' : 'row',
+  gap: isMobile.value ? '32px' : '60px',
+  alignItems: 'center', justifyContent: 'space-between',
+  padding: isMobile.value ? '100px 20px 60px' : isTablet.value ? '100px 24px 60px' : '0 40px',
+  textAlign: isMobile.value ? 'center' : 'left',
+}));
 const getLeftContentStyle = (l) => ({ display: 'flex', flexDirection: 'column', flex: '1', zIndex: 2, opacity: l ? 1 : 0, transform: l ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 0.9s ease, transform 0.9s ease' });
 const getRightImageStyle = (l) => ({ display: 'flex', alignItems: 'center', justifyContent: 'center', flex: '1', position: 'relative', zIndex: 2, opacity: l ? 1 : 0, transform: l ? 'translateY(0)' : 'translateY(30px)', transition: 'opacity 1s ease 0.2s, transform 1s ease 0.2s' });
-const brandLogoStyle = { 
+const brandLogoStyle = computed(() => ({ 
   display: 'flex', 
-  alignItems: 'center', 
+  alignItems: isMobile.value ? 'center' : 'center',
+  justifyContent: isMobile.value ? 'center' : 'flex-start',
   gap: '12px', 
   marginBottom: '20px', 
   position: 'relative', 
   zIndex: 100, 
-  marginLeft: '-40px' 
-};
-const brandTitleStyle = { fontSize: 'clamp(64px, 8vw, 100px)', fontWeight: '900', color: '#111827', letterSpacing: '-0.02em' };
+  marginLeft: isMobile.value ? '0' : '-40px',
+}));
+const brandTitleStyle = computed(() => ({ fontSize: isMobile.value ? 'clamp(40px, 10vw, 64px)' : 'clamp(64px, 8vw, 100px)', fontWeight: '900', color: '#111827', letterSpacing: '-0.02em' }));
 const brandCrossStyle = { fontSize: 'clamp(32px, 4vw, 48px)', fontWeight: '500', color: '#4b5563' };
 const brandAiStyle = { fontSize: 'clamp(40px, 5vw, 64px)', fontWeight: '900', color: '#111827', letterSpacing: '-0.02em' };
 const mainTitleStyle = { fontSize: 'clamp(28px, 4vw, 40px)', fontWeight: '700', color: '#111827', lineHeight: '1.3', margin: '0 0 20px 0', letterSpacing: '-0.02em' };
@@ -295,9 +323,10 @@ const fixedBgStyle = computed(() => ({
   bottom: '0',
   backgroundColor: features.value[activeFeatureIndex.value].bgColor,
   transition: 'background-color 0.6s ease, opacity 0.5s ease',
-  opacity: isInFeatureSection.value ? 1 : 0,
+  opacity: isTablet.value ? 0 : (isInFeatureSection.value ? 1 : 0),
   pointerEvents: 'none',
-  zIndex: 5
+  zIndex: 5,
+  display: isTablet.value ? 'none' : 'block',
 }));
 
 const fixedTextPanelStyle = computed(() => ({
@@ -306,7 +335,7 @@ const fixedTextPanelStyle = computed(() => ({
   left: '0',
   right: '0',
   height: '100vh',
-  display: 'flex',
+  display: isTablet.value ? 'none' : 'flex',
   alignItems: 'center',
   opacity: isInFeatureSection.value ? 1 : 0,
   transition: 'opacity 0.5s ease',
@@ -349,6 +378,7 @@ const getTextItemStyle = (idx) => ({
 const featureBadgeStyle = (idx) => ({ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', padding: '6px 14px', border: `1px solid ${features.value[idx].badgeColor}`, color: features.value[idx].badgeColor, borderRadius: '4px', fontSize: '13px', fontWeight: '600', marginBottom: '24px', letterSpacing: '0.08em', textTransform: 'uppercase' });
 const featureTitleStyle = (idx) => ({ fontSize: 'clamp(34px, 4.5vw, 46px)', fontWeight: '800', color: features.value[idx].titleColor, marginBottom: '28px', letterSpacing: '-0.02em', lineHeight: '1.35', wordBreak: 'keep-all' });
 const featureDescStyle = (idx) => ({ fontSize: 'clamp(17px, 2.2vw, 19px)', fontWeight: '400', color: features.value[idx].descColor, lineHeight: '1.7', marginBottom: '40px', wordBreak: 'keep-all', letterSpacing: '-0.01em', opacity: '0.95' });
+const mobileFeatureTextStyle = { width: '100%', marginBottom: '32px', padding: '0 4px' };
 const dotsWrapStyle = { display: 'flex', flexDirection: 'column', gap: '16px' };
 const dotRowStyle = { display: 'flex', alignItems: 'center', gap: '14px' };
 const dotLineStyle = (idx) => ({ width: '18px', height: '1px', backgroundColor: features.value[idx].accentColor, flexShrink: 0 });
@@ -360,19 +390,20 @@ const featureSectionStyle = {
   zIndex: 10
 };
 
-const featureInnerStyle = {
+const featureInnerStyle = computed(() => ({
   maxWidth: '1200px',
   width: '100%',
   margin: '0 auto',
-  padding: '0 40px',
+  padding: isTablet.value ? '0 20px' : '0 40px',
   display: 'flex',
-  flexDirection: 'row'
-};
+  flexDirection: isTablet.value ? 'column' : 'row',
+}));
 
 // 텍스트 패널과 동일한 비율 유지 (flex:1 / flex:1) → 이미지가 텍스트 영역 침범 없음
-const leftSpacerStyle = {
-  flex: '1'
-};
+const leftSpacerStyle = computed(() => ({
+  flex: '1',
+  display: isTablet.value ? 'none' : 'block',
+}));
 
 const rightColStyle = {
   flex: '1',
@@ -381,21 +412,24 @@ const rightColStyle = {
   alignItems: 'flex-start' // 왼쪽 정렬 → wrapper가 오른쪽으로만 overflow
 };
 
-const imgSlotStyle = {
+const imgSlotStyle = computed(() => ({
   width: '100%',
-  height: '150vh',
+  height: isTablet.value ? 'auto' : '150vh',
+  minHeight: isTablet.value ? '600px' : 'auto',
   display: 'flex',
+  flexDirection: isTablet.value ? 'column' : 'row',
   alignItems: 'center',
   justifyContent: 'flex-start',
-  flexShrink: 0
-};
+  flexShrink: 0,
+  padding: isTablet.value ? '40px 0' : '0',
+}));
 
-const imageGroupWrapperStyle = {
+const imageGroupWrapperStyle = computed(() => ({
   position: 'relative',
-  width: '130%',
-  height: '900px', // 두 이미지 사이 간격 확보
-  flexShrink: 0
-};
+  width: isTablet.value ? '100%' : '130%',
+  height: isTablet.value ? '500px' : '900px',
+  flexShrink: 0,
+}));
 
 const decorativeCircleStyle = (idx) => {
   const isLight = features.value[idx].bgColor === '#ffffff' || features.value[idx].bgColor === '#f8fafc';
@@ -516,7 +550,8 @@ button:active {
 
 @media (max-width: 640px) {
   [data-hero-section] > div {
-    padding: 60px 20px !important;
+    padding: 60px 16px !important;
+    min-height: auto !important;
   }
   .button-group {
     flex-direction: column;
@@ -526,4 +561,5 @@ button:active {
     width: 100%;
   }
 }
+
 </style>
