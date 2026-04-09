@@ -231,6 +231,13 @@ function getAvailableInterestTags(categoryIds: number[], interestOptions: Intere
     return Array.from(tagMap.values());
 }
 
+function getMenuKeyFromPathname(pathname: string): MenuKey | null {
+    if (pathname.startsWith("/mypage/interview")) return "interview";
+    if (pathname.startsWith("/mypage/schedule")) return "schedule";
+    if (pathname.startsWith("/mypage/withdrawal")) return "withdraw";
+    return null;
+}
+
 function toQuestionTypeLabel(value: string) {
     switch (value) {
         case "OX":
@@ -1142,8 +1149,8 @@ export default function MyPage() {
     );
     const availableDraftInterestTags = getAvailableInterestTags(draftInterestSelection.categories, interestOptions);
 
-    const isInterviewRoute = location.pathname.startsWith("/mypage/interview");
-    const displayActiveMenu: MenuKey = isInterviewRoute ? "interview" : activeMenu;
+    const routeDrivenMenu = getMenuKeyFromPathname(location.pathname);
+    const displayActiveMenu: MenuKey = routeDrivenMenu ?? activeMenu;
 
     const handleMenuClick = (menuKey: MenuKey) => {
         if (menuKey === "interview") {
@@ -1151,9 +1158,19 @@ export default function MyPage() {
             return;
         }
 
+        if (menuKey === "schedule") {
+            navigate("schedule");
+            return;
+        }
+
+        if (menuKey === "withdraw") {
+            navigate("withdrawal");
+            return;
+        }
+
         setActiveMenu(menuKey);
 
-        if (isInterviewRoute) {
+        if (routeDrivenMenu) {
             navigate("/mypage");
         }
     };
