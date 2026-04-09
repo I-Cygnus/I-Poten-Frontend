@@ -79,6 +79,14 @@ const PageWrap = styled.div`
     text-rendering: optimizeLegibility;
 `;
 
+const PageContainer = styled(NarrowLeft)`
+    padding: 8px 0 24px;
+
+    @media (max-width: 720px) {
+        padding: 8px 16px 24px;
+    }
+`;
+
 /* ---------- 상단 툴바 ---------- */
 const ChipRow = styled.div` display:flex; flex-wrap:wrap; gap:10px; align-items:center; `;
 
@@ -96,6 +104,23 @@ const HeaderMeta = styled.div`
     align-items: center;
     gap: 10px;
     flex-wrap: wrap;
+
+    @media (max-width: 720px) {
+        order: 3;
+        width: 100%;
+        gap: 8px;
+    }
+`;
+
+const HeaderRight = styled.div`
+    position: relative;
+    display: flex;
+    align-items: center;
+
+    @media (max-width: 720px) {
+        order: 2;
+        margin-left: auto;
+    }
 `;
 
 /* ---------- 설정 버튼 + 메뉴 ---------- */
@@ -117,6 +142,11 @@ const PdfSubMenu = styled.div`
     box-shadow: ${UI.shadow.menu};
     padding: 8px 6px 6px;
     z-index: 20;
+
+    @media (max-width: 720px) {
+        width: min(320px, calc(100vw - 32px));
+        max-height: min(60vh, calc(100vh - 140px));
+    }
 `;
 
 
@@ -136,6 +166,12 @@ const SettingsBtn = styled.button`
     align-items: center;
     gap: 8px;
     &:hover { background: #f1f5f9; }
+
+    @media (max-width: 720px) {
+        height: 34px;
+        padding: 0 10px;
+        font-size: 13px;
+    }
 `;
 
 const RadioItem = styled.button<{ $checked?: boolean }>`
@@ -230,6 +266,10 @@ const HideTermCardAdd = styled.div<{ $hideTitle?: boolean; $hideDesc?: boolean }
 const CardWrap = styled.div`
   position: relative;
   border-radius: ${UI.radius.xl}px;
+
+  @media (max-width: 720px) {
+    border-radius: 18px;
+  }
 `;
 
 /** 항상 보이는 좌측 체크(첨부칩 느낌) */
@@ -324,6 +364,14 @@ const StatusBtn = styled.button<{ $done?: boolean }>`
     &:active { transform: scale(.97); }
     &:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(79,118,241,.25); }
     &:disabled { opacity: .7; cursor: not-allowed; }
+
+    @media (max-width: 720px) {
+        top: 12px;
+        right: 12px;
+        height: 26px;
+        padding: 0 10px;
+        font-size: 11px;
+    }
 `;
 
 const LearnRow = styled.div`
@@ -332,6 +380,12 @@ const LearnRow = styled.div`
     display: inline-flex;
     align-items: center;
     gap: 8px;
+
+    @media (max-width: 720px) {
+        width: 100%;
+        margin-left: 0;
+        flex-wrap: wrap;
+    }
 `;
 
 const LearnLabel = styled.span`
@@ -345,6 +399,10 @@ const LearnSeg = styled.div`
     border: 1px solid ${UI.color.line};
     border-radius: ${UI.radius.sm}px;
     overflow: hidden;
+
+    @media (max-width: 720px) {
+        flex: 1 1 auto;
+    }
 `;
 
 const LearnBtn = styled.button<{ $active?: boolean }>`
@@ -358,6 +416,11 @@ const LearnBtn = styled.button<{ $active?: boolean }>`
     font-weight: 700;
     &:hover {
         background: #f9fafb;
+    }
+
+    @media (max-width: 720px) {
+        flex: 1 1 0;
+        min-width: 0;
     }
 `;
 
@@ -383,6 +446,63 @@ const Tray = styled.div`
   padding: 10px 14px;
   border-radius: 12px;
   margin-top: 10px;
+
+  @media (max-width: 720px) {
+    bottom: max(0px, env(safe-area-inset-bottom));
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px;
+  }
+`;
+
+const TrayText = styled.span`
+    line-height: 1.5;
+`;
+
+const TrayActions = styled.div`
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+
+    @media (max-width: 720px) {
+        width: 100%;
+    }
+`;
+
+const TrayButtonBase = styled.button`
+    min-height: 40px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+
+    @media (max-width: 720px) {
+        flex: 1 1 calc(50% - 4px);
+        justify-content: center;
+    }
+`;
+
+const TrayGhostBtn = styled(TrayButtonBase)`
+    border: 1px solid ${UI.color.line};
+    background: transparent;
+    color: #fff;
+`;
+
+const TrayPrimaryBtn = styled(TrayButtonBase)<{ disabled?: boolean }>`
+    border: 0;
+    background: linear-gradient(135deg, #4F76F1 0%, #3E63E0 100%);
+    color: #fff;
+    border-radius: 999px;
+    letter-spacing: 0.01em;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+    opacity: ${({ disabled }) => (disabled ? 0.85 : 1)};
+    cursor: ${({ disabled }) => (disabled ? "default" : "pointer")};
+
+    @media (max-width: 720px) {
+        flex-basis: 100%;
+    }
 `;
 
 /* ---------- Pagination ---------- */
@@ -399,6 +519,10 @@ const PaginationRow = styled.div`
     padding-top: 6px;
     width: fit-content;
     margin: 0 auto;
+
+    @media (max-width: 720px) {
+        width: 100%;
+    }
 `;
 
 const PaginationBar = styled.nav`
@@ -407,6 +531,13 @@ const PaginationBar = styled.nav`
     justify-content: center;
     gap: 6px;
     padding: 6px;
+
+    @media (max-width: 720px) {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 4px 0;
+    }
 `;
 
 const PagePill = styled.button<{ $active?: boolean }>`
@@ -610,6 +741,10 @@ const Pagination: React.FC<PaginationProps> = ({ page, size, total, onChange }) 
 const MetaSep = styled.span`
   margin: 0 8px;
   color: ${UI.color.muted};
+
+  @media (max-width: 720px) {
+    display: none;
+  }
 `;
 
 const SortInlineWrap = styled.span`
@@ -617,6 +752,11 @@ const SortInlineWrap = styled.span`
     display: inline-flex;
     align-items: center;
     isolation: isolate;   /* 내부 z-index를 독립시켜 안전하게 레이어링 */
+
+    @media (max-width: 720px) {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
 `;
 
 const SortInlineBtn = styled.button`
@@ -659,6 +799,18 @@ const SortInlineBtn = styled.button`
         outline: none;
         box-shadow: 0 0 0 3px rgba(79,118,241,0.25); /* 키보드 접근성 */
     }
+
+    @media (max-width: 720px) {
+        width: 100%;
+        min-height: 36px;
+        padding: 0 12px;
+        border: 1px solid ${UI.color.line};
+        background: #f8fafc;
+        display: inline-flex;
+        align-items: center;
+        justify-content: flex-start;
+        text-align: left;
+    }
 `;
 
 const SortPopup = styled.div`
@@ -673,6 +825,13 @@ const SortPopup = styled.div`
   box-shadow: ${UI.shadow.menu};
   padding: 6px;
   z-index: 8;
+
+  @media (max-width: 720px) {
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    min-width: 0;
+  }
 `;
 
 /* ---------- QuizCta ---------- */
@@ -2745,7 +2904,7 @@ export default function WordbookPage() {
     const listRef = React.useRef<HTMLDivElement | null>(null);
 
     return (
-        <NarrowLeft style={{ padding: "8px 0 24px" }}>  {/* SearchBar와 동일 폭/정렬 */}
+        <PageContainer>  {/* SearchBar와 동일 폭/정렬 */}
             <PageWrap>
             {/* 상단 */}
             <LearningPageHeader
@@ -2812,14 +2971,7 @@ export default function WordbookPage() {
                     </HeaderMeta>
                 }
                 right={
-                    <div
-                        ref={actionsRef}
-                        style={{
-                            position: "relative",
-                            display: "flex",
-                            alignItems: "center",
-                        }}
-                    >
+                    <HeaderRight ref={actionsRef}>
                         <SettingsBtn
                             type="button"
                             onClick={() => {
@@ -2932,7 +3084,7 @@ export default function WordbookPage() {
                                     )}
                                 </PdfSubMenu>
                             )}
-                        </div>
+                        </HeaderRight>
                 }
             />
 
@@ -2993,6 +3145,8 @@ export default function WordbookPage() {
                                 >
                                     <SelectToggleChip
                                         checked={isChecked}
+                                        top={16}
+                                        left={16}
                                         ariaLabel={isChecked ? "선택 해제" : "선택"}
                                         title={isChecked ? "선택 해제" : "선택"}
                                         onClick={(e) => {
@@ -3108,69 +3262,36 @@ export default function WordbookPage() {
             {/* 하단 Export Tray */}
             {selectedTermIds.size > 0 && (
                 <Tray>
-        <span>
-            선택 {selectedTermIds.size.toLocaleString()}개 — 필요한 페이지를 더 불러온 뒤에도 선택은 유지돼요.
-        </span>
+                    <TrayText>
+                        선택 {selectedTermIds.size.toLocaleString()}개 — 필요한 페이지를 더 불러온 뒤에도 선택은 유지돼요.
+                    </TrayText>
 
-                    <div style={{ display: "flex", gap: 8 }}>
+                    <TrayActions>
                         {/* 현재 페이지 전체 선택 / 해제 */}
-                        <button
+                        <TrayGhostBtn
                             type="button"
                             onClick={() => toggleAll(!allOn)}
-                            style={{
-                                border: `1px solid ${UI.color.line}`,
-                                background: "transparent",
-                                color: "#fff",
-                                padding: "8px 12px",
-                                borderRadius: 8,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                whiteSpace: "nowrap",
-                            }}
                         >
                             {allOn ? "현재 페이지 선택 해제" : "현재 페이지 전체 선택"}
-                        </button>
+                        </TrayGhostBtn>
 
                         {/* 선택 전체 초기화 (전 페이지 통합 선택 바구니 비우기) */}
-                        <button
+                        <TrayGhostBtn
                             type="button"
                             onClick={clearAllSelected}
-                            style={{
-                                border: `1px solid ${UI.color.line}`,
-                                background: "transparent",
-                                color: "#fff",
-                                padding: "8px 12px",
-                                borderRadius: 8,
-                                fontWeight: 700,
-                                cursor: "pointer",
-                                whiteSpace: "nowrap",
-                            }}
                         >
                             모두 해제
-                        </button>
+                        </TrayGhostBtn>
 
                         {/* 선택 항목 PDF 내보내기 */}
-                        <button
+                        <TrayPrimaryBtn
                             type="button"
                             onClick={handleExportSelectedPdf}
                             disabled={exporting}
-                            style={{
-                                border: 0,
-                                background: "linear-gradient(135deg, #4F76F1 0%, #3E63E0 100%)",
-                                color: "#fff",
-                                padding: "8px 14px",
-                                borderRadius: 999,
-                                fontWeight: 700,
-                                letterSpacing: "0.01em",
-                                boxShadow: "inset 0 1px 0 rgba(255,255,255,0.25)",
-                                opacity: exporting ? 0.85 : 1,
-                                cursor: exporting ? "default" : "pointer",
-                                whiteSpace: "nowrap",
-                            }}
                         >
                             {exporting ? "내보내는 중..." : "선택 항목 PDF 내보내기"}
-                        </button>
-                    </div>
+                        </TrayPrimaryBtn>
+                    </TrayActions>
                 </Tray>
             )}
 
@@ -3229,7 +3350,7 @@ export default function WordbookPage() {
                 }}
             />
             </PageWrap>
-        </NarrowLeft>
+        </PageContainer>
 
     );
 }

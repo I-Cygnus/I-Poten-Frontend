@@ -1513,6 +1513,11 @@ const Content = styled.div`
     display: flex;
     flex-direction: column;
     gap: 16px;
+
+    @media (max-width: 640px) {
+        padding: 0 14px 32px;
+        gap: 14px;
+    }
 `;
 
 const Panel = styled.section`
@@ -1535,6 +1540,10 @@ const FilterRow = styled.div`
 const SearchBox = styled.div`
     display: flex;
     gap: 10px;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+    }
 `;
 
 const SearchInput = styled.input`
@@ -1585,6 +1594,10 @@ const SearchBtn = styled.button`
     &:disabled {
         opacity: 0.6;
         cursor: not-allowed;
+    }
+
+    @media (max-width: 640px) {
+        width: 100%;
     }
 `;
 
@@ -1775,12 +1788,23 @@ const BulkRow = styled.div`
     justify-content: space-between;
     gap: 10px;
     flex-wrap: wrap;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: stretch;
+    }
 `;
 
 const BulkLeft = styled.div`
     display: flex;
     align-items: center;
     gap: 12px;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
 `;
 
 const CheckAll = styled.div`
@@ -1809,6 +1833,11 @@ const BulkInfo = styled.div`
 const BulkRight = styled.div`
     display: flex;
     gap: 10px;
+
+    @media (max-width: 640px) {
+        width: 100%;
+        flex-direction: column;
+    }
 `;
 
 const PrimaryBtn = styled.button`
@@ -1831,6 +1860,10 @@ const PrimaryBtn = styled.button`
         opacity: 0.55;
         cursor: not-allowed;
     }
+
+    @media (max-width: 640px) {
+        width: 100%;
+    }
 `;
 
 const DangerBtn = styled.button`
@@ -1849,6 +1882,10 @@ const DangerBtn = styled.button`
     &:hover {
         background: rgba(239, 68, 68, 0.14);
         border-color: rgba(239, 68, 68, 0.45);
+    }
+
+    @media (max-width: 640px) {
+        width: 100%;
     }
 `;
 
@@ -1876,16 +1913,20 @@ const CardHead = styled.div`
     align-items: flex-start;
     justify-content: space-between;
     gap: 12px;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: stretch;
+    }
 `;
 
 const Left = styled.div`
     display: flex;
     gap: 10px;
     align-items: flex-start;
-    input {
-        margin-top: 4px;
-        width: 16px;
-        height: 16px;
+
+    @media (max-width: 640px) {
+        width: 100%;
     }
 `;
 
@@ -2002,6 +2043,11 @@ const Right = styled.div`
     gap: 8px;
     flex-wrap: wrap;
     justify-content: flex-end;
+
+    @media (max-width: 640px) {
+        width: 100%;
+        justify-content: flex-start;
+    }
 `;
 
 const MiniBtn = styled.button<{ $tone: "ok" | "pending" | "normal" }>`
@@ -2125,6 +2171,13 @@ const IconToggleBtn = styled.button<{ $active?: boolean }>`
     &:hover::before,
     &:focus-visible::before {
         opacity: 1;
+    }
+
+    @media (max-width: 640px) {
+        &::after,
+        &::before {
+            display: none;
+        }
     }
 `;
 
@@ -2283,6 +2336,22 @@ const ChoiceItem = styled.div<{ $correct?: boolean; $mine?: boolean }>`
 
     ${({ $mine, $correct }) =>
             $mine && !$correct ? `box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.10);` : ""};
+
+    @media (max-width: 640px) {
+        grid-template-columns: 28px 1fr;
+        align-items: start;
+
+        .tag {
+            grid-column: 2 / 3;
+            justify-self: start;
+            margin-top: 4px;
+        }
+
+        .t {
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    }
 `;
 
 const Explain = styled.div``;

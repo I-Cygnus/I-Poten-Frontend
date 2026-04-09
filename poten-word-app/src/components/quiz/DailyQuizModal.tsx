@@ -88,22 +88,22 @@ const Scrim = styled.div<{ $variant: Variant }>`
 `;
 
 const Sheet = styled.div<{ $variant: Variant }>`
-  position: fixed;
-  z-index: 2001;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
+    position: fixed;
+    z-index: 2001;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 
-  background: #fff;
-  border-radius: 18px;
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.18);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.18);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 
-  ${({ $variant }) =>
-    $variant === "cardOnly"
-        ? `
+    ${({ $variant }) =>
+            $variant === "cardOnly"
+                    ? `
         --gap: clamp(12px, 1.6vw, 22px);
         --vw: calc(100dvw - var(--gap));
         --vh: calc(100dvh - var(--gap));
@@ -112,17 +112,30 @@ const Sheet = styled.div<{ $variant: Variant }>`
         width: min(var(--maxW), var(--vw), calc(var(--vh) * 16 / 9));
         aspect-ratio: 16 / 9;
         height: auto;
+
+        @media (max-width: 1180px) {
+          width: calc(100dvw - 24px);
+          max-width: 960px;
+          max-height: calc(100dvh - 24px);
+          aspect-ratio: auto;
+          height: auto;
+          border-radius: 18px;
+        }
+
+        @media (max-width: 768px) {
+          max-width: 420px;
+        }
       `
-        : `
+                    : `
         width: min(980px, calc(100% - 32px));
         max-height: min(90vh, calc(100vh - 32px));
       `}
 `;
 
 const Body = styled.div<{ $variant: Variant }>`
-  ${({ $variant }) =>
-    $variant === "cardOnly"
-        ? `
+    ${({ $variant }) =>
+            $variant === "cardOnly"
+                    ? `
         flex: 1 1 auto;
         height: 100%;
         overflow: hidden;
@@ -136,8 +149,20 @@ const Body = styled.div<{ $variant: Variant }>`
         }
 
         & [data-soft-blobs="true"] { display: none !important; }
+
+        @media (max-width: 1180px) {
+          height: auto;
+          max-height: calc(100dvh - 24px);
+          overflow-y: auto;
+          -webkit-overflow-scrolling: touch;
+
+          & > * {
+            width: 100%;
+            height: auto;
+          }
+        }
       `
-        : `
+                    : `
         overflow: auto;
         padding: 14px;
       `}

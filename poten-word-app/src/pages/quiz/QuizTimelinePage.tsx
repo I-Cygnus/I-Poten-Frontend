@@ -255,6 +255,13 @@ const Row = styled.div`
         background: #fbfcff;
         box-shadow: inset 0 -1px #eef2f7, 0 1px 6px rgba(62, 99, 224, 0.05);
     }
+
+    @media (max-width: 768px) {
+        grid-template-columns: 1fr;
+        align-items: start;
+        gap: 14px;
+        padding: 18px 16px 16px;
+    }
 `;
 
 const ActionBar = styled.div`
@@ -264,6 +271,18 @@ const ActionBar = styled.div`
     gap: 10px;
     min-width: 0;
     padding-right: 0px;
+
+    @media (max-width: 768px) {
+        width: 100%;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+    }
+
+    @media (max-width: 480px) {
+        flex-direction: column;
+        align-items: stretch;
+    }
 `;
 
 const MenuWrap = styled.div`
@@ -285,6 +304,11 @@ const RowMenuWrap = styled.div`
 const DonutWrap = styled.div`
     display: grid;
     place-items: center;
+
+    @media (max-width: 480px) {
+        transform: scale(0.9);
+        transform-origin: left center;
+    }
 `;
 
 /* ===== 제목 스택 & 라이트 칩 ===== */
@@ -1014,13 +1038,6 @@ const PageInfo = styled.span`
 `;
 
 /* ===== 우측 버튼: 분할 버튼 형태 ===== */
-const SegGroup = styled.div`
-    display: inline-flex;
-    border-radius: 12px;
-    overflow: hidden;
-    border: 1px solid #e6eaf2;
-    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
-`;
 
 const Seg = styled.button`
     height: 36px;
@@ -1029,6 +1046,31 @@ const Seg = styled.button`
     font-weight: 750;
     letter-spacing: -0.02em;
     cursor: pointer;
+    white-space: nowrap;
+
+    @media (max-width: 768px) {
+        padding: 0 12px;
+        font-size: 13px;
+    }
+
+    @media (max-width: 480px) {
+        width: 100%;
+        justify-content: center;
+    }
+`;
+
+const SegGroup = styled.div`
+    display: inline-flex;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid #e6eaf2;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.02);
+
+    @media (max-width: 480px) {
+        width: 100%;
+        flex-direction: column;
+        border-radius: 12px;
+    }
 `;
 
 const SegGhost = styled(Seg)`

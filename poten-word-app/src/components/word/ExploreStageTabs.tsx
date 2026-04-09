@@ -732,6 +732,12 @@ const TabBtn = styled.button<{ $active?: boolean }>`
         outline: none;
         box-shadow: inset 0 0 0 3px rgba(79, 118, 241, 0.20);
     }
+
+    @media (max-width: 640px) {
+        font-size: 14px;
+        padding: 12px 10px;
+        min-width: 120px;
+    }
 `;
 
 const TabLabel = styled.span<{ $active?: boolean }>`
@@ -976,6 +982,14 @@ const LangGrid = styled.div`
     grid-template-columns: repeat(6, minmax(0, 1fr));
     gap: 1px;
     background: ${LINE.divider};
+
+    @media (max-width: 1024px) {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    @media (max-width: 640px) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 `;
 
 const LangCell = styled.button<{ $active?: boolean }>`
@@ -1011,6 +1025,11 @@ const LangCell = styled.button<{ $active?: boolean }>`
         outline: none !important;
         box-shadow: none !important;
     }
+
+    @media (max-width: 640px) {
+        min-height: 68px;
+        padding: 12px 8px;
+    }
 `;
 
 const LangText = styled.div<{ $active?: boolean }>`
@@ -1022,7 +1041,7 @@ const LangText = styled.div<{ $active?: boolean }>`
     color: #111827;
     letter-spacing: -0.015em;
 
-    line-height: 1.25;
+    line-height: 1.3;
     white-space: pre-line;
 
     padding-bottom: 6px;
@@ -1048,8 +1067,8 @@ const LangText = styled.div<{ $active?: boolean }>`
         opacity 160ms ease;
         will-change: transform;
 
-        @media (prefers-reduced-motion: reduce) {
-            transition: none;
+        @media (max-width: 640px) {
+            font-size: 13px;
         }
     }
 `;
@@ -1319,7 +1338,7 @@ const PickBtn = styled.button<{ $active?: boolean; $kind?: GlyphKind }>`
 
 const PanelsArea = styled.div<{ $collapsed: boolean }>`
     overflow: hidden;
-    max-height: ${({ $collapsed }) => ($collapsed ? "0px" : "1200px")};
+    max-height: ${({ $collapsed }) => ($collapsed ? "0px" : "3000px")};
     opacity: ${({ $collapsed }) => ($collapsed ? 0 : 1)};
     transition: max-height 260ms cubic-bezier(.16, 1, .3, 1), opacity 160ms ease;
     margin-top: -1px;
