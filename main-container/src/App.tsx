@@ -32,6 +32,7 @@ import RequireLogin from "./RequireLogin.tsx";
 import MobileServiceGuard from "./components/MobileServiceGuard.tsx";
 import OpenBetaEventLanding from "./event/page/OpenBetaEventLanding.tsx";
 import PotenReviewerEventLanding from "./event/page/PotenReviewerEventLanding.tsx";
+import AdminPage from "./admin/AdminPage.tsx";
 
 const eventBus = mitt();
 
@@ -132,6 +133,7 @@ function InnerApp() {
 
         // 네비게이션바 숨길 경로
         const hiddenLayouts = [
+            "/admin",
             "/vue-account/account/login",
             "/vue-account/account/privacy",
             "/vue-account/account/admin",
@@ -148,6 +150,7 @@ function InnerApp() {
         ];
 
         const hiddenLayoutsFooters = [
+            "/admin",
             "/mypage/",
             "/mypage",
             "/vue-account/account/login",
@@ -176,6 +179,7 @@ function InnerApp() {
         const shouldShowFooter = !hideLayoutFooter;
 
         const noindexPrefixes = [
+            "/admin",
             "/vue-account",
             "/vue-ai-interview",
             "/mypage",
@@ -198,6 +202,7 @@ function InnerApp() {
                 <MobileServiceGuard>
                     <Routes>
                         <Route path="/" element={<Main />} />
+                        <Route path="/admin" element={<AdminPage />} />
                         <Route path="/review-survey" element={<ReviewSurveyPage />} />
                         <Route path="/event" element={<NewEventPage />} />
                         <Route path="/event/:id" element={<NewEventDetailPage />} />
