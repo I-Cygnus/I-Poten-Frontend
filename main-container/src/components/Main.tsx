@@ -2602,7 +2602,7 @@ const FloatingButton = styled.button`
 `;
 
 const ScrollTopButton = styled(FloatingButton)`
-  bottom: 100px;
+  bottom: calc(24px + env(safe-area-inset-bottom));
   background: white;
   color: ${BRAND.blue};
   border: 2px solid #e2e8f0;
@@ -2614,7 +2614,7 @@ const ScrollTopButton = styled(FloatingButton)`
   }
 
   @media (max-width: 768px) {
-    bottom: 88px;
+    bottom: calc(20px + env(safe-area-inset-bottom));
     box-shadow: 0 4px 16px rgba(59, 130, 246, 0.25);
   }
 `;
