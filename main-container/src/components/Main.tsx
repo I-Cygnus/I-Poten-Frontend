@@ -4779,19 +4779,12 @@ const MobilePromoImage = styled.img`
     width: min(520px, 58%);
   }
 
-  @media (max-width: 768px) {
-    position: relative;
-    top: -10px;
-    right: auto;
-    width: min(560px, 96%);
-    margin: 0 auto -10px;
-  }
-  
   @media (max-width: 640px) {
-    right: -8px;
+    right: 0px;
     bottom: 8px;
     width: min(290px, 88%);
     margin: 0;
+  }
 `;
 
 const MobilePromoLogo = styled.img`
@@ -4804,7 +4797,6 @@ const MobilePromoLogo = styled.img`
   @media (max-width: 768px) {
     width: 120px;
     margin-bottom: 14px;
-    align-self: center;
   }
 `;
 
@@ -4822,11 +4814,6 @@ const MobilePromoContent = styled.div`
     max-width: 100%;
     align-self: start;
     text-align: left;
-    align-self: center;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
   }
 `;
 
@@ -4882,7 +4869,6 @@ const MobileStoreRow = styled.div`
   @media (max-width: 480px) {
     flex-direction: column;
     align-items: stretch;
-    justify-content: center;
   }
 `;
 
