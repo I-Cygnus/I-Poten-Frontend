@@ -24,7 +24,9 @@ const injectMulmaruFont = () => {
 font-display: swap;*/
 
 import React, { useEffect, useState, useRef, useId } from "react";
-import styled, { keyframes } from "styled-components";
+import styled, { keyframes, createGlobalStyle } from "styled-components";
+import incheonEducationFont from "../assets/fonts/iceJaram-Rg.woff2";
+import interviewVideo from "../assets/videos/interview.mp4";
 import image from "../assets/nugule.png";
 import confetti from "canvas-confetti";
 import word1 from "../assets/word3.png";
@@ -56,6 +58,17 @@ import appStoreBtn from "../assets/mobile/appstore-button.png";
 import googlePlayBtn from "../assets/mobile/googleplay-button.png";
 import googlePlayQr from "../assets/mobile/google-play-qr.png";
 import appStoreQr from "../assets/mobile/app-store-qr.png";
+
+/* ====== 폰트 ====== */
+const GlobalFonts = createGlobalStyle`
+  @font-face {
+    font-family: 'IncheonEducation';
+    src: url(${incheonEducationFont}) format('woff2');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+`;
 
 /* ====== 로고 이미지 ====== */
 import logoDanggeun from "../assets/ci/daangn.png";
@@ -193,6 +206,7 @@ const Page = styled.main`
 
   @media (max-width: 768px) {
     padding: 0;
+    scroll-snap-type: none;
   }
 
   [data-reveal] {
@@ -606,7 +620,7 @@ const ScheduleCardBase = styled.div`
 
   @media (max-width: 640px) {
     border-radius: 32px;
-    min-height: 460px;
+    min-height: 400px;
   }
 `;
 
@@ -655,7 +669,7 @@ const ScheduleLightCaption = styled.div`
   @media (max-width: 640px) {
     bottom: 28px;
     width: min(92%, 520px);
-    font-size: 22px;
+    font-size: 20px;
   }
 `;
 
@@ -692,10 +706,12 @@ const SchedulePhoneFrame = styled.div`
   z-index: 1;
 
   @media (max-width: 640px) {
-    right: -80px;
-    bottom: -40px;
-    width: 520px;
-    height: 520px;
+    right: 50%;
+    bottom: -12px;
+    transform: translateX(50%);
+    width: min(420px, 118%);
+    height: auto;
+    aspect-ratio: 1 / 1;
   }
 `;
 
@@ -763,6 +779,11 @@ const ScheduleListFrame = styled.div`
   box-shadow: 0 22px 70px rgba(2, 6, 23, 0.45);
   overflow: hidden;
   z-index: 2;
+
+  @media (max-width: 640px) {
+    bottom: 24px;
+    width: min(90%, 420px);
+  }
 `;
 
 const ScheduleListInner = styled.div`
@@ -860,6 +881,14 @@ const InsightsPanelInner = styled.div`
   align-items: start;
 
   @media (max-width: 1024px) {
+    padding: 40px 34px;
+    gap: 24px;
+    grid-template-columns: 0.95fr 1.05fr;
+    min-height: 440px;
+    align-items: stretch;
+  }
+
+  @media (max-width: 768px) {
     grid-template-columns: 1fr;
     padding: 42px 28px;
     min-height: auto;
@@ -895,8 +924,25 @@ const InsightsBackgroundVideo = styled.video`
   transform-origin: right top;
   background: #E2E8F0;
   border-radius: inherit;
-  box-shadow: none;
-  filter: none;
+
+  @media (max-width: 1024px) {
+    object-fit: contain;
+    object-position: center center;
+    transform: scale(1.06) translate(2%, -1%);
+  }
+
+  @media (max-width: 768px) {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center bottom;
+    transform: scale(1.12);
+    transform-origin: center bottom;
+  }
 `;
 
 const InsightsBackgroundPlaceholder = styled.div`
@@ -971,6 +1017,14 @@ const InsightsLeftTitle = styled.div`
   margin-bottom: 14px;
   //color: rgba(59, 130, 246, 0.72);
   color: black;
+  word-break: keep-all;
+  text-wrap: balance;
+
+  @media (max-width: 640px) {
+    font-size: 32px;
+    line-height: 1.18;
+  }
+
   :root[data-theme="dark"] & {
     color: ${BRAND.blueDark};
   }
@@ -991,6 +1045,11 @@ const InsightsRight = styled.div`
   min-height: 500px;
 
   @media (max-width: 1024px) {
+    min-height: 430px;
+    margin-top: 0;
+  }
+
+  @media (max-width: 768px) {
     min-height: auto;
     margin-top: 22px;
   }
@@ -1022,16 +1081,22 @@ const InsightsQuestionStack = styled.div`
       rgba(0, 0, 0, 0) 100%
   );
 
-  @media (max-width: 640px) {
-    height: 280px;
+  @media (max-width: 1024px) {
+    bottom: 30%;
+    right: 18%;
+    height: 260px;
   }
 
-  @media (max-width: 1024px) {
+  @media (max-width: 768px) {
     position: relative;
     bottom: auto;
     right: auto;
     width: 100%;
-    height: clamp(220px, 34vh, 320px);
+    height: clamp(160px, 24vh, 220px);
+  }
+
+  @media (max-width: 640px) {
+    height: 170px;
   }
 `;
 
@@ -1068,29 +1133,48 @@ const InsightsDashboardFrame = styled.div`
   width: min(112%, 1120px);
   height: min(108%, 390px);
   border-radius: 24px;
-  background: transparent;
-  border: none;
-  box-shadow: none;
   overflow: hidden;
   z-index: 1;
 
   @media (max-width: 1024px) {
+    left: 4%;
+    top: 40%;
+    width: min(108%, 560px);
+    height: 340px;
+    margin: 0;
+  }
+
+  @media (max-width: 768px) {
     position: relative;
     left: auto;
     top: auto;
     width: 100%;
+    max-width: 440px;
     height: auto;
-    margin-top: 22px;
+    margin: 12px auto 0;
+  }
+
+  @media (max-width: 640px) {
+    max-width: 360px;
   }
 `;
 
 const InsightsDashboardInner = styled.div`
+  position: relative;
   width: 100%;
   height: 100%;
   aspect-ratio: 16 / 8;
   border-radius: inherit;
   overflow: hidden;
   background: #E2E8F0;
+
+  @media (max-width: 1024px) {
+    aspect-ratio: 16 / 8;
+  }
+
+  @media (max-width: 768px) {
+    aspect-ratio: 4 / 5;
+  }
 `;
 
 const InsightsDashboardPlaceholder = styled.div`
@@ -1206,7 +1290,9 @@ const ShowcaseVisual = styled.div`
   }
 
   @media (max-width: 640px) {
-    min-height: 380px;
+    min-height: 320px;
+    justify-content: center;
+    overflow: visible;
   }
 `;
 
@@ -1222,7 +1308,10 @@ const ShowcaseFrameStack = styled.div<{ $reverse?: boolean }>`
   }
 
   @media (max-width: 640px) {
-    transform: translateX(-56px);
+    width: min(100%, 360px);
+    margin-inline: auto;
+    transform: none;
+    padding-top: 18px;
   }
 `;
 
@@ -1275,23 +1364,23 @@ const ShowcaseOverlayFrame = styled.div<{ $reverse?: boolean }>`
   }
 
   @media (max-width: 1024px) {
-    top: -28px;
+    top: -40px;
     ${({ $reverse }) =>
         $reverse
-            ? "left: -52px;"
-            : "right: -52px;"}
-    width: min(62vw, 500px);
+            ? "left: -76px;"
+            : "right: -76px;"}
+    width: min(78vw, 680px);
     border-radius: 16px;
   }
 
   @media (max-width: 640px) {
-    top: -14px;
+    top: -18px;
     ${({ $reverse }) =>
         $reverse
-            ? "left: -18px;"
-            : "right: -18px;"}
-    width: 60%;
-    border-radius: 14px;
+            ? "left: -14px;"
+            : "right: -14px;"}
+    width: 88%;
+    border-radius: 16px;
   }
 `;
 
@@ -1301,6 +1390,16 @@ const ShowcaseImage = styled.img`
   display: block;
   object-fit: cover;
   object-position: center top;
+
+  @media (max-width: 1024px) {
+    transform: scale(1.08);
+    transform-origin: center top;
+  }
+
+  @media (max-width: 640px) {
+    transform: scale(1.24);
+    transform-origin: center top;
+  }
 `;
 
 const ShowcasePlaceholder = styled.div`
@@ -1353,7 +1452,10 @@ const ShowcaseTitle = styled.h2`
 
 const ShowcaseTitleLine = styled.span`
   display: block;
-  white-space: nowrap;
+
+  @media (max-width: 640px) {
+    white-space: normal;
+  }
 `;
 
 const ShowcaseTitleAccent = styled.span`
@@ -1451,6 +1553,18 @@ const ProgressStepLabel = styled.div<{ $leftPct: number; $active?: boolean; $edg
   user-select: none;
   pointer-events: none;
 
+  @media (max-width: 1024px) {
+    font-size: 11px;
+    top: -34px;
+    letter-spacing: 0.08em;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 9px;
+    top: -28px;
+    letter-spacing: 0.04em;
+  }
+
   :root[data-theme="dark"] & {
     color: ${props => (props.$active ? "rgba(96, 165, 250, 1)" : "rgba(148, 163, 184, 0.75)")};
   }
@@ -1461,11 +1575,11 @@ const ProgressDot = styled.div<{ $leftPct: number; $active?: boolean; $edge?: "l
   top: 50%;
   left: ${props => `${props.$leftPct}%`};
   transform: ${props => {
-    const scale = props.$active ? 1.25 : 1;
-    if (props.$edge === "left") return `translate(0, -50%) scale(${scale})`;
-    if (props.$edge === "right") return `translate(-100%, -50%) scale(${scale})`;
-    return `translate(-50%, -50%) scale(${scale})`;
-  }};
+  const scale = props.$active ? 1.25 : 1;
+  if (props.$edge === "left") return `translate(0, -50%) scale(${scale})`;
+  if (props.$edge === "right") return `translate(-100%, -50%) scale(${scale})`;
+  return `translate(-50%, -50%) scale(${scale})`;
+}};
   width: 18px;
   height: 18px;
   border-radius: 999px;
@@ -1484,11 +1598,21 @@ const ProgressDot = styled.div<{ $leftPct: number; $active?: boolean; $edge?: "l
 const ProgressTopSlot = styled.div`
   min-height: 36px;
   margin-top: 14px;
+
+  @media (max-width: 640px) {
+    min-height: 24px;
+    margin-top: 8px;
+  }
 `;
 
 const ProgressBottomSlot = styled.div`
   min-height: 36px;
   margin-top: 28px;
+
+  @media (max-width: 640px) {
+    min-height: 24px;
+    margin-top: 18px;
+  }
 `;
 
 const ProgressBottomDescription = styled.p`
@@ -1497,6 +1621,20 @@ const ProgressBottomDescription = styled.p`
   line-height: 1.65;
   color: #64748b;
   word-break: keep-all;
+  text-wrap: balance;
+
+  @media (max-width: 1024px) {
+    margin-top: 72px;
+    font-size: 24px;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 640px) {
+    margin-top: 44px;
+    font-size: 18px;
+    line-height: 1.5;
+    padding: 0 8px;
+  }
 
   :root[data-theme="dark"] & {
     color: #cbd5e1;
@@ -1535,6 +1673,7 @@ type StoreModalType = "google" | "appstore" | null;
 const HeroSection = styled.section`
   width: 100%;
   height: 100vh;
+  min-height: 760px;
   position: relative;
   display: flex;
   align-items: center;
@@ -1585,6 +1724,17 @@ const HeroSection = styled.section`
     0% { transform: scale(1.05) translate(0%, 1%); }
     100% { transform: scale(1.1) translate(-1%, -1%); }
   }
+
+  @media (max-width: 900px) {
+    height: auto;
+    min-height: unset;
+    padding: 120px 0 72px;
+    align-items: flex-start;
+  }
+
+  @media (max-width: 640px) {
+    padding: 108px 0 56px;
+  }
 `;
 
 const HeroInner = styled.div`
@@ -1600,9 +1750,10 @@ const HeroInner = styled.div`
 
   @media (max-width: 900px) {
     flex-direction: column;
-    text-align: center;
+    align-items: flex-start;
+    text-align: left;
     padding: 0 20px;
-    gap: 40px;
+    gap: 28px;
   }
 `;
 
@@ -1611,6 +1762,14 @@ const HeroContent = styled.div`
   color: #1a1a1a;
   text-shadow: none; /* 배경과 자연스럽게 어울리도록 텍스트 그림자 제거 */
   transform: translateY(-40px) translateX(-60px); /* 왼쪽 위로 이동 */
+  @media (max-width: 1100px) {
+    transform: translateY(-16px) translateX(0);
+  }
+
+  @media (max-width: 900px) {
+    width: 100%;
+    transform: none;
+  }
 `;
 
 const HeroTitle = styled.h1`
@@ -1634,8 +1793,8 @@ const HeroSubtitle = styled.p`
   color: #333333;
 
   @media (max-width: 900px) {
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 0;
+    margin-right: 0;
   }
 `;
 
@@ -1659,7 +1818,9 @@ const HeroLogoLine = styled.div`
 
   @media (max-width: 900px) {
     margin-left: 0;
-    justify-content: center;
+    justify-content: flex-start;
+    gap: 8px;
+    flex-wrap: wrap;
   }
 `;
 
@@ -1668,6 +1829,14 @@ const HeroLogoImg = styled.img`
   width: auto;
   object-fit: contain;
   display: block;
+
+  @media (max-width: 900px) {
+    height: 92px;
+  }
+
+  @media (max-width: 640px) {
+    height: 72px;
+  }
 `;
 
 const HeroLogoX = styled.span`
@@ -1677,6 +1846,14 @@ const HeroLogoX = styled.span`
   line-height: 1;
   letter-spacing: -0.02em;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  @media (max-width: 900px) {
+    font-size: 72px;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 56px;
+  }
 `;
 
 const HeroLogoAIText = styled.span`
@@ -1687,17 +1864,27 @@ const HeroLogoAIText = styled.span`
   line-height: 1;
   letter-spacing: -0.02em;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  @media (max-width: 900px) {
+    font-size: 64px;
+    margin-top: 12px;
+  }
+
+  @media (max-width: 640px) {
+    font-size: 48px;
+    margin-top: 8px;
+  }
 `;
 
 /* 메인 슬로건 */
 const HeroMainSlogan = styled.div`
   font-size: clamp(38px, 4.4vw, 64px);
-  font-weight: 700;
+  font-weight: 400;
   color: #0f172a;
   line-height: 1.2;
   margin-bottom: 16px;
   letter-spacing: -0.025em;
-  font-family: 'IncheonEduJaramBold', 'Pretendard', sans-serif;
+  font-family: 'IncheonEducation', 'Pretendard', sans-serif;
 `;
 
 /* 설명 문구 */
@@ -1714,8 +1901,8 @@ const HeroDescText = styled.p`
   text-wrap: pretty;
 
   @media (max-width: 900px) {
-    margin-left: auto;
-    margin-right: auto;
+    margin-left: 0;
+    margin-right: 0;
   }
 
   @media (max-width: 640px) {
@@ -1731,6 +1918,10 @@ const HeroBtnRow = styled.div`
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+
+  @media (max-width: 640px) {
+    width: 100%;
+  }
 `;
 
 const HeroBtn = styled.button`
@@ -1754,6 +1945,11 @@ const HeroBtn = styled.button`
   }
   &:active {
     transform: translateY(0);
+  }
+
+  @media (max-width: 640px) {
+    width: 100%;
+    justify-content: center;
   }
 `;
 
@@ -1924,7 +2120,6 @@ const SearchTitle2 = styled.h2`
   margin-bottom: 400px;
   position: relative;
   z-index: 1;
-
   font-size: 48px;
   font-weight: 800;
   line-height: 1.35;
@@ -1933,16 +2128,34 @@ const SearchTitle2 = styled.h2`
   font-family: Freesentation, sans-serif;
   overflow-wrap: break-word;
   word-break: keep-all;
+  padding: 0 24px;
+
+  @media (max-width: 1024px) {
+    margin-top: 260px;
+    margin-bottom: 260px;
+    font-size: 38px;
+    line-height: 1.4;
+    padding: 0 24px;
+  }
 
   @media (max-width: 768px) {
-    font-size: 28px;
+    margin-top: 180px;
+    margin-bottom: 180px;
+    font-size: 24px;
     font-weight: 700;
-    line-height: 1.45;
+    line-height: 1.5;
+    padding: 0 16px;
   }
 `;
 
 const SearchTitle2Line = styled.span`
   display: block;
+
+  @media (max-width: 1024px) {
+    white-space: nowrap;
+    width: fit-content;
+    margin-inline: auto;
+  }
 `;
 
 const SearchTitle2Char = styled.span<{ $active: number }>`
@@ -1989,6 +2202,16 @@ const ProductsSection = styled.section<{ $isVisible?: boolean }>`
   transform: translateY(${props => props.$isVisible ? '0' : '40px'});
   transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
+
+  @media (max-width: 1024px) {
+    margin: 140px auto 200px;
+    padding: 0 20px;
+  }
+
+  @media (max-width: 768px) {
+    margin: 120px auto 180px;
+    padding: 0 16px;
+  }
 `;
 
 const ProductsGrid = styled.div`
@@ -1998,12 +2221,16 @@ const ProductsGrid = styled.div`
   margin-top: 60px;
 
   @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: 1fr;
     gap: 24px;
+    max-width: 560px;
+    margin: 48px auto 0;
   }
 
   @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 100%;
+    margin-top: 40px;
   }
 `;
 
@@ -2030,6 +2257,7 @@ const ProductCard = styled.div<{ $bgColor?: string; $delay?: number; $featured?:
   transition-delay: ${props => props.$delay || 0}s;
   min-height: 460px;
   cursor: pointer;
+  width: 100%;
 
   &::after {
     content: '';
@@ -2053,6 +2281,20 @@ const ProductCard = styled.div<{ $bgColor?: string; $delay?: number; $featured?:
     border-color: ${({ $featured }) =>
         $featured ? "rgba(255,255,255,0.22)" : "rgba(59, 130, 246, 0.2)"};
     border-radius: 50%;
+  }
+
+  @media (max-width: 1024px) {
+    max-width: 560px;
+    min-height: 380px;
+    padding: 40px 28px;
+    border-radius: 28px;
+  }
+
+  @media (max-width: 768px) {
+    max-width: 100%;
+    min-height: 340px;
+    padding: 34px 24px;
+    border-radius: 24px;
   }
 `;
 
@@ -2119,10 +2361,15 @@ const ProductImageWrap = styled.div`
     transition: all 0.6s ease;
   }
 
-  ${ProductCard}:hover & {
-    transform: scale(1.15) rotate(3deg);
+  @media (max-width: 1024px) {
     img {
-      filter: brightness(1.1) drop-shadow(0 20px 40px rgba(59, 130, 246, 0.15));
+      max-height: 190px;
+    }
+  }
+
+  @media (max-width: 768px) {
+    img {
+      max-height: 170px;
     }
   }
 `;
@@ -2151,8 +2398,6 @@ const ProductCircleImageWrap = styled.div`
     }
   }
 `;
-
-
 
 const Highlight = styled.span`
   background: ${BRAND.blue};
@@ -3510,6 +3755,10 @@ const CoreValueSection = styled.section`
     pointer-events: none;
   }
 
+  @media (max-width: 1024px) {
+    padding: 96px 24px;
+  }
+
   @media (max-width: 768px) {
     min-height: 100vh;
     padding: 80px 20px;
@@ -3517,6 +3766,8 @@ const CoreValueSection = styled.section`
 `;
 
 const CoreValueHeader = styled.div`
+  width: 100%;
+  max-width: 1200px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -3524,6 +3775,10 @@ const CoreValueHeader = styled.div`
   margin-bottom: 80px;
   position: relative;
   z-index: 1;
+
+  @media (max-width: 1024px) {
+    margin-bottom: 56px;
+  }
 `;
 
 const CoreValueLabel = styled.span`
@@ -3547,29 +3802,58 @@ const CoreValueTitle = styled.h2`
   font-size: clamp(32px, 4.5vw, 52px);
   font-weight: 900;
   color: #0f172a;
-  line-height: 1.4;
+  line-height: 1.32;
   margin: 0;
   letter-spacing: -0.02em;
+  word-break: keep-all;
+  text-wrap: balance;
 
-  span {
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    position: relative;
-    display: inline-block;
+  @media (max-width: 768px) {
+    font-size: 28px;
+    line-height: 1.38;
+  }
 
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
-      border-radius: 2px;
-      opacity: 0.3;
+  @media (max-width: 480px) {
+    font-size: 24px;
+    line-height: 1.42;
+  }
+`;
+
+const CoreValueTitleLine = styled.span`
+  display: inline;
+
+  & + & {
+    margin-left: 0.28em;
+  }
+
+  @media (max-width: 1024px) {
+    display: block;
+
+    & + & {
+      margin-left: 0;
     }
+  }
+`;
+
+const CoreValueTitleAccent = styled.span`
+  display: inline-block;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  padding-bottom: 2px;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+    border-radius: 2px;
+    opacity: 0.28;
   }
 `;
 
@@ -3577,13 +3861,18 @@ const CoreValueGrid = styled.div`
   display: flex;
   flex-direction: column;
   gap: 80px;
+  width: 100%;
   max-width: 1200px;
   margin: 0 auto;
   position: relative;
   z-index: 1;
 
-  @media (max-width: 900px) {
-    gap: 60px;
+  @media (max-width: 1024px) {
+    gap: 56px;
+  }
+
+  @media (max-width: 768px) {
+    gap: 48px;
   }
 `;
 
@@ -3592,15 +3881,17 @@ const CoreValueRow = styled.div<{ $reverse?: boolean }>`
   grid-template-columns: 1fr 1fr;
   gap: 60px;
   align-items: center;
+  width: 100%;
 
-  @media (max-width: 900px) {
+  @media (max-width: 1024px) {
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 28px;
+    width: 100%;
   }
 
   ${props => props.$reverse && `
     direction: rtl;
-    
+
     > * {
       direction: ltr;
     }
@@ -3609,7 +3900,7 @@ const CoreValueRow = styled.div<{ $reverse?: boolean }>`
 
 const CoreValueImageCard = styled.div`
   width: 100%;
-  aspect-ratio: 3/2;
+  aspect-ratio: 3 / 2;
   background: linear-gradient(135deg, #2563eb 0%, #3b82f6 100%);
   border-radius: 32px;
   padding: 0;
@@ -3635,7 +3926,12 @@ const CoreValueImageCard = styled.div`
     box-shadow: 0 32px 64px rgba(37, 99, 235, 0.3);
   }
 
-  @media (max-width: 900px) {
+  @media (max-width: 1024px) {
+    width: 100%;
+    border-radius: 28px;
+  }
+
+  @media (max-width: 768px) {
     border-radius: 24px;
   }
 `;
@@ -3668,6 +3964,7 @@ const CoreValueContent = styled.div`
   display: flex;
   flex-direction: column;
   gap: 20px;
+  width: 100%;
 `;
 
 const CoreValueCardTitle = styled.h3`
@@ -3677,6 +3974,22 @@ const CoreValueCardTitle = styled.h3`
   margin: 0;
   line-height: 1.4;
   letter-spacing: -0.02em;
+  word-break: keep-all;
+  text-wrap: balance;
+
+  @media (max-width: 768px) {
+    font-size: 24px;
+    line-height: 1.45;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 22px;
+    line-height: 1.5;
+  }
+`;
+
+const CoreValueCardTitleLine = styled.span`
+  display: block;
 `;
 
 const CoreValueCardDesc = styled.p`
@@ -3760,49 +4073,79 @@ const GrowthTitle = styled.h2`
   font-size: clamp(32px, 4.2vw, 48px);
   font-weight: 900;
   color: #0f172a;
-  line-height: 1.5;
+  line-height: 1.32;
   margin: 0;
   letter-spacing: -0.02em;
+  word-break: keep-all;
+  text-wrap: balance;
 
-  span {
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    position: relative;
-    display: inline-block;
-    font-weight: 900;
+  @media (max-width: 768px) {
+    font-size: 28px;
+    line-height: 1.38;
+  }
 
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
-      border-radius: 2px;
-      opacity: 0.4;
+  @media (max-width: 480px) {
+    font-size: 24px;
+    line-height: 1.42;
+  }
+`;
+
+const GrowthTitleLine = styled.span`
+  display: inline;
+
+  & + & {
+    margin-left: 0.28em;
+  }
+
+  &:nth-of-type(2)::after {
+    content: "";
+    display: block;
+  }
+
+  &:nth-of-type(3) {
+    margin-left: 0;
+  }
+
+  @media (max-width: 1024px) {
+    display: block;
+
+    & + & {
+      margin-left: 0;
+    }
+
+    &:nth-of-type(2)::after {
+      content: none;
     }
   }
 `;
 
-const GrowthTimeline = styled.div`
-  display: flex;
-  gap: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
-  align-items: flex-start;
+const GrowthTitleAccent = styled.span`
+  display: inline-block;
+  background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  position: relative;
+  padding-bottom: 2px;
 
-  @media (max-width: 900px) {
-    flex-direction: column;
-    gap: 20px;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+    border-radius: 2px;
+    opacity: 0.28;
   }
 `;
 
 const GrowthCard = styled.div<{ $offset?: number }>`
   flex: 1;
   min-width: 0;
+  width: 100%;
+  box-sizing: border-box;
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 20px;
@@ -3832,10 +4175,29 @@ const GrowthCard = styled.div<{ $offset?: number }>`
     &::before {
       height: 100%;
     }
+
+    @media (max-width: 900px) {
+      margin-top: 0;
+    }
   }
 
   @media (max-width: 900px) {
     margin-top: 0;
+  }
+`;
+
+const GrowthTimeline = styled.div`
+  display: flex;
+  gap: 24px;
+  max-width: 1200px;
+  width: 100%;
+  margin: 0 auto;
+  align-items: flex-start;
+
+  @media (max-width: 900px) {
+    flex-direction: column;
+    gap: 20px;
+    align-items: stretch;
   }
 `;
 
@@ -4149,43 +4511,45 @@ const MobilePromoBanner = styled.div`
   box-sizing: border-box;
 
   @media (max-width: 1024px) {
-    min-height: 390px;
-    padding: 38px 40px;
+    min-height: 360px;
+    padding: 32px 32px 28px;
     grid-template-columns: 0.95fr 1.05fr;
   }
 
-  @media (max-width: 768px) {
+  @media (max-width: 640px) {
     min-height: auto;
     grid-template-columns: 1fr;
-    padding: 28px 20px 18px;
+    padding: 24px 18px 170px;
     border-radius: 24px;
-    gap: 16px;
+    gap: 12px;
+    overflow: hidden;
   }
 `;
 
 const MobilePromoImage = styled.img`
   position: absolute;
-  right: 0;
-  top: -72px;
+  right: 0px;
+  bottom: -8px;
+  top: auto;
   z-index: 2;
   display: block;
-  width: min(760px, 68%);
+  width: min(540px, 54%);
   height: auto;
   margin: 0;
   pointer-events: none;
   filter: drop-shadow(0 28px 60px rgba(15, 23, 42, 0.16));
 
   @media (max-width: 1024px) {
-    width: min(680px, 72%);
-    top: -28px;
+    right: 0px;
+    bottom: -6px;
+    width: min(520px, 58%);
   }
 
-  @media (max-width: 768px) {
-    position: relative;
-    top: -10px;
-    right: auto;
-    width: min(560px, 96%);
-    margin: 0 0 -10px auto;
+  @media (max-width: 640px) {
+    right: -8px;
+    bottom: 8px;
+    width: min(290px, 88%);
+    margin: 0;
   }
 `;
 
@@ -4208,9 +4572,14 @@ const MobilePromoContent = styled.div`
   max-width: 420px;
   align-self: center;
 
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
+    max-width: 360px;
+  }
+
+  @media (max-width: 640px) {
     max-width: 100%;
     align-self: start;
+    text-align: left;
   }
 `;
 
@@ -4260,6 +4629,12 @@ const MobileStoreRow = styled.div`
 
   @media (max-width: 768px) {
     margin-top: 22px;
+    gap: 10px;
+  }
+
+  @media (max-width: 480px) {
+    flex-direction: column;
+    align-items: stretch;
   }
 `;
 
@@ -4295,6 +4670,11 @@ const MobileStoreActionButton = styled.button`
 
   &:active {
     transform: translateY(0);
+  }
+
+  @media (max-width: 480px) {
+    width: 100%;
+    justify-content: flex-start;
   }
 `;
 
@@ -4508,10 +4888,49 @@ export default function Main() {
   const searchTitle2Ref = useRef<HTMLHeadingElement | null>(null);
   const [searchTitle2FillProgress, setSearchTitle2FillProgress] = useState(0);
 
-  const SEARCH_TITLE2_LINES = [
+  const SEARCH_TITLE2_DESKTOP_LINES = [
     "면접으로 시작해 더 다양한 가치를 만드는데",
     "함께 하세요",
   ] as const;
+
+  const SEARCH_TITLE2_TABLET_LINES = [
+    "면접으로 시작해",
+    "더 다양한 가치를 만드는데",
+    "함께 하세요",
+  ] as const;
+
+  const SEARCH_TITLE2_MOBILE_LINES = [
+    "면접으로 시작해",
+    "더 다양한 가치를 만드는데",
+    "함께 하세요",
+  ] as const;
+
+  const [titleMode, setTitleMode] = useState<"desktop" | "tablet" | "mobile">("desktop");
+
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+
+      if (width <= 640) {
+        setTitleMode("mobile");
+      } else if (width <= 1024) {
+        setTitleMode("tablet");
+      } else {
+        setTitleMode("desktop");
+      }
+    };
+
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const searchTitle2Lines =
+      titleMode === "mobile"
+          ? SEARCH_TITLE2_MOBILE_LINES
+          : titleMode === "tablet"
+              ? SEARCH_TITLE2_TABLET_LINES
+              : SEARCH_TITLE2_DESKTOP_LINES;
 
   const goToAiInterview = () => {
     window.location.href = "http://localhost/vue-ai-interview/ai-interview/landing";
@@ -4542,10 +4961,10 @@ export default function Main() {
   // }, []);
 
   const renderSearchTitle2 = () => {
-    const totalChars = SEARCH_TITLE2_LINES.join("").replace(/\s/g, "").length;
+    const totalChars = searchTitle2Lines.join("").replace(/\s/g, "").length;
     let currentCharIndex = 0;
 
-    return SEARCH_TITLE2_LINES.map((line, lineIndex) => (
+    return searchTitle2Lines.map((line, lineIndex) => (
         <SearchTitle2Line key={lineIndex}>
           {[...line].map((char, charIndex) => {
             if (char === " ") {
@@ -4693,14 +5112,6 @@ export default function Main() {
       font-family: 'InkLiquid';
       src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/InkLipquid.woff') format('woff');
       font-weight: normal;
-      font-display: swap;
-    }
-
-    @font-face {
-      font-family: 'IncheonEduJaramBold';
-      src: url('/fonts/IncheonEduJarambold.woff2') format('woff2');
-      font-weight: 700;
-      font-style: normal;
       font-display: swap;
     }
 
@@ -4970,850 +5381,860 @@ export default function Main() {
               : "";
 
   return (
-      <Page>
-        <SoftBg />
-        {/* <BackgroundTextContainer>
-        <BackgroundText $isVisible={isBackgroundVisible}>
-          <BackgroundImage src={backFont} alt="" />
-          <BackgroundImage src={backFont} alt="" />
-          <BackgroundImage src={backFont} alt="" />
-          <BackgroundImage src={backFont} alt="" />
-          <BackgroundImage src={backFont} alt="" />
-          <BackgroundImage src={backFont} alt="" />
-          <BackgroundImage src={backFont} alt="" />
-          <BackgroundImage src={backFont} alt="" />
-        </BackgroundText>
-      </BackgroundTextContainer> */}
-        <HeroSection>
-          <HeroInner>
+      <>
+        <GlobalFonts />
+        <Page>
+          <SoftBg />
+          {/* <BackgroundTextContainer>
+          <BackgroundText $isVisible={isBackgroundVisible}>
+            <BackgroundImage src={backFont} alt="" />
+            <BackgroundImage src={backFont} alt="" />
+            <BackgroundImage src={backFont} alt="" />
+            <BackgroundImage src={backFont} alt="" />
+            <BackgroundImage src={backFont} alt="" />
+            <BackgroundImage src={backFont} alt="" />
+            <BackgroundImage src={backFont} alt="" />
+            <BackgroundImage src={backFont} alt="" />
+          </BackgroundText>
+        </BackgroundTextContainer> */}
+          <HeroSection>
+            <HeroInner>
 
-            {/* ── LEFT: 텍스트 + 버튼 ── */}
-            <HeroContent>
+              {/* ── LEFT: 텍스트 + 버튼 ── */}
+              <HeroContent>
 
-              {/* i-POTEN (로고) × AI */}
-              <HeroLogoLine>
-                <HeroLogoImg src={pageLogo} alt="i-POTEN" draggable={false} />
-                <HeroLogoX>×</HeroLogoX>
-                <HeroLogoAIText>AI</HeroLogoAIText>
-              </HeroLogoLine>
+                {/* i-POTEN (로고) × AI */}
+                <HeroLogoLine>
+                  <HeroLogoImg src={pageLogo} alt="i-POTEN" draggable={false} />
+                  <HeroLogoX>×</HeroLogoX>
+                  <HeroLogoAIText>AI</HeroLogoAIText>
+                </HeroLogoLine>
 
-              {/* 메인 슬로건 */}
-              <HeroMainSlogan>당신의 잠재력을 깨우다</HeroMainSlogan>
+                {/* 메인 슬로건 */}
+                <HeroMainSlogan>당신의 잠재력을 깨우다</HeroMainSlogan>
 
-              {/* 설명 */}
-              <HeroDescText>
-                AI 기반 I-Poten 솔루션으로<br />
-                당신의 면접과 취업, 합격 이후의 성장까지<br />
-                필요한 모든 것을 연결합니다.
-              </HeroDescText>
+                {/* 설명 */}
+                <HeroDescText>
+                  AI 기반 I-Poten 솔루션으로<br />
+                  당신의 면접과 취업, 합격 이후의 성장까지<br />
+                  필요한 모든 것을 연결합니다.
+                </HeroDescText>
 
-              {/* CTA 버튼 */}
-              <HeroBtnRow>
-                <HeroBtn type="button" onClick={goToAiInterview}>
-                  지금 시작하기
-                </HeroBtn>
-                <HeroBtn type="button" onClick={scrollToProducts}>
-                  둘러보기
-                </HeroBtn>
-              </HeroBtnRow>
+                {/* CTA 버튼 */}
+                <HeroBtnRow>
+                  <HeroBtn type="button" onClick={goToAiInterview}>
+                    지금 시작하기
+                  </HeroBtn>
+                  <HeroBtn type="button" onClick={scrollToProducts}>
+                    둘러보기
+                  </HeroBtn>
+                </HeroBtnRow>
 
-            </HeroContent>
+              </HeroContent>
 
-            {/* ── RIGHT: 3D 이미지 ── */}
-            <HeroRightArea>
-              {/* 상단 우측 추상 도형 */}
-              <PageImgEl src={pageImg} alt="" draggable={false} />
-              {/* 하단 3D AI 텍스트 */}
-              {/*<PageAIEl src={pageAI} alt="AI" draggable={false} />*/}
-            </HeroRightArea>
+              {/* ── RIGHT: 3D 이미지 ── */}
+              <HeroRightArea>
+                {/* 상단 우측 추상 도형 */}
+                <PageImgEl src={pageImg} alt="" draggable={false} />
+                {/* 하단 3D AI 텍스트 */}
+                {/*<PageAIEl src={pageAI} alt="AI" draggable={false} />*/}
+              </HeroRightArea>
 
-          </HeroInner>
-        </HeroSection>
+            </HeroInner>
+          </HeroSection>
 
-        <CloudTransitionWrap>
-          <SearchTitle2
-              ref={searchTitle2Ref}
-              data-search-title2
-              data-service-section
-          >
-            {renderSearchTitle2()}
-          </SearchTitle2>
+          <CloudTransitionWrap>
+            <SearchTitle2
+                ref={searchTitle2Ref}
+                data-search-title2
+                data-service-section
+            >
+              {renderSearchTitle2()}
+            </SearchTitle2>
 
-          {/* Products Section */}
-          <ProductsSection
-              ref={productsSectionRef}
-              data-products-section
-              $isVisible={isProductsVisible}
-          >
-            <ProductsGrid>
-              {/* Word Card 1 */}
-              <ProductCard $bgColor="#f8f9fa" $delay={0.1}>
-                <ProductTitle>단어학습</ProductTitle>
-                <ProductDesc>
-                  면접에 자주 나오는 핵심 단어와<br />
-                  실무 용어를 학습합니다
-                </ProductDesc>
-                <ProductImageWrap>
-                  <img src={word01} alt="단어학습" draggable={false} />
-                </ProductImageWrap>
-              </ProductCard>
+            {/* Products Section */}
+            <ProductsSection
+                ref={productsSectionRef}
+                data-products-section
+                $isVisible={isProductsVisible}
+            >
+              <ProductsGrid>
+                {/* Word Card 1 */}
+                <ProductCard $bgColor="#f8f9fa" $delay={0.1}>
+                  <ProductTitle>단어학습</ProductTitle>
+                  <ProductDesc>
+                    면접에 자주 나오는 핵심 단어와<br />
+                    실무 용어를 학습합니다
+                  </ProductDesc>
+                  <ProductImageWrap>
+                    <img src={word01} alt="단어학습" draggable={false} />
+                  </ProductImageWrap>
+                </ProductCard>
 
-              {/* Word Card 2 */}
-              <ProductCard $bgColor="#f8f9fa" $delay={0.2}>
-                <ProductTitle>단어복습</ProductTitle>
-                <ProductDesc>
-                  학습한 단어를 반복 학습하여<br />
-                  완벽하게 내 것으로 만듭니다
-                </ProductDesc>
-                <ProductImageWrap>
-                  <img src={note01} alt="단어복습" draggable={false} />
-                </ProductImageWrap>
-              </ProductCard>
+                {/* Word Card 2 */}
+                <ProductCard $bgColor="#f8f9fa" $delay={0.2}>
+                  <ProductTitle>단어복습</ProductTitle>
+                  <ProductDesc>
+                    학습한 단어를 반복 학습하여<br />
+                    완벽하게 내 것으로 만듭니다
+                  </ProductDesc>
+                  <ProductImageWrap>
+                    <img src={note01} alt="단어복습" draggable={false} />
+                  </ProductImageWrap>
+                </ProductCard>
 
-              {/* Interview Card */}
-              <ProductCard
-                  $featured
-                  $bgColor="linear-gradient(135deg, #5b8ef7 0%, #56d3c2 100%)"
-                  $delay={0.3}
-              >
-                <ProductTitle $color="#0f172a" $featured>
-                  AI 모의 면접
-                </ProductTitle>
-
-                <ProductDesc $color="rgba(15, 23, 42, 0.62)" $featured>
-                  실전처럼 연습하는 AI 면접<br />
-                  실시간 피드백으로 합격률 향상
-                </ProductDesc>
-
-                <ProductCircleImageWrap>
-                  <img src={interviewB} alt="AI 모의 면접" draggable={false} />
-                </ProductCircleImageWrap>
-              </ProductCard>
-            </ProductsGrid>
-          </ProductsSection>
-        </CloudTransitionWrap>
-
-        {/*<ServiceSection>*/}
-        {/*<ServiceTitle data-service-title data-reveal style={revealStyle(0)}>*/}
-        {/*  <Highlight>취업 준비</Highlight>, 어디까지 해보셨나요?*/}
-        {/*</ServiceTitle>*/}
-        {/*<ServiceSubtitle data-reveal style={revealStyle(120)}>*/}
-        {/*  ↓ 잡스푼은 다양한 방향의 취업 준비 솔루션을 제공합니다*/}
-        {/*</ServiceSubtitle>*/}
-
-        {/*  <ServiceGrid data-service-grid>*/}
-        {/*    {SERVICE_CARDS.map((card, index) => {*/}
-        {/*      const rotations = [-12, -6, 0, 6, 12];*/}
-        {/*      const zIndexes = [1, 2, 3, 2, 1];*/}
-        {/*      const delays = ["0s", "0.06s", "0.12s", "0.18s", "0.24s"];*/}
-        {/*      return (*/}
-        {/*        <ServiceCard*/}
-        {/*          key={card.title}*/}
-        {/*          $rotation={rotations[index] ?? 0}*/}
-        {/*          $zIndex={zIndexes[index] ?? 1}*/}
-        {/*          $translateX={0}*/}
-        {/*          $isVisible={areCardsVisible}*/}
-        {/*          style={{ transitionDelay: delays[index] ?? "0s" }}*/}
-        {/*        >*/}
-        {/*          <CardLabel>{card.label}</CardLabel>*/}
-        {/*          <CardTitle>{card.title}</CardTitle>*/}
-        {/*          <CardIcon aria-hidden>{card.icon}</CardIcon>*/}
-        {/*        </ServiceCard>*/}
-        {/*      );*/}
-        {/*    })}*/}
-        {/*  </ServiceGrid>*/}
-        {/*</ServiceSection>*/}
-
-        <ProgressSection data-progress-section ref={progressSectionRef}>
-          <ProgressKicker data-reveal style={revealStyle(0)}>I-POTEN FLOW</ProgressKicker>
-          <ProgressTitle data-reveal style={revealStyle(100)}>
-            면접의 모든 과정을
-            <br />
-            <ProgressTitleAccent>I-Poten</ProgressTitleAccent>과 함께
-          </ProgressTitle>
-          <ProgressDescription data-reveal style={revealStyle(220)}>
-            면접 준비의 흐름을 따라
-            각 단계를 순차적으로 확인해 보세요
-          </ProgressDescription>
-          <ProgressTopSlot />
-          <ProgressBarWrap>
-            <ProgressTrack>
-              <ProgressFill $progress={progressValue} />
-            </ProgressTrack>
-            {PROGRESS_STEPS.map((step, idx) => (
-                <ProgressStepLabel
-                    key={step.label}
-                    $leftPct={step.leftPct}
-                    $edge={step.edge}
-                    $active={activeStepIndex === idx}
+                {/* Interview Card */}
+                <ProductCard
+                    $featured
+                    $bgColor="linear-gradient(135deg, #5b8ef7 0%, #56d3c2 100%)"
+                    $delay={0.3}
                 >
-                  {step.label}
-                </ProgressStepLabel>
-            ))}
-            {PROGRESS_STEPS.map((step, idx) => (
-                <ProgressDot
-                    key={`${step.label}-dot`}
-                    $leftPct={step.leftPct}
-                    $edge={step.edge}
-                    $active={activeStepIndex === idx}
-                />
-            ))}
-          </ProgressBarWrap>
-          <ProgressBottomSlot data-reveal style={revealStyle(420)}>
-            <ProgressBottomDescription>{activeStep.description}</ProgressBottomDescription>
-          </ProgressBottomSlot>
-        </ProgressSection>
+                  <ProductTitle $color="#0f172a" $featured>
+                    AI 모의 면접
+                  </ProductTitle>
 
-        <CoreValueSection>
-          <CoreValueHeader data-reveal style={revealStyle(0)}>
-            <CoreValueLabel>COREVALUE</CoreValueLabel>
-            <CoreValueTitle>
-              합격을 넘어,
-              나만의 Identity를 완성하는<br />
-              면접 준비의 <span>핵심</span>을 제공합니다.
-            </CoreValueTitle>
-          </CoreValueHeader>
+                  <ProductDesc $color="rgba(15, 23, 42, 0.62)" $featured>
+                    실전처럼 연습하는 AI 면접<br />
+                    실시간 피드백으로 합격률 향상
+                  </ProductDesc>
 
-          <CoreValueGrid>
-            {/* Row 1 - Image Left, Content Right */}
-            <CoreValueRow data-reveal style={revealStyle(100)}>
-              <CoreValueImageCard>
-                <CoreValueImage src={coreValue01} alt="I-Poten 핵심 가치 1" $fit="cover" />
-              </CoreValueImageCard>
+                  <ProductCircleImageWrap>
+                    <img src={interviewB} alt="AI 모의 면접" draggable={false} />
+                  </ProductCircleImageWrap>
+                </ProductCard>
+              </ProductsGrid>
+            </ProductsSection>
+          </CloudTransitionWrap>
 
-              <CoreValueContent>
-                <CoreValueCardTitle>
-                  정답을 외우는 면접은 끝났다<br />
-                  나만의 Identity로 증명하는 면접
-                </CoreValueCardTitle>
-                <CoreValueCardDesc>
-                  AI가 단순히 정답을 알려주는 것이 아닌,<br />
-                  당신만의 고유한 경험과 가치를 발견하고<br />
-                  면접관에게 깊은 인상을 남기는<br />
-                  진정한 자기소개를 완성하도록 돕습니다.
-                </CoreValueCardDesc>
-              </CoreValueContent>
-            </CoreValueRow>
+          {/*<ServiceSection>*/}
+          {/*<ServiceTitle data-service-title data-reveal style={revealStyle(0)}>*/}
+          {/*  <Highlight>취업 준비</Highlight>, 어디까지 해보셨나요?*/}
+          {/*</ServiceTitle>*/}
+          {/*<ServiceSubtitle data-reveal style={revealStyle(120)}>*/}
+          {/*  ↓ 잡스푼은 다양한 방향의 취업 준비 솔루션을 제공합니다*/}
+          {/*</ServiceSubtitle>*/}
 
-            {/* Row 2 - Content Left, Image Right (Reversed) */}
-            <CoreValueRow $reverse data-reveal style={revealStyle(200)}>
-              <CoreValueImageCard>
-                <CoreValueImage src={coreValue02} alt="I-Poten 핵심 가치 2" $fit="cover" />
-              </CoreValueImageCard>
+          {/*  <ServiceGrid data-service-grid>*/}
+          {/*    {SERVICE_CARDS.map((card, index) => {*/}
+          {/*      const rotations = [-12, -6, 0, 6, 12];*/}
+          {/*      const zIndexes = [1, 2, 3, 2, 1];*/}
+          {/*      const delays = ["0s", "0.06s", "0.12s", "0.18s", "0.24s"];*/}
+          {/*      return (*/}
+          {/*        <ServiceCard*/}
+          {/*          key={card.title}*/}
+          {/*          $rotation={rotations[index] ?? 0}*/}
+          {/*          $zIndex={zIndexes[index] ?? 1}*/}
+          {/*          $translateX={0}*/}
+          {/*          $isVisible={areCardsVisible}*/}
+          {/*          style={{ transitionDelay: delays[index] ?? "0s" }}*/}
+          {/*        >*/}
+          {/*          <CardLabel>{card.label}</CardLabel>*/}
+          {/*          <CardTitle>{card.title}</CardTitle>*/}
+          {/*          <CardIcon aria-hidden>{card.icon}</CardIcon>*/}
+          {/*        </ServiceCard>*/}
+          {/*      );*/}
+          {/*    })}*/}
+          {/*  </ServiceGrid>*/}
+          {/*</ServiceSection>*/}
 
-              <CoreValueContent>
-                <CoreValueCardTitle>
-                  왜 떨어졌는지 모르는 면접은 그만<br />
-                  연습을 넘어 면접을 주도하는
-                </CoreValueCardTitle>
-                <CoreValueCardDesc>
-                  실시간 AI 피드백으로 당신의 답변을 분석하고,<br />
-                  개선점을 명확히 제시합니다.<br />
-                  단순 연습을 넘어 면접장에서 자신감 있게<br />
-                  대화를 이끌어가는 능력을 키웁니다.
-                </CoreValueCardDesc>
-              </CoreValueContent>
-            </CoreValueRow>
-
-            {/* Row 3 - Image Left, Content Right */}
-            <CoreValueRow data-reveal style={revealStyle(300)}>
-              <CoreValueImageCard>
-                <CoreValueImage src={coreValue03} alt="I-Poten 핵심 가치 3" $fit="cover" />
-              </CoreValueImageCard>
-
-              <CoreValueContent>
-                <CoreValueCardTitle>
-                  합격하기 위한 면접을 넘어<br />
-                  합격할 수밖에 없는 나를 만들어갑니다
-                </CoreValueCardTitle>
-                <CoreValueCardDesc>
-                  일회성 합격이 아닌, 지속 가능한 성장을 추구합니다.<br />
-                  면접 준비 과정에서 쌓인 모든 경험이<br />
-                  당신의 커리어 전반에 걸쳐<br />
-                  강력한 무기가 되도록 돕습니다.
-                </CoreValueCardDesc>
-              </CoreValueContent>
-            </CoreValueRow>
-          </CoreValueGrid>
-        </CoreValueSection>
-
-        {/* GROWTH 섹션 */}
-        <GrowthSection>
-          <GrowthHeader data-reveal style={revealStyle(0)}>
-            <GrowthLabel>GROWTH</GrowthLabel>
-            <GrowthTitle>
-              면접의 경험과 준비는
+          <ProgressSection data-progress-section ref={progressSectionRef}>
+            <ProgressKicker data-reveal style={revealStyle(0)}>I-POTEN FLOW</ProgressKicker>
+            <ProgressTitle data-reveal style={revealStyle(100)}>
+              면접의 모든 과정을
               <br />
-              함께 발전하며, <span>내가 걸어온 길</span>의 증명입니다
-            </GrowthTitle>
-          </GrowthHeader>
+              <ProgressTitleAccent>I-Poten</ProgressTitleAccent>과 함께
+            </ProgressTitle>
+            <ProgressDescription data-reveal style={revealStyle(220)}>
+              면접 준비의 흐름을 따라
+              각 단계를 순차적으로 확인해 보세요
+            </ProgressDescription>
+            <ProgressTopSlot />
+            <ProgressBarWrap>
+              <ProgressTrack>
+                <ProgressFill $progress={progressValue} />
+              </ProgressTrack>
+              {PROGRESS_STEPS.map((step, idx) => (
+                  <ProgressStepLabel
+                      key={step.label}
+                      $leftPct={step.leftPct}
+                      $edge={step.edge}
+                      $active={activeStepIndex === idx}
+                  >
+                    {step.label}
+                  </ProgressStepLabel>
+              ))}
+              {PROGRESS_STEPS.map((step, idx) => (
+                  <ProgressDot
+                      key={`${step.label}-dot`}
+                      $leftPct={step.leftPct}
+                      $edge={step.edge}
+                      $active={activeStepIndex === idx}
+                  />
+              ))}
+            </ProgressBarWrap>
+            <ProgressBottomSlot data-reveal style={revealStyle(420)}>
+              <ProgressBottomDescription>{activeStep.description}</ProgressBottomDescription>
+            </ProgressBottomSlot>
+          </ProgressSection>
 
-          <GrowthTimeline>
-            <GrowthCard $offset={120} data-reveal style={revealStyle(100)}>
-              <GrowthCardYear>신입</GrowthCardYear>
-              <GrowthCardTitle>
-                가능성을 증명하는
-                <br />
-                첫 면접
-              </GrowthCardTitle>
-              <GrowthCardDesc>
-                배움의 과정과 성장 의지를 바탕으로
-                <br />
-                앞으로의 가능성을 설득력 있게 보여줍니다.
-              </GrowthCardDesc>
-            </GrowthCard>
+          <CoreValueSection>
+            <CoreValueHeader data-reveal style={revealStyle(0)}>
+              <CoreValueLabel>COREVALUE</CoreValueLabel>
+              <CoreValueTitle>
+                <CoreValueTitleLine>합격을 넘어,</CoreValueTitleLine>
+                <CoreValueTitleLine>나만의 Identity를 완성하는</CoreValueTitleLine>
+                <CoreValueTitleLine>
+                  면접 준비의 <CoreValueTitleAccent>핵심</CoreValueTitleAccent>을 제공합니다.
+                </CoreValueTitleLine>
+              </CoreValueTitle>
+            </CoreValueHeader>
 
-            <GrowthCard $offset={60} data-reveal style={revealStyle(200)}>
-              <GrowthCardYear>주니어</GrowthCardYear>
-              <GrowthCardTitle>
-                경험으로 실력을 말하는
-                <br />
-                성장의 면접
-              </GrowthCardTitle>
-              <GrowthCardDesc>
-                실무 경험과 프로젝트 성과를 통해
-                <br />
-                문제 해결 능력과 실행력을 보여줍니다.
-              </GrowthCardDesc>
-            </GrowthCard>
+            <CoreValueGrid>
+              {/* Row 1 - Image Left, Content Right */}
+              <CoreValueRow data-reveal style={revealStyle(100)}>
+                <CoreValueImageCard>
+                  <CoreValueImage src={coreValue01} alt="I-Poten 핵심 가치 1" $fit="cover" />
+                </CoreValueImageCard>
 
-            <GrowthCard $offset={0} data-reveal style={revealStyle(300)}>
-              <GrowthCardYear>시니어</GrowthCardYear>
-              <GrowthCardTitle>
-                가치와 영향력을 증명하는
-                <br />
-                완성의 면접
-              </GrowthCardTitle>
-              <GrowthCardDesc>
-                조직에 기여한 성과와 리더십을 바탕으로
-                <br />
-                더 큰 책임과 역할을 증명합니다.
-              </GrowthCardDesc>
-            </GrowthCard>
-          </GrowthTimeline>
-        </GrowthSection>
+                <CoreValueContent>
+                  <CoreValueCardTitle>
+                    <CoreValueCardTitleLine>정답을 외우는 면접은 끝났다</CoreValueCardTitleLine>
+                    <CoreValueCardTitleLine>나만의 Identity로</CoreValueCardTitleLine>
+                    <CoreValueCardTitleLine>증명하는 면접</CoreValueCardTitleLine>
+                  </CoreValueCardTitle>
+                  <CoreValueCardDesc>
+                    AI가 단순히 정답을 알려주는 것이 아닌,<br />
+                    당신만의 고유한 경험과 가치를 발견하고<br />
+                    면접관에게 깊은 인상을 남기는<br />
+                    진정한 자기소개를 완성하도록 돕습니다.
+                  </CoreValueCardDesc>
+                </CoreValueContent>
+              </CoreValueRow>
 
-        <LightShowcaseBand>
-          {/* 섹션 1: 포텐워드 */}
-          <ShowcaseSection>
-            <ShowcaseGrid>
-              <ShowcaseVisual>
-                <div data-reveal style={revealStyle(0)}>
-                  <ShowcaseFrameStack>
-                    <ShowcaseBaseFrame>
-                      <ShowcaseImage
-                          src={word02}
-                          alt="포텐워드 상세 화면"
-                          draggable={false}
-                      />
-                    </ShowcaseBaseFrame>
+              {/* Row 2 - Content Left, Image Right (Reversed) */}
+              <CoreValueRow $reverse data-reveal style={revealStyle(200)}>
+                <CoreValueImageCard>
+                  <CoreValueImage src={coreValue02} alt="I-Poten 핵심 가치 2" $fit="cover" />
+                </CoreValueImageCard>
 
-                    <ShowcaseOverlayFrame
-                        data-reveal
-                        data-reveal-variant="fade"
-                        style={revealStyle(180)}
-                    >
-                      <ShowcaseImage
-                          src={word01}
-                          alt="포텐워드 메인 화면"
-                          draggable={false}
-                      />
-                    </ShowcaseOverlayFrame>
-                  </ShowcaseFrameStack>
-                </div>
-              </ShowcaseVisual>
+                <CoreValueContent>
+                  <CoreValueCardTitle>
+                    <CoreValueCardTitleLine>왜 떨어졌는지</CoreValueCardTitleLine>
+                    <CoreValueCardTitleLine>모르는 면접은 그만</CoreValueCardTitleLine>
+                    <CoreValueCardTitleLine>연습을 넘어 면접을 주도하는</CoreValueCardTitleLine>
+                  </CoreValueCardTitle>
+                  <CoreValueCardDesc>
+                    실시간 AI 피드백으로 당신의 답변을 분석하고,<br />
+                    개선점을 명확히 제시합니다.<br />
+                    단순 연습을 넘어 면접장에서 자신감 있게<br />
+                    대화를 이끌어가는 능력을 키웁니다.
+                  </CoreValueCardDesc>
+                </CoreValueContent>
+              </CoreValueRow>
 
-              <ShowcaseContent $shiftX={-100} data-reveal style={revealStyle(100)}>
-                <ShowcaseTitle>
-                  <ShowcaseTitleLine>필요한 용어만</ShowcaseTitleLine>
-                  <ShowcaseTitleLine>빠르게 찾으세요</ShowcaseTitleLine>
-                </ShowcaseTitle>
-                <ShowcaseSubTitle>면접 준비의 시작, 포텐워드로 더 쉽게</ShowcaseSubTitle>
-                <ShowcaseDescription>
-                  분야별로 꼭 필요한 IT 용어를 모아 4만 개 이상의 포텐워드를 한곳에서 검색하고, 상세한 설명과 연관 키워드로 더 넓고 깊게 학습할 수 있습니다.
-                </ShowcaseDescription>
-              </ShowcaseContent>
-            </ShowcaseGrid>
-          </ShowcaseSection>
+              {/* Row 3 - Image Left, Content Right */}
+              <CoreValueRow data-reveal style={revealStyle(300)}>
+                <CoreValueImageCard>
+                  <CoreValueImage src={coreValue03} alt="I-Poten 핵심 가치 3" $fit="cover" />
+                </CoreValueImageCard>
 
-          {/* 섹션 2: 포텐노트 */}
-          <ShowcaseSection>
-            <ShowcaseGrid>
-              <ShowcaseVisual>
-                <div data-reveal style={revealStyle(0)}>
-                  <ShowcaseFrameStack>
-                    <ShowcaseBaseFrame>
-                      <ShowcaseImage
-                          src={note02}
-                          alt="포텐노트 반복 학습 화면"
-                          draggable={false}
-                      />
-                    </ShowcaseBaseFrame>
+                <CoreValueContent>
+                  <CoreValueCardTitle>
+                    <CoreValueCardTitleLine>합격하기 위한 면접을 넘어</CoreValueCardTitleLine>
+                    <CoreValueCardTitleLine>합격할 수밖에 없는</CoreValueCardTitleLine>
+                    <CoreValueCardTitleLine>나를 만들어갑니다</CoreValueCardTitleLine>
+                  </CoreValueCardTitle>
+                  <CoreValueCardDesc>
+                    일회성 합격이 아닌, 지속 가능한 성장을 추구합니다.<br />
+                    면접 준비 과정에서 쌓인 모든 경험이<br />
+                    당신의 커리어 전반에 걸쳐<br />
+                    강력한 무기가 되도록 돕습니다.
+                  </CoreValueCardDesc>
+                </CoreValueContent>
+              </CoreValueRow>
+            </CoreValueGrid>
+          </CoreValueSection>
 
-                    <ShowcaseOverlayFrame
-                        data-reveal
-                        data-reveal-variant="fade"
-                        style={revealStyle(180)}
-                    >
-                      <ShowcaseImage
-                          src={note01}
-                          alt="포텐노트 메인 화면"
-                          draggable={false}
-                      />
-                    </ShowcaseOverlayFrame>
-                  </ShowcaseFrameStack>
-                </div>
-              </ShowcaseVisual>
+          {/* GROWTH 섹션 */}
+          <GrowthSection>
+            <GrowthHeader data-reveal style={revealStyle(0)}>
+              <GrowthLabel>GROWTH</GrowthLabel>
+              <GrowthTitle>
+                <GrowthTitleLine>면접의 경험과 준비는</GrowthTitleLine>
+                <GrowthTitleLine>함께 발전하며,</GrowthTitleLine>
+                <GrowthTitleLine>
+                  <GrowthTitleAccent>내가 걸어온 길</GrowthTitleAccent>의 증명입니다
+                </GrowthTitleLine>
+              </GrowthTitle>
+            </GrowthHeader>
 
-              <ShowcaseContent $shiftX={-100} data-reveal style={revealStyle(100)}>
-                <ShowcaseTitle>
-                  <ShowcaseTitleLine>나만의 학습을</ShowcaseTitleLine>
-                  <ShowcaseTitleLine>완성하세요</ShowcaseTitleLine>
-                </ShowcaseTitle>
-                <ShowcaseSubTitle>모아두고, 가려보며, 반복해서 익히세요</ShowcaseSubTitle>
-                <ShowcaseDescription>
-                  포텐노트에 학습하고 싶은 용어만 따로 모아 나만의 학습 목록으로 관리하고, 용어와 뜻을 가려가며 반복 학습과 진행 상황까지 한눈에 확인할 수 있습니다.
-                </ShowcaseDescription>
-              </ShowcaseContent>
-            </ShowcaseGrid>
-          </ShowcaseSection>
+            <GrowthTimeline>
+              <GrowthCard $offset={120} data-reveal style={revealStyle(100)}>
+                <GrowthCardYear>신입</GrowthCardYear>
+                <GrowthCardTitle>
+                  가능성을 증명하는
+                  <br />
+                  첫 면접
+                </GrowthCardTitle>
+                <GrowthCardDesc>
+                  배움의 과정과 성장 의지를 바탕으로
+                  <br />
+                  앞으로의 가능성을 설득력 있게 보여줍니다.
+                </GrowthCardDesc>
+              </GrowthCard>
 
-          {/* 섹션 3: 포텐퀴즈 */}
-          <ShowcaseSection>
-            <ShowcaseGrid>
-              <ShowcaseVisual>
-                <div data-reveal style={revealStyle(0)}>
-                  <ShowcaseFrameStack>
-                    <ShowcaseBaseFrame>
-                      <ShowcaseImage
-                          src={quiz02}
-                          alt="포텐퀴즈 타임라인 화면"
-                          draggable={false}
-                      />
-                    </ShowcaseBaseFrame>
+              <GrowthCard $offset={60} data-reveal style={revealStyle(200)}>
+                <GrowthCardYear>주니어</GrowthCardYear>
+                <GrowthCardTitle>
+                  경험으로 실력을 말하는
+                  <br />
+                  성장의 면접
+                </GrowthCardTitle>
+                <GrowthCardDesc>
+                  실무 경험과 프로젝트 성과를 통해
+                  <br />
+                  문제 해결 능력과 실행력을 보여줍니다.
+                </GrowthCardDesc>
+              </GrowthCard>
 
-                    <ShowcaseOverlayFrame
-                        data-reveal
-                        data-reveal-variant="fade"
-                        style={revealStyle(180)}
-                    >
-                      <ShowcaseImage
-                          src={quiz01}
-                          alt="포텐퀴즈 메인 화면"
-                          draggable={false}
-                      />
-                    </ShowcaseOverlayFrame>
-                  </ShowcaseFrameStack>
-                </div>
-              </ShowcaseVisual>
+              <GrowthCard $offset={0} data-reveal style={revealStyle(300)}>
+                <GrowthCardYear>시니어</GrowthCardYear>
+                <GrowthCardTitle>
+                  가치와 영향력을 증명하는
+                  <br />
+                  완성의 면접
+                </GrowthCardTitle>
+                <GrowthCardDesc>
+                  조직에 기여한 성과와 리더십을 바탕으로
+                  <br />
+                  더 큰 책임과 역할을 증명합니다.
+                </GrowthCardDesc>
+              </GrowthCard>
+            </GrowthTimeline>
+          </GrowthSection>
 
-              <ShowcaseContent $shiftX={-100} data-reveal style={revealStyle(100)}>
-                <ShowcaseTitle>
-                  <ShowcaseTitleLine>꾸준하게 확인하며</ShowcaseTitleLine>
-                  <ShowcaseTitleLine>실력을 쌓으세요</ShowcaseTitleLine>
-                </ShowcaseTitle>
-                <ShowcaseSubTitle>퀴즈로 점검하고, 기록으로 성장하세요</ShowcaseSubTitle>
-                <ShowcaseDescription>
-                  오늘의 퀴즈와 직무별 퀴즈로 원하는 분야와 난이도에 맞춰 학습하고, 퀴즈 타임라인으로 학습 기록과 성과를 한눈에 확인할 수 있습니다. 틀린 문제는 오답노트에 모아 복습이 필요한 문제만 다시 학습해 보세요.
-                </ShowcaseDescription>
-              </ShowcaseContent>
-            </ShowcaseGrid>
-          </ShowcaseSection>
-
-          {/* COREVALUE 섹션 */}
-
-
-          <ScheduleShowcaseSection>
-            <ScheduleShowcaseTitle data-reveal style={revealStyle(0)}>
-              <ScheduleShowcaseTitleMuted>면접 결과 한눈에</ScheduleShowcaseTitleMuted>
-              <ScheduleShowcaseTitleStrong>확인하고 발전하세요.</ScheduleShowcaseTitleStrong>
-            </ScheduleShowcaseTitle>
-
-
-
-            <ScheduleCardsGrid>
-
-              <ScheduleDarkCard data-reveal style={revealStyle(180)}>
-                <ScheduleDarkContent>
-                  <ScheduleDarkTitle>
-                    종합적 지표를 통해
-                    <br />
-                    나의 면접 역량을 파악하세요.
-                  </ScheduleDarkTitle>
-                  <ScheduleDarkDescription>
-                    다양한 세부 점수와 종합 점수를 제공하여
-                    <br />
-                    현재 나의 상태와 성장 방향을 한눈에 확인할 수 있습니다.
-                  </ScheduleDarkDescription>
-                </ScheduleDarkContent>
-
-                <ScheduleListFrame>
-                  <ScheduleListInner>
-                    <ScheduleMedia src={interview1} alt="" $fit="cover" />
-                  </ScheduleListInner>
-                </ScheduleListFrame>
-              </ScheduleDarkCard>
-
-              <ScheduleLightCard data-reveal style={revealStyle(260)}>
-                <ScheduleLightCaption>
-                  <ScheduleLightCaptionMuted>
-                    질문
-                    <br />
-                    하나하나
-                    <br />
-                    확인하고
-                  </ScheduleLightCaptionMuted>
-                  <ScheduleLightCaptionStrong>피드백을!</ScheduleLightCaptionStrong>
-                </ScheduleLightCaption>
-
-                <SchedulePhoneFrame>
-                  <ScheduleMedia src={interview2} alt="" $fit="contain" />
-                </SchedulePhoneFrame>
-              </ScheduleLightCard>
-
-
-
-              <ScheduleLightCard data-reveal style={revealStyle(340)}>
-                <ScheduleLightCaption>
-                  <ScheduleLightCaptionMuted>
-                    한 번에
-                    <br />
-                    전반적인
-                    <br />
-                    나의 면접
-                  </ScheduleLightCaptionMuted>
-                  <ScheduleLightCaptionStrong>피드백!</ScheduleLightCaptionStrong>
-                </ScheduleLightCaption>
-
-                <SchedulePhoneFrame>
-                  <ScheduleMedia src={interview3} alt="" $fit="contain" />
-                </SchedulePhoneFrame>
-              </ScheduleLightCard>
-
-              <ScheduleDarkCard data-reveal style={revealStyle(420)}>
-                <ScheduleDarkContent>
-                  <ScheduleDarkTitle>
-                    PDF 및 마이페이지에서
-                    <br />
-                    면접 기록을 오래도록 보관하세요
-                  </ScheduleDarkTitle>
-                  <ScheduleDarkDescription>
-                    PDF로 내보내거나
-                    <br />
-                    마이페이지에서 나의 면접 기록을 언제든 다시 확인할 수 있습니다.
-                  </ScheduleDarkDescription>
-                </ScheduleDarkContent>
-
-                <ScheduleListFrame>
-                  <ScheduleListInner>
-                    <ScheduleMedia src={interview4} alt="" $fit="cover" />
-                  </ScheduleListInner>
-                </ScheduleListFrame>
-              </ScheduleDarkCard>
-
-            </ScheduleCardsGrid>
-          </ScheduleShowcaseSection>
-
-          <InsightsSection>
-            <InsightsTitle data-reveal style={revealStyle(0)}>
-              <InsightsTitleMuted>실제 면접 데이터를 통해</InsightsTitleMuted>
-              <InsightsTitleStrong>더욱 엄선된 면접을 제공합니다.</InsightsTitleStrong>
-            </InsightsTitle>
-
-            <InsightsPanel>
-              <InsightsPanelInner>
-                <InsightsLeft data-reveal style={revealStyle(140)}>
-                  <InsightsLeftTitle>
-                    실제
-                    <br />
-                    <Highlight2>4,000여 개</Highlight2>의
-                    <br />
-                    면접 데이터로
-                    <br />
-                    <InsightsLeftStrong>보다 정확하게, 확실하게 </InsightsLeftStrong>
-                  </InsightsLeftTitle>
-                  <InsightsBody>
-                    실제 면접 같은 다양한 면접을 통해
-                    <br />
-                    면접 준비 시간을 줄여보세요.
-                  </InsightsBody>
-                </InsightsLeft>
-
-                <InsightsRight data-reveal style={revealStyle(220)}>
-                  <InsightsQuestionStack>
-                    <InsightsQuestionTrack>
-                      {INSIGHTS_TICKER_ITEMS.map((t) => (
-                          <InsightsQuestionPill key={`a-${t}`}>{t}</InsightsQuestionPill>
-                      ))}
-                      {INSIGHTS_TICKER_ITEMS.map((t) => (
-                          <InsightsQuestionPill key={`b-${t}`}>{t}</InsightsQuestionPill>
-                      ))}
-                    </InsightsQuestionTrack>
-                  </InsightsQuestionStack>
-
-                  {/*<InsightsTickerBox>*/}
-                  {/*  <InsightsTickerTrack>*/}
-                  {/*    {INSIGHTS_TICKER_ITEMS.map((t, idx) => (*/}
-                  {/*      <InsightsTickerRow key={`a-${idx}`}>{t}</InsightsTickerRow>*/}
-                  {/*    ))}*/}
-                  {/*    {INSIGHTS_TICKER_ITEMS.map((t, idx) => (*/}
-                  {/*      <InsightsTickerRow key={`b-${idx}`}>{t}</InsightsTickerRow>*/}
-                  {/*    ))}*/}
-                  {/*  </InsightsTickerTrack>*/}
-                  {/*  <InsightsTickerMask />*/}
-                  {/*</InsightsTickerBox>*/}
-
-                  <InsightsDashboardFrame>
-                    <InsightsDashboardInner>
-                      <InsightsBackgroundVideo
-                          autoPlay
-                          muted
-                          loop
-                          playsInline
-                          preload="auto"
-                      >
-                        <source src="/videos/interview.mp4" type="video/mp4" />
-                      </InsightsBackgroundVideo>
-                    </InsightsDashboardInner>
-                  </InsightsDashboardFrame>
-                </InsightsRight>
-              </InsightsPanelInner>
-            </InsightsPanel>
-          </InsightsSection>
-        </LightShowcaseBand>
-
-        <WhiteBackground>
-          {/*<PracticeSection>*/}
-          {/*  <PracticeIcon data-reveal style={revealStyle(0)}>*/}
-          {/*    <img style={{ width: "110px", height: "auto" }} src={image} />*/}
-          {/*  </PracticeIcon>*/}
-
-          {/*  <PracticeTitle data-reveal style={revealStyle(120)}>*/}
-          {/*    면접은 한 번의 준비보다*/}
-          {/*    <br />*/}
-          {/*    <PracticeHighlight>반복된 연습</PracticeHighlight>이 더 중요합니다*/}
-          {/*  </PracticeTitle>*/}
-
-          {/*  <PracticeDescription data-reveal style={revealStyle(240)}>*/}
-          {/*    실전 같은 연습과 꾸준한 준비를 통해*/}
-          {/*    <br />*/}
-          {/*    더 자신 있는 답변과 더 단단한 면접 역량을 만들어 보세요.*/}
-          {/*  </PracticeDescription>*/}
-          {/*</PracticeSection>*/}
-
-          <FaqSection>
-            <FaqTitle data-reveal style={revealStyle(0)}>자주 묻는 질문</FaqTitle>
-            <FaqList data-reveal data-reveal-variant="fade" style={revealStyle(140)}>
-              {FAQ_ITEMS.map((item, idx) => {
-                const isOpen = openFaqIndex === idx;
-                return (
-                    <FaqItem key={item.q} $open={isOpen}>
-                      <FaqButtonRow
-                          type="button"
-                          aria-expanded={isOpen}
-                          onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
-                      >
-                        <FaqQuestion>{item.q}</FaqQuestion>
-                        <FaqToggle $open={isOpen}>+</FaqToggle>
-                      </FaqButtonRow>
-
-                      <FaqAnswerWrap $open={isOpen} aria-hidden={!isOpen}>
-                        <FaqAnswerInner>
-                          <FaqAnswer $open={isOpen}>{item.a}</FaqAnswer>
-                        </FaqAnswerInner>
-                      </FaqAnswerWrap>
-                    </FaqItem>
-                );
-              })}
-            </FaqList>
-          </FaqSection>
-
-          <Companies data-reveal style={revealStyle(320)}>
-            <CompaniesEyebrow>Supported Companies</CompaniesEyebrow>
-
-            <CompaniesTitle>
-              현재 I-Poten이 지원하는 기업
-            </CompaniesTitle>
-
-            <CompaniesDesc>
-              다양한 기업 면접 흐름과 준비 방향을 반영해
-              <br />
-              더 실전감 있게 면접을 준비할 수 있습니다.
-            </CompaniesDesc>
-
-            <LogoSlider>
-              <LogoTrack>
-                <LogoGroup>
-                  {COMPANY_LOGOS.map((logo, i) => (
-                      <LogoItemWrap key={`group1-${i}`} $width={logo.boxWidth}>
-                        <LogoImage
-                            src={logo.src}
-                            alt={logo.alt}
+          <LightShowcaseBand>
+            {/* 섹션 1: 포텐워드 */}
+            <ShowcaseSection>
+              <ShowcaseGrid>
+                <ShowcaseVisual>
+                  <div data-reveal style={revealStyle(0)}>
+                    <ShowcaseFrameStack>
+                      <ShowcaseBaseFrame>
+                        <ShowcaseImage
+                            src={word02}
+                            alt="포텐워드 상세 화면"
                             draggable={false}
                         />
-                      </LogoItemWrap>
-                  ))}
-                </LogoGroup>
+                      </ShowcaseBaseFrame>
 
-                <LogoGroup aria-hidden="true">
-                  {COMPANY_LOGOS.map((logo, i) => (
-                      <LogoItemWrap key={`group2-${i}`} $width={logo.boxWidth}>
-                        <LogoImage
-                            src={logo.src}
-                            alt={logo.alt}
+                      <ShowcaseOverlayFrame
+                          data-reveal
+                          data-reveal-variant="fade"
+                          style={revealStyle(180)}
+                      >
+                        <ShowcaseImage
+                            src={word01}
+                            alt="포텐워드 메인 화면"
                             draggable={false}
                         />
-                      </LogoItemWrap>
-                  ))}
-                </LogoGroup>
-              </LogoTrack>
-            </LogoSlider>
-          </Companies>
+                      </ShowcaseOverlayFrame>
+                    </ShowcaseFrameStack>
+                  </div>
+                </ShowcaseVisual>
 
-          {/*<HomeFiveSection>*/}
-          {/*  <Hero>*/}
-          {/*    <TitleBox data-reveal data-reveal-variant="fade" style={revealStyle(120)}>*/}
-          {/*      I-POTEN*/}
-          {/*    </TitleBox>*/}
+                <ShowcaseContent $shiftX={-100} data-reveal style={revealStyle(100)}>
+                  <ShowcaseTitle>
+                    <ShowcaseTitleLine>필요한 용어만</ShowcaseTitleLine>
+                    <ShowcaseTitleLine>빠르게 찾으세요</ShowcaseTitleLine>
+                  </ShowcaseTitle>
+                  <ShowcaseSubTitle>면접 준비의 시작, 포텐워드로 더 쉽게</ShowcaseSubTitle>
+                  <ShowcaseDescription>
+                    분야별로 꼭 필요한 IT 용어를 모아 4만 개 이상의 포텐워드를 한곳에서 검색하고, 상세한 설명과 연관 키워드로 더 넓고 깊게 학습할 수 있습니다.
+                  </ShowcaseDescription>
+                </ShowcaseContent>
+              </ShowcaseGrid>
+            </ShowcaseSection>
 
-          {/*    <h2>*/}
-          {/*      면접 준비의 흐름을*/}
-          {/*      <br />*/}
-          {/*      더 자연스럽게 연결합니다*/}
-          {/*    </h2>*/}
+            {/* 섹션 2: 포텐노트 */}
+            <ShowcaseSection>
+              <ShowcaseGrid>
+                <ShowcaseVisual>
+                  <div data-reveal style={revealStyle(0)}>
+                    <ShowcaseFrameStack>
+                      <ShowcaseBaseFrame>
+                        <ShowcaseImage
+                            src={note02}
+                            alt="포텐노트 반복 학습 화면"
+                            draggable={false}
+                        />
+                      </ShowcaseBaseFrame>
 
-          {/*    <p>*/}
-          {/*      학습, 연습, 피드백의 과정을 하나로 연결해*/}
-          {/*      <br />*/}
-          {/*      더 체계적이고 실전감 있는 면접 준비를 경험해 보세요.*/}
-          {/*    </p>*/}
-          {/*  </Hero>*/}
+                      <ShowcaseOverlayFrame
+                          data-reveal
+                          data-reveal-variant="fade"
+                          style={revealStyle(180)}
+                      >
+                        <ShowcaseImage
+                            src={note01}
+                            alt="포텐노트 메인 화면"
+                            draggable={false}
+                        />
+                      </ShowcaseOverlayFrame>
+                    </ShowcaseFrameStack>
+                  </div>
+                </ShowcaseVisual>
 
-          {/*  <Features data-reveal style={revealStyle(220)}>*/}
-          {/*    <h2>한 번의 연습이 아닌, 이어지는 준비</h2>*/}
-          {/*    <p>*/}
-          {/*      핵심 개념 학습부터 AI 모의면접과 리포트까지*/}
-          {/*      <br />*/}
-          {/*      I-Poten은 면접 준비 전 과정을 끊김 없이 이어줍니다.*/}
-          {/*    </p>*/}
-          {/*  </Features>*/}
-          {/*</HomeFiveSection>*/}
+                <ShowcaseContent $shiftX={-100} data-reveal style={revealStyle(100)}>
+                  <ShowcaseTitle>
+                    <ShowcaseTitleLine>나만의 학습을</ShowcaseTitleLine>
+                    <ShowcaseTitleLine>완성하세요</ShowcaseTitleLine>
+                  </ShowcaseTitle>
+                  <ShowcaseSubTitle>모아두고, 가려보며, 반복해서 익히세요</ShowcaseSubTitle>
+                  <ShowcaseDescription>
+                    포텐노트에 학습하고 싶은 용어만 따로 모아 나만의 학습 목록으로 관리하고, 용어와 뜻을 가려가며 반복 학습과 진행 상황까지 한눈에 확인할 수 있습니다.
+                  </ShowcaseDescription>
+                </ShowcaseContent>
+              </ShowcaseGrid>
+            </ShowcaseSection>
 
-          <MobilePromoSection>
-            <MobilePromoHead data-reveal style={revealStyle(0)}>
-              <MobilePromoEyebrow>Mobile App</MobilePromoEyebrow>
-              <MobilePromoTitle>모바일에서도 I-Poten을 만나보세요</MobilePromoTitle>
-              <MobilePromoDesc>
-                학습부터 퀴즈, AI 모의면접까지
+            {/* 섹션 3: 포텐퀴즈 */}
+            <ShowcaseSection>
+              <ShowcaseGrid>
+                <ShowcaseVisual>
+                  <div data-reveal style={revealStyle(0)}>
+                    <ShowcaseFrameStack>
+                      <ShowcaseBaseFrame>
+                        <ShowcaseImage
+                            src={quiz02}
+                            alt="포텐퀴즈 타임라인 화면"
+                            draggable={false}
+                        />
+                      </ShowcaseBaseFrame>
+
+                      <ShowcaseOverlayFrame
+                          data-reveal
+                          data-reveal-variant="fade"
+                          style={revealStyle(180)}
+                      >
+                        <ShowcaseImage
+                            src={quiz01}
+                            alt="포텐퀴즈 메인 화면"
+                            draggable={false}
+                        />
+                      </ShowcaseOverlayFrame>
+                    </ShowcaseFrameStack>
+                  </div>
+                </ShowcaseVisual>
+
+                <ShowcaseContent $shiftX={-100} data-reveal style={revealStyle(100)}>
+                  <ShowcaseTitle>
+                    <ShowcaseTitleLine>꾸준하게 확인하며</ShowcaseTitleLine>
+                    <ShowcaseTitleLine>실력을 쌓으세요</ShowcaseTitleLine>
+                  </ShowcaseTitle>
+                  <ShowcaseSubTitle>퀴즈로 점검하고, 기록으로 성장하세요</ShowcaseSubTitle>
+                  <ShowcaseDescription>
+                    오늘의 퀴즈와 직무별 퀴즈로 원하는 분야와 난이도에 맞춰 학습하고, 퀴즈 타임라인으로 학습 기록과 성과를 한눈에 확인할 수 있습니다. 틀린 문제는 오답노트에 모아 복습이 필요한 문제만 다시 학습해 보세요.
+                  </ShowcaseDescription>
+                </ShowcaseContent>
+              </ShowcaseGrid>
+            </ShowcaseSection>
+
+            {/* COREVALUE 섹션 */}
+
+
+            <ScheduleShowcaseSection>
+              <ScheduleShowcaseTitle data-reveal style={revealStyle(0)}>
+                <ScheduleShowcaseTitleMuted>면접 결과 한눈에</ScheduleShowcaseTitleMuted>
+                <ScheduleShowcaseTitleStrong>확인하고 발전하세요.</ScheduleShowcaseTitleStrong>
+              </ScheduleShowcaseTitle>
+
+
+
+              <ScheduleCardsGrid>
+
+                <ScheduleDarkCard data-reveal style={revealStyle(180)}>
+                  <ScheduleDarkContent>
+                    <ScheduleDarkTitle>
+                      종합적 지표를 통해
+                      <br />
+                      나의 면접 역량을 파악하세요.
+                    </ScheduleDarkTitle>
+                    <ScheduleDarkDescription>
+                      다양한 세부 점수와 종합 점수를 제공하여
+                      <br />
+                      현재 나의 상태와 성장 방향을 한눈에 확인할 수 있습니다.
+                    </ScheduleDarkDescription>
+                  </ScheduleDarkContent>
+
+                  <ScheduleListFrame>
+                    <ScheduleListInner>
+                      <ScheduleMedia src={interview1} alt="" $fit="cover" />
+                    </ScheduleListInner>
+                  </ScheduleListFrame>
+                </ScheduleDarkCard>
+
+                <ScheduleLightCard data-reveal style={revealStyle(260)}>
+                  <ScheduleLightCaption>
+                    <ScheduleLightCaptionMuted>
+                      질문
+                      <br />
+                      하나하나
+                      <br />
+                      확인하고
+                    </ScheduleLightCaptionMuted>
+                    <ScheduleLightCaptionStrong>피드백을!</ScheduleLightCaptionStrong>
+                  </ScheduleLightCaption>
+
+                  <SchedulePhoneFrame>
+                    <ScheduleMedia src={interview2} alt="" $fit="contain" />
+                  </SchedulePhoneFrame>
+                </ScheduleLightCard>
+
+
+
+                <ScheduleLightCard data-reveal style={revealStyle(340)}>
+                  <ScheduleLightCaption>
+                    <ScheduleLightCaptionMuted>
+                      한 번에
+                      <br />
+                      전반적인
+                      <br />
+                      나의 면접
+                    </ScheduleLightCaptionMuted>
+                    <ScheduleLightCaptionStrong>피드백!</ScheduleLightCaptionStrong>
+                  </ScheduleLightCaption>
+
+                  <SchedulePhoneFrame>
+                    <ScheduleMedia src={interview3} alt="" $fit="contain" />
+                  </SchedulePhoneFrame>
+                </ScheduleLightCard>
+
+                <ScheduleDarkCard data-reveal style={revealStyle(420)}>
+                  <ScheduleDarkContent>
+                    <ScheduleDarkTitle>
+                      PDF 및 마이페이지에서
+                      <br />
+                      면접 기록을 오래도록 보관하세요
+                    </ScheduleDarkTitle>
+                    <ScheduleDarkDescription>
+                      PDF로 내보내거나
+                      <br />
+                      마이페이지에서 나의 면접 기록을 언제든 다시 확인할 수 있습니다.
+                    </ScheduleDarkDescription>
+                  </ScheduleDarkContent>
+
+                  <ScheduleListFrame>
+                    <ScheduleListInner>
+                      <ScheduleMedia src={interview4} alt="" $fit="cover" />
+                    </ScheduleListInner>
+                  </ScheduleListFrame>
+                </ScheduleDarkCard>
+
+              </ScheduleCardsGrid>
+            </ScheduleShowcaseSection>
+
+            <InsightsSection>
+              <InsightsTitle data-reveal style={revealStyle(0)}>
+                <InsightsTitleMuted>실제 면접 데이터를 통해</InsightsTitleMuted>
+                <InsightsTitleStrong>더욱 엄선된 면접을 제공합니다.</InsightsTitleStrong>
+              </InsightsTitle>
+
+              <InsightsPanel>
+                <InsightsPanelInner>
+                  <InsightsLeft data-reveal style={revealStyle(140)}>
+                    <InsightsLeftTitle>
+                      실제
+                      <br />
+                      <Highlight2>4,000여 개</Highlight2>의
+                      <br />
+                      면접 데이터로
+                      <br />
+                      <InsightsLeftStrong>보다 정확하게, 확실하게 </InsightsLeftStrong>
+                    </InsightsLeftTitle>
+                    <InsightsBody>
+                      실제 면접 같은 다양한 면접을 통해
+                      <br />
+                      면접 준비 시간을 줄여보세요.
+                    </InsightsBody>
+                  </InsightsLeft>
+
+                  <InsightsRight data-reveal style={revealStyle(220)}>
+                    <InsightsQuestionStack>
+                      <InsightsQuestionTrack>
+                        {INSIGHTS_TICKER_ITEMS.map((t) => (
+                            <InsightsQuestionPill key={`a-${t}`}>{t}</InsightsQuestionPill>
+                        ))}
+                        {INSIGHTS_TICKER_ITEMS.map((t) => (
+                            <InsightsQuestionPill key={`b-${t}`}>{t}</InsightsQuestionPill>
+                        ))}
+                      </InsightsQuestionTrack>
+                    </InsightsQuestionStack>
+
+                    {/*<InsightsTickerBox>*/}
+                    {/*  <InsightsTickerTrack>*/}
+                    {/*    {INSIGHTS_TICKER_ITEMS.map((t, idx) => (*/}
+                    {/*      <InsightsTickerRow key={`a-${idx}`}>{t}</InsightsTickerRow>*/}
+                    {/*    ))}*/}
+                    {/*    {INSIGHTS_TICKER_ITEMS.map((t, idx) => (*/}
+                    {/*      <InsightsTickerRow key={`b-${idx}`}>{t}</InsightsTickerRow>*/}
+                    {/*    ))}*/}
+                    {/*  </InsightsTickerTrack>*/}
+                    {/*  <InsightsTickerMask />*/}
+                    {/*</InsightsTickerBox>*/}
+
+                    <InsightsDashboardFrame>
+                      <InsightsDashboardInner>
+                        <InsightsBackgroundVideo
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                            preload="auto"
+                        >
+                          <source src={interviewVideo} type="video/mp4" />
+                        </InsightsBackgroundVideo>
+                      </InsightsDashboardInner>
+                    </InsightsDashboardFrame>
+                  </InsightsRight>
+                </InsightsPanelInner>
+              </InsightsPanel>
+            </InsightsSection>
+          </LightShowcaseBand>
+
+          <WhiteBackground>
+            {/*<PracticeSection>*/}
+            {/*  <PracticeIcon data-reveal style={revealStyle(0)}>*/}
+            {/*    <img style={{ width: "110px", height: "auto" }} src={image} />*/}
+            {/*  </PracticeIcon>*/}
+
+            {/*  <PracticeTitle data-reveal style={revealStyle(120)}>*/}
+            {/*    면접은 한 번의 준비보다*/}
+            {/*    <br />*/}
+            {/*    <PracticeHighlight>반복된 연습</PracticeHighlight>이 더 중요합니다*/}
+            {/*  </PracticeTitle>*/}
+
+            {/*  <PracticeDescription data-reveal style={revealStyle(240)}>*/}
+            {/*    실전 같은 연습과 꾸준한 준비를 통해*/}
+            {/*    <br />*/}
+            {/*    더 자신 있는 답변과 더 단단한 면접 역량을 만들어 보세요.*/}
+            {/*  </PracticeDescription>*/}
+            {/*</PracticeSection>*/}
+
+            <FaqSection>
+              <FaqTitle data-reveal style={revealStyle(0)}>자주 묻는 질문</FaqTitle>
+              <FaqList data-reveal data-reveal-variant="fade" style={revealStyle(140)}>
+                {FAQ_ITEMS.map((item, idx) => {
+                  const isOpen = openFaqIndex === idx;
+                  return (
+                      <FaqItem key={item.q} $open={isOpen}>
+                        <FaqButtonRow
+                            type="button"
+                            aria-expanded={isOpen}
+                            onClick={() => setOpenFaqIndex(isOpen ? null : idx)}
+                        >
+                          <FaqQuestion>{item.q}</FaqQuestion>
+                          <FaqToggle $open={isOpen}>+</FaqToggle>
+                        </FaqButtonRow>
+
+                        <FaqAnswerWrap $open={isOpen} aria-hidden={!isOpen}>
+                          <FaqAnswerInner>
+                            <FaqAnswer $open={isOpen}>{item.a}</FaqAnswer>
+                          </FaqAnswerInner>
+                        </FaqAnswerWrap>
+                      </FaqItem>
+                  );
+                })}
+              </FaqList>
+            </FaqSection>
+
+            <Companies data-reveal style={revealStyle(320)}>
+              <CompaniesEyebrow>Supported Companies</CompaniesEyebrow>
+
+              <CompaniesTitle>
+                현재 I-Poten이 지원하는 기업
+              </CompaniesTitle>
+
+              <CompaniesDesc>
+                다양한 기업 면접 흐름과 준비 방향을 반영해
                 <br />
-                언제 어디서나 I-Poten을 끊김 없이 이어갈 수 있습니다.
-              </MobilePromoDesc>
-            </MobilePromoHead>
+                더 실전감 있게 면접을 준비할 수 있습니다.
+              </CompaniesDesc>
 
-            <MobilePromoBanner data-reveal data-reveal-variant="fade" style={revealStyle(120)}>
-              <MobilePromoContent>
-                <MobilePromoLogo
-                    src={pageLogo}
-                    alt="i-POTEN"
-                    draggable={false}
-                />
+              <LogoSlider>
+                <LogoTrack>
+                  <LogoGroup>
+                    {COMPANY_LOGOS.map((logo, i) => (
+                        <LogoItemWrap key={`group1-${i}`} $width={logo.boxWidth}>
+                          <LogoImage
+                              src={logo.src}
+                              alt={logo.alt}
+                              draggable={false}
+                          />
+                        </LogoItemWrap>
+                    ))}
+                  </LogoGroup>
 
-                <MobilePromoInsideTitle>
-                  App으로 더 편하게
-                </MobilePromoInsideTitle>
+                  <LogoGroup aria-hidden="true">
+                    {COMPANY_LOGOS.map((logo, i) => (
+                        <LogoItemWrap key={`group2-${i}`} $width={logo.boxWidth}>
+                          <LogoImage
+                              src={logo.src}
+                              alt={logo.alt}
+                              draggable={false}
+                          />
+                        </LogoItemWrap>
+                    ))}
+                  </LogoGroup>
+                </LogoTrack>
+              </LogoSlider>
+            </Companies>
 
-                <MobilePromoInsideDesc>
-                  이동 중에도, 짧은 틈에도
+            {/*<HomeFiveSection>*/}
+            {/*  <Hero>*/}
+            {/*    <TitleBox data-reveal data-reveal-variant="fade" style={revealStyle(120)}>*/}
+            {/*      I-POTEN*/}
+            {/*    </TitleBox>*/}
+
+            {/*    <h2>*/}
+            {/*      면접 준비의 흐름을*/}
+            {/*      <br />*/}
+            {/*      더 자연스럽게 연결합니다*/}
+            {/*    </h2>*/}
+
+            {/*    <p>*/}
+            {/*      학습, 연습, 피드백의 과정을 하나로 연결해*/}
+            {/*      <br />*/}
+            {/*      더 체계적이고 실전감 있는 면접 준비를 경험해 보세요.*/}
+            {/*    </p>*/}
+            {/*  </Hero>*/}
+
+            {/*  <Features data-reveal style={revealStyle(220)}>*/}
+            {/*    <h2>한 번의 연습이 아닌, 이어지는 준비</h2>*/}
+            {/*    <p>*/}
+            {/*      핵심 개념 학습부터 AI 모의면접과 리포트까지*/}
+            {/*      <br />*/}
+            {/*      I-Poten은 면접 준비 전 과정을 끊김 없이 이어줍니다.*/}
+            {/*    </p>*/}
+            {/*  </Features>*/}
+            {/*</HomeFiveSection>*/}
+
+            <MobilePromoSection>
+              <MobilePromoHead data-reveal style={revealStyle(0)}>
+                <MobilePromoEyebrow>Mobile App</MobilePromoEyebrow>
+                <MobilePromoTitle>모바일에서도 I-Poten을 만나보세요</MobilePromoTitle>
+                <MobilePromoDesc>
+                  학습부터 퀴즈, AI 모의면접까지
                   <br />
-                  I-Poten으로 면접 준비를 이어가 보세요.
-                </MobilePromoInsideDesc>
+                  언제 어디서나 I-Poten을 끊김 없이 이어갈 수 있습니다.
+                </MobilePromoDesc>
+              </MobilePromoHead>
 
-                <MobileStoreRow>
-                  <MobileStoreActionButton
-                      type="button"
-                      aria-label="Google Play 다운로드"
-                      onClick={() => setStoreModalType("google")}
-                  >
-                    <MobileStoreButtonImg
-                        src={googlePlayBtn}
-                        alt="Google Play에서 다운로드"
-                        draggable={false}
-                    />
-                  </MobileStoreActionButton>
-
-                  <MobileStoreActionButton
-                      type="button"
-                      aria-label="App Store 다운로드"
-                      onClick={() => setStoreModalType("appstore")}
-                  >
-                    <MobileStoreButtonImg
-                        src={appStoreBtn}
-                        alt="App Store에서 다운로드"
-                        draggable={false}
-                    />
-                  </MobileStoreActionButton>
-                </MobileStoreRow>
-              </MobilePromoContent>
-
-              <MobilePromoImage
-                  src={mobileBanner}
-                  alt="i-Poten 애플리케이션 출시 배너"
-                  draggable={false}
-                  loading="lazy"
-              />
-            </MobilePromoBanner>
-          </MobilePromoSection>
-        </WhiteBackground>
-
-
-        <ScrollTopButton onClick={scrollToTop} aria-label="맨 위로">
-          ↑
-        </ScrollTopButton>
-
-        <Review
-            isOpen={isReviewModalOpen}
-            onClose={() => setIsReviewModalOpen(false)}
-            onSubmit={async (rating, comment) => {
-              console.log('리뷰 제출:', { rating, comment });
-              alert(`리뷰가 제출되었습니다!\n평점: ${rating}점\n내용: ${comment}`);
-            }}
-        />
-        <OpenEvent
-            isOpen={isOpenEventModalOpen}
-            onClose={() => setIsOpenEventModalOpen(false)}
-        />
-        {storeModalType && (
-            <StoreQrModalOverlay onClick={() => setStoreModalType(null)}>
-              <StoreQrModalCard onClick={(e) => e.stopPropagation()}>
-                <StoreQrCloseButton
-                    type="button"
-                    aria-label="QR 모달 닫기"
-                    onClick={() => setStoreModalType(null)}
-                >
-                  ×
-                </StoreQrCloseButton>
-
-                <StoreQrTitle>{storeModalTitle}</StoreQrTitle>
-                <StoreQrDesc>
-                  스마트폰 카메라로 QR을 스캔해
-                  <br />
-                  I-Poten 앱 다운로드 페이지로 이동하세요.
-                </StoreQrDesc>
-
-                <StoreQrImageWrap>
-                  <StoreQrImage
-                      src={storeModalQr}
-                      alt={`${storeModalTitle} QR 코드`}
+              <MobilePromoBanner data-reveal data-reveal-variant="fade" style={revealStyle(120)}>
+                <MobilePromoContent>
+                  <MobilePromoLogo
+                      src={pageLogo}
+                      alt="i-POTEN"
                       draggable={false}
                   />
-                </StoreQrImageWrap>
 
-                <StoreQrCaption>
-                  버튼을 누르거나 바깥 영역을 클릭하면 닫을 수 있습니다.
-                </StoreQrCaption>
-              </StoreQrModalCard>
-            </StoreQrModalOverlay>
-        )}
-      </Page>
+                  <MobilePromoInsideTitle>
+                    App으로 더 편하게
+                  </MobilePromoInsideTitle>
+
+                  <MobilePromoInsideDesc>
+                    이동 중에도, 짧은 틈에도
+                    <br />
+                    I-Poten으로 면접 준비를 이어가 보세요.
+                  </MobilePromoInsideDesc>
+
+                  <MobileStoreRow>
+                    <MobileStoreActionButton
+                        type="button"
+                        aria-label="Google Play 다운로드"
+                        onClick={() => setStoreModalType("google")}
+                    >
+                      <MobileStoreButtonImg
+                          src={googlePlayBtn}
+                          alt="Google Play에서 다운로드"
+                          draggable={false}
+                      />
+                    </MobileStoreActionButton>
+
+                    <MobileStoreActionButton
+                        type="button"
+                        aria-label="App Store 다운로드"
+                        onClick={() => setStoreModalType("appstore")}
+                    >
+                      <MobileStoreButtonImg
+                          src={appStoreBtn}
+                          alt="App Store에서 다운로드"
+                          draggable={false}
+                      />
+                    </MobileStoreActionButton>
+                  </MobileStoreRow>
+                </MobilePromoContent>
+
+                <MobilePromoImage
+                    src={mobileBanner}
+                    alt="i-Poten 애플리케이션 출시 배너"
+                    draggable={false}
+                    loading="lazy"
+                />
+              </MobilePromoBanner>
+            </MobilePromoSection>
+          </WhiteBackground>
+
+
+          <ScrollTopButton onClick={scrollToTop} aria-label="맨 위로">
+            ↑
+          </ScrollTopButton>
+
+          <Review
+              isOpen={isReviewModalOpen}
+              onClose={() => setIsReviewModalOpen(false)}
+              onSubmit={async (rating, comment) => {
+                console.log('리뷰 제출:', { rating, comment });
+                alert(`리뷰가 제출되었습니다!\n평점: ${rating}점\n내용: ${comment}`);
+              }}
+          />
+          <OpenEvent
+              isOpen={isOpenEventModalOpen}
+              onClose={() => setIsOpenEventModalOpen(false)}
+          />
+          {storeModalType && (
+              <StoreQrModalOverlay onClick={() => setStoreModalType(null)}>
+                <StoreQrModalCard onClick={(e) => e.stopPropagation()}>
+                  <StoreQrCloseButton
+                      type="button"
+                      aria-label="QR 모달 닫기"
+                      onClick={() => setStoreModalType(null)}
+                  >
+                    ×
+                  </StoreQrCloseButton>
+
+                  <StoreQrTitle>{storeModalTitle}</StoreQrTitle>
+                  <StoreQrDesc>
+                    스마트폰 카메라로 QR을 스캔해
+                    <br />
+                    I-Poten 앱 다운로드 페이지로 이동하세요.
+                  </StoreQrDesc>
+
+                  <StoreQrImageWrap>
+                    <StoreQrImage
+                        src={storeModalQr}
+                        alt={`${storeModalTitle} QR 코드`}
+                        draggable={false}
+                    />
+                  </StoreQrImageWrap>
+
+                  <StoreQrCaption>
+                    버튼을 누르거나 바깥 영역을 클릭하면 닫을 수 있습니다.
+                  </StoreQrCaption>
+                </StoreQrModalCard>
+              </StoreQrModalOverlay>
+          )}
+        </Page>
+      </>
   );
 }
