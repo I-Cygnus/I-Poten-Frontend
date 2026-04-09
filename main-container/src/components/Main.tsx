@@ -307,8 +307,14 @@ const ProgressSection = styled.section`
   }
 
   @media (max-width: 768px) {
+    margin-top: 160px;
     min-height: 100vh;
     padding: 40px 16px;
+  }
+
+  @media (max-width: 480px) {
+    margin-top: 100px;
+    padding: 32px 12px;
   }
 `;
 
@@ -694,8 +700,15 @@ const SchedulePhoneFrame = styled.div`
   @media (max-width: 640px) {
     right: -80px;
     bottom: -40px;
-    width: 520px;
-    height: 520px;
+    width: 420px;
+    height: 420px;
+  }
+
+  @media (max-width: 400px) {
+    right: -60px;
+    bottom: -30px;
+    width: 340px;
+    height: 340px;
   }
 `;
 
@@ -832,6 +845,10 @@ const InsightsPanel = styled.div`
   overflow: hidden;
   position: relative;
   background-color: #E2E8F0;
+
+  @media (max-width: 640px) {
+    border-radius: 24px;
+  }
   //background-color: #DDEAF3;
   //background-color: transparent;
   //background: linear-gradient(
@@ -973,6 +990,10 @@ const InsightsLeftTitle = styled.div`
   color: black;
   :root[data-theme="dark"] & {
     color: ${BRAND.blueDark};
+  }
+
+  @media (max-width: 640px) {
+    font-size: 28px;
   }
 `;
 
@@ -1224,6 +1245,10 @@ const ShowcaseFrameStack = styled.div<{ $reverse?: boolean }>`
   @media (max-width: 640px) {
     transform: translateX(-56px);
   }
+
+  @media (max-width: 480px) {
+    transform: translateX(-24px);
+  }
 `;
 
 const ShowcaseBaseFrame = styled.div<{ $reverse?: boolean }>`
@@ -1354,6 +1379,10 @@ const ShowcaseTitle = styled.h2`
 const ShowcaseTitleLine = styled.span`
   display: block;
   white-space: nowrap;
+
+  @media (max-width: 640px) {
+    white-space: normal;
+  }
 `;
 
 const ShowcaseTitleAccent = styled.span`
@@ -1454,6 +1483,12 @@ const ProgressStepLabel = styled.div<{ $leftPct: number; $active?: boolean; $edg
   :root[data-theme="dark"] & {
     color: ${props => (props.$active ? "rgba(96, 165, 250, 1)" : "rgba(148, 163, 184, 0.75)")};
   }
+
+  @media (max-width: 480px) {
+    font-size: 10px;
+    letter-spacing: 0.06em;
+    top: -32px;
+  }
 `;
 
 const ProgressDot = styled.div<{ $leftPct: number; $active?: boolean; $edge?: "left" | "right" }>`
@@ -1500,6 +1535,18 @@ const ProgressBottomDescription = styled.p`
 
   :root[data-theme="dark"] & {
     color: #cbd5e1;
+  }
+
+  @media (max-width: 768px) {
+    margin-top: 60px;
+    font-size: 22px;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 480px) {
+    margin-top: 40px;
+    font-size: 18px;
+    line-height: 1.5;
   }
 `;
 
@@ -1585,6 +1632,11 @@ const HeroSection = styled.section`
     0% { transform: scale(1.05) translate(0%, 1%); }
     100% { transform: scale(1.1) translate(-1%, -1%); }
   }
+
+  @media (max-width: 768px) {
+    height: 100svh;
+    min-height: 580px;
+  }
 `;
 
 const HeroInner = styled.div`
@@ -1604,13 +1656,30 @@ const HeroInner = styled.div`
     padding: 0 20px;
     gap: 40px;
   }
+
+  @media (max-width: 480px) {
+    padding: 0 16px;
+  }
 `;
 
 const HeroContent = styled.div`
   flex: 1;
   color: #1a1a1a;
-  text-shadow: none; /* 배경과 자연스럽게 어울리도록 텍스트 그림자 제거 */
-  transform: translateY(-40px) translateX(-60px); /* 왼쪽 위로 이동 */
+  text-shadow: none;
+  transform: translateY(-40px) translateX(-60px);
+
+  @media (max-width: 900px) {
+    transform: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  @media (max-width: 480px) {
+    align-items: flex-start;
+  }
 `;
 
 const HeroTitle = styled.h1`
@@ -1661,6 +1730,11 @@ const HeroLogoLine = styled.div`
     margin-left: 0;
     justify-content: center;
   }
+
+  @media (max-width: 480px) {
+    gap: 8px;
+    margin-left: 0;
+  }
 `;
 
 const HeroLogoImg = styled.img`
@@ -1668,15 +1742,30 @@ const HeroLogoImg = styled.img`
   width: auto;
   object-fit: contain;
   display: block;
+
+  @media (max-width: 640px) {
+    height: 72px;
+  }
+
+  @media (max-width: 380px) {
+    height: 56px;
+  }
 `;
 
 const HeroLogoX = styled.span`
   font-size: 110px;
-  //font-weight: 900;
   color: #0f172a;
   line-height: 1;
   letter-spacing: -0.02em;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  @media (max-width: 640px) {
+    font-size: 48px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 36px;
+  }
 `;
 
 const HeroLogoAIText = styled.span`
@@ -1687,6 +1776,16 @@ const HeroLogoAIText = styled.span`
   line-height: 1;
   letter-spacing: -0.02em;
   font-family: "Pretendard", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+
+  @media (max-width: 640px) {
+    font-size: 44px;
+    margin-top: 8px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 34px;
+    margin-top: 6px;
+  }
 `;
 
 /* 메인 슬로건 */
@@ -1698,6 +1797,14 @@ const HeroMainSlogan = styled.div`
   margin-bottom: 16px;
   letter-spacing: -0.025em;
   font-family: 'IncheonEduJaramBold', 'Pretendard', sans-serif;
+
+  @media (max-width: 640px) {
+    font-size: 28px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 24px;
+  }
 `;
 
 /* 설명 문구 */
@@ -1723,6 +1830,12 @@ const HeroDescText = styled.p`
     line-height: 1.64;
     letter-spacing: -0.01em;
     max-width: 100%;
+    margin-bottom: 28px;
+  }
+
+  @media (max-width: 380px) {
+    font-size: 13px;
+    margin-bottom: 24px;
   }
 `;
 
@@ -1731,6 +1844,15 @@ const HeroBtnRow = styled.div`
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
+
+  @media (max-width: 900px) {
+    justify-content: center;
+  }
+
+  @media (max-width: 480px) {
+    justify-content: flex-start;
+    width: 100%;
+  }
 `;
 
 const HeroBtn = styled.button`
@@ -1754,6 +1876,12 @@ const HeroBtn = styled.button`
   }
   &:active {
     transform: translateY(0);
+  }
+
+  @media (max-width: 640px) {
+    height: 44px;
+    padding: 0 22px;
+    font-size: 13px;
   }
 `;
 
@@ -1938,6 +2066,15 @@ const SearchTitle2 = styled.h2`
     font-size: 28px;
     font-weight: 700;
     line-height: 1.45;
+    margin-top: 200px;
+    margin-bottom: 200px;
+  }
+
+  @media (max-width: 480px) {
+    font-size: 24px;
+    margin-top: 120px;
+    margin-bottom: 120px;
+    padding: 0 8px;
   }
 `;
 
@@ -1989,6 +2126,15 @@ const ProductsSection = styled.section<{ $isVisible?: boolean }>`
   transform: translateY(${props => props.$isVisible ? '0' : '40px'});
   transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
   text-align: center;
+
+  @media (max-width: 768px) {
+    margin: 120px auto 160px;
+    padding: 0 16px;
+  }
+
+  @media (max-width: 480px) {
+    margin: 80px auto 100px;
+  }
 `;
 
 const ProductsGrid = styled.div`
@@ -2053,6 +2199,17 @@ const ProductCard = styled.div<{ $bgColor?: string; $delay?: number; $featured?:
     border-color: ${({ $featured }) =>
         $featured ? "rgba(255,255,255,0.22)" : "rgba(59, 130, 246, 0.2)"};
     border-radius: 50%;
+  }
+
+  @media (max-width: 768px) {
+    min-height: 380px;
+    padding: 36px 24px;
+    border-radius: 24px;
+  }
+
+  @media (max-width: 480px) {
+    min-height: 340px;
+    padding: 32px 20px;
   }
 `;
 
@@ -2244,11 +2401,18 @@ const PrimaryButton = styled.a`
     transform: translateY(0);
   }
 
+  @media (max-width: 768px) {
+    font-size: 18px;
+    height: 52px;
+    padding: 14px 28px;
+  }
+
   @media (max-width: 640px) {
     width: 100%;
     max-width: 100%;
-    padding: 16px 32px;
+    padding: 14px 28px;
     font-size: 16px;
+    height: 48px;
     border-radius: 12px;
     box-shadow: 0 6px 20px rgba(59, 130, 246, 0.35);
   }
@@ -2757,6 +2921,10 @@ const DotStyle = styled.span`
   color: #DFE2E4;
   letter-spacing: -0.02em;   /* 두께 체감 ↑ */
   -webkit-text-stroke: 0.2px currentColor; /* 윤곽 강조 */
+
+  @media (max-width: 640px) {
+    font-size: 48px;
+  }
 `;
 
 
@@ -2798,6 +2966,10 @@ const SubTextStyle = styled.span`
   color: #A7ABB3;
   letter-spacing: -0.02em;   /* 두께 체감 ↑ */
   -webkit-text-stroke: 0.2px currentColor; /* 윤곽 강조 */
+
+  @media (max-width: 640px) {
+    font-size: 18px;
+  }
 `;
 
 const SubTextStyle2 = styled.span`
@@ -2813,6 +2985,11 @@ const SubTextStyle2 = styled.span`
   text-decoration-color: rgba(59, 130, 246, 0.3);
   text-decoration-thickness: 4px;
   text-underline-offset: 6px;
+
+  @media (max-width: 640px) {
+    font-size: 18px;
+    text-decoration-thickness: 3px;
+  }
 `;
 
 const StepsContainer = styled.div`
@@ -3234,6 +3411,10 @@ const HomeFiveSection = styled.section`
       width: calc(100% - 32px);
     }
   }
+
+  @media (max-width: 480px) {
+    margin: 80px auto 60px;
+  }
 `;
 
 const COMPANY_LOGOS = [
@@ -3410,6 +3591,10 @@ const Companies = styled.div`
     padding-top: 18px;
     padding-bottom: 16px;
   }
+
+  @media (max-width: 480px) {
+    margin: 80px auto 100px;
+  }
 `;
 
 const CompaniesEyebrow = styled.span`
@@ -3511,8 +3696,12 @@ const CoreValueSection = styled.section`
   }
 
   @media (max-width: 768px) {
-    min-height: 100vh;
+    min-height: auto;
     padding: 80px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 60px 16px;
   }
 `;
 
@@ -3524,6 +3713,10 @@ const CoreValueHeader = styled.div`
   margin-bottom: 80px;
   position: relative;
   z-index: 1;
+
+  @media (max-width: 768px) {
+    margin-bottom: 48px;
+  }
 `;
 
 const CoreValueLabel = styled.span`
@@ -3710,8 +3903,12 @@ const GrowthSection = styled.section`
   }
 
   @media (max-width: 768px) {
-    min-height: 100vh;
+    min-height: auto;
     padding: 80px 20px;
+  }
+
+  @media (max-width: 480px) {
+    padding: 60px 16px;
   }
 `;
 
@@ -3725,6 +3922,10 @@ const GrowthHeader = styled.div`
   margin-left: auto;
   margin-right: auto;
   position: relative;
+
+  @media (max-width: 768px) {
+    margin-bottom: 48px;
+  }
 
   &::after {
     content: '';
@@ -3893,7 +4094,12 @@ const ScrollSection = styled.section<{ $bgColor: string; $zIndex: number }>`
 
   @media (max-width: 768px) {
     padding: 60px 20px;
-    height: 100vh;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  @media (max-width: 480px) {
+    padding: 40px 16px;
   }
 `;
 
@@ -4720,6 +4926,8 @@ export default function Main() {
       setProgressValue(next);
     };
 
+    let touchStartY = 0;
+
     const onWheel = (e: WheelEvent) => {
       if (!isProgressPinnedRef.current) return;
 
@@ -4729,6 +4937,35 @@ export default function Main() {
       e.preventDefault();
 
       const speed = 1200;
+      const next = clamp(progressValueRef.current + delta / speed, 0, 1);
+      setProgress(next);
+
+      if (next >= 1 && delta > 0) {
+        unlockProgressScroll("down");
+      }
+
+      if (next <= 0 && delta < 0) {
+        unlockProgressScroll("up");
+      }
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      if (!isProgressPinnedRef.current) return;
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (!isProgressPinnedRef.current) return;
+
+      e.preventDefault();
+
+      const touchY = e.touches[0].clientY;
+      const delta = touchStartY - touchY; // positive = scroll down
+      touchStartY = touchY;
+
+      if (delta === 0) return;
+
+      const speed = 400;
       const next = clamp(progressValueRef.current + delta / speed, 0, 1);
       setProgress(next);
 
@@ -4759,6 +4996,8 @@ export default function Main() {
       document.body.style.width = "100%";
 
       window.addEventListener("wheel", onWheel, { passive: false });
+      window.addEventListener("touchstart", onTouchStart, { passive: true });
+      window.addEventListener("touchmove", onTouchMove, { passive: false });
     };
 
     const unlockProgressScroll = (direction: "down" | "up" = "down") => {
@@ -4766,6 +5005,8 @@ export default function Main() {
 
       isProgressPinnedRef.current = false;
       window.removeEventListener("wheel", onWheel as any);
+      window.removeEventListener("touchstart", onTouchStart as any);
+      window.removeEventListener("touchmove", onTouchMove as any);
 
       document.body.style.position = "";
       document.body.style.top = "";
