@@ -4,8 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import OpenBetaEventLanding from "./OpenBetaEventLanding.tsx";
 import PotenReviewerEventLanding from "./PotenReviewerEventLanding.tsx";
 
-import event1 from "../../assets/event/thumbnail/01.png";
-import event2 from "../../assets/event/thumbnail/02.png";
+import event1 from "../../assets/event/thumbnail/01.jpg";
+import event2 from "../../assets/event/thumbnail/02.jpg";
 
 import reviewer1 from "../../assets/event/reviewer/01.jpg";
 import reviewer2 from "../../assets/event/reviewer/02.jpg";

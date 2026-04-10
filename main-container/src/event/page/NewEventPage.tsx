@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import styled from "styled-components";
-import event1 from "../../assets/event/thumbnail/01.png";
-import event2 from "../../assets/event/thumbnail/02.png";
+import event1 from "../../assets/event/thumbnail/01.jpg";
+import event2 from "../../assets/event/thumbnail/02.jpg";
 import reviewer1 from "../../assets/event/reviewer/01.jpg";
 import reviewer2 from "../../assets/event/reviewer/02.jpg";
 import reviewer3 from "../../assets/event/reviewer/03.jpg";
@@ -313,7 +313,7 @@ const DUMMY: EventItem[] = [
         title: "오픈베타 이벤트",
         isNew: true,
         startDate: "2026-03-21",
-        endDate: "2026-04-21",
+        endDate: "2026-05-01",
         imageUrl: event1,
         status: "ONGOING",
         badge: { type: "DDAY", text: "" },
@@ -323,7 +323,7 @@ const DUMMY: EventItem[] = [
         title: "포텐 리뷰어 이벤트",
         isNew: true,
         startDate: "2026-03-21",
-        endDate: "2026-04-21",
+        endDate: "2026-05-01",
         imageUrl: event2,
         status: "ONGOING",
         badge: { type: "DDAY", text: "" },
