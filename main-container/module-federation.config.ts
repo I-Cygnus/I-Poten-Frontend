@@ -16,9 +16,9 @@ export const mfConfig = {
     myPageApp: isDev
       ? 'myPageApp@http://localhost:3020/remoteEntry.js'
       : `myPageApp@${process.env.REACT_MYPAGE_APP}/remoteEntry.js`,
-    ptnWordApp: isDev
-      ? 'ptnWordApp@http://localhost:3006/remoteEntry.js'
-      : `ptnWordApp@${process.env.REACT_PTN_WORD_APP}/remoteEntry.js`
+    potenWordApp: isDev
+      ? 'potenWordApp@http://localhost:3006/remoteEntry.js'
+      : `potenWordApp@${process.env.REACT_POTEN_WORD_APP}/remoteEntry.js`
   },
   shared: {
     react: { singleton: true, requiredVersion: "^18.2.0", eager: true },

@@ -10,6 +10,6 @@
     "sveltekit-review-app",
     "packages/*",
     "mypage-app",
-    "ptn-word-app"
+    "poten-word-app"
   ]
 }

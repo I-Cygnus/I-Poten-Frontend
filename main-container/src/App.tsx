@@ -31,14 +31,14 @@ import { themeAtom } from "@jobspoon/app-state";
 import RequireLogin from "./RequireLogin.tsx";
 import MobileServiceGuard from "./components/MobileServiceGuard.tsx";
 import OpenBetaEventLanding from "./event/page/OpenBetaEventLanding.tsx";
-import PtnReviewerEventLanding from "./event/page/PtnReviewerEventLanding.tsx";
+import PotenReviewerEventLanding from "./event/page/PotenReviewerEventLanding.tsx";
 import AdminPage from "./admin/AdminPage.tsx";
 
 const eventBus = mitt();
 
 const NavigationBarApp = lazy(() => import("navigationBarApp/App"));
 const MyPageApp = lazy(() => import("myPageApp/App"));
-const PtnWordApp = lazy(() => import("ptnWordApp/App"));
+const PotenWordApp = lazy(() => import("potenWordApp/App"));
 
 function subscribeToBrowserPath(onStoreChange: () => void) {
     window.addEventListener("popstate", onStoreChange);
@@ -225,7 +225,7 @@ function InnerApp() {
                             path="/vue-account/*"
                             element={<VueAccountAppWrapper eventBus={eventBus} />}
                         />
-                        <Route path="/learning/*" element={<PtnWordApp />} />
+                        <Route path="/learning/*" element={<PotenWordApp />} />
                         <Route
                             path="/vue-ai-interview/*"
                             element={

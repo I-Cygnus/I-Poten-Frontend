@@ -1,5 +1,5 @@
-export const LAST_ACTIVITY_KEY = "ptn:last_activity_at";
-export const LAST_ACTIVITY_EVENT = "ptn:last-activity-updated";
+export const LAST_ACTIVITY_KEY = "poten:last_activity_at";
+export const LAST_ACTIVITY_EVENT = "poten:last-activity-updated";
 
 function safeParseDate(value: string | null | undefined): number | null {
     if (!value) return null;

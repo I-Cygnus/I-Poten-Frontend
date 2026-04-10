@@ -31,7 +31,7 @@ COPY navigation-bar-app/package.json navigation-bar-app/
 COPY vue-account-app/package.json vue-account-app/
 COPY vue-ai-interview-app/package.json vue-ai-interview-app/
 COPY mypage-app/package.json mypage-app/
-COPY ptn-word-app/package.json ptn-word-app/
+COPY poten-word-app/package.json poten-word-app/
 COPY sveltekit-review-app/package.json sveltekit-review-app/
 COPY packages/app-state/package.json packages/app-state/
 COPY packages/theme-bridge/package.json packages/theme-bridge/
@@ -76,7 +76,7 @@ COPY --from=builder /app/mypage-app/dist /usr/share/nginx/html/mypage-app
 COPY --from=builder /app/navigation-bar-app/dist /usr/share/nginx/html/navigation-bar-app
 COPY --from=builder /app/vue-account-app/dist /usr/share/nginx/html/vue-account-app
 COPY --from=builder /app/vue-ai-interview-app/dist /usr/share/nginx/html/vue-ai-interview-app
-COPY --from=builder /app/ptn-word-app/dist /usr/share/nginx/html/ptn-word-app
+COPY --from=builder /app/poten-word-app/dist /usr/share/nginx/html/poten-word-app
 COPY --from=builder /app/sveltekit-review-app/build-static /usr/share/nginx/html/sveltekit-review-app
 
 EXPOSE 80
