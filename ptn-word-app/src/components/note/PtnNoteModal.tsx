@@ -620,8 +620,8 @@ const ArrowLink = styled.a`
 
 /** 컴포넌트 내부 헬퍼 */
 const getFolderHref = (wordbookId: string) => {
-    const inPoten = window.location.pathname.startsWith("/learning");
-    return inPoten ? `/learning/folders/${wordbookId}` : `/folders/${wordbookId}`;
+    const inPtn = window.location.pathname.startsWith("/learning");
+    return inPtn ? `/learning/folders/${wordbookId}` : `/folders/${wordbookId}`;
 };
 
 export default function PtnNoteModal({
