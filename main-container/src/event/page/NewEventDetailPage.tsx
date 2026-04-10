@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import styled from "styled-components";
 import { useNavigate, useParams } from "react-router-dom";
 import OpenBetaEventLanding from "./OpenBetaEventLanding.tsx";
-import PotenReviewerEventLanding from "./PotenReviewerEventLanding.tsx";
+import PtnReviewerEventLanding from "./PtnReviewerEventLanding.tsx";
 
 import event1 from "../../assets/event/thumbnail/01.png";
 import event2 from "../../assets/event/thumbnail/02.png";
@@ -226,7 +226,7 @@ const NewEventDetailPage: React.FC = () => {
                 {current.id === 1 ? (
                     <OpenBetaEventLanding />
                 ) : current.id === 2 ? (
-                    <PotenReviewerEventLanding />
+                    <PtnReviewerEventLanding />
                 ) : (
                     <img src={current.imageUrl} alt={current.title} />
                 )}

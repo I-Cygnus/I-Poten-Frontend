@@ -8,7 +8,7 @@ const LOCAL_STORAGE_KEYS = [
     "loginType",
     "accessToken",
     "userId",
-    "poten:last_activity_at",
+    "ptn:last_activity_at",
 ];
 
 const SESSION_STORAGE_KEYS = [

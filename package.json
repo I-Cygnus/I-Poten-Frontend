@@ -9,7 +9,7 @@
     "vue-ai-interview-app",
     "packages/*",
     "mypage-app",
-    "poten-word-app",
+    "ptn-word-app",
     "sveltekit-review-app",
     "@jobspoon/*"
   ],

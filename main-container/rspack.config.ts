@@ -52,7 +52,7 @@ export default defineConfig({
         { from: /^\/vue-account\/.*$/, to: "/index.html" },
         { from: /^\/vue-ai-interview\/.*$/, to: "/index.html" },
         { from: /^\/studies\/.*$/, to: "/index.html" },
-        { from: /^\/poten-word\/.*$/, to: "/index.html" },
+        { from: /^\/ptn-word\/.*$/, to: "/index.html" },
         { from: /^\/mypage\/.*$/, to: "/index.html" },
         { from: /./, to: "/index.html" }
       ]
@@ -118,7 +118,7 @@ export default defineConfig({
       "process.env.REACT_NAVIGATION_APP": JSON.stringify(process.env.REACT_NAVIGATION_APP),
       "process.env.REACT_STUDYROOM_APP": JSON.stringify(process.env.REACT_STUDYROOM_APP),
       "process.env.REACT_MYPAGE_APP": JSON.stringify(process.env.REACT_MYPAGE_APP),
-      "process.env.REACT_POTEN_WORD_APP": JSON.stringify(process.env.REACT_POTEN_WORD_APP),
+      "process.env.REACT_PTN_WORD_APP": JSON.stringify(process.env.REACT_PTN_WORD_APP),
       "process.env.REACT_APP_API_BASE_URL": JSON.stringify(process.env.REACT_APP_API_BASE_URL),
     }),
     new ModuleFederationPlugin(mfConfig),

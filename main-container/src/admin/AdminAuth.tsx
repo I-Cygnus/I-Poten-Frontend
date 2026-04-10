@@ -326,7 +326,7 @@ export default function AdminAuth({ onSuccess }: AdminAuthProps) {
             <FloatingOrb $dark={dark} $delay="3s" $top="40%" $left="60%" $size="200px" />
 
             <Card $dark={dark} $shake={shaking}>
-                <Logo $dark={dark}>I-POTEN</Logo>
+                <Logo $dark={dark}>I-PTN</Logo>
                 <Title $dark={dark}>{current.title}</Title>
                 <Subtitle $dark={dark}>{current.subtitle}</Subtitle>
 

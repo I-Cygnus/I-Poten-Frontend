@@ -32,7 +32,7 @@ jobs:
           echo "${{ secrets.MY_PAGE_ENV }}" > mypage-app/.env
           
           # 퀴즈 및 단어사전 앱 환경변수
-          echo "${{ secrets.POTEN_WORD_ENV }}" > poten-word-app/.env
+          echo "${{ secrets.POTEN_WORD_ENV }}" > ptn-word-app/.env
           
           # navigation-bar 앱 환경변수
           echo "${{ secrets.NAVIGATION_BAR_ENV }}" > navigation-bar-app/.env
@@ -61,7 +61,7 @@ jobs:
           tags: ghcr.io/i-cygnus/i-poten-frontend:latest
           platforms: linux/arm64
           build-args: |
-            REACT_POTEN_WORD_APP=https://i-poten.com/poten-word-app
+            REACT_PTN_WORD_APP=https://i-poten.com/ptn-word-app
             REACT_NAVIGATION_APP=https://i-poten.com/navigation-bar-app
             REACT_MYPAGE_APP=https://i-poten.com/mypage-app
             VUE_ACCOUNT_APP=https://i-poten.com/vue-account-app
@@ -90,7 +90,7 @@ jobs:
           docker pull ghcr.io/i-cygnus/i-poten-frontend:latest
           
           # 새 컨테이너 실행
-          docker run -d -p 80:80 --name i-poten-frontend-container --network ipoten-net ghcr.io/i-cygnus/i-poten-frontend:latest
+          docker run -d -p 80:80 --name i-poten-frontend-container --network iptn-net ghcr.io/i-cygnus/i-poten-frontend:latest
           
           # 사용하지 않는 이미지 정리
           docker image prune -af
