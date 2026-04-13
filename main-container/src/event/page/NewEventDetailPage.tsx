@@ -4,8 +4,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import OpenBetaEventLanding from "./OpenBetaEventLanding.tsx";
 import PotenReviewerEventLanding from "./PotenReviewerEventLanding.tsx";
 
-import event1 from "../../assets/event/thumbnail/01.png";
-import event2 from "../../assets/event/thumbnail/02.png";
+import event1 from "../../assets/event/thumbnail/01.jpg";
+import event2 from "../../assets/event/thumbnail/02.jpg";
 
 import reviewer1 from "../../assets/event/reviewer/01.jpg";
 import reviewer2 from "../../assets/event/reviewer/02.jpg";
@@ -36,7 +36,7 @@ type EventItem = {
 const DUMMY: EventItem[] = [
     {
         id: 1,
-        title: "오픈베타 이벤트",
+        title: "오픈 이벤트",
         isNew: true,
         startDate: "2026-03-08",
         endDate: "2026-03-31",
@@ -48,7 +48,7 @@ const DUMMY: EventItem[] = [
     },
     {
         id: 2,
-        title: "포텐 리뷰어 이벤트",
+        title: "베스트 리뷰어 이벤트",
         startDate: "2026-03-15",
         endDate: "2026-03-31",
         imageUrl: event2,

@@ -16,11 +16,11 @@ const WINNER_DUMMY: WinnerPost[] = [
     {
         id: 1,
         tag: "당첨자",
-        title: "오픈베타 이벤트 당첨자 안내",
+        title: "오픈 이벤트 당첨자 안내",
         createdAt: "2026-03-15",
         author: "관리자",
         contentHtml: `
-      <p>오픈베타 이벤트 당첨자를 안내드립니다.</p>
+      <p>오픈 이벤트 당첨자를 안내드립니다.</p>
       <ul>
         <li>당첨자: 홍길동, 김철수, 박영희...</li>
         <li>지급 일정: 2026-03-20</li>

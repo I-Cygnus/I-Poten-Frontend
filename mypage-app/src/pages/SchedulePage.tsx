@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import styled, { css } from "styled-components";
+import styled, { css, keyframes } from "styled-components";
 import Calendar from "../components/schedule/Calendar.tsx";
 import AddScheduleModal from "../components/modals/AddScheduleModal.tsx";
 import SystemMessageModal, {
@@ -745,6 +745,26 @@ const ContentCard = styled.section`
     background: #ffffff;
     border: 1px solid rgba(15, 23, 42, 0.06);
     box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+`;
+
+const spin = keyframes`
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+`;
+
+const Spinner = styled.div`
+    width: 44px;
+    height: 44px;
+    margin: 56px auto;
+    border-radius: 50%;
+    border: 4px solid rgba(62, 130, 232, 0.16);
+    border-top-color: #3e82e8;
+    animation: ${spin} 0.8s linear infinite;
 `;
 
 const PopoverLayer = styled.div`

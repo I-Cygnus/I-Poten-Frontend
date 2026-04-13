@@ -413,7 +413,7 @@ export default function ReviewSurveyPage() {
         if (answeredCount === 0) {
             openNoticeModal(
                 "이미 응모가 완료되었어요",
-                "포텐 리뷰어 이벤트는 계정당 1회만 참여할 수 있어요.",
+                "베스트 리뷰어 이벤트는 계정당 1회만 참여할 수 있어요.",
                 "info",
                 true
             );
@@ -448,7 +448,7 @@ export default function ReviewSurveyPage() {
                 } else if (error.status === 409) {
                     openNoticeModal(
                         "이미 응모가 완료되었어요",
-                        "포텐 리뷰어 이벤트는 계정당 1회만 참여할 수 있어요.",
+                        "베스트 리뷰어 이벤트는 계정당 1회만 참여할 수 있어요.",
                         "info"
                     );
                 } else {
@@ -525,7 +525,7 @@ export default function ReviewSurveyPage() {
                 <HeroWrap ref={heroRef}>
                     <HeroPanel>
                         <HeroTopRow>
-                            <HeroBadge>포텐 리뷰어 이벤트</HeroBadge>
+                            <HeroBadge>베스트 리뷰어 이벤트</HeroBadge>
                         </HeroTopRow>
 
                         <HeroTitle>{survey.title}</HeroTitle>
@@ -773,7 +773,7 @@ export default function ReviewSurveyPage() {
 
                         <NoticeModalTitle>리뷰 제출 감사합니다.</NoticeModalTitle>
                         <NoticeModalMessage>
-                            포텐 리뷰어 이벤트에 정상적으로 응모 완료되었습니다.
+                            베스트 리뷰어 이벤트에 정상적으로 응모 완료되었습니다.
                         </NoticeModalMessage>
 
                         <NoticeModalButtonRow>
