@@ -35,7 +35,7 @@ type ImageSize = {
 };
 
 const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
-    // 오픈베타 - 02.jpg
+    // 오픈 이벤트 - 02.jpg
     2: [
         {
             x1: 496,
@@ -43,7 +43,7 @@ const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
             y1: 873,
             y2: 940,
             to: "/vue-account/account/login",
-            label: "오픈베타 02 첫 번째 바로가기 : 크레딧",
+            label: "오픈 이벤트 02 첫 번째 바로가기 : 크레딧",
         },
         {
             x1: 1023,
@@ -51,11 +51,11 @@ const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
             y1: 873,
             y2: 940,
             to: "/event/2",
-            label: "오픈베타 02 두 번째 바로가기 : 포텐 리뷰어",
+            label: "오픈 이벤트 02 두 번째 바로가기 : 포텐 리뷰어",
         },
     ],
 
-    // 오픈베타 - 03.jpg
+    // 오픈 이벤트 - 03.jpg
     3: [
         {
             x1: 796,
@@ -63,11 +63,11 @@ const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
             y1: 903.72,
             y2: 985.72,
             to: "/vue-account/account/login",
-            label: "오픈베타 05 바로가기 : 크레딧 제공",
+            label: "오픈 이벤트 05 바로가기 : 크레딧 제공",
         },
     ],
 
-    // 오픈베타 - 04.jpg
+    // 오픈 이벤트 - 04.jpg
     4: [
         {
             x1: 568,
@@ -75,7 +75,7 @@ const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
             y1: 870,
             y2: 947.72,
             to: "/vue-ai-interview/ai-interview/landing", // TODO 임시 링크 교체
-            label: "오픈베타 03 첫 번째 바로가기 : 기업별 면접 바로가기",
+            label: "오픈 이벤트 03 첫 번째 바로가기 : 기업별 면접 바로가기",
         },
         {
             x1: 1020,
@@ -83,11 +83,11 @@ const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
             y1: 870,
             y2: 947.72,
             to: "/vue-ai-interview/ai-interview/landing", // TODO 임시 링크 교체
-            label: "오픈베타 03 두 번째 바로가기 : 인성 면접 바로가기",
+            label: "오픈 이벤트 03 두 번째 바로가기 : 인성 면접 바로가기",
         },
     ],
 
-    // 오픈베타 - 05.jpg
+    // 오픈 이벤트 - 05.jpg
     5: [
         {
             x1: 796,
@@ -95,7 +95,7 @@ const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
             y1: 903.72,
             y2: 985.72,
             to: "/event/2",
-            label: "오픈베타 04 바로가기 : 포텐 리뷰어",
+            label: "오픈 이벤트 04 바로가기 : 포텐 리뷰어",
         },
     ],
 };
@@ -130,7 +130,7 @@ export default function OpenBetaEventLanding() {
                         <ImageFrame>
                             <FullImage
                                 src={src}
-                                alt={`오픈베타 이벤트 이미지 ${pageNumber}`}
+                                alt={`오픈 이벤트 이미지 ${pageNumber}`}
                                 loading={pageNumber === 1 ? "eager" : "lazy"}
                                 onLoad={(e) => handleImageLoad(pageNumber, e)}
                             />

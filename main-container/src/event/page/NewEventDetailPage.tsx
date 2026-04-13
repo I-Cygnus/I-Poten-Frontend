@@ -36,7 +36,7 @@ type EventItem = {
 const DUMMY: EventItem[] = [
     {
         id: 1,
-        title: "오픈베타 이벤트",
+        title: "오픈 이벤트",
         isNew: true,
         startDate: "2026-03-08",
         endDate: "2026-03-31",

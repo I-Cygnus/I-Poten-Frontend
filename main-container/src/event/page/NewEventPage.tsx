@@ -32,7 +32,7 @@ type EventItem = {
 type WinnerPost = {
     id: number;
     tag: string;        // "당첨자"
-    title: string;      // "오픈베타 이벤트 당첨자 안내"
+    title: string;      // "오픈 이벤트 당첨자 안내"
     createdAt: string;  // "2026-03-15"
 };
 
@@ -40,7 +40,7 @@ const WINNER_DUMMY: WinnerPost[] = [
     {
         id: 1,
         tag: "당첨자",
-        title: "오픈베타 이벤트 당첨자 안내",
+        title: "오픈 이벤트 당첨자 안내",
         createdAt: "2026-03-15",
     },
 ];
@@ -310,7 +310,7 @@ const TABS: { key: EventStatus; label: string }[] = [
 const DUMMY: EventItem[] = [
     {
         id: 1,
-        title: "오픈베타 이벤트",
+        title: "오픈 이벤트",
         isNew: true,
         startDate: "2026-03-21",
         endDate: "2026-05-01",
