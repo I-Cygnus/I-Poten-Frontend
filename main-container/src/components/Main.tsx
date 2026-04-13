@@ -5167,7 +5167,7 @@ export default function Main() {
               : SEARCH_TITLE2_DESKTOP_LINES;
 
   const goToAiInterview = () => {
-    window.location.href = "http://localhost/vue-ai-interview/ai-interview/landing";
+    window.location.href = "/vue-ai-interview/ai-interview/landing";
   };
 
   const scrollToProducts = () => {

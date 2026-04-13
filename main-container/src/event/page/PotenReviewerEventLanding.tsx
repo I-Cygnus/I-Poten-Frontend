@@ -31,7 +31,7 @@ const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
             y1: 605.72,
             y2: 665.72,
             to: "/review-survey",
-            label: "포텐 리뷰어 03 바로가기 : 실제 리뷰 페이지로 이동",
+            label: "베스트 리뷰어 03 바로가기 : 실제 리뷰 페이지로 이동",
         },
     ],
 };
@@ -66,7 +66,7 @@ export default function PotenReviewerEventLanding() {
                         <ImageFrame>
                             <FullImage
                                 src={src}
-                                alt={`포텐 리뷰어 이벤트 이미지 ${pageNumber}`}
+                                alt={`베스트 리뷰어 이벤트 이미지 ${pageNumber}`}
                                 loading={pageNumber === 1 ? "eager" : "lazy"}
                                 onLoad={(e) => handleImageLoad(pageNumber, e)}
                             />
