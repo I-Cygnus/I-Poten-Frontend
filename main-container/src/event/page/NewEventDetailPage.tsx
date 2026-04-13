@@ -48,7 +48,7 @@ const DUMMY: EventItem[] = [
     },
     {
         id: 2,
-        title: "포텐 리뷰어 이벤트",
+        title: "베스트 리뷰어 이벤트",
         startDate: "2026-03-15",
         endDate: "2026-03-31",
         imageUrl: event2,

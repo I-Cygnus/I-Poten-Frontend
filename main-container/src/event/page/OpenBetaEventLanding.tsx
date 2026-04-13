@@ -51,7 +51,7 @@ const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
             y1: 873,
             y2: 940,
             to: "/event/2",
-            label: "오픈 이벤트 02 두 번째 바로가기 : 포텐 리뷰어",
+            label: "오픈 이벤트 02 두 번째 바로가기 : 베스트 리뷰어",
         },
     ],
 
@@ -95,7 +95,7 @@ const HOTSPOTS_BY_PAGE: Record<number, Hotspot[]> = {
             y1: 903.72,
             y2: 985.72,
             to: "/event/2",
-            label: "오픈 이벤트 04 바로가기 : 포텐 리뷰어",
+            label: "오픈 이벤트 04 바로가기 : 베스트 리뷰어",
         },
     ],
 };

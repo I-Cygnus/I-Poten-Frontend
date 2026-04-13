@@ -320,7 +320,7 @@ const DUMMY: EventItem[] = [
     },
     {
         id: 2,
-        title: "포텐 리뷰어 이벤트",
+        title: "베스트 리뷰어 이벤트",
         isNew: true,
         startDate: "2026-03-21",
         endDate: "2026-05-01",
