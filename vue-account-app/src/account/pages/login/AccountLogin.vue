@@ -1,6 +1,5 @@
 <template>
-  <div class="w-full overflow-hidden flex items-center justify-center min-h-screen bg-white">
-
+  <div class="w-full h-screen overflow-hidden flex items-center justify-center bg-white">
     <!-- 배경 텍스트 애니메이션 -->
     <div :style="backgroundTextContainerStyle">
       <div :style="backgroundTextStyle">
@@ -10,8 +9,11 @@
     </div>
 
     <!-- 로그인 카드 -->
-    <div :style="loginBoxStyle" @mouseenter="Object.assign(loginBoxStyle, loginBoxHoverStyle)" @mouseleave="loginBoxStyle.boxShadow = '0 10px 30px rgba(31, 38, 135, 0.4)'">
-
+    <div
+        :style="loginBoxStyle"
+        @mouseenter="Object.assign(loginBoxStyle, loginBoxHoverStyle)"
+        @mouseleave="loginBoxStyle.boxShadow = '0 10px 30px rgba(31, 38, 135, 0.4)'"
+    >
       <!-- 로고 -->
       <div :style="logoWrapStyle" @click="goHome">
         <img :src="logoBlack" :style="logoImgStyle" alt="I-Poten Logo" />
