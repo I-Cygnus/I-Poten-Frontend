@@ -1418,7 +1418,7 @@ export default function QuizWrongNotePage() {
 
                 </List>
 
-                {items.length > 0 && pages > 1 && (
+                {items.length > 0 && pages >= 1 && (
                     <BottomGrid>
                         <PaginationRow>
                             <PaginationBar aria-label="오답노트 페이지 이동">
@@ -2435,9 +2435,12 @@ const PaginationRow = styled.div`
     display: flex;
     justify-content: center;
     padding-top: 6px;
-
     width: fit-content;
     margin: 0 auto;
+
+    @media (max-width: 768px) {
+        width: 100%;
+    }
 `;
 
 const PaginationBar = styled.nav`
@@ -2446,6 +2449,14 @@ const PaginationBar = styled.nav`
     justify-content: center;
     gap: 6px;
     padding: 6px;
+
+    @media (max-width: 768px) {
+        width: 100%;
+        gap: 4px;
+        overflow-x: auto;
+        justify-content: flex-start;
+        padding: 6px 0;
+    }
 `;
 
 
@@ -2456,12 +2467,12 @@ const PagePill = styled.button<{ $active?: boolean }>`
     border-radius: 10px;
     border: 0;
 
-    font-size: 13px;
     font-weight: 800;
     letter-spacing: -0.02em;
     cursor: pointer;
 
     color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
+    -webkit-text-fill-color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
     background: ${({ $active }) => ($active ? UI.primaryBlue : "transparent")};
 
     transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
@@ -2469,6 +2480,7 @@ const PagePill = styled.button<{ $active?: boolean }>`
     &:hover {
         background: ${({ $active }) => ($active ? UI.primaryBlue : "rgba(255,255,255,0.85)")};
         color: ${({ $active }) => ($active ? "#fff" : UI.text)};
+        -webkit-text-fill-color: ${({ $active }) => ($active ? "#fff" : UI.text)};
     }
 
     &:active {
@@ -2484,12 +2496,15 @@ const PagePill = styled.button<{ $active?: boolean }>`
 const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
     padding: 0 10px;
     color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
+    -webkit-text-fill-color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
     cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
 
     &:hover {
         background: ${({ disabled }) => (disabled ? "transparent" : "rgba(255,255,255,0.85)")};
         color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.text)};
+        -webkit-text-fill-color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.text)};
     }
+
     &:active {
         transform: ${({ disabled }) => (disabled ? "none" : "translateY(1px)")};
     }

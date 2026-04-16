@@ -462,20 +462,25 @@ const FilterGroup = styled.div`
   gap: 8px;
 `;
 
-const FilterChip = styled.button<{ $active: boolean }>`
-    height: 42px;
-    padding: 0 14px;
-    border-radius: 999px;
-    border: 1px solid ${({ $active }) => ($active ? "#111111" : "#d1d5db")};
-    background: ${({ $active }) => ($active ? "#111111" : "#ffffff")};
-    color: ${({ $active }) => ($active ? "#ffffff" : "#111111")};
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+const FilterChip = styled.button.attrs({ "data-interview-filter-chip": "true" })<{ $active: boolean }>`
+    &[data-interview-filter-chip="true"] {
+        height: 42px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid ${({ $active }) => ($active ? "#111111" : "#d1d5db")};
+        background: ${({ $active }) => ($active ? "#111111" : "#ffffff")};
+        color: ${({ $active }) => ($active ? "#ffffff" : "#111111")};
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    }
 
-    &:hover {
+    &[data-interview-filter-chip="true"]:hover {
         background: ${({ $active }) => ($active ? "#111111" : "#f3f4f6")};
+        border-color: ${({ $active }) => ($active ? "#111111" : "#cbd5e1")};
+        box-shadow: ${({ $active }) => ($active ? "0 10px 20px rgba(17, 17, 17, 0.16)" : "none")};
+        transform: ${({ $active }) => ($active ? "translateY(-1px)" : "none")};
     }
 `;
 

@@ -953,11 +953,14 @@ const GoBtn = styled.button`
 
     background: ${UI.primaryBtn};
     color: #ffffff;
+    -webkit-text-fill-color: #ffffff;
 
     transition: transform 80ms ease, background 140ms ease, box-shadow 140ms ease;
 
     &:hover:not(:disabled) {
         background: ${UI.primaryBtnHover};
+        color: #ffffff;
+        -webkit-text-fill-color: #ffffff;
     }
 
     &:active:not(:disabled) {
@@ -973,6 +976,7 @@ const GoBtn = styled.button`
         cursor: default;
         background: ${UI.primaryBtnDisabled};
         color: rgba(255,255,255,0.9);
+        -webkit-text-fill-color: rgba(255,255,255,0.9);
         box-shadow: none;
     }
 `;

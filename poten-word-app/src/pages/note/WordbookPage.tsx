@@ -675,6 +675,7 @@ const PagePill = styled.button<{ $active?: boolean }>`
     cursor: pointer;
 
     color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
+    -webkit-text-fill-color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
     background: ${({ $active }) => ($active ? UI.color.primary : "transparent")};
 
     transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
@@ -682,6 +683,7 @@ const PagePill = styled.button<{ $active?: boolean }>`
     &:hover {
         background: ${({ $active }) => ($active ? UI.color.primary : "rgba(255,255,255,0.85)")};
         color: ${({ $active }) => ($active ? "#fff" : UI.color.text)};
+        -webkit-text-fill-color: ${({ $active }) => ($active ? "#fff" : UI.color.text)};
     }
 
     &:active {
@@ -697,11 +699,13 @@ const PagePill = styled.button<{ $active?: boolean }>`
 const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
     padding: 0 10px;
     color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
+    -webkit-text-fill-color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
     cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
 
     &:hover {
         background: ${({ disabled }) => (disabled ? "transparent" : "rgba(255,255,255,0.85)")};
         color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.color.text)};
+        -webkit-text-fill-color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.color.text)};
     }
 
     &:active {

@@ -445,49 +445,112 @@ const StackedImages = styled.div`
     }
 `;
 
-const Pagination = styled.div`
+const PAGE_WINDOW_SIZE = 5;
+
+const PaginationWrap = styled.div`
+    width: 100%;
     display: flex;
-    align-items: center;
     justify-content: center;
-    gap: 18px;
     margin-bottom: 24px;
 `;
 
-const PageBtn = styled.button<{ $active?: boolean }>`
-    appearance: none;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
+const PaginationRow = styled.div`
+    display: flex;
+    justify-content: center;
+    width: fit-content;
+    margin: 0 auto;
 
-    padding: 6px 2px;
-    font-size: 14px;
-    font-weight: ${({ $active }) => ($active ? 600 : 400)};
-    color: ${({ $active }) => ($active ? "#111111" : "rgba(0,0,0,0.6)")};
-    line-height: 1;
-
-    position: relative;
-
-    &:after {
-        content: "";
-        position: absolute;
-        left: 0;
-        right: 0;
-        bottom: -2px;
-        height: 2px;
-        background: ${({ $active }) => ($active ? "#578BF2" : "transparent")};
-        border-radius: 2px;
-    }
-
-    &:hover {
-        color: #111111;
+    @media (max-width: 640px) {
+        width: 100%;
     }
 `;
 
-const Ellipsis = styled.span`
-  font-size: 14px;
-  font-weight: 400;
-  color: rgba(0,0,0,0.45);
-  padding: 6px 2px;
+const PaginationBar = styled.nav`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 6px;
+
+    @media (max-width: 640px) {
+        width: 100%;
+        flex-wrap: wrap;
+        gap: 4px;
+        padding: 4px 0;
+    }
+`;
+
+const PagePill = styled.button<{ $active?: boolean }>`
+    height: 34px;
+    min-width: 34px;
+    padding: 0 12px;
+    border-radius: 10px;
+    border: 0;
+    background: ${({ $active }) => ($active ? "#527cea" : "transparent")};
+    color: ${({ $active }) => ($active ? "#ffffff" : "rgba(15,23,42,0.70)")};
+    -webkit-text-fill-color: ${({ $active }) =>
+    $active ? "#ffffff" : "rgba(15,23,42,0.70)"};
+
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
+
+    &:hover {
+        background: ${({ $active }) =>
+    $active ? "#527cea" : "rgba(255,255,255,0.85)"};
+        color: ${({ $active }) => ($active ? "#ffffff" : "#111111")};
+        -webkit-text-fill-color: ${({ $active }) =>
+    $active ? "#ffffff" : "#111111"};
+    }
+
+    &:active {
+        transform: translateY(1px);
+    }
+
+    &:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(82,124,234,0.22);
+    }
+`;
+
+const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
+    padding: 0 10px;
+    color: ${({ disabled }) =>
+    disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)"};
+    -webkit-text-fill-color: ${({ disabled }) =>
+    disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)"};
+    cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+
+    &:hover {
+        background: ${({ disabled }) =>
+    disabled ? "transparent" : "rgba(255,255,255,0.85)"};
+        color: ${({ disabled }) =>
+    disabled ? "rgba(15,23,42,0.28)" : "#111111"};
+        -webkit-text-fill-color: ${({ disabled }) =>
+    disabled ? "rgba(15,23,42,0.28)" : "#111111"};
+    }
+
+    &:active {
+        transform: ${({ disabled }) =>
+    disabled ? "none" : "translateY(1px)"};
+    }
+`;
+
+const PageEllipsis = styled.span`
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 34px;
+    padding: 0 4px;
+    color: rgba(15, 23, 42, 0.5);
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    user-select: none;
 `;
 
 const SearchBar = styled.div`
@@ -610,6 +673,132 @@ function getEventStatus(startDate: string, endDate: string): EventStatus {
     return "ONGOING";
 }
 
+type EventPaginationProps = {
+    currentPage: number;
+    totalPages: number;
+    onPageChange: (page: number) => void;
+    ariaLabel: string;
+};
+
+const EventPagination: React.FC<EventPaginationProps> = ({
+                                                             currentPage,
+                                                             totalPages,
+                                                             onPageChange,
+                                                             ariaLabel,
+                                                         }) => {
+    const safeTotalPages = Math.max(1, totalPages);
+    const safeCurrentPage = Math.max(1, Math.min(currentPage, safeTotalPages));
+
+    const clampWindowStart = (start: number) => {
+        const maxStart = Math.max(1, safeTotalPages - PAGE_WINDOW_SIZE + 1);
+        return Math.max(1, Math.min(start, maxStart));
+    };
+
+    const pageWindowStart = clampWindowStart(
+        Math.floor((safeCurrentPage - 1) / PAGE_WINDOW_SIZE) * PAGE_WINDOW_SIZE + 1
+    );
+    const pageWindowEnd = Math.min(
+        safeTotalPages,
+        pageWindowStart + PAGE_WINDOW_SIZE - 1
+    );
+
+    const pageWindow = Array.from(
+        { length: pageWindowEnd - pageWindowStart + 1 },
+        (_, index) => pageWindowStart + index
+    );
+
+    const firstVisiblePage = pageWindow[0] ?? 1;
+    const lastVisiblePage = pageWindow[pageWindow.length - 1] ?? safeTotalPages;
+
+    const showFirstPage = firstVisiblePage > 1;
+    const showLeadingEllipsis = firstVisiblePage > 2;
+    const showTrailingEllipsis = lastVisiblePage < safeTotalPages - 1;
+    const showLastPage = lastVisiblePage < safeTotalPages;
+
+    const goPrevWindow = () => {
+        if (pageWindowStart === 1) return;
+        onPageChange(clampWindowStart(pageWindowStart - PAGE_WINDOW_SIZE));
+    };
+
+    const goNextWindow = () => {
+        if (pageWindowEnd >= safeTotalPages) return;
+        onPageChange(clampWindowStart(pageWindowStart + PAGE_WINDOW_SIZE));
+    };
+
+    return (
+        <PaginationWrap>
+            <PaginationRow>
+                <PaginationBar aria-label={ariaLabel}>
+                    <PageNavBtn
+                        type="button"
+                        onClick={goPrevWindow}
+                        disabled={pageWindowStart === 1}
+                        aria-label="이전 페이지 묶음"
+                    >
+                        ‹
+                    </PageNavBtn>
+
+                    {showFirstPage && (
+                        <PagePill
+                            type="button"
+                            $active={safeCurrentPage === 1}
+                            onClick={() => onPageChange(1)}
+                            aria-current={safeCurrentPage === 1 ? "page" : undefined}
+                            aria-label="1페이지"
+                        >
+                            1
+                        </PagePill>
+                    )}
+
+                    {showLeadingEllipsis && (
+                        <PageEllipsis aria-hidden="true">...</PageEllipsis>
+                    )}
+
+                    {pageWindow.map((pageNumber) => (
+                        <PagePill
+                            key={pageNumber}
+                            type="button"
+                            $active={pageNumber === safeCurrentPage}
+                            onClick={() => onPageChange(pageNumber)}
+                            aria-current={pageNumber === safeCurrentPage ? "page" : undefined}
+                            aria-label={`${pageNumber}페이지`}
+                        >
+                            {pageNumber}
+                        </PagePill>
+                    ))}
+
+                    {showTrailingEllipsis && (
+                        <PageEllipsis aria-hidden="true">...</PageEllipsis>
+                    )}
+
+                    {showLastPage && (
+                        <PagePill
+                            type="button"
+                            $active={safeCurrentPage === safeTotalPages}
+                            onClick={() => onPageChange(safeTotalPages)}
+                            aria-current={
+                                safeCurrentPage === safeTotalPages ? "page" : undefined
+                            }
+                            aria-label={`${safeTotalPages}페이지`}
+                        >
+                            {safeTotalPages}
+                        </PagePill>
+                    )}
+
+                    <PageNavBtn
+                        type="button"
+                        onClick={goNextWindow}
+                        disabled={pageWindowEnd >= safeTotalPages}
+                        aria-label="다음 페이지 묶음"
+                    >
+                        ›
+                    </PageNavBtn>
+                </PaginationBar>
+            </PaginationRow>
+        </PaginationWrap>
+    );
+};
+
 const NewEventPage: React.FC = () => {
     const [active, setActive] = useState<EventStatus>("ONGOING");
     const [winnerQuery, setWinnerQuery] = useState("");
@@ -636,35 +825,8 @@ const NewEventPage: React.FC = () => {
         return filtered.filter((e) => e.title.toLowerCase().includes(q));
     }, [filtered, eventQuery]);
 
-    // 이벤트 페이지 수
     const eventTotalPages = Math.max(1, Math.ceil(eventFiltered.length / EVENT_PAGE_SIZE));
 
-    // 이벤트 페이지 버튼 목록
-    const eventPagesToShow = useMemo(() => {
-        const total = eventTotalPages;
-        const current = eventPage;
-
-        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
-        const base = [1, 2, 3, 4, 5, 6];
-
-        if (current > 6 && current < total) {
-            const start = Math.max(1, current - 2);
-            const end = Math.min(total, current + 2);
-            const range = Array.from({ length: end - start + 1 }, (_, i) => start + i);
-
-            const result: (number | "…")[] = [1];
-            if (start > 2) result.push("…");
-            result.push(...range);
-            if (end < total - 1) result.push("…");
-            result.push(total);
-            return result;
-        }
-
-        return [...base, "…", total];
-    }, [eventTotalPages, eventPage]);
-
-    // 이벤트 페이지 아이템
     const eventPageItems = useMemo(() => {
         const start = (eventPage - 1) * EVENT_PAGE_SIZE;
         return eventFiltered.slice(start, start + EVENT_PAGE_SIZE);
@@ -676,7 +838,6 @@ const NewEventPage: React.FC = () => {
         setEventQuery("");
     }, [active]);
 
-    // 이벤트 검색어가 바뀌면 1페이지로
     useEffect(() => {
         setEventPage(1);
     }, [eventQuery]);
@@ -684,43 +845,17 @@ const NewEventPage: React.FC = () => {
     const winnerFiltered = useMemo(() => {
         const q = winnerQuery.trim().toLowerCase();
         if (!q) return WINNER_DUMMY;
-        return WINNER_DUMMY.filter((p) => p.title.toLowerCase().includes(q));
+        return WINNER_DUMMY.filter((post) =>
+            post.title.toLowerCase().includes(q)
+        );
     }, [winnerQuery]);
 
-    const winnerTotalPages = Math.max(1, Math.ceil(winnerFiltered.length / WINNER_PAGE_SIZE));
-
-    const pagesToShow = useMemo(() => {
-        const total = winnerTotalPages;
-        const current = winnerPage;
-
-        // total이 작으면 전부 노출
-        if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
-
-        // 기본: 1~6 보여주고 ... 마지막 (이미지 스타일)
-        // 필요하면 current 근처로 확장 가능
-        const base = [1, 2, 3, 4, 5, 6];
-
-        // current가 6보다 크면 current 주변 형태로
-        if (current > 6 && current < total) {
-            const start = Math.max(1, current - 2);
-            const end = Math.min(total, current + 2);
-            const range = Array.from({ length: end - start + 1 }, (_, i) => start + i);
-
-            // 앞/뒤 보정해서 1, ..., range, ..., total 형태
-            const result: (number | "…")[] = [1];
-            if (start > 2) result.push("…");
-            result.push(...range);
-            if (end < total - 1) result.push("…");
-            result.push(total);
-            return result;
-        }
-
-        // current가 6 이하이면: 1~6 ... total
-        return [...base, "…", total];
-    }, [winnerTotalPages, winnerPage]);
+    const winnerTotalPages = Math.max(
+        1,
+        Math.ceil(winnerFiltered.length / WINNER_PAGE_SIZE)
+    );
 
     useEffect(() => {
-        // 검색어가 바뀌면 1페이지로
         setWinnerPage(1);
     }, [winnerQuery]);
 
@@ -771,22 +906,12 @@ const NewEventPage: React.FC = () => {
 
                         <WinnerFooter>
                             {/* WINNER pagination */}
-                            <Pagination>
-                                {pagesToShow.map((p, idx) =>
-                                    p === "…" ? (
-                                        <Ellipsis key={`w-e-${idx}`}>…</Ellipsis>
-                                    ) : (
-                                        <PageBtn
-                                            key={`w-p-${p}`}
-                                            type="button"
-                                            $active={p === winnerPage}
-                                            onClick={() => setWinnerPage(p)}
-                                        >
-                                            {p}
-                                        </PageBtn>
-                                    )
-                                )}
-                            </Pagination>
+                            <EventPagination
+                                currentPage={winnerPage}
+                                totalPages={winnerTotalPages}
+                                onPageChange={setWinnerPage}
+                                ariaLabel="winner pagination"
+                            />
 
                             {/* WINNER search */}
                             <SearchBar>
@@ -853,22 +978,12 @@ const NewEventPage: React.FC = () => {
 
                         {/* EVENT pagination + search */}
                         <WinnerFooter>
-                            <Pagination>
-                                {eventPagesToShow.map((p, idx) =>
-                                    p === "…" ? (
-                                        <Ellipsis key={`e-e-${idx}`}>…</Ellipsis>
-                                    ) : (
-                                        <PageBtn
-                                            key={`e-p-${p}`}
-                                            type="button"
-                                            $active={p === eventPage}
-                                            onClick={() => setEventPage(p)}
-                                        >
-                                            {p}
-                                        </PageBtn>
-                                    )
-                                )}
-                            </Pagination>
+                            <EventPagination
+                                currentPage={eventPage}
+                                totalPages={eventTotalPages}
+                                onPageChange={setEventPage}
+                                ariaLabel="event pagination"
+                            />
 
                             <SearchBar>
                                 <SearchBox>

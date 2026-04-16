@@ -2066,38 +2066,53 @@ const HeroBtnRow = styled.div`
   }
 `;
 
-const HeroBtn = styled.button`
-  height: 50px;
-  padding: 0 28px;
-  background: #0f172a;
-  color: #ffffff;
-  font-size: 14px;
-  font-weight: 600;
-  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  border: none;
-  border-radius: 999px;
-  cursor: pointer;
-  white-space: nowrap;
-  letter-spacing: -0.01em;
-  transition: background 0.2s ease, transform 0.15s ease;
+const HeroBtn = styled.button.attrs({ "data-ipoten-main-hero-btn": "true" })`
+  &[data-ipoten-main-hero-btn="true"] {
+    appearance: none;
+    -webkit-appearance: none;
+    height: 50px;
+    padding: 0 28px;
+    background: #0f172a;
+    color: #ffffff;
+    -webkit-text-fill-color: #ffffff;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    white-space: nowrap;
+    letter-spacing: -0.01em;
+    transition: background 0.2s ease, transform 0.15s ease;
+  }
 
-  &:hover {
+  &[data-ipoten-main-hero-btn="true"]:hover {
     background: #1e293b;
+    color: #ffffff;
+    -webkit-text-fill-color: #ffffff;
     transform: translateY(-2px);
   }
-  &:active {
+
+  &[data-ipoten-main-hero-btn="true"]:active {
     transform: translateY(0);
   }
 
+  &[data-ipoten-main-hero-btn="true"] span,
+  &[data-ipoten-main-hero-btn="true"] svg {
+    color: inherit;
+  }
+
   @media (max-width: 640px) {
-    height: 48px;
-    padding: 0 22px;
-    font-size: 14px;
-    width: 100%;
-    max-width: 280px;
-    justify-content: center;
-    display: flex;
-    align-items: center;
+    &[data-ipoten-main-hero-btn="true"] {
+      height: 48px;
+      padding: 0 22px;
+      font-size: 14px;
+      width: 100%;
+      max-width: 280px;
+      justify-content: center;
+      display: flex;
+      align-items: center;
+    }
   }
 `;
 
