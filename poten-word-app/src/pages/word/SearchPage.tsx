@@ -2623,7 +2623,7 @@ export default function SearchPage() {
                             <TrendingHead>
                                 <div>
                                     <TrendingTitle>
-                                        이번 주 I-Ptn 회원들이 가장 많이 찾아본 <span className="highlight">포텐워드</span> TOP 10
+                                        이번 주 I-Poten 회원들이 가장 많이 찾아본 <span className="highlight">포텐워드</span> TOP 10
                                     </TrendingTitle>
                                 </div>
                             </TrendingHead>

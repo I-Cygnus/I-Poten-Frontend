@@ -760,8 +760,8 @@ const App: React.FC = () => {
       <>
         <Header $scrolled={isScrolled} $hidden={isServiceNavMode}>
           <Inner>
-            <Brand to="/" aria-label="JobSpoon 홈">
-              <LogoImg src={logoBlack} alt="JobSpoon" />
+            <Brand to="/" aria-label="I-Poten 홈">
+              <LogoImg src={logoBlack} alt="I-Poten" />
             </Brand>
 
             <Nav>
@@ -802,7 +802,7 @@ const App: React.FC = () => {
 
         <BottomBarWrap $visible={isServiceNavMode}>
           <BottomBar>
-            <BottomHome to="/" aria-label="JobSpoon 홈">
+            <BottomHome to="/" aria-label="I-Poten 홈">
               <BottomHomeLogo src={logoBlack} alt="" />
             </BottomHome>
 

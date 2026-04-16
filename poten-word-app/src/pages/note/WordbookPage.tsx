@@ -2530,8 +2530,8 @@ export default function WordbookPage() {
             const preferred =
                 (meta as any)?.cdFilename ||
                 (meta as any)?.ebookFilename ||
-                `I-Ptn_terms_${Date.now()}.pdf`;
-            const finalName = sanitizeFilename(preferred, `I-Ptn_terms_${Date.now()}.pdf`);
+                `I-Poten_terms_${Date.now()}.pdf`;
+            const finalName = sanitizeFilename(preferred, `I-Poten_terms_${Date.now()}.pdf`);
             saveBlob(blob, finalName);
         } catch (e: any) {
             console.error("[PDF] export failed", e);
@@ -2564,7 +2564,7 @@ export default function WordbookPage() {
                     if (res.status >= 200 && res.status < 300) {
                         const headers = (res as any).headers || {};
                         const ebookFilename = headers["ebook-filename"] || headers["Ebook-Filename"];
-                        let filename = ebookFilename || `I-Ptn_terms_${Date.now()}.pdf`;
+                        let filename = ebookFilename || `I-Poten_terms_${Date.now()}.pdf`;
 
                         const cd = headers["content-disposition"] || headers["Content-Disposition"];
                         if (!ebookFilename && typeof cd === "string") {
