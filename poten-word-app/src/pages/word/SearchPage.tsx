@@ -444,7 +444,7 @@ const PaginationRow = styled.div`
     width: fit-content;
     margin: 0 auto;
 
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
         width: 100%;
     }
 `;
@@ -456,12 +456,14 @@ const PaginationBar = styled.nav`
     gap: 6px;
     padding: 6px;
 
-    @media (max-width: 640px) {
+    @media (max-width: 768px) {
         width: 100%;
+        gap: 4px;
         justify-content: flex-start;
         overflow-x: auto;
         overflow-y: hidden;
         -webkit-overflow-scrolling: touch;
+        padding: 6px 0;
     }
 `;
 
@@ -472,18 +474,20 @@ const PagePill = styled.button<{ $active?: boolean }>`
     border-radius: 10px;
     border: 0;
 
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     cursor: pointer;
 
     color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
-    background: ${({ $active }) => ($active ? UI.color.primaryStrong : "transparent")};
+    -webkit-text-fill-color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
+    background: ${({ $active }) => ($active ? "#4f76f1" : "transparent")};
 
     transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
 
     &:hover {
-        background: ${({ $active }) => ($active ? UI.color.primaryStrong : "rgba(255,255,255,0.85)")};
-        color: ${({ $active }) => ($active ? "#fff" : "#0f172a")};
+        background: ${({ $active }) => ($active ? "#4f76f1" : "rgba(255,255,255,0.85)")};
+        color: ${({ $active }) => ($active ? "#fff" : UI.color.text)};
+        -webkit-text-fill-color: ${({ $active }) => ($active ? "#fff" : UI.color.text)};
     }
 
     &:active {
@@ -499,11 +503,13 @@ const PagePill = styled.button<{ $active?: boolean }>`
 const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
     padding: 0 10px;
     color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
+    -webkit-text-fill-color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
     cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
 
     &:hover {
         background: ${({ disabled }) => (disabled ? "transparent" : "rgba(255,255,255,0.85)")};
-        color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "#0f172a")};
+        color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.color.text)};
+        -webkit-text-fill-color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.color.text)};
     }
 
     &:active {
@@ -519,8 +525,8 @@ const PageEllipsis = styled.span`
     height: 34px;
     padding: 0 4px;
     color: rgba(15, 23, 42, 0.5);
-    font-weight: 700;
-    letter-spacing: -0.01em;
+    font-weight: 800;
+    letter-spacing: -0.02em;
     user-select: none;
 `;
 
@@ -2623,7 +2629,7 @@ export default function SearchPage() {
                             <TrendingHead>
                                 <div>
                                     <TrendingTitle>
-                                        이번 주 I-Ptn 회원들이 가장 많이 찾아본 <span className="highlight">포텐워드</span> TOP 10
+                                        이번 주 I-Poten 회원들이 가장 많이 찾아본 <span className="highlight">포텐워드</span> TOP 10
                                     </TrendingTitle>
                                 </div>
                             </TrendingHead>

@@ -685,16 +685,25 @@ const ViewToggle = styled.div`
     gap: 8px;
 `;
 
-const ToggleButton = styled.button<{ $active: boolean }>`
-    height: 40px;
-    padding: 0 14px;
-    border-radius: 999px;
-    border: 1px solid ${({ $active }) => ($active ? "#111827" : "#dbe2ea")};
-    background: ${({ $active }) => ($active ? "#111827" : "#ffffff")};
-    color: ${({ $active }) => ($active ? "#ffffff" : "#334155")};
-    font-size: 13px;
-    font-weight: 700;
-    cursor: pointer;
+const ToggleButton = styled.button.attrs({ "data-schedule-toggle-btn": "true" })<{ $active: boolean }>`
+    &[data-schedule-toggle-btn="true"] {
+        height: 40px;
+        padding: 0 14px;
+        border-radius: 999px;
+        border: 1px solid ${({ $active }) => ($active ? "#111111" : "#dbe2ea")};
+        background: ${({ $active }) => ($active ? "#111111" : "#ffffff")};
+        color: ${({ $active }) => ($active ? "#ffffff" : "#334155")};
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    }
+
+    &[data-schedule-toggle-btn="true"]:hover {
+        transform: translateY(-1px);
+        box-shadow: ${({ $active }) => ($active ? "0 10px 20px rgba(17, 17, 17, 0.16)" : "0 8px 18px rgba(15, 23, 42, 0.06)")};
+        border-color: ${({ $active }) => ($active ? "#111111" : "#cbd5e1")};
+    }
 `;
 
 const MonthLabel = styled.div`
@@ -807,17 +816,19 @@ const StateDescription = styled.p`
     color: #64748b;
 `;
 
-const PrimaryButton = styled.button`
-    min-width: 120px;
-    height: 44px;
-    padding: 0 16px;
-    border: none;
-    border-radius: 14px;
-    background: linear-gradient(90deg, #3e82e8 0%, #2bc6a6 100%);
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
+const PrimaryButton = styled.button.attrs({ "data-schedule-primary-btn": "true" })`
+    &[data-schedule-primary-btn="true"] {
+        min-width: 120px;
+        height: 44px;
+        padding: 0 16px;
+        border: none;
+        border-radius: 14px;
+        background: linear-gradient(90deg, #3e82e8 0%, #2bc6a6 100%);
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+    }
 `;
 
 const SecondaryButton = styled.button`

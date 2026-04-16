@@ -24,6 +24,7 @@ export const mfConfig = {
     react: { singleton: true, requiredVersion: "^18.2.0", eager: true },
     "react-dom": { singleton: true, requiredVersion: "^18.2.0", eager: true },
     "react-router-dom": { singleton: true, requiredVersion: "^6.28.0", eager: true },
+    "styled-components": { singleton: true, requiredVersion: "^6.1.19" },
     '@jobspoon/app-state': { singleton: true, eager: true },
     '@jobspoon/theme-bridge': { singleton: true, eager: true },
   },
