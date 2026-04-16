@@ -753,7 +753,7 @@ export default function AdminDashboard({ onLogout }: AdminDashboardProps) {
         <Wrapper $dark={dark}>
             <TopBar $dark={dark}>
                 <TopBarLeft>
-                    <LogoText>I-POTEN Admin</LogoText>
+                    <LogoText>I-Poten Admin</LogoText>
                     <BadgeTag $dark={dark}>관리 콘솔</BadgeTag>
                 </TopBarLeft>
                 <TopBarRight>

@@ -2358,52 +2358,55 @@ const MenuList = styled.div`
     }
 `;
 
-const MenuButton = styled.button<{ $active: boolean }>`
-    width: 100%;
-    border-radius: 12px;
-    padding: 14px 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    background: #f3f4f6;
-    color: #374151;
-    border: 1px solid ${palette.border};
-
-    ${({ $active }) =>
-        $active &&
-        css`
-            background: ${palette.primary};
-            color: #ffffff;
-            border-color: ${palette.primary};
-            box-shadow: 0 4px 14px rgba(79, 118, 241, 0.18);
-        `}
-
-    &:hover {
-        transform: translateY(-1px);
-        background: ${({ $active }) => ($active ? palette.primaryStrong : "#e5e7eb")};
+const MenuButton = styled.button.attrs({ "data-ipoten-mypage-menu-btn": "true" })<{ $active: boolean }>`
+    &[data-ipoten-mypage-menu-btn="true"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 100%;
+        border-radius: 12px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        background: ${({ $active }) => ($active ? palette.primary : "#f3f4f6")};
+        color: ${({ $active }) => ($active ? "#ffffff" : "#374151")};
+        -webkit-text-fill-color: ${({ $active }) => ($active ? "#ffffff" : "#374151")};
+        border: 1px solid ${({ $active }) => ($active ? palette.primary : palette.border)};
+        box-shadow: ${({ $active }) => ($active ? "0 4px 14px rgba(79, 118, 241, 0.18)" : "none")};
     }
 
-    span,
-    svg {
+    &[data-ipoten-mypage-menu-btn="true"]:hover {
+        transform: translateY(-1px);
+        background: ${({ $active }) => ($active ? palette.primaryStrong : "#e5e7eb")};
+        color: ${({ $active }) => ($active ? "#ffffff" : "#374151")};
+        -webkit-text-fill-color: ${({ $active }) => ($active ? "#ffffff" : "#374151")};
+    }
+
+    &[data-ipoten-mypage-menu-btn="true"] span,
+    &[data-ipoten-mypage-menu-btn="true"] svg {
         color: inherit;
     }
 
     @media (max-width: 1080px) {
-        width: auto;
-        padding: 10px 14px;
-        border-radius: 999px;
-        white-space: nowrap;
+        &[data-ipoten-mypage-menu-btn="true"] {
+            width: auto;
+            padding: 10px 14px;
+            border-radius: 999px;
+            white-space: nowrap;
+        }
 
-        > svg:last-child {
+        &[data-ipoten-mypage-menu-btn="true"] > svg:last-child {
             display: none;
         }
     }
 
     @media (max-width: 480px) {
-        padding: 8px 12px;
-        font-size: 13px;
+        &[data-ipoten-mypage-menu-btn="true"] {
+            padding: 8px 12px;
+            font-size: 13px;
+        }
     }
 `;
 
@@ -3205,21 +3208,23 @@ const DetailButton = styled.button`
     }
 `;
 
-const PrimaryButton = styled.button`
-    height: 44px;
-    padding: 0 16px;
-    border: none;
-    border-radius: 12px;
-    background: ${palette.accentGradient};
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1;
-    letter-spacing: -0.015em;
-    cursor: pointer;
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+const PrimaryButton = styled.button.attrs({ "data-mypage-primary-btn": "true" })`
+    &[data-mypage-primary-btn="true"] {
+        height: 44px;
+        padding: 0 16px;
+        border: none;
+        border-radius: 12px;
+        background: ${palette.accentGradient};
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1;
+        letter-spacing: -0.015em;
+        cursor: pointer;
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
 
-    &:hover {
+    &[data-mypage-primary-btn="true"]:hover {
         transform: translateY(-1px);
         box-shadow: 0 10px 20px rgba(62, 99, 224, 0.16);
     }
@@ -4167,20 +4172,22 @@ const DangerActionRow = styled.div`
     }
 `;
 
-const DangerButton = styled.button<{ disabled?: boolean }>`
-    height: 44px;
-    padding: 0 16px;
-    border: none;
-    border-radius: 12px;
-    background: ${({ disabled }) => (disabled ? "#fca5a5" : palette.danger)};
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 700;
-    letter-spacing: -0.015em;
-    cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
-    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+const DangerButton = styled.button.attrs({ "data-mypage-danger-btn": "true" })<{ disabled?: boolean }>`
+    &[data-mypage-danger-btn="true"] {
+        height: 44px;
+        padding: 0 16px;
+        border: none;
+        border-radius: 12px;
+        background: ${({ disabled }) => (disabled ? "#fca5a5" : palette.danger)};
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: -0.015em;
+        cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
 
-    &:hover {
+    &[data-mypage-danger-btn="true"]:hover {
         transform: ${({ disabled }) => (disabled ? "none" : "translateY(-1px)")};
         background: ${({ disabled }) => (disabled ? "#fca5a5" : "#dc2626")};
         box-shadow: ${({ disabled }) => (disabled ? "none" : "0 10px 20px rgba(239, 68, 68, 0.14)")};

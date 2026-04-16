@@ -78,8 +78,8 @@ const PaginationNav = styled.nav`
 `;
 const PageNumBtn = styled.button<{ $active: boolean }>`
     min-width: 34px; height: 34px; padding: 0 10px; border-radius: 999px;
-    border: 1px solid ${({ $active }) => ($active ? TOKENS.color.textBlue : TOKENS.color.border)};
-    background: ${({ $active }) => ($active ? TOKENS.color.textBlue : "#fff")};
+    border: 1px solid ${({ $active }) => ($active ? "#4f76f1" : TOKENS.color.border)};
+    background: ${({ $active }) => ($active ? "#4f76f1" : "#fff")};
     color: ${({ $active }) => ($active ? "#fff" : TOKENS.color.text)};
     font-weight: ${({ $active }) => ($active ? 700 : 600)};
     cursor: pointer;

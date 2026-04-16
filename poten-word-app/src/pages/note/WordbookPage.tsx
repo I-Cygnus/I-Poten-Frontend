@@ -1,4 +1,4 @@
-import React from "react";
+﻿import React from "react";
 import { NarrowLeft } from "../../styles/layout.ts";
 import styled from "styled-components";
 import { useParams, useNavigate, useLocation, useSearchParams, useNavigationType } from "react-router-dom";
@@ -432,6 +432,129 @@ const Empty = styled.div`
     color: ${UI.color.muted};
 `;
 
+const ErrorStateCard = styled.section`
+    position: relative;
+    overflow: hidden;
+    border-radius: 22px;
+    padding: 28px;
+    border: 1px solid rgba(79, 118, 241, 0.12);
+    background:
+            radial-gradient(circle at top right, rgba(79, 118, 241, 0.12), transparent 32%),
+            linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    box-shadow: 0 12px 28px rgba(79, 118, 241, 0.08);
+
+    @media (max-width: 720px) {
+        padding: 22px 18px;
+        border-radius: 18px;
+    }
+`;
+
+const ErrorStateGlow = styled.div`
+    position: absolute;
+    right: -18px;
+    top: -22px;
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: rgba(79, 118, 241, 0.07);
+    filter: blur(10px);
+    pointer-events: none;
+`;
+
+const ErrorStateInner = styled.div`
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
+    text-align: center;
+`;
+
+const ErrorBadge = styled.div`
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, rgba(79, 118, 241, 0.10), rgba(62, 99, 224, 0.16));
+    color: ${UI.color.primaryStrong};
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+    font-size: 22px;
+    font-weight: 800;
+`;
+
+const ErrorEyebrow = styled.span`
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 24px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: rgba(79, 118, 241, 0.07);
+    color: ${UI.color.primaryStrong};
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+`;
+
+const ErrorTitle = styled.h2`
+    margin: 0;
+    font-size: clamp(22px, 2.6vw, 28px);
+    line-height: 1.3;
+    letter-spacing: -0.03em;
+    color: ${UI.color.text};
+    text-align: center;
+`;
+
+const ErrorDescription = styled.p`
+    margin: 0 auto;
+    max-width: 500px;
+    color: ${UI.color.sub};
+    line-height: 1.65;
+    font-size: 14px;
+    text-align: center;
+
+    br {
+        display: block;
+        content: "";
+        margin-top: 4px;
+    }
+`;
+
+const ErrorActions = styled.div`
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 4px;
+    justify-content: center;
+`;
+
+const ErrorActionButton = styled.button<{ $primary?: boolean }>`
+    height: 40px;
+    padding: 0 15px;
+    border-radius: 12px;
+    border: 1px solid ${({ $primary }) => ($primary ? "transparent" : "rgba(79, 118, 241, 0.16)")};
+    background: ${({ $primary }) => ($primary ? UI.gradient.brand : "#ffffff")};
+    color: ${({ $primary }) => ($primary ? "#ffffff" : UI.color.primaryStrong)};
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    cursor: pointer;
+    box-shadow: ${({ $primary }) => ($primary ? "0 8px 18px rgba(79, 118, 241, 0.16)" : "none")};
+    transition:
+            transform 160ms ease,
+            box-shadow 160ms ease,
+            background-color 160ms ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: ${({ $primary }) => ($primary ? "0 12px 22px rgba(79, 118, 241, 0.18)" : "0 6px 14px rgba(79, 118, 241, 0.06)")};
+        background: ${({ $primary }) => ($primary ? UI.gradient.brand : "#f8fbff")};
+    }
+`;
+
 /* 하단 Export Tray */
 const Tray = styled.div`
   position: sticky;
@@ -552,6 +675,7 @@ const PagePill = styled.button<{ $active?: boolean }>`
     cursor: pointer;
 
     color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
+    -webkit-text-fill-color: ${({ $active }) => ($active ? "#fff" : "rgba(15,23,42,0.70)")};
     background: ${({ $active }) => ($active ? UI.color.primary : "transparent")};
 
     transition: background 0.15s ease, color 0.15s ease, transform 0.08s ease;
@@ -559,6 +683,7 @@ const PagePill = styled.button<{ $active?: boolean }>`
     &:hover {
         background: ${({ $active }) => ($active ? UI.color.primary : "rgba(255,255,255,0.85)")};
         color: ${({ $active }) => ($active ? "#fff" : UI.color.text)};
+        -webkit-text-fill-color: ${({ $active }) => ($active ? "#fff" : UI.color.text)};
     }
 
     &:active {
@@ -574,11 +699,13 @@ const PagePill = styled.button<{ $active?: boolean }>`
 const PageNavBtn = styled(PagePill)<{ disabled?: boolean }>`
     padding: 0 10px;
     color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
+    -webkit-text-fill-color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : "rgba(15,23,42,0.70)")};
     cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
 
     &:hover {
         background: ${({ disabled }) => (disabled ? "transparent" : "rgba(255,255,255,0.85)")};
         color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.color.text)};
+        -webkit-text-fill-color: ${({ disabled }) => (disabled ? "rgba(15,23,42,0.28)" : UI.color.text)};
     }
 
     &:active {
@@ -1952,6 +2079,8 @@ export default function WordbookPage() {
     const [moveOpen, setMoveOpen] = React.useState(false);
     const [notebooks, setNotebooks] = React.useState<Notebook[]>([]);
 
+    const isMissingFolderError = error === "폴더를 찾을 수 없습니다.";
+
     // 전역 선택 바구니: termId 기준(페이지 넘어가도 유지)
     const [selectedTermIds, setSelectedTermIds] = React.useState<Set<number>>(new Set());
     const [uwtToTerm, setUwtToTerm] = React.useState<Record<string, number | null>>({});
@@ -2180,7 +2309,12 @@ export default function WordbookPage() {
     const openMove = async () => {
         const selectedCount = selectedTermIds.size;
         if (selectedCount === 0) {
-            alert("먼저 단어를 선택해 주세요.");
+            setSystemMessage({
+                tone: "info",
+                title: "선택된 항목이 없어요.",
+                description: "이동할 단어를 먼저 선택해 주세요.",
+            });
+            setSystemMessageOpen(true);
             return;
         }
         try {
@@ -2385,7 +2519,12 @@ export default function WordbookPage() {
     /* ------ PDF 내보내기 ------ */
     const exportByTermIds = async (termIds: number[], title: string) => {
         if (!termIds.length) {
-            alert("선택한 단어가 없습니다.");
+            setSystemMessage({
+                tone: "info",
+                title: "선택된 항목이 없어요.",
+                description: "내보낼 단어를 먼저 선택해 주세요.",
+            });
+            setSystemMessageOpen(true);
             return;
         }
         try {
@@ -2534,7 +2673,12 @@ export default function WordbookPage() {
 
     const handleDeleteSelected = async () => {
         if (selectedTermIds.size === 0) {
-            alert("먼저 단어를 선택해 주세요.");
+            setSystemMessage({
+                tone: "info",
+                title: "선택된 항목이 없어요.",
+                description: "삭제할 단어를 먼저 선택해 주세요.",
+            });
+            setSystemMessageOpen(true);
             return;
         }
         if (!wordbookId) return;
@@ -3090,7 +3234,34 @@ export default function WordbookPage() {
 
             {/* 본문 */}
             {error ? (
-                <p style={{ color: "red", padding: 20 }}>{error}</p>
+                isMissingFolderError ? (
+                    <ErrorStateCard>
+                        <ErrorStateGlow />
+                        <ErrorStateInner>
+                            <ErrorEyebrow>Folder unavailable</ErrorEyebrow>
+                            <ErrorBadge aria-hidden="true">!</ErrorBadge>
+                            <ErrorTitle>찾으시는 폴더가 보이지 않아요</ErrorTitle>
+                            <ErrorDescription>
+                                삭제되었거나 접근 권한이 바뀌었을 수 있습니다. 포텐노트 목록으로
+                                돌아가 다른 폴더를 확인해 주세요.
+                            </ErrorDescription>
+                            <ErrorActions>
+                                <ErrorActionButton
+                                    $primary
+                                    type="button"
+                                    onClick={() => navigate("/learning/note")}
+                                >
+                                    폴더 목록으로 가기
+                                </ErrorActionButton>
+                                <ErrorActionButton type="button" onClick={() => navigate(-1)}>
+                                    이전 화면으로
+                                </ErrorActionButton>
+                            </ErrorActions>
+                        </ErrorStateInner>
+                    </ErrorStateCard>
+                ) : (
+                    <Empty>{error}</Empty>
+                )
             ) : loading && items.length === 0 ? (
                 <p style={{ padding: 20 }}>⏳ 불러오는 중...</p>
             ) : items.length === 0 ? (
@@ -3354,3 +3525,4 @@ export default function WordbookPage() {
 
     );
 }
+
