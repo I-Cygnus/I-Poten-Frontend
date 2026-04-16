@@ -52,7 +52,7 @@ export default defineConfig({
         { from: /^\/vue-account\/.*$/, to: "/index.html" },
         { from: /^\/vue-ai-interview\/.*$/, to: "/index.html" },
         { from: /^\/studies\/.*$/, to: "/index.html" },
-        { from: /^\/poten-word\/.*$/, to: "/index.html" },
+        { from: /^\/ptn-word\/.*$/, to: "/index.html" },
         { from: /^\/mypage\/.*$/, to: "/index.html" },
         { from: /./, to: "/index.html" }
       ]

@@ -138,7 +138,7 @@ const BackgroundCircle = styled.div<{
   }
 `;
 
-/* ========== 배경 레이어 (poten-word 스타일) ========== */
+/* ========== 배경 레이어 (ptn-word 스타일) ========== */
 const SoftBg = styled.div`
   position: fixed;
   inset: 0;
@@ -5236,8 +5236,8 @@ export default function Main() {
 
   const FAQ_ITEMS = [
     {
-      q: "I-Poten은 어떤 서비스인가요?",
-      a: "I-Poten은 면접 준비에 필요한 학습, 퀴즈, AI 모의 면접, 피드백 리포트를 하나로 연결해 주는 서비스입니다. 단순히 질문과 답변을 외우는 방식이 아니라, 반복 학습과 실전 연습을 통해 나만의 답변과 면접 역량을 만들어 갈 수 있도록 돕습니다.",
+      q: "I-Ptn은 어떤 서비스인가요?",
+      a: "I-Ptn은 면접 준비에 필요한 학습, 퀴즈, AI 모의 면접, 피드백 리포트를 하나로 연결해 주는 서비스입니다. 단순히 질문과 답변을 외우는 방식이 아니라, 반복 학습과 실전 연습을 통해 나만의 답변과 면접 역량을 만들어 갈 수 있도록 돕습니다.",
     },
     {
       q: "무료로 이용할 수 있나요?",
@@ -5249,7 +5249,7 @@ export default function Main() {
     },
     {
       q: "별도 프로그램 설치가 필요한가요?",
-      a: "아니요. I-Poten은 웹 기반 서비스이기 때문에 별도의 프로그램 설치 없이 바로 이용할 수 있습니다. 브라우저만 있으면 학습, 퀴즈, AI 모의 면접, 결과 확인까지 한 곳에서 진행할 수 있습니다.",
+      a: "아니요. I-Ptn은 웹 기반 서비스이기 때문에 별도의 프로그램 설치 없이 바로 이용할 수 있습니다. 브라우저만 있으면 학습, 퀴즈, AI 모의 면접, 결과 확인까지 한 곳에서 진행할 수 있습니다.",
     },
     {
       q: "AI 모의 면접은 어떻게 진행되나요?",
@@ -5261,7 +5261,7 @@ export default function Main() {
     },
     {
       q: "학습한 내용은 퀴즈나 면접 연습과 연결되나요?",
-      a: "네. I-Poten은 단어 학습, 퀴즈, AI 모의 면접이 서로 연결되도록 설계되어 있습니다. 학습한 내용을 퀴즈로 점검하고, 이후 면접 답변에서 실제로 활용해 보면서 준비 과정을 자연스럽게 이어갈 수 있습니다.",
+      a: "네. I-Ptn은 단어 학습, 퀴즈, AI 모의 면접이 서로 연결되도록 설계되어 있습니다. 학습한 내용을 퀴즈로 점검하고, 이후 면접 답변에서 실제로 활용해 보면서 준비 과정을 자연스럽게 이어갈 수 있습니다.",
     },
   ] as const;
 
@@ -5684,7 +5684,7 @@ export default function Main() {
 
                 {/* 설명 */}
                 <HeroDescText>
-                  AI 기반 I-Poten 솔루션으로<br />
+                  AI 기반 I-Ptn 솔루션으로<br />
                   당신의 면접과 취업, 합격 이후의 성장까지<br />
                   필요한 모든 것을 연결합니다.
                 </HeroDescText>
@@ -5807,11 +5807,11 @@ export default function Main() {
           {/*</ServiceSection>*/}
 
           <ProgressSection data-progress-section ref={progressSectionRef}>
-            <ProgressKicker data-reveal style={revealStyle(0)}>I-POTEN FLOW</ProgressKicker>
+            <ProgressKicker data-reveal style={revealStyle(0)}>I-PTN FLOW</ProgressKicker>
             <ProgressTitle data-reveal style={revealStyle(100)}>
               면접의 모든 과정을
               <br />
-              <ProgressTitleAccent>I-Poten</ProgressTitleAccent>과 함께
+              <ProgressTitleAccent>I-Ptn</ProgressTitleAccent>과 함께
             </ProgressTitle>
             <ProgressDescription data-reveal style={revealStyle(220)}>
               면접 준비의 흐름을 따라
@@ -5862,7 +5862,7 @@ export default function Main() {
               {/* Row 1 - Image Left, Content Right */}
               <CoreValueRow data-reveal style={revealStyle(100)}>
                 <CoreValueImageCard>
-                  <CoreValueImage src={coreValue01} alt="I-Poten 핵심 가치 1" $fit="cover" />
+                  <CoreValueImage src={coreValue01} alt="I-Ptn 핵심 가치 1" $fit="cover" />
                 </CoreValueImageCard>
 
                 <CoreValueContent>
@@ -5883,7 +5883,7 @@ export default function Main() {
               {/* Row 2 - Content Left, Image Right (Reversed) */}
               <CoreValueRow $reverse data-reveal style={revealStyle(200)}>
                 <CoreValueImageCard>
-                  <CoreValueImage src={coreValue02} alt="I-Poten 핵심 가치 2" $fit="cover" />
+                  <CoreValueImage src={coreValue02} alt="I-Ptn 핵심 가치 2" $fit="cover" />
                 </CoreValueImageCard>
 
                 <CoreValueContent>
@@ -5904,7 +5904,7 @@ export default function Main() {
               {/* Row 3 - Image Left, Content Right */}
               <CoreValueRow data-reveal style={revealStyle(300)}>
                 <CoreValueImageCard>
-                  <CoreValueImage src={coreValue03} alt="I-Poten 핵심 가치 3" $fit="cover" />
+                  <CoreValueImage src={coreValue03} alt="I-Ptn 핵심 가치 3" $fit="cover" />
                 </CoreValueImageCard>
 
                 <CoreValueContent>
@@ -6321,7 +6321,7 @@ export default function Main() {
               <CompaniesEyebrow>Supported Companies</CompaniesEyebrow>
 
               <CompaniesTitle>
-                현재 I-Poten이 지원하는 기업
+                현재 I-Ptn이 지원하는 기업
               </CompaniesTitle>
 
               <CompaniesDesc>
@@ -6362,7 +6362,7 @@ export default function Main() {
             {/*<HomeFiveSection>*/}
             {/*  <Hero>*/}
             {/*    <TitleBox data-reveal data-reveal-variant="fade" style={revealStyle(120)}>*/}
-            {/*      I-POTEN*/}
+            {/*      I-PTN*/}
             {/*    </TitleBox>*/}
 
             {/*    <h2>*/}
@@ -6383,7 +6383,7 @@ export default function Main() {
             {/*    <p>*/}
             {/*      핵심 개념 학습부터 AI 모의면접과 리포트까지*/}
             {/*      <br />*/}
-            {/*      I-Poten은 면접 준비 전 과정을 끊김 없이 이어줍니다.*/}
+            {/*      I-Ptn은 면접 준비 전 과정을 끊김 없이 이어줍니다.*/}
             {/*    </p>*/}
             {/*  </Features>*/}
             {/*</HomeFiveSection>*/}
@@ -6391,11 +6391,11 @@ export default function Main() {
             <MobilePromoSection>
               <MobilePromoHead data-reveal style={revealStyle(0)}>
                 <MobilePromoEyebrow>Mobile App</MobilePromoEyebrow>
-                <MobilePromoTitle>모바일에서도 I-Poten을 만나보세요</MobilePromoTitle>
+                <MobilePromoTitle>모바일에서도 I-Ptn을 만나보세요</MobilePromoTitle>
                 <MobilePromoDesc>
                   학습부터 퀴즈, AI 모의면접까지
                   <br />
-                  언제 어디서나 I-Poten을 끊김 없이 이어갈 수 있습니다.
+                  언제 어디서나 I-Ptn을 끊김 없이 이어갈 수 있습니다.
                 </MobilePromoDesc>
               </MobilePromoHead>
 
@@ -6414,7 +6414,7 @@ export default function Main() {
                   <MobilePromoInsideDesc>
                     이동 중에도, 짧은 틈에도
                     <br />
-                    I-Poten으로 면접 준비를 이어가 보세요.
+                    I-Ptn으로 면접 준비를 이어가 보세요.
                   </MobilePromoInsideDesc>
 
                   <MobileStoreRow>
@@ -6446,7 +6446,7 @@ export default function Main() {
 
                 <MobilePromoImage
                     src={mobileBanner}
-                    alt="i-Poten 애플리케이션 출시 배너"
+                    alt="i-Ptn 애플리케이션 출시 배너"
                     draggable={false}
                     loading="lazy"
                 />
@@ -6486,7 +6486,7 @@ export default function Main() {
                   <StoreQrDesc>
                     스마트폰 카메라로 QR을 스캔해
                     <br />
-                    I-Poten 앱 다운로드 페이지로 이동하세요.
+                    I-Ptn 앱 다운로드 페이지로 이동하세요.
                   </StoreQrDesc>
 
                   <StoreQrImageWrap>

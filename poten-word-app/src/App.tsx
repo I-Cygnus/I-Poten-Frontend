@@ -229,7 +229,7 @@ function AppLayout() {
   useLayoutEffect(() => {
     const setShellInsets = () => {
       const brand = document.querySelector(
-          'header a[aria-label="i-Poten 홈"]'
+          'header a[aria-label="i-Ptn 홈"]'
       ) as HTMLElement | null;
       const inner = brand?.closest("div") as HTMLElement | null;
       if (!inner) return;
