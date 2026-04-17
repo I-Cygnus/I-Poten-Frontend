@@ -70,7 +70,11 @@ function formatDateTime(value: string) {
 }
 
 function getPdfViewUrl(record: InterviewSummary) {
-    return record.pdfUrl || `/vue-ai-interview/ai-interview/result/${record.interviewId}`;
+    if (record.pdfUrl) return record.pdfUrl;
+    if (record.interviewType === "인성 면접") {
+        return `/vue-ai-interview/ai-interview/personality-result/${record.interviewId}`;
+    }
+    return `/vue-ai-interview/ai-interview/result/${record.interviewId}`;
 }
 
 export default function InterviewRecordListPage() {

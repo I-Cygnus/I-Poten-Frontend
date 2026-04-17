@@ -426,11 +426,14 @@ export default function InterviewRecordDetailPage() {
                 if (mounted) {
                     setDetail(normalized);
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error(error);
 
                 if (mounted) {
-                    setLoadError("면접 결과를 불러오지 못했습니다.");
+                    const msg = error?.message?.includes("권한")
+                        ? "접근 권한이 없습니다."
+                        : "면접 결과를 불러오지 못했습니다.";
+                    setLoadError(msg);
                 }
             } finally {
                 if (mounted) {

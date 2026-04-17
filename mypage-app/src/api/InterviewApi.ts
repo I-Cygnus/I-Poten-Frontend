@@ -401,6 +401,10 @@ async function requestJson<T>(path: string): Promise<T> {
         credentials: "include",
     });
 
+    if (response.status === 403) {
+        throw new Error("접근 권한이 없습니다.");
+    }
+
     if (!response.ok) {
         throw new Error(`Interview API request failed: ${response.status}`);
     }

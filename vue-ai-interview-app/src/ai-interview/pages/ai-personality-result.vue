@@ -132,6 +132,10 @@ const loadResult = async () => {
     qaList.value = res.data.qaList || [];
   } catch (err) {
     console.error('결과 조회 실패:', err);
+    if (err?.response?.status === 403) {
+      errorMsg.value = '접근 권한이 없습니다.';
+      return;
+    }
     errorMsg.value = '결과를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.';
   } finally {
     isLoading.value = false;
