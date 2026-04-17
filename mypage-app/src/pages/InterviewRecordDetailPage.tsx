@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getInterviewResultDetail } from "../api/InterviewApi.ts";
+import { notifyError } from "../utils/toast.ts";
 
 const pretendard = css`
   font-family:
@@ -430,9 +431,11 @@ export default function InterviewRecordDetailPage() {
                 console.error(error);
 
                 if (mounted) {
-                    const msg = error?.message?.includes("권한")
+                    const isAuthError = error?.message?.includes("권한");
+                    const msg = isAuthError
                         ? "접근 권한이 없습니다."
                         : "면접 결과를 불러오지 못했습니다.";
+                    notifyError(msg);
                     setLoadError(msg);
                 }
             } finally {
