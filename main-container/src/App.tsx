@@ -1,6 +1,5 @@
 // src/App.tsx
 import React, { lazy, Suspense, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import ReactDOM from "react-dom/client";
 
 import { CircularProgress, CssBaseline, GlobalStyles } from "@mui/material";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
@@ -286,9 +285,4 @@ const App = () => (
 );
 
 export default App;
-
-const container = document.getElementById("app") as HTMLElement;
-if (!container) throw new Error("Root container #app not found");
-const root = ReactDOM.createRoot(container);
-root.render(<App />);
 

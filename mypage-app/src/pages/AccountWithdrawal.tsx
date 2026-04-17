@@ -550,20 +550,22 @@ const GhostButton = styled.button`
     }
 `;
 
-const DangerButton = styled.button<{ disabled?: boolean }>`
-    ${interactiveText};
-    height: 44px;
-    padding: 0 16px;
-    border: none;
-    border-radius: 12px;
-    background: ${({ disabled }) => (disabled ? "#fca5a5" : palette.danger)};
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
-    transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+const DangerButton = styled.button.attrs({ "data-account-withdraw-danger-btn": "true" })<{ disabled?: boolean }>`
+    &[data-account-withdraw-danger-btn="true"] {
+        ${interactiveText};
+        height: 44px;
+        padding: 0 16px;
+        border: none;
+        border-radius: 12px;
+        background: ${({ disabled }) => (disabled ? "#fca5a5" : palette.danger)};
+        color: #ffffff;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
+        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+    }
 
-    &:hover {
+    &[data-account-withdraw-danger-btn="true"]:hover {
         transform: ${({ disabled }) => (disabled ? "none" : "translateY(-1px)")};
         background: ${({ disabled }) => (disabled ? "#fca5a5" : "#dc2626")};
         box-shadow: ${({ disabled }) => (disabled ? "none" : "0 10px 20px rgba(239, 68, 68, 0.14)")};
