@@ -27,6 +27,9 @@ const AdminOverview = () => import("@/administrator/pages/adminPage/AdminOvervie
 const AdminLayout = () => import("@/administrator/pages/adminPage/AdminLayout.vue");
 const AdminUsers = () => import("@/administrator/pages/adminPage/AdminUsers.vue");
 const AdminStudyRoomReport=() => import("@/administrator/pages/adminPage/AdminStudyRoomReport.vue");
+const AdminInterviews = () => import("@/administrator/pages/adminPage/AdminInterviews.vue");
+const AdminInterviewHistory = () => import("@/administrator/pages/adminPage/AdminInterviewHistory.vue");
+const AdminInterviewDetail = () => import("@/administrator/pages/adminPage/AdminInterviewDetail.vue");
 
 const routes: Array<RouteRecordRaw> = [
   { path: "/account/login", name: "VueAccountLogin", component: AccountLogin },
@@ -87,6 +90,26 @@ const routes: Array<RouteRecordRaw> = [
         name:"AdminStudyRoomReport",
         component: AdminStudyRoomReport,
         meta: {section: "ADMIN_APP",requiresAdmin: true}
+      },
+      {
+        path: "interviews",
+        name: "AdminInterviews",
+        component: AdminInterviews,
+        meta: { section: "ADMIN_APP", requiresAdmin: true }
+      },
+      {
+        path: "interviews/:userId",
+        name: "AdminInterviewHistory",
+        component: AdminInterviewHistory,
+        meta: { section: "ADMIN_APP", requiresAdmin: true },
+        props: true
+      },
+      {
+        path: "interviews/:userId/:interviewId",
+        name: "AdminInterviewDetail",
+        component: AdminInterviewDetail,
+        meta: { section: "ADMIN_APP", requiresAdmin: true },
+        props: true
       },
     ],
   },

@@ -28,6 +28,12 @@
           link
       />
       <v-list-item
+          prepend-icon="mdi-clipboard-text-search"
+          title="면접 결과 조회"
+          :to="{ name: 'AdminInterviews' }"
+          link
+      />
+      <v-list-item
           prepend-icon="mdi-chair-rolling"
           title="스터디룸 신고 관리"
           :to="{ name: 'AdminStudyRoomReport' }"
