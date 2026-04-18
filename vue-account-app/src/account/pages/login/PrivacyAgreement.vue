@@ -1,205 +1,121 @@
 <template>
-  <v-container :style="containerStyle" class="py-6">
-    <v-row justify="center">
-      <v-col cols="12" md="10" lg="8">
-        <div :style="titleContainerStyle">
-          <div :style="badgeRowStyle">
-            <span :style="pageBadgeStyle">
-              {{ rejoinMode ? "계정 재가입" : "회원가입 전 확인" }}
-            </span>
-<!--            <span :style="stepBadgeStyle">STEP 1</span>-->
-          </div>
+  <div :style="pageStyle">
+    <!-- Top bar -->
+    <div :style="topBarStyle">
+      <div :style="topBarInnerStyle">
+        <a href="/" :style="logoLinkStyle" aria-label="I-Poten 홈으로">
+          <img :src="logoBlack" alt="I-Poten" :style="logoImageStyle" />
+        </a>
+      </div>
+    </div>
 
-          <h1 :style="mainTitleStyle">
-            {{ rejoinMode ? "다시 시작하기 전에 약관을 확인해 주세요" : "회원가입을 위한 약관 동의" }}
-          </h1>
+    <div :style="shellStyle">
+      <!-- Header -->
+      <header :style="headerStyle">
+        <p :style="eyebrowStyle">{{ rejoinMode ? "계정 재가입" : "회원가입" }}</p>
+        <h1 :style="titleStyle">
+          {{ rejoinMode ? "약관을 다시 확인해주세요" : "서비스 이용약관에 동의해주세요" }}
+        </h1>
+        <p :style="descStyle">
+          {{
+            rejoinMode
+                ? "탈퇴 이력이 있는 계정을 다시 활성화하려면 약관 동의가 필요합니다."
+                : "필수 항목에 동의하시면 바로 회원가입이 완료됩니다."
+          }}
+        </p>
+      </header>
 
-          <p :style="subtitleStyle">
-            {{
-              rejoinMode
-                  ? "탈퇴 이력이 있는 계정을 다시 활성화하려면 약관 동의가 필요합니다."
-                  : "I-Poten 서비스 이용을 위해 개인정보 처리방침과 이용약관 확인이 필요합니다."
-            }}
-          </p>
+      <!-- Card -->
+      <section :style="cardStyle">
+        <!-- All agree -->
+        <button
+            type="button"
+            :style="allAgreeRowStyle"
+            @click="toggleAll"
+            :aria-pressed="allChecked"
+        >
+          <span :style="getCheckStyle(allChecked, true)" aria-hidden="true">
+            <span :style="getCheckIconStyle(allChecked)"></span>
+          </span>
+          <span :style="allAgreeLabelStyle">약관 전체 동의</span>
+          <span :style="allAgreeMetaStyle">{{ requiredCheckedCount }} / {{ requiredItemsCount }} 필수</span>
+        </button>
 
-          <p :style="subtitleStyle">
-            {{
-              rejoinMode
-                  ? "이전과 동일한 소셜 계정으로 다시 가입하는 경우에도 필수 약관 동의 절차가 진행됩니다."
-                  : "필수 항목에 동의하면 회원가입을 계속 진행할 수 있습니다."
-            }}
-          </p>
-        </div>
+        <div :style="dividerStyle"></div>
 
-        <!-- 상단 상태 카드 -->
-        <div :style="summaryGridStyle">
-          <div :style="summaryPrimaryCardStyle">
-            <div :style="summaryLabelWhiteStyle">필수 항목 동의</div>
-            <div :style="summaryValueWhiteStyle">{{ requiredCheckedCount }} / {{ requiredItemsCount }}</div>
-            <div :style="summaryTextWhiteStyle">
-              필수 약관에 모두 동의해야 다음 단계로 진행할 수 있습니다.
-            </div>
-          </div>
-
-          <div :style="summaryCardStyle">
-            <div :style="summaryLabelStyle">진행 상태</div>
-            <div :style="summaryValueStyle">
-              {{ canSubmit ? "가입 진행 가능" : "필수 항목 확인 필요" }}
-            </div>
-            <div :style="summaryTextStyle">
-              선택 항목은 동의하지 않아도 서비스 이용을 시작할 수 있습니다.
-            </div>
-          </div>
-        </div>
-
-        <!-- 전체 동의 -->
-        <div :style="allAgreeSectionStyle">
-          <div :style="allAgreeTopStyle" @click="toggleAll">
-            <div :style="allAgreeLeftStyle">
-              <div :style="allAgreeCheckWrapStyle">
-                <span :style="getCheckBoxStyle(allChecked)">
-                  <span :style="checkIconStyle">✓</span>
-                </span>
-              </div>
-
-              <div>
-                <div :style="allAgreeTitleStyle">전체 약관에 동의합니다</div>
-                <div :style="allAgreeSubStyle">
-                  선택 항목을 포함한 모든 약관을 한 번에 체크할 수 있습니다.
-                </div>
-              </div>
-            </div>
-
-            <div :style="allAgreeStateStyle">
-              {{ allChecked ? "전체 동의 완료" : "전체 선택" }}
-            </div>
-          </div>
-        </div>
-
-        <!-- 약관 항목 -->
-        <div :style="sectionWrapStyle">
-          <div :style="sectionHeaderStyle">
-            <h2 :style="sectionTitleStyle">약관 항목</h2>
-            <p :style="sectionDescStyle">필수 항목을 우선 확인하고, 필요한 경우 상세 내용을 펼쳐 확인해 주세요.</p>
-          </div>
-
-          <div
-              v-for="(item, index) in agreementItems"
+        <!-- Items -->
+        <ul :style="listStyle">
+          <li
+              v-for="item in agreementItems"
               :key="item.id"
-              :style="getAgreementCardStyle(item.checked, isExpanded(item.id))"
+              :style="itemStyle"
           >
-            <div :style="agreementTopRowStyle">
-              <div :style="agreementLeftStyle">
-                <div :style="checkWrapStyle">
-                  <button
-                      type="button"
-                      :style="checkButtonStyle"
-                      @click="toggleItem(item.id)"
-                      :aria-pressed="item.checked"
-                      :aria-label="`${item.title} ${item.checked ? '동의 해제' : '동의'}`"
-                  >
-                    <span :style="getCheckBoxStyle(item.checked)">
-                    <span :style="checkIconStyle">✓</span>
-                    </span>
-                  </button>
-                </div>
-
-                <div :style="agreementTextWrapStyle">
-                  <div :style="agreementMetaRowStyle">
-                    <span :style="item.required ? requiredBadgeStyle : optionalBadgeStyle">
-                      {{ item.required ? "필수" : "선택" }}
-                    </span>
-                    <span :style="agreementOrderStyle">
-                      {{ String(index + 1).padStart(2, "0") }}
-                    </span>
-                  </div>
-
-                  <div :style="agreementTitleRowStyle">
-                    <strong :style="agreementMainTitleStyle">{{ item.title }}</strong>
-                  </div>
-
-                  <p :style="agreementCaptionStyle">{{ item.caption }}</p>
-                </div>
-              </div>
-
-              <div :style="agreementActionGroupStyle">
-                <div :style="item.checked ? agreementStateActiveStyle : agreementStateStyle">
-                  {{ item.checked ? "동의함" : "미동의" }}
-                </div>
-
-                <button
-                    type="button"
-                    :style="getDetailToggleStyle(isExpanded(item.id))"
-                    @click="toggleExpanded(item.id)"
-                    :aria-expanded="isExpanded(item.id)"
-                >
-                  <span>{{ isExpanded(item.id) ? "상세 접기" : "상세 보기" }}</span>
-                  <span :style="getChevronWrapStyle">
-                    <span :style="getChevronStyle(isExpanded(item.id))"></span>
+            <div :style="itemRowStyle">
+              <button
+                  type="button"
+                  :style="itemClickStyle"
+                  @click="toggleItem(item.id)"
+                  :aria-pressed="item.checked"
+              >
+                <span :style="getCheckStyle(item.checked, false)" aria-hidden="true">
+                  <span :style="getCheckIconStyle(item.checked)"></span>
+                </span>
+                <span :style="itemLabelWrapStyle">
+                  <span :style="item.required ? requiredTagStyle : optionalTagStyle">
+                    {{ item.required ? "(필수)" : "(선택)" }}
                   </span>
-                </button>
-              </div>
+                  <span :style="itemTitleStyle">{{ item.title }}</span>
+                </span>
+              </button>
+
+              <button
+                  type="button"
+                  :style="detailToggleStyle"
+                  @click="toggleExpanded(item.id)"
+                  :aria-expanded="isExpanded(item.id)"
+              >
+                <span>{{ isExpanded(item.id) ? "접기" : "전문 보기" }}</span>
+                <span :style="getChevronStyle(isExpanded(item.id))"></span>
+              </button>
             </div>
 
             <v-expand-transition>
-              <div v-show="isExpanded(item.id)" :style="agreementBodyStyle">
-                <div :style="agreementDetailHeaderStyle">
-                  <div :style="agreementDetailTitleStyle">상세 안내</div>
-                  <div :style="agreementDetailSubStyle">
-                    아래 내용을 확인한 뒤 동의 여부를 선택해 주세요.
-                  </div>
-                </div>
-
-                <div
+              <div v-show="isExpanded(item.id)" :style="detailBoxStyle">
+                <p
                     v-for="paragraph in item.content"
                     :key="`${item.id}-${paragraph.slice(0, 20)}`"
-                    :style="agreementParagraphRowStyle"
+                    :style="detailParagraphStyle"
                 >
-                  <span :style="dotStyle"></span>
-                  <p :style="agreementParagraphStyle">{{ paragraph }}</p>
-                </div>
+                  {{ paragraph }}
+                </p>
               </div>
             </v-expand-transition>
-          </div>
-        </div>
+          </li>
+        </ul>
+      </section>
 
-        <!-- 하단 버튼 -->
-        <div :style="bottomActionStyle">
-          <div :style="bottomGuideBoxStyle">
-            <div :style="bottomGuideTitleStyle">
-              {{ canSubmit ? "필수 약관 동의가 완료되었습니다." : "필수 약관 동의가 필요합니다." }}
-            </div>
-            <div :style="bottomGuideDescStyle">
-              {{
-                canSubmit
-                    ? "이제 회원가입 또는 재가입을 계속 진행할 수 있습니다."
-                    : "개인정보 수집 및 이용 동의와 서비스 이용약관 동의는 반드시 필요합니다."
-              }}
-            </div>
-          </div>
-
-          <div :style="buttonContainerStyle">
-            <v-btn
-                @click="goBack"
-                :style="cancelBtnStyle"
-                elevation="0"
-            >
-              이전으로
-            </v-btn>
-
-            <v-btn
-                @click="agreeAndLogin"
-                :style="canSubmit ? agreeBtnStyle : disabledAgreeBtnStyle"
-                elevation="0"
-                :disabled="!canSubmit"
-            >
-              {{ rejoinMode ? "동의하고 재가입 진행" : "동의하고 회원가입" }}
-            </v-btn>
-          </div>
-        </div>
-      </v-col>
-    </v-row>
-  </v-container>
+      <!-- Actions -->
+      <div :style="actionRowStyle">
+        <v-btn
+            @click="goBack"
+            :style="secondaryBtnStyle"
+            elevation="0"
+            height="48"
+        >
+          이전으로
+        </v-btn>
+        <v-btn
+            @click="agreeAndLogin"
+            :style="canSubmit ? primaryBtnStyle : primaryBtnDisabledStyle"
+            elevation="0"
+            :disabled="!canSubmit"
+            height="48"
+        >
+          {{ rejoinMode ? "동의하고 재가입" : "동의하고 가입하기" }}
+        </v-btn>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup>
@@ -211,6 +127,7 @@ import { useNaverAuthenticationStore } from "../../../naver/stores/naverAuthenti
 import { useMetaAuthenticationStore } from "@/meta/stores/metaAuthenticationStore";
 import { useHead } from "@vueuse/head";
 import { isRejoinUser } from "../../utility/socialLogin";
+import logoBlack from "@/assets/images/logo/Logo2.png";
 
 useHead({
   title: "약관 동의 | I-Poten",
@@ -366,526 +283,305 @@ const goBack = () => {
   router.push("/account/login");
 };
 
-/* style objects */
-const containerStyle = {
-  backgroundColor: "#f5f8ff",
-  fontFamily: "'Pretendard', 'Noto Sans KR', sans-serif",
-  maxWidth: "1200px",
+/* ===================== styles ===================== */
+
+const pageStyle = {
+  minHeight: "100vh",
+  backgroundColor: "#f7f8fa",
+  fontFamily: "'Pretendard', 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif",
+  color: "#191f28",
+};
+
+const topBarStyle = {
+  position: "sticky",
+  top: 0,
+  zIndex: 30,
+  background: "rgba(247, 248, 250, 0.85)",
+  backdropFilter: "saturate(180%) blur(12px)",
+  WebkitBackdropFilter: "saturate(180%) blur(12px)",
+  borderBottom: "1px solid #edeff2",
+};
+
+const topBarInnerStyle = computed(() => ({
+  maxWidth: "1120px",
   margin: "0 auto",
-  marginTop: "20px",
-  marginBottom: "40px",
-};
-
-const titleContainerStyle = computed(() => ({
-  textAlign: 'left',
-  marginBottom: '24px',
-  background: 'rgba(255,255,255,0.9)',
-  border: '1px solid rgba(15, 23, 42, 0.08)',
-  borderRadius: isMobile.value ? '18px' : '24px',
-  padding: isMobile.value ? '20px 16px' : '32px',
-  boxShadow: '0 18px 48px rgba(15, 23, 42, 0.07)',
-}));
-
-const badgeRowStyle = {
+  padding: isMobile.value ? "14px 20px" : "18px 32px",
   display: "flex",
   alignItems: "center",
-  gap: "10px",
-  marginBottom: "16px",
-  flexWrap: "wrap",
-};
-
-const pageBadgeStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  height: "34px",
-  padding: "0 14px",
-  borderRadius: "999px",
-  background: "rgba(82, 124, 234, 0.1)",
-  color: "#3f67dd",
-  fontSize: "13px",
-  fontWeight: 700,
-};
-
-const stepBadgeStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  height: "34px",
-  padding: "0 12px",
-  borderRadius: "999px",
-  background: "#111827",
-  color: "#ffffff",
-  fontSize: "12px",
-  fontWeight: 700,
-};
-
-const mainTitleStyle = computed(() => ({
-  fontSize: isMobile.value ? '1.5rem' : '2.1rem',
-  fontWeight: 800,
-  color: '#111827',
-  marginBottom: '14px',
-  lineHeight: '1.25',
-  letterSpacing: '-0.03em',
-  wordBreak: 'keep-all',
 }));
 
-const subtitleStyle = {
-  fontSize: "1rem",
-  color: "#6b7280",
-  lineHeight: "1.7",
-  margin: "6px 0",
+const logoLinkStyle = {
+  display: "inline-flex",
+  alignItems: "center",
+  textDecoration: "none",
 };
 
-const summaryGridStyle = computed(() => ({
-  display: 'grid',
-  gridTemplateColumns: isMobile.value ? '1fr' : '1.2fr 1fr',
-  gap: '14px',
-  marginBottom: '18px',
+const logoImageStyle = {
+  height: "26px",
+  width: "auto",
+  display: "block",
+};
+
+const shellStyle = computed(() => ({
+  maxWidth: "720px",
+  margin: "0 auto",
+  padding: isMobile.value ? "32px 20px 80px" : "64px 32px 120px",
 }));
 
-const summaryPrimaryCardStyle = {
-  background: "linear-gradient(135deg, #527cea, #6b93f5)",
-  borderRadius: "20px",
-  padding: "22px",
-  color: "#ffffff",
-  boxShadow: "0 14px 30px rgba(82, 124, 234, 0.18)",
-};
+const headerStyle = computed(() => ({
+  marginBottom: isMobile.value ? "24px" : "32px",
+  paddingLeft: "4px",
+}));
 
-const summaryCardStyle = {
-  backgroundColor: "#ffffff",
-  border: "1px solid rgba(148, 163, 184, 0.18)",
-  borderRadius: "20px",
-  padding: "22px",
-  boxShadow: "0 10px 24px rgba(15, 23, 42, 0.04)",
-};
-
-const summaryLabelWhiteStyle = {
+const eyebrowStyle = {
+  margin: 0,
   fontSize: "13px",
+  fontWeight: 600,
+  color: "#3182f6",
+  letterSpacing: "0.02em",
+  marginBottom: "12px",
+  textTransform: "uppercase",
+};
+
+const titleStyle = computed(() => ({
+  margin: 0,
+  fontSize: isMobile.value ? "1.625rem" : "2rem",
   fontWeight: 700,
-  opacity: 0.95,
+  color: "#191f28",
+  lineHeight: "1.35",
+  letterSpacing: "-0.025em",
+  wordBreak: "keep-all",
+}));
+
+const descStyle = {
+  margin: "12px 0 0",
+  fontSize: "15px",
+  lineHeight: "1.65",
+  color: "#6b7684",
+  letterSpacing: "-0.01em",
+  wordBreak: "keep-all",
 };
 
-const summaryValueWhiteStyle = {
-  fontSize: "2rem",
-  fontWeight: 800,
-  marginTop: "10px",
-  lineHeight: "1.1",
-};
+const cardStyle = computed(() => ({
+  background: "#ffffff",
+  border: "1px solid #e5e8eb",
+  borderRadius: "16px",
+  padding: isMobile.value ? "8px 20px" : "16px 32px",
+  boxShadow: "0 1px 2px rgba(17, 24, 39, 0.04)",
+}));
 
-const summaryTextWhiteStyle = {
-  marginTop: "10px",
-  fontSize: "13px",
-  lineHeight: "1.6",
-  opacity: 0.92,
-};
-
-const summaryLabelStyle = {
-  fontSize: "13px",
-  fontWeight: 700,
-  color: "#64748b",
-};
-
-const summaryValueStyle = {
-  fontSize: "1.45rem",
-  fontWeight: 800,
-  marginTop: "10px",
-  lineHeight: "1.3",
-  color: "#111827",
-};
-
-const summaryTextStyle = {
-  marginTop: "10px",
-  fontSize: "13px",
-  lineHeight: "1.6",
-  color: "#64748b",
-};
-
-const allAgreeSectionStyle = {
-  marginBottom: "16px",
-  background: "linear-gradient(135deg, #1f2937, #334155)",
-  borderRadius: "20px",
-  padding: "20px 22px",
-  boxShadow: "0 16px 34px rgba(15, 23, 42, 0.14)",
-};
-
-const allAgreeTopStyle = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: "16px",
-  cursor: "pointer",
-  flexWrap: "wrap",
-};
-
-const allAgreeLeftStyle = {
+const allAgreeRowStyle = {
   display: "flex",
   alignItems: "center",
   gap: "14px",
+  width: "100%",
+  padding: "20px 4px",
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  textAlign: "left",
 };
 
-const allAgreeCheckWrapStyle = {
-  display: "flex",
-  alignItems: "center",
-};
-
-const allAgreeTitleStyle = {
-  fontSize: "18px",
-  fontWeight: 800,
-  color: "#ffffff",
-};
-
-const allAgreeSubStyle = {
-  fontSize: "13px",
-  color: "rgba(255,255,255,0.76)",
-  marginTop: "4px",
-  lineHeight: "1.5",
-};
-
-const allAgreeStateStyle = {
-  fontSize: "13px",
+const allAgreeLabelStyle = {
+  fontSize: "17px",
   fontWeight: 700,
-  color: "#ffffff",
+  color: "#191f28",
+  letterSpacing: "-0.015em",
+  flex: 1,
 };
 
-const sectionWrapStyle = computed(() => ({
-  backgroundColor: '#ffffff',
-  border: '1px solid rgba(15, 23, 42, 0.08)',
-  borderRadius: isMobile.value ? '18px' : '24px',
-  padding: isMobile.value ? '16px' : '24px',
-  boxShadow: '0 18px 48px rgba(15, 23, 42, 0.07)',
-}));
-
-const sectionHeaderStyle = {
-  marginBottom: "18px",
+const allAgreeMetaStyle = {
+  fontSize: "13px",
+  fontWeight: 500,
+  color: "#8b95a1",
+  letterSpacing: "-0.01em",
+  fontVariantNumeric: "tabular-nums",
 };
 
-const sectionTitleStyle = {
-  fontSize: "1.5rem",
-  fontWeight: 800,
-  color: "#111827",
-  marginBottom: "8px",
+const dividerStyle = {
+  height: "1px",
+  background: "#f2f4f6",
+  margin: "0 -8px",
 };
 
-const sectionDescStyle = {
-  fontSize: "14px",
-  color: "#6b7280",
+const listStyle = {
+  listStyle: "none",
+  padding: 0,
   margin: 0,
 };
 
-const getAgreementCardStyle = (checked, expanded) => ({
-  marginBottom: "14px",
-  background: expanded ? "linear-gradient(180deg, #ffffff 0%, #f8fbff 100%)" : "#ffffff",
-  border: checked
-      ? "1px solid rgba(82, 124, 234, 0.38)"
-      : "1px solid rgba(148, 163, 184, 0.2)",
-  borderRadius: "20px",
-  overflow: "hidden",
-  boxShadow: expanded
-      ? "0 18px 36px rgba(15, 23, 42, 0.08)"
-      : checked
-          ? "0 10px 24px rgba(82, 124, 234, 0.08)"
-          : "none",
-});
+const itemStyle = {
+  padding: "0",
+  borderBottom: "1px solid #f2f4f6",
+};
 
-const agreementTopRowStyle = {
+const itemRowStyle = {
   display: "flex",
-  justifyContent: "space-between",
   alignItems: "center",
-  gap: "14px",
-  padding: "18px 20px",
-  flexWrap: "wrap",
+  justifyContent: "space-between",
+  gap: "12px",
+  padding: "16px 4px",
 };
 
-const agreementLeftStyle = {
-  display: "flex",
-  alignItems: "flex-start",
-  gap: "14px",
-  flex: 1,
-  minWidth: 0,
-};
-
-const agreementActionGroupStyle = {
+const itemClickStyle = {
   display: "flex",
   alignItems: "center",
   gap: "12px",
-  flexWrap: "wrap",
-  justifyContent: "flex-end",
-};
-
-const checkWrapStyle = {
-  display: "flex",
-  alignItems: "flex-start",
-  paddingTop: "2px",
-};
-
-const checkButtonStyle = {
-  display: "inline-flex",
-  padding: 0,
-  border: "none",
-  background: "transparent",
-  cursor: "pointer",
-};
-
-const agreementTextWrapStyle = {
   flex: 1,
+  minWidth: 0,
+  background: "transparent",
+  border: "none",
+  padding: 0,
+  cursor: "pointer",
+  textAlign: "left",
+};
+
+const itemLabelWrapStyle = {
+  display: "inline-flex",
+  alignItems: "baseline",
+  gap: "6px",
+  flexWrap: "wrap",
   minWidth: 0,
 };
 
-const agreementMetaRowStyle = {
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  marginBottom: "10px",
-  flexWrap: "wrap",
+const requiredTagStyle = {
+  fontSize: "14px",
+  fontWeight: 600,
+  color: "#3182f6",
+  letterSpacing: "-0.01em",
+  flexShrink: 0,
 };
 
-const agreementOrderStyle = {
+const optionalTagStyle = {
+  fontSize: "14px",
+  fontWeight: 500,
+  color: "#8b95a1",
+  letterSpacing: "-0.01em",
+  flexShrink: 0,
+};
+
+const itemTitleStyle = {
+  fontSize: "15px",
+  fontWeight: 500,
+  color: "#191f28",
+  letterSpacing: "-0.015em",
+  lineHeight: "1.5",
+};
+
+const detailToggleStyle = {
   display: "inline-flex",
   alignItems: "center",
-  height: "24px",
-  padding: "0 10px",
-  borderRadius: "999px",
-  background: "rgba(15, 23, 42, 0.06)",
-  color: "#475569",
-  fontSize: "12px",
-  fontWeight: 700,
-};
-
-const agreementTitleRowStyle = {
-  display: "flex",
-  alignItems: "center",
-  flexWrap: "wrap",
-};
-
-const agreementMainTitleStyle = {
-  fontSize: "17px",
-  lineHeight: "1.4",
-  color: "#111827",
-};
-
-const agreementCaptionStyle = {
+  gap: "6px",
+  height: "32px",
+  padding: "0 12px",
+  background: "transparent",
+  border: "none",
+  borderRadius: "6px",
+  color: "#6b7684",
   fontSize: "13px",
-  color: "#6b7280",
-  lineHeight: "1.6",
-  margin: "8px 0 0 0",
-};
-
-const requiredBadgeStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: "42px",
-  height: "24px",
-  padding: "0 9px",
-  borderRadius: "999px",
-  background: "rgba(82, 124, 234, 0.1)",
-  color: "#3f67dd",
-  fontSize: "12px",
-  fontWeight: 700,
-};
-
-const optionalBadgeStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  minWidth: "42px",
-  height: "24px",
-  padding: "0 9px",
-  borderRadius: "999px",
-  background: "rgba(148, 163, 184, 0.14)",
-  color: "#475569",
-  fontSize: "12px",
-  fontWeight: 700,
-};
-
-const agreementStateStyle = {
-  fontSize: "13px",
-  fontWeight: 700,
-  color: "#94a3b8",
-};
-
-const agreementStateActiveStyle = {
-  fontSize: "13px",
-  fontWeight: 700,
-  color: "#527cea",
-};
-
-const getDetailToggleStyle = (expanded) => ({
-  display: "inline-flex",
-  alignItems: "center",
-  gap: "8px",
-  height: "40px",
-  padding: "0 14px",
-  borderRadius: "999px",
-  border: expanded ? "1px solid rgba(82, 124, 234, 0.28)" : "1px solid rgba(148, 163, 184, 0.24)",
-  background: expanded ? "rgba(82, 124, 234, 0.08)" : "#ffffff",
-  color: expanded ? "#3f67dd" : "#334155",
-  fontSize: "13px",
-  fontWeight: 700,
+  fontWeight: 500,
+  letterSpacing: "-0.01em",
   cursor: "pointer",
-});
-
-const getChevronWrapStyle = {
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-  width: "14px",
-  height: "14px",
+  flexShrink: 0,
 };
 
 const getChevronStyle = (expanded) => ({
   display: "inline-block",
-  width: "7px",
-  height: "7px",
-  borderRight: "1.8px solid currentColor",
-  borderBottom: "1.8px solid currentColor",
-  transform: expanded ? "rotate(-135deg)" : "rotate(45deg)",
-  transition: "transform 0.2s ease",
-  color: expanded ? "#3f67dd" : "#64748b",
-  marginTop: expanded ? "2px" : "-1px",
-});
-
-
-
-const agreementBodyStyle = {
-  padding: "18px 20px 22px 20px",
-  borderTop: "1px solid rgba(148, 163, 184, 0.14)",
-  backgroundColor: "#fbfcff",
-};
-
-const agreementDetailHeaderStyle = {
-  marginBottom: "4px",
-};
-
-const agreementDetailTitleStyle = {
-  fontSize: "14px",
-  fontWeight: 800,
-  color: "#111827",
-};
-
-const agreementDetailSubStyle = {
-  marginTop: "6px",
-  fontSize: "13px",
-  color: "#64748b",
-  lineHeight: "1.6",
-};
-
-const agreementParagraphRowStyle = {
-  display: "flex",
-  alignItems: "flex-start",
-  gap: "10px",
-  marginTop: "14px",
-};
-
-const dotStyle = {
   width: "6px",
   height: "6px",
-  borderRadius: "50%",
-  backgroundColor: "#527cea",
-  marginTop: "10px",
-  flexShrink: 0,
-};
+  borderRight: "1.5px solid currentColor",
+  borderBottom: "1.5px solid currentColor",
+  transform: expanded ? "rotate(-135deg)" : "rotate(45deg)",
+  transition: "transform 0.2s ease",
+  marginTop: expanded ? "2px" : "-2px",
+});
 
-const agreementParagraphStyle = {
-  margin: 0,
-  fontSize: "14px",
-  color: "#475569",
-  lineHeight: "1.8",
-  wordBreak: "keep-all",
-};
-
-const bottomActionStyle = {
-  marginTop: "20px",
-  marginBottom: "60px",
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  gap: "16px",
-  flexWrap: "wrap",
-  backgroundColor: "rgba(255,255,255,0.95)",
-  border: "1px solid rgba(15, 23, 42, 0.08)",
-  borderRadius: "20px",
+const detailBoxStyle = {
+  margin: "0 4px 16px",
   padding: "18px 20px",
-  boxShadow: "0 18px 48px rgba(15, 23, 42, 0.07)",
+  background: "#f7f8fa",
+  borderRadius: "10px",
 };
 
-const bottomGuideBoxStyle = computed(() => ({
-  flex: 1,
-  minWidth: isMobile.value ? '0' : '260px',
-}));
-
-const bottomGuideTitleStyle = {
-  fontSize: "15px",
-  fontWeight: 800,
-  color: "#111827",
-};
-
-const bottomGuideDescStyle = {
-  marginTop: "6px",
+const detailParagraphStyle = {
+  margin: "0 0 8px",
   fontSize: "13px",
-  lineHeight: "1.6",
-  color: "#6b7280",
+  color: "#4e5968",
+  lineHeight: "1.75",
+  wordBreak: "keep-all",
+  letterSpacing: "-0.01em",
 };
 
-const buttonContainerStyle = {
-  display: "flex",
-  justifyContent: "center",
-  gap: "12px",
-  flexWrap: "wrap",
-};
-
-const agreeBtnStyle = {
-  background: "linear-gradient(135deg, #527cea, #6b93f5)",
-  color: "#ffffff",
-  padding: "0 2rem",
-  height: "48px",
-  fontSize: "1rem",
-  fontWeight: 700,
-  borderRadius: "12px",
-  textTransform: "none",
-  boxShadow: "0 14px 28px rgba(82, 124, 234, 0.22)",
-};
-
-const disabledAgreeBtnStyle = {
-  background: "#cbd5e1",
-  color: "#ffffff",
-  padding: "0 2rem",
-  height: "48px",
-  fontSize: "1rem",
-  fontWeight: 700,
-  borderRadius: "12px",
-  textTransform: "none",
-};
-
-const cancelBtnStyle = {
-  backgroundColor: "#ffffff",
-  color: "#111827",
-  border: "1px solid rgba(148, 163, 184, 0.28)",
-  padding: "0 2rem",
-  height: "48px",
-  fontSize: "1rem",
-  fontWeight: 600,
-  borderRadius: "12px",
-  textTransform: "none",
-};
-
-const getCheckBoxStyle = (checked) => ({
+const getCheckStyle = (checked, strong) => ({
   display: "inline-flex",
   alignItems: "center",
   justifyContent: "center",
-  width: "26px",
-  height: "26px",
-  borderRadius: "8px",
-  border: checked ? "1.5px solid #527cea" : "1.5px solid rgba(148, 163, 184, 0.55)",
-  background: checked ? "linear-gradient(135deg, #527cea, #6b93f5)" : "#ffffff",
-  boxShadow: checked ? "0 10px 20px rgba(82, 124, 234, 0.22)" : "none",
+  width: strong ? "26px" : "24px",
+  height: strong ? "26px" : "24px",
+  borderRadius: "50%",
+  background: checked ? "#3182f6" : "transparent",
+  border: checked ? "1.5px solid #3182f6" : "1.5px solid #d1d6db",
+  transition: "background 0.15s ease, border-color 0.15s ease",
   flexShrink: 0,
 });
 
-const checkIconStyle = {
+const getCheckIconStyle = (checked) => ({
+  display: "inline-block",
+  width: "10px",
+  height: "6px",
+  borderLeft: "2px solid #ffffff",
+  borderBottom: "2px solid #ffffff",
+  transform: "rotate(-45deg)",
+  marginTop: "-2px",
+  opacity: checked ? 1 : 0,
+  transition: "opacity 0.15s ease",
+});
+
+const actionRowStyle = computed(() => ({
+  display: "flex",
+  justifyContent: "flex-end",
+  gap: "8px",
+  marginTop: isMobile.value ? "24px" : "32px",
+  flexWrap: "wrap",
+}));
+
+const primaryBtnStyle = {
+  background: "#3182f6",
   color: "#ffffff",
-  fontSize: "14px",
-  fontWeight: 800,
-  lineHeight: 1,
+  fontSize: "0.9375rem",
+  fontWeight: 700,
+  borderRadius: "10px",
+  textTransform: "none",
+  letterSpacing: "-0.015em",
+  boxShadow: "none",
+  padding: "0 24px",
+  minWidth: "180px",
+};
+
+const primaryBtnDisabledStyle = {
+  background: "#e5e8eb",
+  color: "#b0b8c1",
+  fontSize: "0.9375rem",
+  fontWeight: 700,
+  borderRadius: "10px",
+  textTransform: "none",
+  letterSpacing: "-0.015em",
+  boxShadow: "none",
+  padding: "0 24px",
+  minWidth: "180px",
+};
+
+const secondaryBtnStyle = {
+  background: "#ffffff",
+  color: "#4e5968",
+  border: "1px solid #d1d6db",
+  fontSize: "0.9375rem",
+  fontWeight: 600,
+  borderRadius: "10px",
+  textTransform: "none",
+  letterSpacing: "-0.015em",
+  boxShadow: "none",
+  padding: "0 20px",
 };
 </script>
 
