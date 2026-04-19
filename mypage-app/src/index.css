@@ -1,3 +1,24 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+[data-app="mypage"] {
+    --mypage-bg: #ffffff;
+    --mypage-bg-tint: rgba(226, 232, 240, 0.45);
+    --mypage-ink: #0f172a;
+    --mypage-ink-soft: rgba(15, 23, 42, 0.6);
+    --mypage-rule: rgba(148, 163, 184, 0.22);
+}
+
+:root[data-theme="dark"] [data-app="mypage"] {
+    --mypage-bg: #0b0f19;
+    --mypage-bg-tint: rgba(30, 41, 59, 0.55);
+    --mypage-ink: #f1f5f9;
+    --mypage-ink-soft: rgba(226, 232, 240, 0.66);
+    --mypage-rule: rgba(148, 163, 184, 0.18);
+}
+
+[data-app="mypage"] ::selection {
+    background: rgba(59, 130, 246, 0.2);
+    color: inherit;
+}

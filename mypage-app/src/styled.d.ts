@@ -3,6 +3,7 @@ import 'styled-components';
 declare module 'styled-components' {
     export interface DefaultTheme {
         bg: string;
+        backdrop: string;
         fg: string;
         surface: string;
         surfaceAlt: string;

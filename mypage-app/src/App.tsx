@@ -12,10 +12,27 @@ import AccountWithdrawal from "./pages/AccountWithdrawal.tsx";
 import SchedulePage from "./pages/SchedulePage.tsx";
 
 const AppShell = styled.div.attrs({ "data-app": "mypage" })`
+    position: relative;
     min-height: 100vh;
     background: ${({ theme }) => theme.bg};
     color: ${({ theme }) => theme.fg};
-    transition: background-color 0.2s ease, color 0.2s ease;
+    transition: background-color 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    isolation: isolate;
+
+    &::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        background: ${({ theme }) => theme.backdrop};
+    }
+
+    & > * {
+        position: relative;
+        z-index: 1;
+    }
 `;
 
 function useBridgeTheme(): BridgeTheme {
@@ -70,21 +87,18 @@ export default function App() {
                     containerStyle={{ top: 60 }}
                     toastOptions={{
                         style: {
-                            borderRadius: "14px",
-                            padding: "12px 18px",
-                            fontSize: "15px",
+                            borderRadius: "12px",
+                            padding: "14px 18px",
+                            fontSize: "14px",
                             fontWeight: 600,
-                            boxShadow: "0 4px 16px rgba(0,0,0,0.15)",
-                            color: mode === "dark" ? "#F9FAFB" : "#111827",
-                            background:
-                                mode === "dark"
-                                    ? "rgba(28,28,30,0.9)"
-                                    : "rgba(255,255,255,0.95)",
-                            backdropFilter: "blur(10px)",
+                            letterSpacing: "-0.015em",
+                            boxShadow: "0 22px 60px rgba(15, 23, 42, 0.12)",
+                            color: mode === "dark" ? "#f1f5f9" : "#0f172a",
+                            background: mode === "dark" ? "#0f172a" : "#ffffff",
                             border:
                                 mode === "dark"
-                                    ? "1px solid rgba(255,255,255,0.08)"
-                                    : "1px solid rgba(0,0,0,0.08)",
+                                    ? "1px solid rgba(148, 163, 184, 0.18)"
+                                    : "1px solid rgba(148, 163, 184, 0.22)",
                         },
                     }}
                 />
@@ -109,54 +123,60 @@ export default function App() {
     );
 }
 
+const lightBackdrop = `#f8fafc`;
+
+const darkBackdrop = `#0b1222`;
+
 const lightTheme = {
     bg: "#ffffff",
-    fg: "#111111",
+    backdrop: lightBackdrop,
+    fg: "#0f172a",
     surface: "#ffffff",
-    surfaceAlt: "#D9D9D954",
-    surfaceHover: "#f2f4f7",
-    border: "#e5e7eb",
-    muted: "#6b7280",
-    subtle: "#9ca3af",
-    primary: "#01B0F1",
-    primaryHover: "#4752c4",
-    tagBg: "#eef2ff",
-    overlay: "rgba(0,0,0,0.45)",
+    surfaceAlt: "#f8fafc",
+    surfaceHover: "#f1f5f9",
+    border: "rgba(148, 163, 184, 0.22)",
+    muted: "rgba(15, 23, 42, 0.66)",
+    subtle: "rgba(15, 23, 42, 0.42)",
+    primary: "#3b82f6",
+    primaryHover: "#2563eb",
+    tagBg: "rgba(59, 130, 246, 0.08)",
+    overlay: "rgba(15, 23, 42, 0.45)",
     inputBg: "#ffffff",
-    inputBorder: "#d1d5db",
-    inputPlaceholder: "#9ca3af",
-    badgeRecruitingBg: "#01B0F1",
-    badgeRecruitingFg: "#fff",
-    badgeClosedBg: "#1A1A1F",
-    badgeClosedFg: "#BDBDBD",
-    accent: "#5865F2",
-    accentHover: "#4752c4",
-    danger: "#ef4444",
-    dangerHover: "#dc2626",
+    inputBorder: "rgba(148, 163, 184, 0.28)",
+    inputPlaceholder: "rgba(15, 23, 42, 0.4)",
+    badgeRecruitingBg: "#0f172a",
+    badgeRecruitingFg: "#ffffff",
+    badgeClosedBg: "#f1f5f9",
+    badgeClosedFg: "rgba(15, 23, 42, 0.55)",
+    accent: "#3b82f6",
+    accentHover: "#2563eb",
+    danger: "#dc2626",
+    dangerHover: "#b91c1c",
 };
 
 const darkTheme = {
-    bg: "#181924",
-    fg: "#ffffff",
-    surface: "#2c2f3b",
-    surfaceAlt: "#2D2F3C",
-    surfaceHover: "#343846",
-    border: "#3e414f",
-    muted: "#8c92a7",
-    subtle: "#a0a0a0",
-    primary: "#01B0F1",
-    primaryHover: "#6a75f7",
-    tagBg: "#3e414f",
-    overlay: "rgba(0,0,0,0.7)",
-    inputBg: "#1e2129",
-    inputBorder: "#4a5568",
-    inputPlaceholder: "#9aa3b2",
-    badgeRecruitingBg: "#01B0F1",
-    badgeRecruitingFg: "#fff",
-    badgeClosedBg: "#1A1A1F",
-    badgeClosedFg: "#BDBDBD",
-    accent: "#5865F2",
-    accentHover: "#6a75f7",
-    danger: "#ff6b6b",
-    dangerHover: "#f05252",
+    bg: "#070b14",
+    backdrop: darkBackdrop,
+    fg: "#f1f5f9",
+    surface: "rgba(15, 23, 42, 0.92)",
+    surfaceAlt: "rgba(30, 41, 59, 0.55)",
+    surfaceHover: "rgba(30, 41, 59, 0.75)",
+    border: "rgba(148, 163, 184, 0.18)",
+    muted: "rgba(226, 232, 240, 0.66)",
+    subtle: "rgba(226, 232, 240, 0.42)",
+    primary: "#60a5fa",
+    primaryHover: "#93c5fd",
+    tagBg: "rgba(96, 165, 250, 0.14)",
+    overlay: "rgba(2, 6, 23, 0.7)",
+    inputBg: "rgba(15, 23, 42, 0.7)",
+    inputBorder: "rgba(148, 163, 184, 0.24)",
+    inputPlaceholder: "rgba(226, 232, 240, 0.4)",
+    badgeRecruitingBg: "#f1f5f9",
+    badgeRecruitingFg: "#0f172a",
+    badgeClosedBg: "rgba(30, 41, 59, 0.75)",
+    badgeClosedFg: "rgba(226, 232, 240, 0.6)",
+    accent: "#60a5fa",
+    accentHover: "#93c5fd",
+    danger: "#f87171",
+    dangerHover: "#ef4444",
 };

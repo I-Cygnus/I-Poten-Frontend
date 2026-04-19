@@ -146,14 +146,7 @@ const baseLink = css`
 const MenuItem = styled(NavLink)<{ $active?: boolean }>`
     ${baseLink};
     color: ${({ $active }) => ($active ? "#ffffff" : "#64748b")};
-    background: ${({ $active }) =>
-        $active
-            ? "linear-gradient(135deg, #3E82E8 0%, #2BC6A6 100%)"
-            : "transparent"};
-    box-shadow: ${({ $active }) =>
-        $active
-            ? "0 6px 20px rgba(62, 130, 232, 0.28)"
-            : "none"};
+    background: ${({ $active }) => ($active ? "#2563eb" : "transparent")};
     font-weight: ${({ $active }) => ($active ? 650 : 500)};
 
     &:not(.active):hover {
@@ -199,7 +192,7 @@ const BottomSection = styled.div`
 
 const Divider = styled.div`
     height: 1px;
-    background: linear-gradient(90deg, transparent, #e2e8f0 30%, #e2e8f0 70%, transparent);
+    background: #e2e8f0;
     margin: 12px 0;
 `;
 

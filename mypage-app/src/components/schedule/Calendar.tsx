@@ -207,7 +207,7 @@ export default function Calendar({
 const Wrapper = styled.section`
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 20px;
 `;
 
 const Header = styled.div`
@@ -224,47 +224,100 @@ const Header = styled.div`
 
 const MonthTitle = styled.h2`
     margin: 0;
-    font-size: 24px;
-    font-weight: 800;
-    letter-spacing: -0.03em;
+    font-size: clamp(20px, 2.2vw, 24px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
     color: #0f172a;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const HeaderActions = styled.div`
     display: flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
 `;
 
 const MonthButton = styled.button`
-    height: 38px;
+    height: 34px;
     padding: 0 14px;
     border-radius: 999px;
-    border: 1px solid #dbe2ea;
-    background: #ffffff;
-    color: #334155;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(255, 255, 255, 0.7);
+    color: #0f172a;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &:hover {
+        background: rgba(59, 130, 246, 0.08);
+        border-color: rgba(59, 130, 246, 0.2);
+        color: #2563eb;
+    }
+
+    :root[data-theme="dark"] & {
+        border-color: rgba(148, 163, 184, 0.24);
+        background: rgba(15, 23, 42, 0.5);
+        color: #f1f5f9;
+
+        &:hover {
+            background: rgba(96, 165, 250, 0.14);
+            border-color: rgba(96, 165, 250, 0.3);
+            color: #93c5fd;
+        }
+    }
 `;
 
 const WeekHeader = styled.div`
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 10px;
+    gap: 4px;
+    padding: 0 4px;
+
+    @media (max-width: 980px) {
+        display: none;
+    }
 `;
 
 const WeekLabel = styled.div`
+    padding: 10px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(15, 23, 42, 0.5);
     text-align: center;
-    font-size: 13px;
-    font-weight: 800;
-    color: #64748b;
+
+    &:first-child {
+        color: rgba(220, 38, 38, 0.6);
+    }
+
+    &:last-child {
+        color: rgba(37, 99, 235, 0.6);
+    }
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.55);
+
+        &:first-child {
+            color: rgba(248, 113, 113, 0.7);
+        }
+
+        &:last-child {
+            color: rgba(147, 197, 253, 0.75);
+        }
+    }
 `;
 
 const Grid = styled.div`
     display: grid;
     grid-template-columns: repeat(7, minmax(0, 1fr));
-    gap: 10px;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 18px;
+    background: rgba(248, 250, 252, 0.5);
 
     @media (max-width: 980px) {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -273,19 +326,40 @@ const Grid = styled.div`
     @media (max-width: 640px) {
         grid-template-columns: 1fr;
     }
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.35);
+    }
 `;
 
 const DayCell = styled.div<{ $muted: boolean; $today: boolean }>`
-    min-height: 160px;
-    border-radius: 18px;
-    border: 1px solid
-        ${({ $today }) => ($today ? "rgba(79, 118, 241, 0.3)" : "#e5e7eb")};
-    background: ${({ $muted }) => ($muted ? "#f8fafc" : "#ffffff")};
-    padding: 14px;
+    min-height: 148px;
+    border-radius: 14px;
+    background: ${({ $muted, $today }) =>
+        $today
+            ? "rgba(59, 130, 246, 0.08)"
+            : $muted
+                ? "transparent"
+                : "rgba(255, 255, 255, 0.7)"};
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    opacity: ${({ $muted }) => ($muted ? 0.62 : 1)};
+    gap: 8px;
+    opacity: ${({ $muted }) => ($muted ? 0.45 : 1)};
+    border: 1px solid ${({ $today }) =>
+        $today ? "rgba(59, 130, 246, 0.28)" : "transparent"};
+    transition: background 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+
+    :root[data-theme="dark"] & {
+        background: ${({ $muted, $today }) =>
+            $today
+                ? "rgba(96, 165, 250, 0.12)"
+                : $muted
+                    ? "transparent"
+                    : "rgba(15, 23, 42, 0.55)"};
+        border-color: ${({ $today }) =>
+            $today ? "rgba(96, 165, 250, 0.32)" : "transparent"};
+    }
 `;
 
 const DayHeader = styled.div`
@@ -296,59 +370,112 @@ const DayHeader = styled.div`
 `;
 
 const DayNumber = styled.div`
-    font-size: 15px;
-    font-weight: 800;
+    font-size: 13px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
     color: #0f172a;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const AddLink = styled.button`
-    width: 28px;
-    height: 28px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
     border: none;
-    border-radius: 999px;
-    background: rgba(79, 118, 241, 0.1);
-    color: #3e63e0;
-    font-size: 18px;
+    background: rgba(59, 130, 246, 0.08);
+    color: #2563eb;
+    font-size: 14px;
+    line-height: 1;
     cursor: pointer;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &:hover:not(:disabled) {
+        background: #3b82f6;
+        color: #ffffff;
+        transform: scale(1.05);
+    }
 
     &:disabled {
-        opacity: 0.45;
+        opacity: 0.3;
         cursor: default;
+    }
+
+    :root[data-theme="dark"] & {
+        background: rgba(96, 165, 250, 0.14);
+        color: #93c5fd;
+
+        &:hover:not(:disabled) {
+            background: #60a5fa;
+            color: #0b0f19;
+        }
     }
 `;
 
 const EventList = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
 `;
 
 const EventButton = styled.button<{ $selected: boolean }>`
     width: 100%;
-    border: 1px solid
-        ${({ $selected }) => ($selected ? "rgba(79, 118, 241, 0.3)" : "transparent")};
-    border-radius: 12px;
-    background: ${({ $selected }) => ($selected ? "#eef4ff" : "#f8fbff")};
-    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background: ${({ $selected }) =>
+        $selected ? "rgba(59, 130, 246, 0.18)" : "rgba(59, 130, 246, 0.08)"};
+    padding: 6px 8px;
     text-align: left;
     cursor: pointer;
+    transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &:hover {
+        background: rgba(59, 130, 246, 0.18);
+    }
+
+    :root[data-theme="dark"] & {
+        background: ${({ $selected }) =>
+            $selected ? "rgba(96, 165, 250, 0.22)" : "rgba(96, 165, 250, 0.12)"};
+
+        &:hover {
+            background: rgba(96, 165, 250, 0.22);
+        }
+    }
 `;
 
 const EventTime = styled.div`
-    font-size: 11px;
-    font-weight: 800;
-    color: #4f76f1;
-    margin-bottom: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: #2563eb;
+    margin-bottom: 2px;
+
+    :root[data-theme="dark"] & {
+        color: #93c5fd;
+    }
 `;
 
 const EventTitle = styled.div`
-    font-size: 13px;
-    line-height: 1.5;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.4;
     color: #0f172a;
     word-break: break-word;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const MoreText = styled.div`
-    font-size: 12px;
-    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+    color: rgba(15, 23, 42, 0.5);
+    padding: 2px 8px;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.5);
+    }
 `;

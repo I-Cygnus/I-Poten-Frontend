@@ -384,7 +384,6 @@ export default function SchedulePage() {
             <PageInner>
                 <HeroCard>
                     <HeroText>
-                        <HeroBadge>SCHEDULE</HeroBadge>
                         <HeroTitle>일정 기록</HeroTitle>
                         <HeroDescription>
                             캘린더와 목록으로 일정을 한눈에 보고, 필요한 일정은 바로 관리할 수 있어요.
@@ -581,69 +580,76 @@ export default function SchedulePage() {
 const Page = styled.div`
     ${pretendard};
     min-height: auto;
-    color: #111827;
+    color: #0f172a;
 
     * {
         box-sizing: border-box;
+    }
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
     }
 `;
 
 const PageInner = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 24px;
 `;
 
 const HeroCard = styled.section`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
-    padding: 28px;
+    gap: 32px;
+    padding: 36px 40px;
     border-radius: 24px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
     background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.05);
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.75);
+        border-color: rgba(148, 163, 184, 0.18);
+    }
 
     @media (max-width: 768px) {
         flex-direction: column;
         align-items: flex-start;
+        gap: 24px;
+        padding: 28px 24px;
     }
 `;
 
 const HeroText = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 10px;
-`;
-
-const HeroBadge = styled.div`
-    width: fit-content;
-    min-height: 30px;
-    padding: 0 12px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    background: rgba(79, 118, 241, 0.1);
-    color: #3e63e0;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+    gap: 12px;
+    flex: 1;
 `;
 
 const HeroTitle = styled.h1`
     margin: 0;
-    font-size: 34px;
-    font-weight: 800;
-    letter-spacing: -0.04em;
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
     color: #0f172a;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const HeroDescription = styled.p`
     margin: 0;
-    font-size: 15px;
+    max-width: 55ch;
+    font-size: 14px;
     line-height: 1.7;
-    color: #64748b;
+    color: rgba(15, 23, 42, 0.6);
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const HeroSide = styled.div`
@@ -651,6 +657,7 @@ const HeroSide = styled.div`
     flex-direction: column;
     align-items: flex-end;
     gap: 12px;
+    flex-shrink: 0;
 
     @media (max-width: 768px) {
         width: 100%;
@@ -659,20 +666,29 @@ const HeroSide = styled.div`
 `;
 
 const HeroStatLabel = styled.div`
-    font-size: 14px;
-    font-weight: 700;
-    color: #475569;
+    font-size: 13px;
+    font-weight: 600;
+    color: rgba(15, 23, 42, 0.6);
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const Toolbar = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 18px;
-    border-radius: 20px;
+    gap: 20px;
+    padding: 16px 20px;
+    border-radius: 18px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
     background: #ffffff;
-    border: 1px solid #e5e7eb;
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.7);
+        border-color: rgba(148, 163, 184, 0.18);
+    }
 
     @media (max-width: 768px) {
         flex-direction: column;
@@ -682,40 +698,59 @@ const Toolbar = styled.div`
 
 const ViewToggle = styled.div`
     display: inline-flex;
-    gap: 8px;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.12);
+
+    :root[data-theme="dark"] & {
+        background: rgba(148, 163, 184, 0.16);
+    }
 `;
 
 const ToggleButton = styled.button.attrs({ "data-schedule-toggle-btn": "true" })<{ $active: boolean }>`
     &[data-schedule-toggle-btn="true"] {
-        height: 40px;
-        padding: 0 14px;
+        height: 34px;
+        padding: 0 16px;
+        border: none;
         border-radius: 999px;
-        border: 1px solid ${({ $active }) => ($active ? "#111111" : "#dbe2ea")};
-        background: ${({ $active }) => ($active ? "#111111" : "#ffffff")};
-        color: ${({ $active }) => ($active ? "#ffffff" : "#334155")};
+        background: ${({ $active }) => ($active ? "#2563eb" : "transparent")};
+        color: ${({ $active }) => ($active ? "#ffffff" : "rgba(15, 23, 42, 0.7)")};
         font-size: 13px;
-        font-weight: 700;
+        font-weight: 600;
         cursor: pointer;
-        transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+        transition: all 0.2s ease;
     }
 
     &[data-schedule-toggle-btn="true"]:hover {
-        transform: translateY(-1px);
-        box-shadow: ${({ $active }) => ($active ? "0 10px 20px rgba(17, 17, 17, 0.16)" : "0 8px 18px rgba(15, 23, 42, 0.06)")};
-        border-color: ${({ $active }) => ($active ? "#111111" : "#cbd5e1")};
+        color: ${({ $active }) => ($active ? "#ffffff" : "#2563eb")};
+    }
+
+    :root[data-theme="dark"] &[data-schedule-toggle-btn="true"] {
+        color: ${({ $active }) => ($active ? "#ffffff" : "rgba(226, 232, 240, 0.7)")};
+    }
+
+    :root[data-theme="dark"] &[data-schedule-toggle-btn="true"]:hover {
+        color: ${({ $active }) => ($active ? "#ffffff" : "#93c5fd")};
     }
 `;
 
 const MonthLabel = styled.div`
-    font-size: 14px;
+    font-size: 16px;
     font-weight: 700;
-    color: #475569;
+    letter-spacing: -0.015em;
+    color: #0f172a;
+    font-variant-numeric: tabular-nums;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const ToolbarSide = styled.div`
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
 
     @media (max-width: 768px) {
         width: 100%;
@@ -731,29 +766,56 @@ const ToolbarSide = styled.div`
 const MonthNav = styled.div`
     display: inline-flex;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
 `;
 
 const MonthNavButton = styled.button`
-    height: 38px;
+    height: 34px;
     padding: 0 14px;
     border-radius: 999px;
-    border: 1px solid #dbe2ea;
-    background: #ffffff;
-    color: #334155;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+    background: rgba(255, 255, 255, 0.7);
+    color: #0f172a;
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &:hover {
+        background: rgba(59, 130, 246, 0.08);
+        border-color: rgba(59, 130, 246, 0.18);
+        color: #2563eb;
+    }
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+        background: rgba(15, 23, 42, 0.5);
+        border-color: rgba(148, 163, 184, 0.24);
+
+        &:hover {
+            background: rgba(96, 165, 250, 0.14);
+            border-color: rgba(96, 165, 250, 0.3);
+            color: #93c5fd;
+        }
+    }
 `;
 
 const ContentCard = styled.section`
     position: relative;
     overflow: visible;
-    padding: 24px;
+    padding: 28px;
     border-radius: 24px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
     background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.7);
+        border-color: rgba(148, 163, 184, 0.18);
+    }
+
+    @media (max-width: 640px) {
+        padding: 20px;
+    }
 `;
 
 const spin = keyframes`
@@ -767,13 +829,18 @@ const spin = keyframes`
 `;
 
 const Spinner = styled.div`
-    width: 44px;
-    height: 44px;
-    margin: 56px auto;
+    width: 40px;
+    height: 40px;
+    margin: 64px auto;
     border-radius: 50%;
-    border: 4px solid rgba(62, 130, 232, 0.16);
-    border-top-color: #3e82e8;
+    border: 2px solid rgba(148, 163, 184, 0.18);
+    border-top-color: #3b82f6;
     animation: ${spin} 0.8s linear infinite;
+
+    :root[data-theme="dark"] & {
+        border-color: rgba(148, 163, 184, 0.2);
+        border-top-color: #60a5fa;
+    }
 `;
 
 const PopoverLayer = styled.div`
@@ -789,84 +856,126 @@ const PopoverLayer = styled.div`
 
 const StateCard = styled.section`
     min-height: 300px;
-    padding: 24px;
+    padding: 48px 32px;
     border-radius: 24px;
-    background: #ffffff;
-    border: 1px solid rgba(15, 23, 42, 0.06);
-    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.04);
+    border: 1px dashed rgba(148, 163, 184, 0.32);
+    background: rgba(255, 255, 255, 0.6);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 14px;
     text-align: center;
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.5);
+        border-color: rgba(148, 163, 184, 0.3);
+    }
 `;
 
 const StateTitle = styled.h2`
     margin: 0;
-    font-size: 22px;
-    font-weight: 800;
+    font-size: clamp(18px, 2vw, 22px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: #0f172a;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const StateDescription = styled.p`
     margin: 0;
+    max-width: 50ch;
     font-size: 14px;
     line-height: 1.7;
-    color: #64748b;
+    color: rgba(15, 23, 42, 0.6);
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const PrimaryButton = styled.button.attrs({ "data-schedule-primary-btn": "true" })`
     &[data-schedule-primary-btn="true"] {
         min-width: 120px;
         height: 44px;
-        padding: 0 16px;
+        padding: 0 22px;
         border: none;
         border-radius: 14px;
-        background: linear-gradient(90deg, #3e82e8 0%, #2bc6a6 100%);
+        background: #2563eb;
         color: #ffffff;
         font-size: 14px;
         font-weight: 700;
         cursor: pointer;
+        transition: background 0.2s ease;
+    }
+
+    &[data-schedule-primary-btn="true"]:hover {
+        background: #1d4ed8;
     }
 `;
 
 const SecondaryButton = styled.button`
     min-width: 120px;
     height: 44px;
-    padding: 0 16px;
+    padding: 0 22px;
     border-radius: 14px;
-    border: 1px solid #dbe2ea;
+    border: 1px solid rgba(148, 163, 184, 0.2);
     background: #ffffff;
-    color: #334155;
+    color: #0f172a;
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+        background: rgba(59, 130, 246, 0.08);
+        border-color: rgba(59, 130, 246, 0.2);
+        color: #2563eb;
+    }
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+        background: rgba(15, 23, 42, 0.5);
+        border-color: rgba(148, 163, 184, 0.24);
+
+        &:hover {
+            background: rgba(96, 165, 250, 0.12);
+            border-color: rgba(96, 165, 250, 0.32);
+            color: #93c5fd;
+        }
+    }
 `;
 
 const ListWrap = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
 `;
 
 const ListCard = styled.button`
     width: 100%;
-    border: 1px solid #e5e7eb;
-    border-radius: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.18);
+    border-radius: 18px;
     background: #ffffff;
-    padding: 18px;
+    padding: 22px 24px;
     text-align: left;
     cursor: pointer;
-    transition:
-        transform 0.18s ease,
-        box-shadow 0.18s ease,
-        border-color 0.18s ease;
+    transition: border-color 0.2s ease;
 
     &:hover {
-        transform: translateY(-1px);
-        border-color: rgba(79, 118, 241, 0.28);
-        box-shadow: 0 10px 24px rgba(62, 99, 224, 0.08);
+        border-color: rgba(59, 130, 246, 0.28);
+    }
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.55);
+        border-color: rgba(148, 163, 184, 0.18);
+
+        &:hover {
+            border-color: rgba(96, 165, 250, 0.32);
+        }
     }
 `;
 
@@ -875,7 +984,7 @@ const ListCardTop = styled.div`
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 
     @media (max-width: 640px) {
         flex-direction: column;
@@ -884,35 +993,54 @@ const ListCardTop = styled.div`
 `;
 
 const ListBadge = styled.div`
-    min-height: 28px;
-    padding: 0 10px;
-    border-radius: 999px;
     display: inline-flex;
     align-items: center;
-    background: rgba(79, 118, 241, 0.1);
-    color: #3e63e0;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.08);
+    color: #2563eb;
     font-size: 12px;
-    font-weight: 800;
+    font-weight: 600;
+
+    :root[data-theme="dark"] & {
+        background: rgba(96, 165, 250, 0.14);
+        color: #93c5fd;
+    }
 `;
 
 const ListDate = styled.div`
     font-size: 13px;
-    font-weight: 700;
-    color: #64748b;
+    font-weight: 600;
+    color: rgba(15, 23, 42, 0.6);
+    font-variant-numeric: tabular-nums;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const ListTitle = styled.h3`
     margin: 0 0 8px;
-    font-size: 18px;
-    font-weight: 800;
+    font-size: clamp(16px, 1.8vw, 18px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
     color: #0f172a;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const ListMemo = styled.p`
     margin: 0;
-    font-size: 14px;
+    max-width: 70ch;
+    font-size: 13px;
     line-height: 1.7;
-    color: #475569;
+    color: rgba(15, 23, 42, 0.6);
     white-space: pre-wrap;
     word-break: break-word;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
