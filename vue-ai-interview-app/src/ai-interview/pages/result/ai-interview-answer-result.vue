@@ -675,7 +675,7 @@ const getScoreResultList = async (id) => {
   isLoading.value = true;
   try {
     const res = await aiInterviewStore.requestGetInterviewResultToSpring(id);
-    if (res.status === 401) {
+    if (res.status === 401 || res.status === 403) {
       Swal.fire({ title: "권한이 없습니다", text: "접근 권한이 없습니다.", icon: "warning", iconColor: "#2563EB", confirmButtonText: "확인" })
         .then(r => { if (r.isConfirmed) window.location.href = "/"; });
       return;

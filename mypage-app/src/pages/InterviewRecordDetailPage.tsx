@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getInterviewResultDetail } from "../api/InterviewApi.ts";
+import { notifyError } from "../utils/toast.ts";
 
 const pretendard = css`
   font-family:
@@ -36,39 +37,41 @@ const interactiveText = css`
 `;
 
 const palette = {
-    pageBlue: "#f8fbff",
-    pageMint: "#f8fffd",
+    card: "#ffffff",
+    cardSoft: "rgba(255, 255, 255, 0.78)",
+    cardTranslucent: "rgba(255, 255, 255, 0.62)",
+    border: "rgba(148, 163, 184, 0.2)",
+    borderSoft: "rgba(148, 163, 184, 0.14)",
 
-    card: "rgba(255, 255, 255, 0.96)",
-    border: "#e5e7eb",
-    borderSoft: "#eef2f7",
+    text: "#0f172a",
+    textSoft: "rgba(15, 23, 42, 0.6)",
+    textMuted: "rgba(15, 23, 42, 0.42)",
 
-    text: "#111827",
-    textSoft: "#6b7280",
-    textMuted: "#9aa4b2",
+    primary: "#3b82f6",
+    primaryStrong: "#2563eb",
+    primaryHover: "#1d4ed8",
+    primarySoft: "rgba(59, 130, 246, 0.1)",
+    primaryRing: "rgba(59, 130, 246, 0.18)",
+    chipBg: "rgba(59, 130, 246, 0.08)",
+    mintChipBg: "rgba(16, 185, 129, 0.1)",
 
-    primary: "#4F76F1",
-    primaryBlue: "#4369e5",
-    primaryStrong: "#3E63E0",
-    primarySoft: "rgba(79, 118, 241, 0.10)",
-    primaryRing: "rgba(62, 99, 224, 0.16)",
+    secondary: "#10b981",
+    secondaryStrong: "#0f766e",
+    secondarySoft: "rgba(16, 185, 129, 0.08)",
 
-    secondary: "#2BC6A6",
-    secondaryStrong: "#10b981",
-    secondarySoft: "rgba(43, 198, 166, 0.12)",
-
-    successBg: "#ecfdf5",
-    successText: "#047857",
-
-    warningBg: "#fffbeb",
+    warning: "#f59e0b",
+    warningSoft: "rgba(245, 158, 11, 0.1)",
     warningText: "#b45309",
 
-    dangerBg: "#fef2f2",
     dangerText: "#dc2626",
 
-    accentGradient: "linear-gradient(90deg, #3E82E8 0%, #2BC6A6 100%)",
-    accentGradientSoft:
-        "linear-gradient(135deg, rgba(79,118,241,0.10) 0%, rgba(43,198,166,0.12) 100%)",
+    shadow: "0 20px 60px rgba(15, 23, 42, 0.06)",
+    shadowHover: "0 26px 70px rgba(15, 23, 42, 0.1)",
+    shadowSoft: "0 12px 36px rgba(15, 23, 42, 0.05)",
+
+    radiusSm: "12px",
+    radiusMd: "18px",
+    radiusLg: "24px",
 };
 
 type InterviewQuestionDetail = {
@@ -426,11 +429,16 @@ export default function InterviewRecordDetailPage() {
                 if (mounted) {
                     setDetail(normalized);
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error(error);
 
                 if (mounted) {
-                    setLoadError("면접 결과를 불러오지 못했습니다.");
+                    const isAuthError = error?.message?.includes("권한");
+                    const msg = isAuthError
+                        ? "접근 권한이 없습니다."
+                        : "면접 결과를 불러오지 못했습니다.";
+                    notifyError(msg);
+                    setLoadError(msg);
                 }
             } finally {
                 if (mounted) {
@@ -500,7 +508,6 @@ export default function InterviewRecordDetailPage() {
 
                 <HeroCard>
                     <HeroLeft>
-                        <HeroBadge>INTERVIEW DETAIL</HeroBadge>
                         <HeroTitle>{detail.title}</HeroTitle>
                         <HeroDescription>{detail.summary}</HeroDescription>
 
@@ -605,7 +612,6 @@ export default function InterviewRecordDetailPage() {
                     <SummaryCard>
                         <SummaryHeader>
                             <SummaryTitle>좋았던 점</SummaryTitle>
-                            <SummaryBadge>STRONG POINTS</SummaryBadge>
                         </SummaryHeader>
 
                         <BulletList>
@@ -622,7 +628,6 @@ export default function InterviewRecordDetailPage() {
                     <SummaryCard>
                         <SummaryHeader>
                             <SummaryTitle>보완하면 좋은 점</SummaryTitle>
-                            <SummaryBadge $variant="mint">IMPROVEMENTS</SummaryBadge>
                         </SummaryHeader>
 
                         <BulletList>
@@ -640,7 +645,6 @@ export default function InterviewRecordDetailPage() {
                 <SectionCard>
                     <SectionHead>
                         <div>
-                            <SectionEyebrow>QUESTION ANALYSIS</SectionEyebrow>
                             <SectionTitle>문항별 상세 분석</SectionTitle>
                             <SectionDesc>
                                 실제 답변과 피드백을 바탕으로 보완할 점과 답변 방향을 함께 확인할 수 있습니다.
@@ -714,7 +718,7 @@ const Page = styled.div`
   ${pretendard};
   min-height: 100vh;
   background: transparent;
-  padding: 32px;
+  padding: 48px 32px;
   box-sizing: border-box;
   color: ${palette.text};
 
@@ -729,8 +733,12 @@ const Page = styled.div`
     ${interactiveText};
   }
 
+  :root[data-theme="dark"] & {
+    color: #f1f5f9;
+  }
+
   @media (max-width: 768px) {
-    padding: 20px;
+    padding: 32px 20px;
   }
 `;
 
@@ -739,7 +747,7 @@ const PageInner = styled.div`
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 56px;
 `;
 
 const TopBar = styled.div`
@@ -749,73 +757,92 @@ const TopBar = styled.div`
 `;
 
 const BackButton = styled.button`
-  height: 42px;
-  padding: 0 14px;
-  border-radius: 12px;
+  ${interactiveText};
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 999px;
   border: 1px solid ${palette.border};
-  background: #ffffff;
-  color: #334155;
+  background: ${palette.cardTranslucent};
+  color: ${palette.text};
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.18s ease, transform 0.18s ease;
+  transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 
   &:hover {
-    background: #f8fafc;
-    transform: translateY(-1px);
+    background: ${palette.chipBg};
+    color: ${palette.primaryStrong};
+    border-color: ${palette.primaryRing};
+    transform: translateX(-2px);
+  }
+
+  :root[data-theme="dark"] & {
+    color: #f1f5f9;
+    background: rgba(15, 23, 42, 0.45);
+    border-color: rgba(148, 163, 184, 0.24);
+
+    &:hover {
+      background: rgba(96, 165, 250, 0.12);
+      color: #93c5fd;
+      border-color: rgba(96, 165, 250, 0.32);
+    }
   }
 `;
 
 const HeroCard = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 220px;
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) 260px;
+  gap: 32px;
   align-items: stretch;
-  padding: 26px;
-  border-radius: 24px;
+  padding: 40px 44px;
+  border-radius: ${palette.radiusLg};
+  border: 1px solid ${palette.border};
   background: #ffffff;
-  border: 1px solid rgba(14, 18, 28, 0.06);
-  box-shadow: 0 8px 20px rgba(30, 41, 59, 0.05);
+
+  :root[data-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.75);
+    border-color: rgba(148, 163, 184, 0.18);
+  }
 
   @media (max-width: 880px) {
     grid-template-columns: 1fr;
+    gap: 28px;
+    padding: 32px 24px;
   }
 `;
 
 const HeroLeft = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 12px;
-`;
-
-const HeroBadge = styled.div`
-  width: fit-content;
-  padding: 8px 12px;
-  border-radius: 999px;
-  background: ${palette.primarySoft};
-  color: ${palette.primaryStrong};
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  gap: 14px;
 `;
 
 const HeroTitle = styled.h1`
   margin: 0;
-  font-size: 32px;
-  font-weight: 800;
-  line-height: 1.25;
-  letter-spacing: -0.04em;
-  color: #0f172a;
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.02em;
+  color: ${palette.text};
+
+  :root[data-theme="dark"] & {
+    color: #f1f5f9;
+  }
 `;
 
 const HeroDescription = styled.p`
   margin: 0;
-  font-size: 15px;
-  line-height: 1.75;
+  max-width: 60ch;
+  font-size: 14px;
+  line-height: 1.7;
   color: ${palette.textSoft};
+
+  :root[data-theme="dark"] & {
+    color: rgba(226, 232, 240, 0.6);
+  }
 `;
 
 const MetaRow = styled.div`
@@ -828,98 +855,118 @@ const MetaChip = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 34px;
-  padding: 0 12px;
+  padding: 6px 12px;
   border-radius: 999px;
-  background: #f8fafc;
-  border: 1px solid ${palette.borderSoft};
-  color: #475569;
-  font-size: 13px;
-  font-weight: 700;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid ${palette.border};
+  color: ${palette.text};
+  font-size: 12px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+
+  :root[data-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.55);
+    border-color: rgba(148, 163, 184, 0.2);
+    color: rgba(226, 232, 240, 0.78);
+  }
 `;
 
 const TagRow = styled.div`
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-top: 2px;
+  margin-top: 6px;
 `;
 
 const Tag = styled.span`
   display: inline-flex;
   align-items: center;
-  height: 32px;
-  padding: 0 12px;
+  padding: 5px 12px;
   border-radius: 999px;
-  background: rgba(79, 118, 241, 0.08);
+  background: ${palette.chipBg};
   color: ${palette.primaryStrong};
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
+
+  :root[data-theme="dark"] & {
+    background: rgba(96, 165, 250, 0.14);
+    color: #93c5fd;
+  }
 `;
 
 const HeroScoreCard = styled.div`
-  border-radius: 20px;
-  background: ${palette.accentGradientSoft};
-  border: 1px solid rgba(79, 118, 241, 0.12);
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 6px;
-  padding: 20px;
+  gap: 8px;
+  padding: 28px 28px 28px;
+  border-radius: ${palette.radiusMd};
+  background: ${palette.primaryStrong};
+  color: #ffffff;
+
+  & > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  @media (max-width: 880px) {
+    padding: 24px;
+  }
 `;
 
 const ScoreLabel = styled.div`
-  font-size: 13px;
-  font-weight: 700;
-  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.82);
 `;
 
 const ScoreValue = styled.div`
-  font-size: 56px;
+  font-size: clamp(3.5rem, 5vw, 4.5rem);
   font-weight: 800;
   line-height: 1;
-  letter-spacing: -0.05em;
-  color: #0f172a;
+  letter-spacing: -0.04em;
+  color: #ffffff;
+  font-variant-numeric: tabular-nums;
 `;
 
 const ScoreUnit = styled.div`
-  margin-top: -4px;
+  margin-top: 2px;
   font-size: 13px;
-  color: #64748b;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.78);
 `;
 
 const ScoreState = styled.div<{ $tone: "excellent" | "good" | "caution" }>`
-  margin-top: 6px;
-  height: 34px;
-  padding: 0 14px;
+  margin-top: 8px;
+  padding: 5px 12px;
   border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 700;
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
   ${({ $tone }) =>
     $tone === "excellent"
         ? css`
-          background: ${palette.successBg};
-          color: ${palette.successText};
+          background: rgba(255, 255, 255, 0.28);
         `
-        : $tone === "good"
+        : $tone === "caution"
             ? css`
-          background: ${palette.primarySoft};
-          color: ${palette.primaryStrong};
+          background: rgba(251, 191, 36, 0.3);
         `
             : css`
-          background: ${palette.warningBg};
-          color: ${palette.warningText};
+          background: rgba(255, 255, 255, 0.22);
         `}
 `;
 
 const StatsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 14px;
+  gap: 16px;
 
   @media (max-width: 1080px) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -931,58 +978,88 @@ const StatsGrid = styled.div`
 `;
 
 const StatCard = styled.div`
-  border-radius: 18px;
-  padding: 18px;
-  background: #ffffff;
+  padding: 22px;
+  border-radius: ${palette.radiusMd};
   border: 1px solid ${palette.border};
-  box-shadow: 0 6px 16px rgba(30, 41, 59, 0.04);
+  background: ${palette.cardSoft};
+  box-shadow: ${palette.shadowSoft};
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: 14px;
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${palette.shadow};
+  }
+
+  :root[data-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(148, 163, 184, 0.18);
+  }
 `;
 
 const StatIconWrap = styled.div`
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  background: ${palette.primarySoft};
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: ${palette.chipBg};
   color: ${palette.primaryStrong};
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+
+  :root[data-theme="dark"] & {
+    background: rgba(96, 165, 250, 0.14);
+    color: #93c5fd;
+  }
 `;
 
 const StatContent = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 `;
 
 const StatLabel = styled.div`
-  font-size: 13px;
-  font-weight: 700;
-  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  color: ${palette.textSoft};
+
+  :root[data-theme="dark"] & {
+    color: rgba(226, 232, 240, 0.6);
+  }
 `;
 
 const StatValue = styled.div`
-  font-size: 24px;
+  font-size: clamp(1.4rem, 2vw, 1.75rem);
   font-weight: 800;
-  line-height: 1.2;
-  letter-spacing: -0.03em;
-  color: #0f172a;
+  line-height: 1.1;
+  letter-spacing: -0.025em;
+  color: ${palette.primaryStrong};
+  font-variant-numeric: tabular-nums;
+
+  :root[data-theme="dark"] & {
+    color: #93c5fd;
+  }
 `;
 
 const StatSub = styled.div`
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.55;
-  color: ${palette.textMuted};
+  color: ${palette.textSoft};
+
+  :root[data-theme="dark"] & {
+    color: rgba(226, 232, 240, 0.5);
+  }
 `;
 
 const SummaryGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 18px;
 
   @media (max-width: 860px) {
     grid-template-columns: 1fr;
@@ -990,11 +1067,15 @@ const SummaryGrid = styled.div`
 `;
 
 const SummaryCard = styled.div`
-  border-radius: 20px;
-  padding: 22px;
-  background: #ffffff;
+  padding: 28px;
+  border-radius: ${palette.radiusLg};
   border: 1px solid ${palette.border};
-  box-shadow: 0 6px 16px rgba(30, 41, 59, 0.04);
+  background: #ffffff;
+
+  :root[data-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.7);
+    border-color: rgba(148, 163, 184, 0.18);
+  }
 `;
 
 const SummaryHeader = styled.div`
@@ -1002,65 +1083,93 @@ const SummaryHeader = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 18px;
 `;
 
 const SummaryTitle = styled.h2`
   margin: 0;
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  color: #0f172a;
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: ${palette.text};
+
+  :root[data-theme="dark"] & {
+    color: #f1f5f9;
+  }
 `;
 
 const SummaryBadge = styled.div<{ $variant?: "mint" }>`
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 999px;
   display: inline-flex;
   align-items: center;
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
   ${({ $variant }) =>
     $variant === "mint"
         ? css`
-          background: rgba(43, 198, 166, 0.12);
+          background: ${palette.mintChipBg};
           color: ${palette.secondaryStrong};
         `
         : css`
-          background: ${palette.primarySoft};
+          background: ${palette.chipBg};
           color: ${palette.primaryStrong};
         `}
+
+  :root[data-theme="dark"] & {
+    ${({ $variant }) =>
+      $variant === "mint"
+          ? css`
+            background: rgba(52, 211, 153, 0.14);
+            color: #34d399;
+          `
+          : css`
+            background: rgba(96, 165, 250, 0.14);
+            color: #93c5fd;
+          `}
+  }
 `;
 
 const BulletList = styled.ul`
   margin: 0;
   padding: 0;
   list-style: none;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 10px;
 
   li {
     position: relative;
-    padding: 14px 14px 14px 38px;
+    padding: 14px 16px 14px 38px;
     border-radius: 14px;
-    background: #f8fafc;
+    background: rgba(255, 255, 255, 0.6);
     border: 1px solid ${palette.borderSoft};
     font-size: 14px;
-    line-height: 1.7;
-    color: #334155;
+    line-height: 1.65;
+    color: ${palette.text};
   }
 
   li::before {
     content: "";
     position: absolute;
     left: 16px;
-    top: 20px;
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
+    top: 22px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
     background: ${palette.primary};
+  }
+
+  :root[data-theme="dark"] & {
+    li {
+      background: rgba(15, 23, 42, 0.5);
+      border-color: rgba(148, 163, 184, 0.16);
+      color: #f1f5f9;
+    }
+
+    li::before {
+      background: #60a5fa;
+    }
   }
 `;
 
@@ -1068,42 +1177,72 @@ const EmptyText = styled.div`
   font-size: 14px;
   line-height: 1.7;
   color: ${palette.textMuted};
+
+  :root[data-theme="dark"] & {
+    color: rgba(226, 232, 240, 0.4);
+  }
 `;
 
 const SectionCard = styled.section`
-  border-radius: 24px;
-  padding: 24px;
-  background: #ffffff;
+  padding: 32px;
+  border-radius: ${palette.radiusLg};
   border: 1px solid ${palette.border};
-  box-shadow: 0 8px 20px rgba(30, 41, 59, 0.04);
+  background: #ffffff;
+
+  :root[data-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.7);
+    border-color: rgba(148, 163, 184, 0.18);
+  }
+
+  @media (max-width: 640px) {
+    padding: 24px;
+  }
 `;
 
 const SectionHead = styled.div`
-  margin-bottom: 18px;
+  margin-bottom: 24px;
 `;
 
 const SectionEyebrow = styled.div`
-  font-size: 12px;
-  font-weight: 800;
-  letter-spacing: 0.12em;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: ${palette.chipBg};
   color: ${palette.primaryStrong};
-  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  margin-bottom: 12px;
+
+  :root[data-theme="dark"] & {
+    background: rgba(96, 165, 250, 0.14);
+    color: #93c5fd;
+  }
 `;
 
 const SectionTitle = styled.h2`
   margin: 0;
-  font-size: 28px;
+  font-size: clamp(22px, 2.6vw, 28px);
   font-weight: 800;
-  line-height: 1.3;
-  letter-spacing: -0.04em;
-  color: #0f172a;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: ${palette.text};
+
+  :root[data-theme="dark"] & {
+    color: #f1f5f9;
+  }
 `;
 
 const SectionDesc = styled.p`
   margin: 10px 0 0;
-  font-size: 15px;
+  max-width: 60ch;
+  font-size: 14px;
   line-height: 1.7;
   color: ${palette.textSoft};
+
+  :root[data-theme="dark"] & {
+    color: rgba(226, 232, 240, 0.6);
+  }
 `;
 
 const QuestionList = styled.div`
@@ -1113,10 +1252,22 @@ const QuestionList = styled.div`
 `;
 
 const QuestionCard = styled.article`
-  border-radius: 18px;
-  padding: 20px;
-  background: #fbfcff;
+  padding: 24px;
+  border-radius: ${palette.radiusMd};
   border: 1px solid ${palette.borderSoft};
+  background: rgba(255, 255, 255, 0.68);
+  transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: ${palette.shadowSoft};
+  }
+
+  :root[data-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.55);
+    border-color: rgba(148, 163, 184, 0.16);
+  }
 `;
 
 const QuestionTop = styled.div`
@@ -1124,58 +1275,90 @@ const QuestionTop = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 10px;
+  margin-bottom: 14px;
 `;
 
 const QuestionOrder = styled.div`
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: ${palette.chipBg};
   color: ${palette.primaryStrong};
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+
+  :root[data-theme="dark"] & {
+    background: rgba(96, 165, 250, 0.14);
+    color: #93c5fd;
+  }
 `;
 
 const QuestionScore = styled.div<{ $tone: "excellent" | "good" | "caution" }>`
-  min-width: 74px;
-  height: 34px;
-  padding: 0 12px;
-  border-radius: 999px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
-  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  font-variant-numeric: tabular-nums;
 
   ${({ $tone }) =>
     $tone === "excellent"
         ? css`
-          background: ${palette.successBg};
-          color: ${palette.successText};
+          background: ${palette.mintChipBg};
+          color: ${palette.secondaryStrong};
         `
         : $tone === "good"
             ? css`
-          background: ${palette.primarySoft};
+          background: ${palette.chipBg};
           color: ${palette.primaryStrong};
         `
             : css`
-          background: ${palette.warningBg};
+          background: ${palette.warningSoft};
           color: ${palette.warningText};
         `}
+
+  :root[data-theme="dark"] & {
+    ${({ $tone }) =>
+      $tone === "excellent"
+          ? css`
+            background: rgba(52, 211, 153, 0.14);
+            color: #34d399;
+          `
+          : $tone === "good"
+              ? css`
+            background: rgba(96, 165, 250, 0.14);
+            color: #93c5fd;
+          `
+              : css`
+            background: rgba(251, 191, 36, 0.16);
+            color: #fbbf24;
+          `}
+  }
 `;
 
 const QuestionTitle = styled.h3`
-  margin: 0 0 14px;
-  font-size: 20px;
-  font-weight: 800;
+  margin: 0 0 16px;
+  font-size: clamp(17px, 1.8vw, 20px);
+  font-weight: 700;
   line-height: 1.5;
-  letter-spacing: -0.03em;
-  color: #0f172a;
+  letter-spacing: -0.02em;
+  color: ${palette.text};
+
+  :root[data-theme="dark"] & {
+    color: #f1f5f9;
+  }
 `;
 
 const AnswerGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 12px;
+  gap: 12px;
+  margin-top: 16px;
 
   @media (max-width: 860px) {
     grid-template-columns: 1fr;
@@ -1183,61 +1366,94 @@ const AnswerGrid = styled.div`
 `;
 
 const AnswerBox = styled.div`
-  border-radius: 16px;
-  padding: 16px;
-  background: #ffffff;
-  border: 1px solid ${palette.border};
+  padding: 18px;
+  border-radius: 14px;
+  background: rgba(248, 250, 252, 0.7);
+  border: 1px solid ${palette.borderSoft};
+
+  :root[data-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.6);
+    border-color: rgba(148, 163, 184, 0.16);
+  }
 `;
 
 const AnswerLabel = styled.div`
-  font-size: 13px;
-  font-weight: 800;
-  color: ${palette.primaryStrong};
+  font-size: 12px;
+  font-weight: 600;
+  color: ${palette.textSoft};
   margin-bottom: 10px;
+
+  :root[data-theme="dark"] & {
+    color: rgba(226, 232, 240, 0.6);
+  }
 `;
 
 const AnswerText = styled.p`
   margin: 0;
   font-size: 14px;
   line-height: 1.75;
-  color: #334155;
+  color: ${palette.text};
+
+  :root[data-theme="dark"] & {
+    color: #f1f5f9;
+  }
 `;
 
 const RecommendedBox = styled.div`
   margin-top: 14px;
-  border-radius: 16px;
-  padding: 16px;
-  background: linear-gradient(180deg, #f8fbff 0%, #f8fffd 100%);
-  border: 1px solid rgba(79, 118, 241, 0.14);
+  padding: 18px;
+  border-radius: 14px;
+  background: ${palette.mintChipBg};
+  border: 1px solid rgba(16, 185, 129, 0.18);
+
+  :root[data-theme="dark"] & {
+    background: rgba(52, 211, 153, 0.08);
+    border-color: rgba(52, 211, 153, 0.2);
+  }
 `;
 
 const RecommendedLabel = styled.div`
-  font-size: 13px;
-  font-weight: 800;
+  font-size: 12px;
+  font-weight: 700;
   color: ${palette.secondaryStrong};
   margin-bottom: 10px;
+
+  :root[data-theme="dark"] & {
+    color: #34d399;
+  }
 `;
 
 const RecommendedText = styled.p`
   margin: 0;
   font-size: 14px;
   line-height: 1.75;
-  color: #334155;
+  color: ${palette.text};
+
+  :root[data-theme="dark"] & {
+    color: #f1f5f9;
+  }
 `;
 
 const EmptyPanel = styled.div`
-  border-radius: 16px;
-  padding: 20px;
-  background: #f8fafc;
+  padding: 32px 20px;
+  border-radius: 14px;
   border: 1px dashed ${palette.border};
+  background: rgba(248, 250, 252, 0.5);
   font-size: 14px;
   color: ${palette.textSoft};
+  text-align: center;
+
+  :root[data-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.4);
+    border-color: rgba(148, 163, 184, 0.24);
+    color: rgba(226, 232, 240, 0.55);
+  }
 `;
 
 const BottomActionBar = styled.div`
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 12px;
 
   @media (max-width: 640px) {
     flex-direction: column-reverse;
@@ -1245,86 +1461,122 @@ const BottomActionBar = styled.div`
 `;
 
 const PrimaryButton = styled.button`
-  height: 44px;
-  padding: 0 16px;
+  ${interactiveText};
+  height: 48px;
+  padding: 0 24px;
   border: none;
-  border-radius: 12px;
-  background: ${palette.accentGradient};
+  border-radius: 14px;
+  background: ${palette.primaryStrong};
   color: #ffffff;
   font-size: 14px;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
-  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  transition: background 0.2s ease;
 
   &:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 10px 20px rgba(62, 99, 224, 0.16);
+    background: #1d4ed8;
   }
 `;
 
 const GhostButton = styled.button`
-  height: 44px;
-  padding: 0 16px;
+  ${interactiveText};
+  height: 48px;
+  padding: 0 22px;
+  border-radius: 14px;
   border: 1px solid ${palette.border};
-  border-radius: 12px;
   background: #ffffff;
-  color: #334155;
+  color: ${palette.text};
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   line-height: 1;
   cursor: pointer;
-  transition: background 0.18s ease, transform 0.18s ease;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 
   &:hover {
-    background: #f8fafc;
-    transform: translateY(-1px);
+    background: ${palette.chipBg};
+    border-color: ${palette.primaryRing};
+    color: ${palette.primaryStrong};
+  }
+
+  :root[data-theme="dark"] & {
+    color: #f1f5f9;
+    background: rgba(15, 23, 42, 0.5);
+    border-color: rgba(148, 163, 184, 0.24);
+
+    &:hover {
+      background: rgba(96, 165, 250, 0.12);
+      border-color: rgba(96, 165, 250, 0.32);
+      color: #93c5fd;
+    }
   }
 `;
 
 const LoadingCard = styled.div`
   min-height: 320px;
-  border-radius: 24px;
-  background: #ffffff;
+  padding: 48px;
+  border-radius: ${palette.radiusLg};
   border: 1px solid ${palette.border};
-  box-shadow: 0 8px 20px rgba(30, 41, 59, 0.04);
+  background: ${palette.cardSoft};
+  box-shadow: ${palette.shadow};
   display: flex;
   align-items: center;
   justify-content: center;
   color: ${palette.textSoft};
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
+
+  :root[data-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.7);
+    border-color: rgba(148, 163, 184, 0.18);
+    color: rgba(226, 232, 240, 0.6);
+  }
 `;
 
 const ErrorCard = styled.div`
   min-height: 320px;
-  border-radius: 24px;
-  padding: 28px;
-  background: #ffffff;
+  padding: 40px;
+  border-radius: ${palette.radiusLg};
   border: 1px solid ${palette.border};
-  box-shadow: 0 8px 20px rgba(30, 41, 59, 0.04);
+  background: ${palette.cardSoft};
+  box-shadow: ${palette.shadow};
   display: flex;
   flex-direction: column;
   justify-content: center;
+
+  :root[data-theme="dark"] & {
+    background: rgba(15, 23, 42, 0.7);
+    border-color: rgba(148, 163, 184, 0.18);
+  }
 `;
 
 const ErrorTitle = styled.h2`
-  margin: 0 0 10px;
-  font-size: 24px;
+  margin: 0 0 14px;
+  font-size: clamp(22px, 2.6vw, 28px);
   font-weight: 800;
-  color: #0f172a;
+  letter-spacing: -0.03em;
+  color: ${palette.text};
+
+  :root[data-theme="dark"] & {
+    color: #f1f5f9;
+  }
 `;
 
 const ErrorText = styled.p`
-  margin: 0 0 20px;
+  margin: 0 0 24px;
+  max-width: 55ch;
   font-size: 14px;
   line-height: 1.7;
   color: ${palette.textSoft};
+
+  :root[data-theme="dark"] & {
+    color: rgba(226, 232, 240, 0.6);
+  }
 `;
 
 const ActionRow = styled.div`
   display: flex;
-  gap: 10px;
+  gap: 12px;
 
   @media (max-width: 640px) {
     flex-direction: column-reverse;

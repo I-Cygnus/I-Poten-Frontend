@@ -16,11 +16,13 @@ const OpenEvent: React.FC<OpenEventProps> = ({ isOpen, onClose }) => {
     if (isOpen) {
       setIsVisible(true);
       document.body.style.overflow = 'hidden';
-    } else {
-      const timer = setTimeout(() => setIsVisible(false), 300);
-      document.body.style.overflow = 'unset';
-      return () => clearTimeout(timer);
+      return () => {
+        document.body.style.overflow = '';
+      };
     }
+    const timer = setTimeout(() => setIsVisible(false), 300);
+    document.body.style.overflow = '';
+    return () => clearTimeout(timer);
   }, [isOpen]);
 
   if (!isOpen && !isVisible) return null;

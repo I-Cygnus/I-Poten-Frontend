@@ -31,17 +31,17 @@ export type SystemMessageModalProps = {
 };
 
 const TONE_COLORS: Record<SystemMessageTone, string> = {
-    info: "#3E63E0",
+    info: "#2563eb",
     success: "#059669",
-    warning: "#D97706",
-    error: "#DC2626",
+    warning: "#b45309",
+    error: "#dc2626",
 };
 
-const TONE_BG_COLORS: Record<SystemMessageTone, string> = {
-    info: "rgba(62, 99, 224, 0.06)",
-    success: "rgba(16, 185, 129, 0.06)",
-    warning: "rgba(234, 179, 8, 0.06)",
-    error: "rgba(239, 68, 68, 0.06)",
+const TONE_BG: Record<SystemMessageTone, string> = {
+    info: "rgba(59, 130, 246, 0.1)",
+    success: "rgba(16, 185, 129, 0.12)",
+    warning: "rgba(245, 158, 11, 0.12)",
+    error: "rgba(220, 38, 38, 0.1)",
 };
 
 const ToneIcon: React.FC<{ tone: SystemMessageTone }> = ({ tone }) => {
@@ -105,8 +105,7 @@ const Scrim = styled.div<{ $zIndex: number }>`
     position: fixed;
     inset: 0;
     z-index: ${({ $zIndex }) => $zIndex};
-    background: rgba(15, 23, 42, 0.45);
-    backdrop-filter: saturate(120%) blur(2px);
+    background: rgba(15, 23, 42, 0.5);
 `;
 
 const Sheet = styled.div<{ $size: "default" | "wide"; $hasDescription: boolean; $zIndex: number }>`
@@ -124,171 +123,265 @@ const Sheet = styled.div<{ $size: "default" | "wide"; $hasDescription: boolean; 
             ? "min(720px, calc(100% - 32px))"
             : "min(480px, calc(100% - 32px))"};
     max-height: min(80vh, calc(100vh - 48px));
-    background: linear-gradient(180deg, #ffffff 0%, #f9fafb 100%);
-    border-radius: 16px;
-    border: 1px solid #e5e7eb;
-    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.25);
+    background: #ffffff;
+    border: 1px solid rgba(148, 163, 184, 0.22);
+    border-radius: 24px;
+    box-shadow: 0 32px 80px rgba(15, 23, 42, 0.18);
     overflow: hidden;
+
+    :root[data-theme="dark"] & {
+        background: #0f172a;
+        border-color: rgba(148, 163, 184, 0.22);
+    }
 `;
 
 const SheetHeader = styled.div<{ $hasDescription: boolean }>`
     position: relative;
     display: flex;
     flex-direction: column;
-    align-items: center;
-    gap: 10px;
-    padding: 20px 20px 16px;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 28px 28px 4px;
 `;
 
 const iconPop = keyframes`
-    0% { transform: scale(0.8); opacity: 0; }
-    60% { transform: scale(1.08); opacity: 1; }
-    100% { transform: scale(1); opacity: 1; }
-`;
-
-const iconRing = keyframes`
-    0% { transform: scale(1); opacity: 0.45; }
-    100% { transform: scale(1.5); opacity: 0; }
+    0% { transform: translateY(-2px) scale(0.9); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
 `;
 
 const IconBox = styled.span<{ $tone: SystemMessageTone }>`
-    position: relative;
-    margin-bottom: 6px;
     flex: 0 0 auto;
-    width: 76px;
-    height: 76px;
-    border-radius: 999px;
+    width: 44px;
+    height: 44px;
     display: grid;
     place-items: center;
+    border-radius: 14px;
     color: ${({ $tone }) => TONE_COLORS[$tone]};
-    background: ${({ $tone }) => TONE_BG_COLORS[$tone]};
-    box-shadow:
-        0 14px 30px rgba(15, 23, 42, 0.18),
-        inset 0 0 0 1px rgba(255, 255, 255, 0.7);
-    animation: ${iconPop} 0.38s ease-out;
-
-    &::after {
-        content: "";
-        position: absolute;
-        inset: 0;
-        border-radius: inherit;
-        border: 2px solid currentColor;
-        opacity: 0;
-        pointer-events: none;
-        animation: ${iconRing} 0.6s ease-out 0.1s forwards;
-    }
+    background: ${({ $tone }) => TONE_BG[$tone]};
+    animation: ${iconPop} 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 
     & > svg {
-        width: 40px;
-        height: 40px;
+        width: 22px;
+        height: 22px;
+    }
+
+    :root[data-theme="dark"] & {
+        color: ${({ $tone }) => {
+            if ($tone === "info") return "#93c5fd";
+            if ($tone === "success") return "#34d399";
+            if ($tone === "warning") return "#fbbf24";
+            return "#f87171";
+        }};
+        background: ${({ $tone }) => {
+            if ($tone === "info") return "rgba(96, 165, 250, 0.14)";
+            if ($tone === "success") return "rgba(52, 211, 153, 0.14)";
+            if ($tone === "warning") return "rgba(251, 191, 36, 0.14)";
+            return "rgba(248, 113, 113, 0.14)";
+        }};
     }
 `;
 
 const TitleWrap = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 4px;
-    padding-top: 10px;
-    text-align: center;
-    align-items: center;
+    gap: 8px;
+    text-align: left;
+    align-items: flex-start;
+    width: 100%;
 
     h3 {
         margin: 0;
-        font-size: 17px;
-        line-height: 1.4;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.35;
         letter-spacing: -0.02em;
-        color: #111827;
+        color: #0f172a;
     }
 
     small {
         margin: 0;
         font-size: 13px;
-        line-height: 1.5;
-        color: #6b7280;
+        line-height: 1.65;
+        color: rgba(15, 23, 42, 0.6);
+    }
+
+    :root[data-theme="dark"] & {
+        h3 {
+            color: #f1f5f9;
+        }
+
+        small {
+            color: rgba(226, 232, 240, 0.66);
+        }
     }
 `;
 
 const CloseX = styled.button`
     position: absolute;
-    top: 10px;
-    right: 10px;
-    border: 0;
-    background: transparent;
-    cursor: pointer;
-    width: 30px;
-    height: 30px;
+    top: 18px;
+    right: 18px;
+    border: none;
     border-radius: 999px;
+    background: rgba(148, 163, 184, 0.1);
+    cursor: pointer;
+    width: 32px;
+    height: 32px;
     display: grid;
     place-items: center;
-    font-size: 18px;
-    color: #9ca3af;
+    font-size: 16px;
+    line-height: 1;
+    color: rgba(15, 23, 42, 0.6);
+    transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 
     &:hover {
-        background: #f3f4f6;
-        color: #4b5563;
+        background: rgba(220, 38, 38, 0.1);
+        color: #dc2626;
+    }
+
+    :root[data-theme="dark"] & {
+        background: rgba(148, 163, 184, 0.16);
+        color: rgba(226, 232, 240, 0.65);
+
+        &:hover {
+            background: rgba(248, 113, 113, 0.16);
+            color: #f87171;
+        }
     }
 `;
 
 const SheetBody = styled.div`
-    padding: 0 22px 20px;
+    padding: 16px 28px 20px;
     overflow: auto;
 `;
 
 const BulletList = styled.ul`
     margin: 0;
-    padding-left: 18px;
-    color: #4b5563;
-    font-size: 13px;
-    line-height: 1.65;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 `;
 
 const BulletItem = styled.li`
-    & + & {
-        margin-top: 6px;
+    position: relative;
+    padding: 12px 16px 12px 36px;
+    border-radius: 14px;
+    background: rgba(248, 250, 252, 0.7);
+    border: 1px solid rgba(148, 163, 184, 0.14);
+    font-size: 13px;
+    line-height: 1.65;
+    font-weight: 500;
+    color: rgba(15, 23, 42, 0.75);
+
+    &::before {
+        content: "";
+        position: absolute;
+        left: 16px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(59, 130, 246, 0.7);
+    }
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.45);
+        border-color: rgba(148, 163, 184, 0.16);
+        color: rgba(226, 232, 240, 0.75);
+
+        &::before {
+            background: rgba(96, 165, 250, 0.8);
+        }
     }
 `;
 
 const SheetFooter = styled.div<{ $hasDescription: boolean }>`
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
     gap: 10px;
-    padding: ${({ $hasDescription }) => ($hasDescription ? "0 22px 22px" : "18px 22px 22px")};
+    padding: 16px 28px 24px;
 `;
 
 const Ghost = styled.button`
     min-height: 44px;
-    border-radius: 12px;
-    border: 1px solid #d1d5db;
-    background: #ffffff;
-    color: #374151;
-    font-size: 14px;
+    min-width: 100px;
+    padding: 0 22px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.7);
+    color: rgba(15, 23, 42, 0.75);
+    font-size: 13px;
     font-weight: 600;
+    letter-spacing: -0.01em;
     cursor: pointer;
+    transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 
     &:hover {
-        background: #f9fafb;
+        background: rgba(59, 130, 246, 0.08);
+        border-color: rgba(59, 130, 246, 0.22);
+        color: #2563eb;
+    }
+
+    :root[data-theme="dark"] & {
+        border-color: rgba(148, 163, 184, 0.22);
+        background: rgba(15, 23, 42, 0.45);
+        color: rgba(226, 232, 240, 0.75);
+
+        &:hover {
+            background: rgba(96, 165, 250, 0.14);
+            border-color: rgba(96, 165, 250, 0.28);
+            color: #93c5fd;
+        }
     }
 `;
 
 const Primary = styled(Ghost)`
-    border-color: #3e63e0;
-    background: #4f76f1;
+    border: none;
+    background: #2563eb;
     color: #ffffff;
 
     &:hover {
-        background: #3e63e0;
-        border-color: #3e63e0;
-        filter: brightness(0.96);
+        background: #1d4ed8;
+        color: #ffffff;
+    }
+
+    :root[data-theme="dark"] & {
+        background: #3b82f6;
+        color: #ffffff;
+
+        &:hover {
+            background: #2563eb;
+            color: #ffffff;
+        }
     }
 `;
 
 const Danger = styled(Ghost)`
-    border-color: rgba(239, 68, 68, 0.45);
-    background: rgba(239, 68, 68, 0.12);
-    color: #dc2626;
+    border: none;
+    background: #dc2626;
+    color: #ffffff;
+    box-shadow: 0 10px 22px rgba(220, 38, 38, 0.22);
 
     &:hover {
-        background: rgba(239, 68, 68, 0.16);
+        background: #b91c1c;
+        color: #ffffff;
+        transform: translateY(-1px);
+        box-shadow: 0 14px 28px rgba(220, 38, 38, 0.28);
+    }
+
+    :root[data-theme="dark"] & {
+        background: #f87171;
+        color: #0f172a;
+        box-shadow: 0 10px 22px rgba(248, 113, 113, 0.24);
+
+        &:hover {
+            background: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 14px 28px rgba(248, 113, 113, 0.3);
+        }
     }
 `;
 
@@ -301,17 +394,21 @@ const SuccessIconSvg = styled.svg`
     .check-path {
         stroke-dasharray: 22;
         stroke-dashoffset: 22;
-        animation: ${checkDraw} 0.4s ease-out forwards;
+        animation: ${checkDraw} 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
     }
 `;
 
 const PlainBody = styled.div`
     margin-top: 0;
-    font-size: 13px;
-    line-height: 1.6;
-    color: #4b5563;
+    font-size: 14px;
+    line-height: 1.7;
+    color: rgba(15, 23, 42, 0.72);
     white-space: pre-wrap;
-    text-align: center;
+    text-align: left;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.72);
+    }
 `;
 
 const SystemMessageModal: React.FC<SystemMessageModalProps> = ({

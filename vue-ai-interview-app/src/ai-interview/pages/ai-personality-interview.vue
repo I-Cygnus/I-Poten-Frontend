@@ -7,6 +7,18 @@
     <div :style="bgDecoStyle"></div>
     <div :style="backgroundTextStyle">PERSONALITY</div>
 
+    <!-- 장치 토글 버튼 (우측 상단) -->
+    <div :style="deviceToggleBarStyle">
+      <div :style="deviceToggleBtnStyle(useMic)" @click="useMic = !useMic">
+        <v-icon size="13" :color="useMic ? '#a5b4fc' : 'rgba(255,255,255,0.3)'">mdi-microphone{{ useMic ? '' : '-off' }}</v-icon>
+        마이크
+      </div>
+      <div :style="deviceToggleBtnStyle(useCamera)" @click="useCamera = !useCamera">
+        <v-icon size="13" :color="useCamera ? '#a5b4fc' : 'rgba(255,255,255,0.3)'">mdi-video{{ useCamera ? '' : '-off' }}</v-icon>
+        카메라
+      </div>
+    </div>
+
     <div :style="interviewStartWrapperStyle">
       <!-- 진행 표시 헤더 -->
       <div :style="progressHeaderStyle">
@@ -22,13 +34,13 @@
         <video ref="previewVideo" autoplay playsinline muted :style="mainVideoStyle" />
 
         <!-- 카메라 비활성화 오버레이 -->
-        <div :style="videoOverlayStyle" v-if="!mediaChecked">
-          <v-icon size="56" color="rgba(255,255,255,0.25)">mdi-video-outline</v-icon>
-          <p :style="overlayTextStyle">카메라를 활성화하세요</p>
+        <div :style="videoOverlayStyle" v-if="!mediaChecked || !useCamera">
+          <v-icon size="56" color="rgba(255,255,255,0.25)">{{ useCamera ? 'mdi-video-outline' : 'mdi-video-off-outline' }}</v-icon>
+          <p :style="overlayTextStyle">{{ !mediaChecked ? '장치를 확인하세요' : '카메라가 꺼져 있습니다' }}</p>
         </div>
 
         <!-- PiP -->
-        <div :style="smallPreviewStyle" v-if="mediaChecked">
+        <div :style="smallPreviewStyle" v-if="mediaChecked && useCamera">
           <video ref="smallPreview" autoplay playsinline muted :style="smallVideoStyle" />
         </div>
 
@@ -44,8 +56,8 @@
           <div :style="questionScrollContainerStyle" class="question-scroll">
             <p :style="videoQuestionTextStyle">
               {{ mediaChecked
-                ? '카메라와 마이크가 정상 작동합니다. 면접을 시작하세요.'
-                : '카메라와 마이크를 확인하고 면접을 준비해주세요.' }}
+                ? '장치가 준비되었습니다. 면접을 시작하세요.'
+                : '장치를 확인하고 면접을 준비해주세요.' }}
             </p>
           </div>
         </div>
@@ -108,7 +120,7 @@
         ></video>
 
         <!-- 사용자 PiP -->
-        <div :style="smallPreviewStyle">
+        <div :style="smallPreviewStyle" v-if="cameraAvailable">
           <video ref="userVideo" v-show="start" autoplay playsinline muted :style="smallVideoStyle"></video>
         </div>
 
@@ -262,6 +274,11 @@ const textAnswer = ref('');
 const answerCardDark = ref(true);
 const textMode = ref(false);
 
+// 장치 토글
+const useMic = ref(true);
+const useCamera = ref(true);
+const cameraAvailable = ref(false);
+
 // 비디오 관련
 const userVideo = ref(null);
 const previewVideo = ref(null);
@@ -357,16 +374,44 @@ const startLoadingVideo = async () => {
 
 // 미디어 체크
 const checkMediaReady = async () => {
+  // 둘 다 꺼져 있으면 즉시 통과
+  if (!useMic.value && !useCamera.value) {
+    mediaChecked.value = true;
+    cameraAvailable.value = false;
+    return;
+  }
+
+  const constraints = { video: useCamera.value, audio: useMic.value };
+
   try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    cameraAvailable.value = useCamera.value;
     mediaChecked.value = true;
     mediaStream.value = stream;
-    if (previewVideo.value) previewVideo.value.srcObject = stream;
-    await nextTick();
-    if (smallPreview.value) smallPreview.value.srcObject = stream;
-    showAlert('마이크와 카메라가 정상적으로 작동합니다.');
-  } catch (err) {
-    showAlert('마이크 또는 카메라에 접근할 수 없습니다. 브라우저 권한을 확인하세요.');
+    if (useCamera.value && previewVideo.value) previewVideo.value.srcObject = stream;
+    if (useCamera.value) {
+      await nextTick();
+      if (smallPreview.value) smallPreview.value.srcObject = stream;
+    }
+    const label = useMic.value && useCamera.value
+      ? '마이크와 카메라가 준비됐습니다.'
+      : useMic.value
+        ? '마이크가 준비됐습니다.'
+        : '카메라가 준비됐습니다.';
+    showAlert(label);
+  } catch (_) {
+    // 카메라+마이크 동시 요청 실패 → 마이크만 폴백
+    if (useCamera.value && useMic.value) {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+        cameraAvailable.value = false;
+        mediaChecked.value = true;
+        mediaStream.value = stream;
+        showAlert('카메라를 찾을 수 없어 마이크만으로 진행합니다.');
+        return;
+      } catch (_) {}
+    }
+    showAlert('장치에 접근할 수 없습니다. 브라우저 권한을 확인하세요.');
     mediaChecked.value = false;
   }
 };
@@ -377,10 +422,13 @@ let recorder = null;
 let chunks = [];
 const startRecordingAuto = async () => {
   try {
-    recordingStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    if (userVideo.value) userVideo.value.srcObject = recordingStream;
+    const hasVideo = cameraAvailable.value;
+    const constraints = { video: hasVideo, audio: useMic.value || true };
+    recordingStream = await navigator.mediaDevices.getUserMedia(constraints);
+    if (hasVideo && userVideo.value) userVideo.value.srcObject = recordingStream;
     chunks = [];
-    recorder = new MediaRecorder(recordingStream, { mimeType: 'video/webm' });
+    const mimeType = hasVideo ? 'video/webm' : 'audio/webm';
+    recorder = new MediaRecorder(recordingStream, { mimeType });
     recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
     recorder.start();
   } catch (e) {}
@@ -548,10 +596,12 @@ onMounted(async () => {
   }
 
   // 카메라 미리보기
-  try {
-    const videoOnlyStream = await navigator.mediaDevices.getUserMedia({ video: true });
-    if (previewVideo.value) previewVideo.value.srcObject = videoOnlyStream;
-  } catch (e) {}
+  if (useCamera.value) {
+    try {
+      const videoOnlyStream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (previewVideo.value) previewVideo.value.srcObject = videoOnlyStream;
+    } catch (e) {}
+  }
 
   if (typeof window !== 'undefined') {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -845,4 +895,20 @@ const countdownBarFillStyle = {
 const prepTextStyle = {
   fontSize: '13px', fontWeight: '500', color: 'rgba(255,255,255,0.6)', margin: '0',
 };
+
+// 장치 토글 스타일
+const deviceToggleBarStyle = {
+  position: 'absolute', top: '20px', right: '24px', zIndex: 10,
+  display: 'flex', gap: '8px',
+};
+const deviceToggleBtnStyle = (isOn) => ({
+  display: 'flex', alignItems: 'center', gap: '6px',
+  padding: '7px 14px', borderRadius: '100px',
+  border: isOn ? '1px solid rgba(91,107,255,0.5)' : '1px solid rgba(255,255,255,0.12)',
+  background: isOn ? 'rgba(91,107,255,0.18)' : 'rgba(255,255,255,0.06)',
+  color: isOn ? '#a5b4fc' : 'rgba(255,255,255,0.3)',
+  fontSize: '12px', fontWeight: '600', cursor: 'pointer',
+  backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+  transition: 'all 0.2s ease', letterSpacing: '-0.01em', userSelect: 'none',
+});
 </script>

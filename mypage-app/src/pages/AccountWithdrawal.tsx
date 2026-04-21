@@ -30,16 +30,24 @@ const interactiveText = css`
 `;
 
 const palette = {
-    border: "#e5e7eb",
-    text: "#111827",
-    textSoft: "#6b7280",
-    primaryStrong: "#3E63E0",
-    primarySoft: "rgba(79, 118, 241, 0.10)",
-    warning: "#f59e0b",
-    warningSoft: "rgba(245, 158, 11, 0.10)",
-    warningBorder: "rgba(245, 158, 11, 0.18)",
-    warningText: "#9a6b16",
-    danger: "#ef4444",
+    softBorder: "rgba(148, 163, 184, 0.22)",
+    softerBorder: "rgba(148, 163, 184, 0.14)",
+    text: "#0f172a",
+    textSoft: "rgba(15, 23, 42, 0.6)",
+    textMuted: "rgba(15, 23, 42, 0.4)",
+    primaryStrong: "#2563eb",
+    chipBg: "rgba(59, 130, 246, 0.08)",
+    mintChipBg: "rgba(16, 185, 129, 0.1)",
+    warningSoft: "rgba(245, 158, 11, 0.1)",
+    warningBorder: "rgba(245, 158, 11, 0.22)",
+    warningText: "#b45309",
+    danger: "#dc2626",
+    dangerHover: "#b91c1c",
+    dangerSoft: "rgba(220, 38, 38, 0.08)",
+    dangerBorder: "rgba(220, 38, 38, 0.22)",
+    surface: "#ffffff",
+    surfaceAlt: "#f8fafc",
+    shadowSoft: "0 20px 60px rgba(15, 23, 42, 0.06)",
 };
 
 export default function AccountWithdrawal() {
@@ -112,81 +120,58 @@ export default function AccountWithdrawal() {
 
     return (
         <PageShell>
-            <SectionHeader>
-                <div>
-                    <SectionEyebrow>WITHDRAW</SectionEyebrow>
-                    <SectionTitle>회원 탈퇴</SectionTitle>
-                    <SectionDescription>
-                        삭제되는 항목과 복구 불가 내용을 확인한 뒤 진행해 주세요.
-                    </SectionDescription>
-                </div>
-            </SectionHeader>
+            <HeroCard>
+                <HeroTitle>탈퇴 전에 꼭 확인해 주세요.</HeroTitle>
+                <HeroDescription>
+                    삭제되는 항목과 복구 불가 내용을 살펴본 뒤 진행해 주세요. 학습 기록, AI 모의 면접 기록, 계정 설정이 함께 정리됩니다.
+                </HeroDescription>
+            </HeroCard>
 
-            <WithdrawHero>
-                <WithdrawHeroIcon>
-                    <LogOut size={24} />
-                </WithdrawHeroIcon>
-
-                <WithdrawHeroContent>
-                    <WithdrawHeroBadge>WITHDRAW GUIDE</WithdrawHeroBadge>
-                    <WithdrawHeroTitle>탈퇴 시 삭제되는 항목을 확인해 주세요.</WithdrawHeroTitle>
-                    <WithdrawHeroDesc>
-                        회원 탈퇴를 진행하면 학습 기록, AI 모의 면접 기록, 계정 설정 정보가 함께 정리됩니다.
-                    </WithdrawHeroDesc>
-                </WithdrawHeroContent>
-            </WithdrawHero>
-
-            <WithdrawInfoGrid>
-                <WithdrawMiniCard>
-                    <WithdrawMiniHead>
-                        <WithdrawMiniIcon>
-                            <FileText size={18} />
-                        </WithdrawMiniIcon>
-                        <WithdrawMiniTitle>학습 기록</WithdrawMiniTitle>
-                    </WithdrawMiniHead>
-                    <WithdrawMiniDesc>
+            <InfoGrid>
+                <InfoCard>
+                    <InfoIconWrap>
+                        <FileText size={18} strokeWidth={2} />
+                    </InfoIconWrap>
+                    <InfoTitle>학습 기록</InfoTitle>
+                    <InfoDesc>
                         퀴즈 풀이 기록, 학습 이력, 오답노트 관련 데이터가 삭제되거나 복구되지 않을 수 있어요.
-                    </WithdrawMiniDesc>
-                </WithdrawMiniCard>
+                    </InfoDesc>
+                </InfoCard>
 
-                <WithdrawMiniCard>
-                    <WithdrawMiniHead>
-                        <WithdrawMiniIcon>
-                            <Clock3 size={18} />
-                        </WithdrawMiniIcon>
-                        <WithdrawMiniTitle>AI 모의 면접 기록</WithdrawMiniTitle>
-                    </WithdrawMiniHead>
-                    <WithdrawMiniDesc>
+                <InfoCard>
+                    <InfoIconWrap>
+                        <Clock3 size={18} strokeWidth={2} />
+                    </InfoIconWrap>
+                    <InfoTitle>AI 모의 면접 기록</InfoTitle>
+                    <InfoDesc>
                         AI 모의 면접 결과와 피드백, 진행 히스토리도 함께 정리될 수 있으니 필요한 내용은 미리 확인해 주세요.
-                    </WithdrawMiniDesc>
-                </WithdrawMiniCard>
+                    </InfoDesc>
+                </InfoCard>
 
-                <WithdrawMiniCard>
-                    <WithdrawMiniHead>
-                        <WithdrawMiniIcon>
-                            <Settings size={18} />
-                        </WithdrawMiniIcon>
-                        <WithdrawMiniTitle>계정 설정</WithdrawMiniTitle>
-                    </WithdrawMiniHead>
-                    <WithdrawMiniDesc>
+                <InfoCard>
+                    <InfoIconWrap>
+                        <Settings size={18} strokeWidth={2} />
+                    </InfoIconWrap>
+                    <InfoTitle>계정 설정</InfoTitle>
+                    <InfoDesc>
                         알림 설정, 관심 분야, 개인화 추천 정보도 초기화되며 일부 정보는 다시 복원되지 않을 수 있어요.
-                    </WithdrawMiniDesc>
-                </WithdrawMiniCard>
-            </WithdrawInfoGrid>
+                    </InfoDesc>
+                </InfoCard>
+            </InfoGrid>
 
             <DangerCard>
-                <DangerTop>
+                <DangerHead>
                     <DangerIconWrap>
-                        <LogOut size={22} />
+                        <LogOut size={20} strokeWidth={2} />
                     </DangerIconWrap>
 
-                    <DangerTopText>
-                        <DangerTitle>최종 확인</DangerTitle>
+                    <DangerHeadText>
+                        <DangerEyebrow>최종 확인</DangerEyebrow>
                         <DangerLead>
-                            아래 세 가지를 확인했다면 회원 탈퇴를 진행해 주세요.
+                            아래 네 가지를 확인했다면 회원 탈퇴를 진행해 주세요.
                         </DangerLead>
-                    </DangerTopText>
-                </DangerTop>
+                    </DangerHeadText>
+                </DangerHead>
 
                 <DangerList>
                     <li>학습 기록과 AI 모의 면접 기록은 삭제 후 복구할 수 없습니다.</li>
@@ -195,23 +180,23 @@ export default function AccountWithdrawal() {
                     <li>회원 탈퇴 후 30일 동안 동일한 계정으로 재가입이 제한됩니다.</li>
                 </DangerList>
 
-                <WithdrawConfirmPanel>
-                    <DangerCheckbox>
+                <ConfirmPanel>
+                    <CheckboxLabel htmlFor="withdraw-check" $checked={withdrawAgreed}>
                         <input
                             type="checkbox"
                             id="withdraw-check"
                             checked={withdrawAgreed}
                             onChange={(event) => setWithdrawAgreed(event.target.checked)}
                         />
-                        <label htmlFor="withdraw-check">안내 내용을 모두 확인했고 회원 탈퇴에 동의합니다.</label>
-                    </DangerCheckbox>
+                        <span>안내 내용을 모두 확인했고 회원 탈퇴에 동의합니다.</span>
+                    </CheckboxLabel>
 
-                    <WithdrawHelperText>
+                    <HelperText>
                         탈퇴 버튼을 누르면 현재 세션이 즉시 종료되며, 30일 동안 동일한 계정으로 재가입이 제한됩니다.
-                    </WithdrawHelperText>
-                </WithdrawConfirmPanel>
+                    </HelperText>
+                </ConfirmPanel>
 
-                <DangerActionRow>
+                <ActionRow>
                     <GhostButton type="button" onClick={() => navigate("/mypage")}>
                         이전으로
                     </GhostButton>
@@ -222,7 +207,7 @@ export default function AccountWithdrawal() {
                     >
                         {withdrawing ? "처리 중..." : "회원 탈퇴 진행"}
                     </DangerButton>
-                </DangerActionRow>
+                </ActionRow>
             </DangerCard>
             <SystemMessageModal open={sysOpen} message={sysMsg} onClose={closeSys} />
         </PageShell>
@@ -234,109 +219,63 @@ const PageShell = styled.div`
     width: 100%;
     max-width: 1120px;
     margin: 0 auto;
-    padding: 40px 24px 56px;
+    padding: 48px 24px 72px;
     display: flex;
     flex-direction: column;
-    gap: 24px;
+    gap: 28px;
 
     @media (max-width: 768px) {
-        padding: 28px 16px 40px;
+        padding: 28px 16px 48px;
+        gap: 20px;
+    }
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
     }
 `;
 
-const SectionHeader = styled.div`
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-`;
-
-const SectionEyebrow = styled.div`
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    color: ${palette.primaryStrong};
-`;
-
-const SectionTitle = styled.h2`
-    margin: 8px 0 0;
-    font-size: 30px;
-    line-height: 1.2;
-    letter-spacing: -0.03em;
-    color: ${palette.text};
-`;
-
-const SectionDescription = styled.p`
-    margin: 12px 0 0;
-    font-size: 15px;
-    line-height: 1.75;
-    color: ${palette.textSoft};
-`;
-
-const WithdrawHero = styled.div`
-    display: flex;
-    align-items: flex-start;
-    gap: 18px;
-    padding: 24px;
+const HeroCard = styled.section`
+    padding: 28px 32px;
     border-radius: 20px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-    border: 1px solid ${palette.border};
-    box-shadow: 0 6px 16px rgba(30, 41, 59, 0.05);
+    background: ${palette.surface};
+    border: 1px solid ${palette.softBorder};
 
     @media (max-width: 768px) {
-        flex-direction: column;
+        padding: 24px 20px;
+    }
+
+    :root[data-theme="dark"] & {
+        background: #0f172a;
+        border-color: rgba(148, 163, 184, 0.18);
     }
 `;
 
-const WithdrawHeroIcon = styled.div`
-    width: 56px;
-    height: 56px;
-    border-radius: 18px;
-    background: ${palette.primarySoft};
-    color: ${palette.primaryStrong};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-`;
-
-const WithdrawHeroContent = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-`;
-
-const WithdrawHeroBadge = styled.div`
-    width: fit-content;
-    height: 28px;
-    padding: 0 12px;
-    border-radius: 999px;
-    display: inline-flex;
-    align-items: center;
-    background: ${palette.primarySoft};
-    color: ${palette.primaryStrong};
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
-`;
-
-const WithdrawHeroTitle = styled.h3`
-    margin: 0;
-    font-size: 24px;
-    font-weight: 800;
-    line-height: 1.35;
-    letter-spacing: -0.03em;
+const HeroTitle = styled.h2`
+    margin: 0 0 10px;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
     color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
-const WithdrawHeroDesc = styled.p`
+const HeroDescription = styled.p`
     margin: 0;
+    max-width: 60ch;
     font-size: 14px;
     line-height: 1.7;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.66);
+    }
 `;
 
-const WithdrawInfoGrid = styled.div`
+const InfoGrid = styled.div`
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
@@ -346,159 +285,238 @@ const WithdrawInfoGrid = styled.div`
     }
 `;
 
-const WithdrawMiniCard = styled.div`
+const InfoCard = styled.article`
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 26px 24px;
     border-radius: 18px;
-    background: #ffffff;
-    border: 1px solid ${palette.border};
-    box-shadow: 0 6px 16px rgba(30, 41, 59, 0.04);
-    padding: 20px;
-`;
+    background: ${palette.surface};
+    border: 1px solid ${palette.softBorder};
+    transition: border-color 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 
-const WithdrawMiniHead = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
-`;
+    &:hover {
+        border-color: rgba(59, 130, 246, 0.22);
+    }
 
-const WithdrawMiniIcon = styled.div`
-    width: 40px;
-    height: 40px;
-    border-radius: 12px;
-    background: ${palette.primarySoft};
-    color: ${palette.primaryStrong};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-`;
+    :root[data-theme="dark"] & {
+        background: #0f172a;
+        border-color: rgba(148, 163, 184, 0.18);
 
-const WithdrawMiniTitle = styled.div`
-    font-size: 16px;
-    font-weight: 750;
-    letter-spacing: -0.02em;
-    color: ${palette.text};
-`;
-
-const WithdrawMiniDesc = styled.p`
-    margin: 0;
-    font-size: 14px;
-    line-height: 1.7;
-    color: ${palette.textSoft};
-`;
-
-const DangerCard = styled.div`
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
-    border: 1px solid ${palette.border};
-    border-radius: 24px;
-    padding: 28px;
-    box-shadow: 0 10px 24px rgba(30, 41, 59, 0.06);
-
-    &::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #f8c15c 0%, #f59e0b 40%, #ef4444 100%);
-        opacity: 0.9;
+        &:hover {
+            border-color: rgba(96, 165, 250, 0.28);
+        }
     }
 `;
 
-const DangerTop = styled.div`
+const InfoIconWrap = styled.div`
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: ${palette.chipBg};
+    color: ${palette.primaryStrong};
+
+    :root[data-theme="dark"] & {
+        background: rgba(96, 165, 250, 0.14);
+        color: #93c5fd;
+    }
+`;
+
+const InfoTitle = styled.h3`
+    margin: 0;
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
+`;
+
+const InfoDesc = styled.p`
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.7;
+    color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.66);
+    }
+`;
+
+const DangerCard = styled.section`
+    padding: 32px 32px 28px;
+    border-radius: 24px;
+    background: ${palette.surface};
+    border: 1px solid ${palette.softBorder};
+
+    @media (max-width: 768px) {
+        padding: 26px 22px 24px;
+    }
+
+    :root[data-theme="dark"] & {
+        background: #0f172a;
+        border-color: rgba(148, 163, 184, 0.18);
+    }
+`;
+
+const DangerHead = styled.div`
     display: flex;
     align-items: flex-start;
     gap: 16px;
-    margin-bottom: 22px;
+    margin-bottom: 24px;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        gap: 12px;
+    }
 `;
 
 const DangerIconWrap = styled.div`
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
     border-radius: 14px;
     background: ${palette.warningSoft};
-    color: ${palette.warning};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
+    color: ${palette.warningText};
+
+    :root[data-theme="dark"] & {
+        background: rgba(251, 191, 36, 0.12);
+        color: #fbbf24;
+    }
 `;
 
-const DangerTopText = styled.div`
+const DangerHeadText = styled.div`
     display: flex;
     flex-direction: column;
     gap: 6px;
 `;
 
-const DangerTitle = styled.h3`
-    margin: 0;
-    font-size: 24px;
-    font-weight: 800;
-    line-height: 1.35;
-    color: ${palette.text};
+const DangerEyebrow = styled.div`
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: ${palette.warningSoft};
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: ${palette.warningText};
+
+    :root[data-theme="dark"] & {
+        background: rgba(251, 191, 36, 0.14);
+        color: #fbbf24;
+    }
 `;
 
 const DangerLead = styled.p`
     margin: 0;
-    font-size: 14px;
-    line-height: 1.7;
-    color: ${palette.textSoft};
+    max-width: 60ch;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.55;
+    letter-spacing: -0.015em;
+    color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const DangerList = styled.ul`
     list-style: none;
-    margin: 0 0 20px;
+    margin: 0 0 24px;
     padding: 0;
-    display: grid;
-    gap: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 
     li {
         position: relative;
-        padding: 14px 16px 14px 42px;
+        padding: 14px 16px 14px 44px;
         border-radius: 14px;
-        background: #fffaf0;
+        background: ${palette.warningSoft};
         border: 1px solid ${palette.warningBorder};
         color: ${palette.warningText};
-        font-size: 14px;
-        line-height: 1.65;
+        font-size: 13.5px;
+        font-weight: 500;
+        line-height: 1.6;
     }
 
     li::before {
-        content: "!";
+        content: "";
         position: absolute;
         left: 16px;
-        top: 13px;
+        top: 50%;
+        transform: translateY(-50%);
         width: 18px;
         height: 18px;
         border-radius: 999px;
-        background: ${palette.warningSoft};
-        color: ${palette.warning};
+        background: rgba(245, 158, 11, 0.22);
+        color: ${palette.warningText};
+    }
+
+    li::after {
+        content: "!";
+        position: absolute;
+        left: 22px;
+        top: 50%;
+        transform: translateY(-52%);
         font-size: 12px;
-        font-weight: 800;
-        display: flex;
-        align-items: center;
-        justify-content: center;
+        font-weight: 700;
+        color: ${palette.warningText};
+        font-family: "Pretendard", sans-serif;
+    }
+
+    :root[data-theme="dark"] & {
+        li {
+            background: rgba(251, 191, 36, 0.08);
+            border-color: rgba(251, 191, 36, 0.22);
+            color: #fde68a;
+        }
+
+        li::before {
+            background: rgba(251, 191, 36, 0.2);
+        }
+
+        li::after {
+            color: #fbbf24;
+        }
     }
 `;
 
-const WithdrawConfirmPanel = styled.div`
-    padding: 18px;
-    border-radius: 18px;
-    background: #f8fafc;
-    border: 1px solid ${palette.border};
-    margin-bottom: 20px;
+const ConfirmPanel = styled.div`
+    padding: 18px 20px;
+    border-radius: 16px;
+    background: ${palette.surfaceAlt};
+    border: 1px solid ${palette.softerBorder};
+    margin-bottom: 22px;
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: rgba(148, 163, 184, 0.16);
+    }
 `;
 
-const DangerCheckbox = styled.div`
+const CheckboxLabel = styled.label<{ $checked: boolean }>`
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
+    padding: 10px 14px;
+    border-radius: 12px;
+    background: ${({ $checked }) => ($checked ? palette.chipBg : "transparent")};
     font-size: 14px;
-    line-height: 1.5;
-    color: #334155;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    color: ${({ $checked }) => ($checked ? palette.primaryStrong : palette.text)};
+    cursor: pointer;
+    transition: background 0.24s cubic-bezier(0.16, 1, 0.3, 1), color 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 
     input {
         width: 16px;
@@ -507,20 +525,28 @@ const DangerCheckbox = styled.div`
         cursor: pointer;
     }
 
-    label {
-        cursor: pointer;
-        font-weight: 600;
+    :root[data-theme="dark"] & {
+        background: ${({ $checked }) => ($checked ? "rgba(96, 165, 250, 0.14)" : "transparent")};
+        color: ${({ $checked }) => ($checked ? "#93c5fd" : "#f1f5f9")};
+
+        input {
+            accent-color: #60a5fa;
+        }
     }
 `;
 
-const WithdrawHelperText = styled.p`
-    margin: 12px 0 0;
-    font-size: 13px;
+const HelperText = styled.p`
+    margin: 10px 14px 0;
+    font-size: 12.5px;
     line-height: 1.7;
-    color: ${palette.textSoft};
+    color: ${palette.textMuted};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.42);
+    }
 `;
 
-const DangerActionRow = styled.div`
+const ActionRow = styled.div`
     display: flex;
     justify-content: flex-end;
     gap: 10px;
@@ -532,42 +558,75 @@ const DangerActionRow = styled.div`
 
 const GhostButton = styled.button`
     ${interactiveText};
-    height: 44px;
-    padding: 0 16px;
-    border-radius: 12px;
-    border: 1px solid ${palette.border};
+    min-width: 104px;
+    height: 46px;
+    padding: 0 22px;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 14px;
     background: #ffffff;
-    color: ${palette.text};
-    font-size: 14px;
-    font-weight: 700;
+    color: rgba(15, 23, 42, 0.75);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     cursor: pointer;
-    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+    transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 
     &:hover {
-        transform: translateY(-1px);
-        border-color: #d1d5db;
-        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+        background: ${palette.chipBg};
+        border-color: rgba(59, 130, 246, 0.22);
+        color: ${palette.primaryStrong};
+    }
+
+    :root[data-theme="dark"] & {
+        border-color: rgba(148, 163, 184, 0.22);
+        background: #0f172a;
+        color: rgba(226, 232, 240, 0.75);
+
+        &:hover {
+            background: rgba(96, 165, 250, 0.14);
+            border-color: rgba(96, 165, 250, 0.28);
+            color: #93c5fd;
+        }
     }
 `;
 
 const DangerButton = styled.button.attrs({ "data-account-withdraw-danger-btn": "true" })<{ disabled?: boolean }>`
     &[data-account-withdraw-danger-btn="true"] {
         ${interactiveText};
-        height: 44px;
-        padding: 0 16px;
+        min-width: 148px;
+        height: 46px;
+        padding: 0 26px;
         border: none;
-        border-radius: 12px;
-        background: ${({ disabled }) => (disabled ? "#fca5a5" : palette.danger)};
-        color: #ffffff;
-        font-size: 14px;
+        border-radius: 14px;
+        background: ${({ disabled }) => (disabled ? "rgba(148, 163, 184, 0.18)" : palette.danger)};
+        color: ${({ disabled }) => (disabled ? "rgba(15, 23, 42, 0.4)" : "#ffffff")};
+        font-size: 13px;
         font-weight: 700;
+        letter-spacing: -0.01em;
         cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
-        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        box-shadow: ${({ disabled }) => (disabled ? "none" : "0 12px 26px rgba(220, 38, 38, 0.22)")};
+        transition: all 0.24s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    &[data-account-withdraw-danger-btn="true"]:hover {
-        transform: ${({ disabled }) => (disabled ? "none" : "translateY(-1px)")};
-        background: ${({ disabled }) => (disabled ? "#fca5a5" : "#dc2626")};
-        box-shadow: ${({ disabled }) => (disabled ? "none" : "0 10px 20px rgba(239, 68, 68, 0.14)")};
+    &[data-account-withdraw-danger-btn="true"]:hover:not(:disabled) {
+        background: ${palette.dangerHover};
+        transform: translateY(-1px);
+        box-shadow: 0 16px 32px rgba(220, 38, 38, 0.28);
+    }
+
+    &[data-account-withdraw-danger-btn="true"]:active:not(:disabled) {
+        transform: translateY(0);
+    }
+
+    :root[data-theme="dark"] &[data-account-withdraw-danger-btn="true"] {
+        background: ${({ disabled }) => (disabled ? "rgba(148, 163, 184, 0.18)" : "#f87171")};
+        color: ${({ disabled }) => (disabled ? "rgba(226, 232, 240, 0.42)" : "#0f172a")};
+        box-shadow: ${({ disabled }) => (disabled ? "none" : "0 12px 26px rgba(248, 113, 113, 0.24)")};
+    }
+
+    :root[data-theme="dark"] &[data-account-withdraw-danger-btn="true"]:hover:not(:disabled) {
+        background: #ef4444;
+        color: #ffffff;
+        box-shadow: 0 16px 32px rgba(248, 113, 113, 0.32);
     }
 `;

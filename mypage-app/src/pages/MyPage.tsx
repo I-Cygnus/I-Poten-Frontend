@@ -73,7 +73,7 @@ import { withdrawAccount } from "../api/withdrawalApi.ts";
 import { getLastActivityAt, getMostRecentActivityAt, LAST_ACTIVITY_EVENT } from "../utils/activity.ts";
 import { clearAuthStorage, AUTH_STORAGE_CLEARED_EVENT } from "../utils/authStorage.ts";
 import { completeWithdrawal } from "../utils/withdrawalFlow.ts";
-import { notifyError, notifySuccess } from "../utils/toast.ts";
+import { notifyError, notifyInfo, notifySuccess } from "../utils/toast.ts";
 import SystemMessageModal, { type SystemMessage } from "../components/common/SystemMessageModal.tsx";
 
 type MenuKey = "profile" | "interview" | "quiz" | "schedule" | "interest field" | "inquiry" | "withdraw";
@@ -368,6 +368,14 @@ function getScheduleTypeLabel(schedule: Schedule) {
     return schedule.allDay ? "종일 일정" : "시간 지정";
 }
 
+function getInterviewPdfViewUrl(record: InterviewSummary) {
+    if (record.pdfUrl) return record.pdfUrl;
+    if (record.interviewType === "인성 면접") {
+        return `/vue-ai-interview/ai-interview/personality-result/${record.interviewId}`;
+    }
+    return `/vue-ai-interview/ai-interview/result/${record.interviewId}`;
+}
+
 function formatInterviewDateTime(value: string) {
     if (!value) return "-";
 
@@ -386,51 +394,58 @@ function formatInterviewDateTime(value: string) {
 }
 
 const palette = {
-    pageBlue: "#f8fbff",
-    pageMint: "#f8fffd",
+    pageBlue: "#ffffff",
+    pageMint: "#f8fafc",
 
-    card: "rgba(255, 255, 255, 0.92)",
-    cardStrong: "rgba(255, 255, 255, 0.96)",
+    card: "#ffffff",
+    cardStrong: "#ffffff",
 
-    border: "#e5e7eb",
-    borderSoft: "#eef2f7",
+    border: "rgba(148, 163, 184, 0.2)",
+    borderSoft: "rgba(148, 163, 184, 0.12)",
 
-    text: "#111827",
-    textSoft: "#6b7280",
-    textMuted: "#9aa4b2",
+    text: "#0f172a",
+    textSoft: "rgba(15, 23, 42, 0.64)",
+    textMuted: "rgba(15, 23, 42, 0.44)",
 
-    primary: "#4F76F1",
-    primaryBlue: "#4369e5",
-    primaryStrong: "#3E63E0",
-    primaryHover: "#3658c8",
-    primarySoft: "rgba(79, 118, 241, 0.10)",
-    primaryRing: "rgba(62, 99, 224, 0.16)",
+    primary: "#3b82f6",
+    primaryBlue: "#3b82f6",
+    primaryStrong: "#2563eb",
+    primaryHover: "#1d4ed8",
+    primarySoft: "rgba(59, 130, 246, 0.1)",
+    primaryRing: "rgba(59, 130, 246, 0.18)",
 
-    secondary: "#2BC6A6",
-    secondaryStrong: "#10b981",
-    secondaryHover: "#22b396",
-    secondarySoft: "rgba(43, 198, 166, 0.12)",
-    secondaryRing: "rgba(43, 198, 166, 0.16)",
+    secondary: "#10b981",
+    secondaryStrong: "#059669",
+    secondaryHover: "#047857",
+    secondarySoft: "rgba(16, 185, 129, 0.1)",
+    secondaryRing: "rgba(16, 185, 129, 0.2)",
 
     indigo50: "#eef2ff",
     indigo200: "#c7d2fe",
 
-    accentGradient: "linear-gradient(90deg, #3E82E8 0%, #2BC6A6 100%)",
-    accentGradientSoft:
-        "linear-gradient(135deg, rgba(79,118,241,0.10) 0%, rgba(43,198,166,0.12) 100%)",
+    chipBg: "rgba(59, 130, 246, 0.08)",
+    mintChipBg: "rgba(16, 185, 129, 0.08)",
 
-    chipBg: "rgba(79, 118, 241, 0.10)",
-    mintChipBg: "#e9fcf8",
+    hover: "#f8fafc",
 
-    hover: "#f7f9fc",
+    surfaceAlt: "#f8fafc",
+    surfaceMuted: "#f1f5f9",
 
-    warning: "#f59e0b",
-    warningSoft: "rgba(245, 158, 11, 0.10)",
-    warningBorder: "rgba(245, 158, 11, 0.18)",
-    warningText: "#9a6b16",
+    shadow: "0 20px 60px rgba(15, 23, 42, 0.06)",
+    shadowHover: "0 28px 80px rgba(15, 23, 42, 0.1)",
+    shadowSoft: "0 10px 30px rgba(15, 23, 42, 0.04)",
 
-    danger: "#ef4444",
-    dangerSoft: "rgba(239, 68, 68, 0.12)",
+    radiusSm: "14px",
+    radiusMd: "20px",
+    radiusLg: "28px",
+
+    warning: "#b45309",
+    warningSoft: "rgba(245, 158, 11, 0.12)",
+    warningBorder: "rgba(245, 158, 11, 0.28)",
+    warningText: "#92400e",
+
+    danger: "#dc2626",
+    dangerSoft: "rgba(220, 38, 38, 0.08)",
 };
 
 export default function MyPage() {
@@ -1179,7 +1194,6 @@ export default function MyPage() {
         <Section>
             <SectionHeader>
                 <div>
-                    <SectionEyebrow>INTEREST FIELDS</SectionEyebrow>
                     <SectionTitle>관심 분야 설정</SectionTitle>
                     <SectionDescription>
                         관심 있는 분야를 선택하고, 나에게 맞는 학습 흐름과 추천 콘텐츠를 더 편하게 관리할 수 있습니다.
@@ -1454,7 +1468,6 @@ export default function MyPage() {
                         <Section>
                             <SectionHeader>
                                 <div>
-                                    <SectionEyebrow>MY DASHBOARD</SectionEyebrow>
                                     <SectionTitle>내 정보와 학습 현황</SectionTitle>
                                     <SectionDescription>
                                         나의 정보와 보유 크레딧, 학습 기록, 예정된 일정까지 한 화면에서 확인할 수 있습니다.
@@ -1500,10 +1513,6 @@ export default function MyPage() {
                                 <HeroRight>
                                     <CreditSummaryCard>
                                         <CreditSummaryTop>
-                                            <CreditSummaryBadge>
-                                                <CreditCard size={14} />
-                                                CREDIT OVERVIEW
-                                            </CreditSummaryBadge>
                                             <CreditSummaryLabel>내 크레딧</CreditSummaryLabel>
                                         </CreditSummaryTop>
 
@@ -1605,7 +1614,14 @@ export default function MyPage() {
                                                     <ScoreBadge>{record.finished ? "완료" : "진행 중"}</ScoreBadge>
                                                     <DetailButton
                                                         type="button"
-                                                        onClick={() => navigate(`/mypage/interview/${record.interviewId}`)}
+                                                        disabled={!record.finished}
+                                                        onClick={() => {
+                                                            if (!record.finished) {
+                                                                notifyInfo("아직 완료되지 않은 면접 기록입니다.");
+                                                                return;
+                                                            }
+                                                            window.open(getInterviewPdfViewUrl(record), "_blank", "noopener,noreferrer");
+                                                        }}
                                                     >
                                                         상세 보기
                                                         <ChevronRight size={16} />
@@ -1663,7 +1679,6 @@ export default function MyPage() {
                         <Section>
                             <SectionHeader>
                                 <div>
-                                    <SectionEyebrow>SCHEDULE</SectionEyebrow>
                                     <SectionTitle>일정</SectionTitle>
                                     <SectionDescription>
                                         예정된 학습 및 면접 준비 일정을 빠르게 확인할 수 있습니다.
@@ -1724,7 +1739,6 @@ export default function MyPage() {
                         <Section>
                             <SectionHeader>
                                 <div>
-                                    <SectionEyebrow>QUIZ RECORD</SectionEyebrow>
                                     <SectionTitle>퀴즈 타임라인과 오답 노트</SectionTitle>
                                     <SectionDescription>
                                         퀴즈 풀이 흐름과 복습이 필요한 문제를 함께 확인하며 학습 상태를 점검할 수 있습니다.
@@ -1890,7 +1904,6 @@ export default function MyPage() {
                     <Section>
                         <SectionHeader>
                             <div>
-                                <SectionEyebrow>SCHEDULE</SectionEyebrow>
                                 <SectionTitle>일정 관리</SectionTitle>
                                 <SectionDescription>
                                     면접 준비, 퀴즈 복습, 자기소개서 점검 일정을 자유롭게 저장하고 관리할 수 있습니다.
@@ -1949,7 +1962,6 @@ export default function MyPage() {
                     <Section>
                         <SectionHeader>
                             <div>
-                                <SectionEyebrow>INTEREST FIELDS</SectionEyebrow>
                                 <SectionTitle>관심 분야 설정</SectionTitle>
                                 <SectionDescription>
                                     관심 분야를 설정하고, 학습에 맞는 정보를 더 편하게 관리할 수 있습니다.
@@ -2091,7 +2103,6 @@ export default function MyPage() {
                     <Section>
                         <SectionHeader>
                             <div>
-                                <SectionEyebrow>WITHDRAW</SectionEyebrow>
                                 <SectionTitle>회원 탈퇴</SectionTitle>
                                 <SectionDescription>
                                     삭제되는 항목과 복구 불가 내용을 확인한 뒤 진행해 주세요.
@@ -2105,7 +2116,6 @@ export default function MyPage() {
                             </WithdrawHeroIcon>
 
                             <WithdrawHeroContent>
-                                <WithdrawHeroBadge>WITHDRAW GUIDE</WithdrawHeroBadge>
                                 <WithdrawHeroTitle>탈퇴 시 삭제되는 항목을 확인해 주세요.</WithdrawHeroTitle>
                                 <WithdrawHeroDesc>
                                     회원 탈퇴를 진행하면 학습 기록, AI 모의 면접 기록, 계정 설정 정보가 함께 정리됩니다.
@@ -2192,13 +2202,7 @@ export default function MyPage() {
         <Page>
             <PageInner>
                 <Sidebar>
-                    <BrandArea>
-                        <BrandBadge>MYPAGE</BrandBadge>
-                        <BrandTitle>내 성장 기록과 학습 흐름을 모아보는 공간</BrandTitle>
-                        <BrandDescription>
-                            계정 정보부터 AI 모의 면접 기록, 포텐퀴즈 기록, 일정까지 나만의 학습 여정을 한곳에서 확인할 수 있습니다.
-                        </BrandDescription>
-                    </BrandArea>
+                   
 
                     <MenuList>
                         {menuItems.map((item) => {
@@ -2238,14 +2242,16 @@ export default function MyPage() {
 const Page = styled.div`
     ${pretendard};
     min-height: 100vh;
-    background:
-            radial-gradient(circle at top left, rgba(79, 118, 241, 0.08), transparent 24%),
-            radial-gradient(circle at top right, rgba(43, 198, 166, 0.06), transparent 26%),
-            linear-gradient(180deg, ${palette.pageBlue} 0%, ${palette.pageMint} 100%);
-    padding: 32px;
+    background: transparent;
+    position: relative;
+    padding: clamp(40px, 5vw, 64px) clamp(24px, 4vw, 56px) clamp(64px, 8vw, 96px);
     box-sizing: border-box;
     color: ${palette.text};
-    line-height: 1.55;
+    line-height: 1.6;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 
     * {
         box-sizing: border-box;
@@ -2259,102 +2265,101 @@ const Page = styled.div`
     }
 
     @media (max-width: 768px) {
-        padding: 20px;
-    }
-
-    @media (max-width: 480px) {
-        padding: 12px;
+        padding: 24px 16px 72px;
     }
 `;
 
 const PageInner = styled.div`
-    max-width: 1380px;
+    max-width: 1240px;
     margin: 0 auto;
+    position: relative;
+    z-index: 1;
     display: grid;
-    grid-template-columns: 292px minmax(0, 1fr);
-    gap: 22px;
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 48px;
 
     @media (max-width: 1080px) {
         grid-template-columns: 1fr;
-    }
-
-    @media (max-width: 480px) {
-        gap: 14px;
+        gap: 24px;
     }
 `;
 
 const Sidebar = styled.aside`
-    background: #ffffff;
-    border: 1px solid ${palette.border};
-    border-radius: 16px;
-    padding: 24px 18px;
-    box-shadow: 0 6px 16px rgba(30, 41, 59, 0.05);
+    position: sticky;
+    top: 96px;
+    align-self: start;
     display: flex;
     flex-direction: column;
-    gap: 22px;
+    gap: 16px;
 
     @media (max-width: 1080px) {
-        padding: 18px 14px;
+        position: static;
         gap: 16px;
-    }
-
-    @media (max-width: 480px) {
-        padding: 14px 12px;
-        border-radius: 12px;
     }
 `;
 
 const BrandArea = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
+    padding: 16px 18px;
+    background: #ffffff;
+    border: 1px solid ${palette.border};
+    border-radius: ${palette.radiusMd};
 
     @media (max-width: 1080px) {
-        gap: 6px;
+        padding: 14px 16px;
+    }
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.7);
+        border-color: rgba(148, 163, 184, 0.18);
     }
 `;
 
 const BrandBadge = styled.span`
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
     width: fit-content;
-    padding: 8px 12px;
+    padding: 4px 12px;
     border-radius: 999px;
-    background: ${palette.primarySoft};
+    background: ${palette.chipBg};
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: -0.005em;
     color: ${palette.primaryStrong};
-    font-size: 12px;
-    font-weight: 700;
-    letter-spacing: 0.08em;
-`;
 
-const BrandTitle = styled.h1`
-    margin: 0;
-    font-size: 23px;
-    font-weight: 700;
-    line-height: 1.38;
-    letter-spacing: -0.03em;
-    color: #0f172a;
-
-    @media (max-width: 640px) {
-        font-size: 19px;
+    :root[data-theme="dark"] & {
+        background: rgba(96, 165, 250, 0.18);
+        color: #93c5fd;
     }
 `;
 
 const BrandDescription = styled.p`
     margin: 0;
-    font-size: 14px;
-    line-height: 1.65;
-    letter-spacing: -0.015em;
+    font-size: 13.5px;
+    line-height: 1.7;
+    letter-spacing: -0.01em;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.66);
+    }
 `;
 
 const MenuList = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 2px;
 
     @media (max-width: 1080px) {
         flex-direction: row;
         flex-wrap: wrap;
-        gap: 8px;
+        gap: 4px;
+        padding-bottom: 4px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
     }
 `;
 
@@ -2362,26 +2367,41 @@ const MenuButton = styled.button.attrs({ "data-ipoten-mypage-menu-btn": "true" }
     &[data-ipoten-mypage-menu-btn="true"] {
         appearance: none;
         -webkit-appearance: none;
+        position: relative;
         width: 100%;
-        border-radius: 12px;
-        padding: 14px 16px;
+        border: 0;
+        border-radius: 14px;
+        padding: 12px 16px;
         display: flex;
         align-items: center;
         justify-content: space-between;
         cursor: pointer;
-        transition: all 0.15s ease;
-        background: ${({ $active }) => ($active ? palette.primary : "#f3f4f6")};
-        color: ${({ $active }) => ($active ? "#ffffff" : "#374151")};
-        -webkit-text-fill-color: ${({ $active }) => ($active ? "#ffffff" : "#374151")};
-        border: 1px solid ${({ $active }) => ($active ? palette.primary : palette.border)};
-        box-shadow: ${({ $active }) => ($active ? "0 4px 14px rgba(79, 118, 241, 0.18)" : "none")};
+        background: ${({ $active }) => ($active ? palette.chipBg : "transparent")};
+        color: ${({ $active }) => ($active ? palette.primaryStrong : palette.textSoft)};
+        -webkit-text-fill-color: ${({ $active }) => ($active ? palette.primaryStrong : palette.textSoft)};
+        font-weight: ${({ $active }) => ($active ? "700" : "500")};
+        transition:
+            background 260ms cubic-bezier(0.16, 1, 0.3, 1),
+            color 260ms cubic-bezier(0.16, 1, 0.3, 1),
+            transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    :root[data-theme="dark"] &[data-ipoten-mypage-menu-btn="true"] {
+        background: ${({ $active }) => ($active ? "rgba(96, 165, 250, 0.16)" : "transparent")};
+        color: ${({ $active }) => ($active ? "#93c5fd" : "rgba(226, 232, 240, 0.64)")};
+        -webkit-text-fill-color: ${({ $active }) => ($active ? "#93c5fd" : "rgba(226, 232, 240, 0.64)")};
     }
 
     &[data-ipoten-mypage-menu-btn="true"]:hover {
-        transform: translateY(-1px);
-        background: ${({ $active }) => ($active ? palette.primaryStrong : "#e5e7eb")};
-        color: ${({ $active }) => ($active ? "#ffffff" : "#374151")};
-        -webkit-text-fill-color: ${({ $active }) => ($active ? "#ffffff" : "#374151")};
+        background: ${({ $active }) => ($active ? palette.chipBg : "rgba(148, 163, 184, 0.08)")};
+        color: ${({ $active }) => ($active ? palette.primaryStrong : palette.text)};
+        -webkit-text-fill-color: ${({ $active }) => ($active ? palette.primaryStrong : palette.text)};
+    }
+
+    :root[data-theme="dark"] &[data-ipoten-mypage-menu-btn="true"]:hover {
+        background: ${({ $active }) => ($active ? "rgba(96, 165, 250, 0.2)" : "rgba(148, 163, 184, 0.1)")};
+        color: ${({ $active }) => ($active ? "#93c5fd" : "#f1f5f9")};
+        -webkit-text-fill-color: ${({ $active }) => ($active ? "#93c5fd" : "#f1f5f9")};
     }
 
     &[data-ipoten-mypage-menu-btn="true"] span,
@@ -2389,23 +2409,29 @@ const MenuButton = styled.button.attrs({ "data-ipoten-mypage-menu-btn": "true" }
         color: inherit;
     }
 
+    &[data-ipoten-mypage-menu-btn="true"] > svg:last-child {
+        opacity: ${({ $active }) => ($active ? "1" : "0")};
+        transform: translateX(${({ $active }) => ($active ? "0" : "-4px")});
+        transition:
+            opacity 260ms cubic-bezier(0.16, 1, 0.3, 1),
+            transform 260ms cubic-bezier(0.16, 1, 0.3, 1);
+        color: currentColor;
+    }
+
     @media (max-width: 1080px) {
         &[data-ipoten-mypage-menu-btn="true"] {
             width: auto;
-            padding: 10px 14px;
+            padding: 9px 14px;
             border-radius: 999px;
+            border: 1px solid ${({ $active }) => ($active ? "transparent" : palette.border)};
+            background: ${({ $active }) => ($active ? palette.primaryStrong : "#ffffff")};
+            color: ${({ $active }) => ($active ? "#ffffff" : palette.textSoft)};
+            -webkit-text-fill-color: ${({ $active }) => ($active ? "#ffffff" : palette.textSoft)};
             white-space: nowrap;
         }
 
         &[data-ipoten-mypage-menu-btn="true"] > svg:last-child {
             display: none;
-        }
-    }
-
-    @media (max-width: 480px) {
-        &[data-ipoten-mypage-menu-btn="true"] {
-            padding: 8px 12px;
-            font-size: 13px;
         }
     }
 `;
@@ -2415,17 +2441,24 @@ const MenuLeft = styled.div`
     align-items: center;
     gap: 12px;
     font-size: 14px;
-    font-weight: 650;
+    font-weight: 600;
     line-height: 1.4;
-    letter-spacing: -0.018em;
+    letter-spacing: -0.01em;
 `;
 
 const SidebarBottomCard = styled.div`
-    margin-top: auto;
-    border-radius: 24px;
-    padding: 18px;
-    background: linear-gradient(180deg, #eef7fd 0%, #f2fbf8 100%);
-    border: 1px solid rgba(115, 174, 184, 0.18);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 20px 22px;
+    border-radius: ${palette.radiusMd};
+    background: ${palette.mintChipBg};
+    border: 1px solid rgba(16, 185, 129, 0.18);
+
+    :root[data-theme="dark"] & {
+        background: rgba(16, 185, 129, 0.1);
+        border-color: rgba(16, 185, 129, 0.24);
+    }
 
     @media (max-width: 1080px) {
         display: none;
@@ -2434,80 +2467,121 @@ const SidebarBottomCard = styled.div`
 
 const SidebarBottomTitle = styled.strong`
     display: block;
-    font-size: 15px;
-    color: #1e293b;
-    margin-bottom: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: ${palette.secondaryHover};
+    margin-bottom: 2px;
+
+    :root[data-theme="dark"] & {
+        color: #6ee7b7;
+    }
 `;
 
 const SidebarBottomText = styled.p`
     margin: 0;
     font-size: 13px;
-    line-height: 1.7;
+    line-height: 1.72;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.7);
+    }
 `;
 
 const Main = styled.main`
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 36px;
+    min-width: 0;
+
+    @media (max-width: 1080px) {
+        gap: 28px;
+    }
 `;
 
 const Section = styled.section`
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 28px;
 `;
 
 const SectionHeader = styled.div`
     display: flex;
-    align-items: flex-start;
+    align-items: flex-end;
     justify-content: space-between;
     gap: 16px;
+    padding-bottom: 4px;
+
+    @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 `;
 
 const SectionEyebrow = styled.div`
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: ${palette.chipBg};
     font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
+    font-weight: 700;
+    letter-spacing: -0.005em;
     color: ${palette.primaryStrong};
-    margin-top: 32px;
-    margin-bottom: 8px;
+    margin: 0 0 14px;
+
+    :root[data-theme="dark"] & {
+        background: rgba(96, 165, 250, 0.16);
+        color: #93c5fd;
+    }
 `;
 
 const SectionTitle = styled.h2`
     margin: 0;
-    font-size: 28px;
-    font-weight: 750;
-    line-height: 1.32;
-    letter-spacing: -0.035em;
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    color: ${palette.text};
 
-    @media (max-width: 640px) {
-        font-size: 22px;
+    :root[data-theme="dark"] & {
+        color: rgba(248, 250, 252, 0.95);
     }
 `;
 
 const SectionDescription = styled.p`
-    margin: 10px 0 0;
-    font-size: 15px;
+    margin: 8px 0 0;
+    max-width: 62ch;
+    font-size: 14px;
     line-height: 1.7;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.01em;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.7);
+    }
 `;
 
 const HeroCard = styled.div`
     background: #ffffff;
-    border: 1px solid rgba(14, 18, 28, 0.06);
-    border-radius: 16px;
-    padding: 24px;
-    box-shadow: 0 6px 16px rgba(30, 41, 59, 0.05);
-    display: flex;
+    border: 1px solid ${palette.border};
+    border-radius: ${palette.radiusLg};
+    padding: clamp(28px, 4vw, 44px);
+    display: grid;
+    grid-template-columns: 1fr auto;
     align-items: center;
-    justify-content: space-between;
-    gap: 20px;
+    gap: clamp(24px, 4vw, 48px);
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.7);
+        border-color: rgba(148, 163, 184, 0.18);
+    }
 
     @media (max-width: 900px) {
-        flex-direction: column;
-        align-items: flex-start;
+        grid-template-columns: 1fr;
     }
 `;
 
@@ -2542,15 +2616,19 @@ const HeroRight = styled.div`
 
 const CreditSummaryCard = styled.div`
     width: 100%;
-    min-height: 196px;
-    padding: 20px;
-    border-radius: 20px;
-    background: linear-gradient(180deg, #ffffff 0%, #f8fbff 100%);
+    min-height: 200px;
+    padding: 26px 26px 22px;
+    background: ${palette.surfaceAlt};
     border: 1px solid ${palette.border};
-    box-shadow: 0 8px 22px rgba(30, 41, 59, 0.05);
+    border-radius: ${palette.radiusLg};
     display: flex;
     flex-direction: column;
-    gap: 18px;
+    gap: 22px;
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.72);
+        border-color: rgba(148, 163, 184, 0.18);
+    }
 `;
 
 const CreditSummaryTop = styled.div`
@@ -2564,21 +2642,29 @@ const CreditSummaryBadge = styled.div`
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    min-height: 28px;
-    padding: 0 10px;
+    padding: 5px 12px;
     border-radius: 999px;
-    background: ${palette.primarySoft};
+    background: rgba(59, 130, 246, 0.14);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: -0.005em;
     color: ${palette.primaryStrong};
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+
+    :root[data-theme="dark"] & {
+        background: rgba(96, 165, 250, 0.2);
+        color: #93c5fd;
+    }
 `;
 
 const CreditSummaryLabel = styled.div`
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 800;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.025em;
     color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const CreditBalanceRow = styled.div`
@@ -2595,25 +2681,39 @@ const CreditBalanceCopy = styled.div`
 `;
 
 const CreditBalanceValue = styled.div`
-    font-size: clamp(2.3rem, 4vw, 3rem);
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: -0.05em;
-    color: #0f172a;
+    font-size: 28px;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    color: ${palette.text};
+    font-variant-numeric: tabular-nums;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const CreditBalanceUnit = styled.div`
-    padding-bottom: 4px;
-    font-size: 14px;
+    padding-bottom: 6px;
+    font-size: 13px;
     font-weight: 700;
-    color: ${palette.primaryStrong};
+    letter-spacing: 0.02em;
+    color: ${palette.textSoft};
     text-transform: lowercase;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const CreditBalanceCaption = styled.div`
     font-size: 13px;
     line-height: 1.6;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const CreditMetaGrid = styled.div`
@@ -2632,25 +2732,41 @@ const CreditMetaGrid = styled.div`
 
 const CreditMetaItem = styled.div`
     padding: 14px 14px;
-    border-radius: 16px;
-    background: #fbfcff;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.7);
     border: 1px solid ${palette.borderSoft};
     display: flex;
     flex-direction: column;
     gap: 6px;
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.4);
+        border-color: rgba(148, 163, 184, 0.14);
+    }
 `;
 
 const CreditMetaTitle = styled.div`
-    font-size: 12px;
-    font-weight: 700;
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.66);
+    }
 `;
 
 const CreditMetaValue = styled.div`
     font-size: 15px;
     font-weight: 800;
-    color: #0f172a;
+    letter-spacing: -0.02em;
+    color: ${palette.text};
     line-height: 1.4;
+    font-variant-numeric: tabular-nums;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const CreditExpiryNotice = styled.div`
@@ -2658,40 +2774,59 @@ const CreditExpiryNotice = styled.div`
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 14px 16px;
-    border-radius: 16px;
-    background: ${palette.accentGradientSoft};
-    border: 1px solid rgba(79, 118, 241, 0.08);
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.18);
+
+    :root[data-theme="dark"] & {
+        background: rgba(245, 158, 11, 0.1);
+        border-color: rgba(245, 158, 11, 0.22);
+    }
 `;
 
 const CreditExpiryLabel = styled.div`
     font-size: 12px;
-    font-weight: 700;
-    color: ${palette.textSoft};
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: ${palette.warningText};
+
+    :root[data-theme="dark"] & {
+        color: #fbbf24;
+    }
 `;
 
 const CreditExpiryValue = styled.div`
     font-size: 14px;
     font-weight: 800;
+    letter-spacing: -0.02em;
     color: ${palette.text};
     text-align: right;
+    font-variant-numeric: tabular-nums;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const AvatarWrap = styled.div`
-    width: 64px;
-    height: 64px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, ${palette.indigo50} 0%, #e9fcf8 100%);
-    color: ${palette.primaryStrong};
+    width: 60px;
+    height: 60px;
+    border-radius: 999px;
+    background: ${palette.primaryStrong};
+    color: #ffffff;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    font-weight: 700;
+    font-size: 22px;
+    letter-spacing: -0.02em;
 
     @media (max-width: 480px) {
         width: 48px;
         height: 48px;
-        border-radius: 14px;
+        font-size: 18px;
     }
 `;
 
@@ -2704,22 +2839,26 @@ const HeroTextGroup = styled.div`
 
 const HeroTitle = styled.h3`
     margin: 0;
-    font-size: 23px;
-    font-weight: 750;
-    line-height: 1.4;
-    letter-spacing: -0.03em;
-    color: #0f172a;
+    font-size: 20px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    color: ${palette.text};
 
-    @media (max-width: 640px) {
-        font-size: 19px;
+    :root[data-theme="dark"] & {
+        color: rgba(248, 250, 252, 0.95);
     }
 `;
 
 const HeroSub = styled.p`
     margin: 0;
     font-size: 14px;
-    line-height: 1.6;
-    color: #64748b;
+    line-height: 1.7;
+    color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.66);
+    }
 `;
 
 const HeroBadgeRow = styled.div`
@@ -2732,15 +2871,19 @@ const HeroBadgeRow = styled.div`
 const RepresentativeBadge = styled.div`
     display: inline-flex;
     align-items: center;
-    min-height: 34px;
+    min-height: 30px;
     padding: 0 14px;
     border-radius: 999px;
-    background: ${palette.accentGradientSoft};
-    border: 1px solid rgba(62, 99, 224, 0.12);
+    background: ${palette.chipBg};
     color: ${palette.primaryStrong};
-    font-size: 13px;
-    font-weight: 800;
-    letter-spacing: -0.015em;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+
+    :root[data-theme="dark"] & {
+        background: rgba(96, 165, 250, 0.2);
+        color: #93c5fd;
+    }
 `;
 
 const RepresentativeHint = styled.div`
@@ -2759,31 +2902,43 @@ const HeroMetaChip = styled.div`
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 8px 12px;
-    border-radius: 999px;
-    background: ${palette.primarySoft};
-    color: ${palette.primaryStrong};
+    padding: 0;
+    background: transparent;
+    color: ${palette.textSoft};
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 500;
+
+    & + & {
+        padding-left: 14px;
+        margin-left: 2px;
+        border-left: 1px solid ${palette.borderSoft};
+    }
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.66);
+    }
+
+    :root[data-theme="dark"] & + & {
+        border-left-color: rgba(148, 163, 184, 0.18);
+    }
 `;
 
 const HeroActionButton = styled.button`
-    height: 46px;
-    padding: 0 18px;
-    border: none;
-    border-radius: 12px;
-    background: ${palette.primaryBlue};
+    height: 44px;
+    padding: 0 22px;
+    border: 0;
+    border-radius: 999px;
+    background: ${palette.primaryStrong};
     color: #ffffff;
-    font-size: 14px;
+    font-size: 13.5px;
     font-weight: 700;
     line-height: 1;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.01em;
     cursor: pointer;
-    transition: transform 0.18s ease, background 0.18s ease;
+    transition: background 200ms ease;
 
     &:hover {
-        transform: translateY(-1px);
-        background: ${palette.primaryStrong};
+        background: #1d4ed8;
     }
 `;
 
@@ -2799,55 +2954,62 @@ const StatsGrid = styled.div`
 
 const StatCard = styled.div`
     position: relative;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     text-align: left;
-    gap: 10px;
-    min-height: 140px;
+    gap: 8px;
     padding: 18px 20px;
-    border: 1px solid rgba(15, 23, 42, 0.08);
-    border-radius: 24px;
-    background:
-            radial-gradient(circle at top right, rgba(79, 118, 241, 0.18), transparent 34%),
-            linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, #f8fbff 100%);
-    box-shadow:
-            0 18px 32px rgba(15, 23, 42, 0.08),
-            0 6px 14px rgba(62, 99, 224, 0.05);
-    backdrop-filter: blur(14px);
-    transition:
-            transform 0.2s ease,
-            box-shadow 0.2s ease,
-            border-color 0.2s ease;
+    border: 1px solid ${palette.border};
+    border-radius: ${palette.radiusMd};
+    background: #ffffff;
+    transition: border-color 0.24s ease;
+
+    &:hover {
+        border-color: rgba(59, 130, 246, 0.22);
+    }
+
+    :root[data-theme="dark"] & {
+        background: #0f172a;
+        border-color: rgba(148, 163, 184, 0.16);
+    }
 `;
 
 const StatLabel = styled.div`
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.12em;
-    color: ${palette.primaryStrong};
+    font-size: 12.5px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    color: ${palette.textSoft};
     text-align: left;
     align-self: flex-start;
     margin: 0;
     padding: 0;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.66);
+    }
 `;
 
 const StatValue = styled.strong`
-    font-size: clamp(1.9rem, 3vw, 2.35rem);
-    font-weight: 800;
-    color: #0f172a;
-    line-height: 1;
-    letter-spacing: -0.04em;
+    font-size: 22px;
+    font-weight: 700;
+    color: ${palette.text};
+    line-height: 1.2;
+    letter-spacing: -0.02em;
     text-align: left;
     align-self: flex-start;
     margin: 0;
+    font-variant-numeric: tabular-nums;
+
+    :root[data-theme="dark"] & {
+        color: rgba(248, 250, 252, 0.95);
+    }
 `;
 
 const StatSub = styled.div`
-    font-size: 14px;
-    line-height: 1.6;
-    color: #475569;
+    font-size: 12px;
+    line-height: 1.55;
+    color: ${palette.textSoft};
     text-align: left;
     align-self: flex-start;
     margin: 0;
@@ -2855,6 +3017,10 @@ const StatSub = styled.div`
     background: transparent;
     border: none;
     box-shadow: none;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.66);
+    }
 `;
 
 const ContentGrid = styled.div`
@@ -2868,21 +3034,24 @@ const ContentGrid = styled.div`
 `;
 
 const PanelCard = styled.div`
-    border: 1px solid rgba(14, 18, 28, 0.06);
-    border-radius: 12px;
+    border: 1px solid ${palette.border};
+    border-radius: ${palette.radiusLg};
     background: #ffffff;
-    box-shadow: 0 6px 16px rgba(30, 41, 59, 0.05);
-    padding: 22px;
+    padding: 28px;
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.7);
+        border-color: rgba(148, 163, 184, 0.18);
+    }
 
     @media (max-width: 640px) {
-        padding: 16px;
-        border-radius: 10px;
+        padding: 22px 20px;
     }
 `;
 
 const PanelHeader = styled.div`
     display: flex;
-    align-items: center;
+    align-items: baseline;
     justify-content: space-between;
     gap: 12px;
     margin-bottom: 20px;
@@ -2890,24 +3059,41 @@ const PanelHeader = styled.div`
 
 const PanelTitle = styled.h3`
     margin: 0;
-    font-size: 19px;
+    font-size: 18px;
     font-weight: 700;
-    line-height: 1.4;
+    line-height: 1.3;
     letter-spacing: -0.025em;
-    color: #0f172a;
+    color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: rgba(248, 250, 252, 0.95);
+    }
 `;
 
 const PanelAction = styled.button`
     ${pretendard};
-    border: none;
+    border: 0;
     background: transparent;
-    color: #2f56d9;
+    color: ${palette.primary};
     font-size: 12px;
-    font-weight: 900;
-    letter-spacing: -0.01em;
+    font-weight: 700;
+    letter-spacing: -0.005em;
     line-height: 1;
     cursor: pointer;
     padding: 0;
+    transition: color 280ms cubic-bezier(0.16, 1, 0.3, 1);
+
+    &:hover {
+        color: ${palette.primaryStrong};
+    }
+
+    :root[data-theme="dark"] & {
+        color: #60a5fa;
+
+        &:hover {
+            color: #93c5fd;
+        }
+    }
 `;
 
 const InfoList = styled.div`
@@ -2919,24 +3105,38 @@ const InfoList = styled.div`
 const InfoItem = styled.div`
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     gap: 16px;
     padding-bottom: 14px;
-    border-bottom: 1px solid #e2e8f0;
+    border-bottom: 1px solid ${palette.borderSoft};
 
     &:last-child {
         padding-bottom: 0;
         border-bottom: none;
     }
+
+    :root[data-theme="dark"] & {
+        border-bottom-color: rgba(148, 163, 184, 0.14);
+    }
 `;
 
 const InfoLabel = styled.span`
-    font-size: 14px;
-    color: #64748b;
+    font-size: 13.5px;
+    color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const InfoValue = styled.strong`
     font-size: 14px;
-    color: #0f172a;
+    font-weight: 600;
+    color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: rgba(248, 250, 252, 0.95);
+    }
 `;
 
 const InfoValueWrap = styled.div`
@@ -3012,21 +3212,35 @@ const RecordItem = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    padding: 16px 18px;
-    border-radius: 14px;
-    background: #fbfcff;
-    border: 1px solid #eef2f7;
-    transition: background 0.15s ease, box-shadow 0.15s ease;
+    gap: 20px;
+    padding: 18px 20px;
+    border: 1px solid ${palette.borderSoft};
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.6);
+    transition:
+        transform 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.32s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.32s cubic-bezier(0.16, 1, 0.3, 1);
 
     &:hover {
-        background: #fbfcff;
-        box-shadow: 0 1px 6px rgba(62, 99, 224, 0.05);
+        transform: translateY(-1px);
+        border-color: ${palette.border};
+        box-shadow: ${palette.shadowSoft};
+    }
+
+    :root[data-theme="dark"] & {
+        background: rgba(30, 41, 59, 0.5);
+        border-color: rgba(148, 163, 184, 0.12);
+    }
+
+    :root[data-theme="dark"] &:hover {
+        border-color: rgba(148, 163, 184, 0.22);
     }
 
     @media (max-width: 640px) {
         flex-direction: column;
         align-items: flex-start;
+        gap: 12px;
     }
 `;
 
@@ -3039,17 +3253,26 @@ const RecordLeft = styled.div`
 `;
 
 const RecordTitle = styled.div`
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 700;
     line-height: 1.5;
     letter-spacing: -0.02em;
-    color: #0f172a;
+    color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const RecordMeta = styled.div`
     font-size: 13px;
     line-height: 1.55;
-    color: #64748b;
+    color: ${palette.textSoft};
+    font-variant-numeric: tabular-nums;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const RecordRight = styled.div`
@@ -3066,13 +3289,23 @@ const WrongNoteList = styled.div`
 `;
 
 const WrongNoteCard = styled.div`
-    border: 1px solid #eef2f7;
-    border-radius: 16px;
-    background: #fbfcff;
-    padding: 18px;
+    padding: 22px 24px;
+    border: 1px solid ${palette.borderSoft};
+    border-radius: ${palette.radiusMd};
+    background: rgba(255, 255, 255, 0.6);
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
+    transition: box-shadow 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &:hover {
+        box-shadow: ${palette.shadowSoft};
+    }
+
+    :root[data-theme="dark"] & {
+        background: rgba(30, 41, 59, 0.5);
+        border-color: rgba(148, 163, 184, 0.14);
+    }
 `;
 
 const WrongNoteHeader = styled.div`
@@ -3093,24 +3326,39 @@ const WrongNoteBadges = styled.div`
 const WrongNoteBadge = styled.span<{ $tone: "default" | "pending" | "resolved" }>`
     display: inline-flex;
     align-items: center;
-    min-height: 28px;
-    padding: 0 10px;
+    min-height: 26px;
+    padding: 0 12px;
     border-radius: 999px;
     font-size: 12px;
     font-weight: 700;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.005em;
     background: ${({ $tone }) =>
             $tone === "pending"
-                    ? "rgba(245, 158, 11, 0.12)"
+                    ? palette.warningSoft
                     : $tone === "resolved"
-                            ? "rgba(43, 198, 166, 0.12)"
-                            : palette.primarySoft};
+                            ? palette.secondarySoft
+                            : palette.chipBg};
     color: ${({ $tone }) =>
             $tone === "pending"
                     ? palette.warningText
                     : $tone === "resolved"
                             ? palette.secondaryHover
                             : palette.primaryStrong};
+
+    :root[data-theme="dark"] & {
+        background: ${({ $tone }) =>
+                $tone === "pending"
+                        ? "rgba(245, 158, 11, 0.18)"
+                        : $tone === "resolved"
+                                ? "rgba(16, 185, 129, 0.22)"
+                                : "rgba(96, 165, 250, 0.2)"};
+        color: ${({ $tone }) =>
+                $tone === "pending"
+                        ? "#fbbf24"
+                        : $tone === "resolved"
+                                ? "#6ee7b7"
+                                : "#93c5fd"};
+    }
 `;
 
 const WrongNoteDate = styled.span`
@@ -3144,109 +3392,168 @@ const WrongNoteAnswerGrid = styled.div`
 `;
 
 const WrongNoteAnswerBox = styled.div`
-    border: 1px solid ${palette.border};
+    padding: 14px 16px;
     border-radius: 14px;
-    background: #ffffff;
-    padding: 14px;
+    background: rgba(248, 250, 252, 0.88);
+    border: 1px solid ${palette.borderSoft};
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.5);
+        border-color: rgba(148, 163, 184, 0.18);
+    }
 `;
 
 const WrongNoteAnswerLabel = styled.div`
     font-size: 12px;
-    font-weight: 700;
+    font-weight: 600;
+    letter-spacing: -0.005em;
     color: ${palette.textSoft};
     margin-bottom: 8px;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.66);
+    }
 `;
 
 const WrongNoteAnswerValue = styled.div<{ $tone: "user" | "correct" }>`
     font-size: 14px;
-    line-height: 1.6;
-    font-weight: 700;
+    line-height: 1.65;
+    font-weight: 600;
     color: ${({ $tone }) => ($tone === "correct" ? palette.secondaryHover : palette.text)};
     white-space: pre-wrap;
     word-break: break-word;
+
+    :root[data-theme="dark"] & {
+        color: ${({ $tone }) => ($tone === "correct" ? "#5eead4" : "#f1f5f9")};
+    }
 `;
 
 const ScoreBadge = styled.div`
-    min-width: 70px;
+    min-width: 76px;
     height: 34px;
-    padding: 0 12px;
-    border-radius: 999px;
-    background: ${palette.primarySoft};
+    padding: 0 14px;
     color: ${palette.primaryStrong};
+    background: ${palette.chipBg};
+    border-radius: 999px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 800;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
     flex-shrink: 0;
+
+    :root[data-theme="dark"] & {
+        background: rgba(96, 165, 250, 0.18);
+        color: #93c5fd;
+    }
 `;
 
 const DetailButton = styled.button`
-    height: 38px;
-    padding: 0 14px;
+    ${interactiveText};
+    height: 40px;
+    padding: 0 18px;
+    border: 1px solid ${palette.border};
     border-radius: 12px;
-    border: 1px solid #dbe4f0;
-    background: #ffffff;
-    color: #334155;
+    background: rgba(255, 255, 255, 0.8);
+    color: ${palette.text};
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
+    letter-spacing: -0.01em;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    letter-spacing: -0.015em;
+    gap: 6px;
     cursor: pointer;
-    transition: background 0.18s ease, transform 0.18s ease;
+    transition:
+        background 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 
     white-space: nowrap;
     flex-shrink: 0;
     word-break: keep-all;
 
     &:hover {
-        background: #f8fafc;
+        background: ${palette.chipBg};
+        color: ${palette.primaryStrong};
+        border-color: rgba(59, 130, 246, 0.32);
         transform: translateY(-1px);
+    }
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+        background: rgba(30, 41, 59, 0.55);
+        border-color: rgba(148, 163, 184, 0.24);
+
+        &:hover {
+            background: rgba(96, 165, 250, 0.18);
+            color: #93c5fd;
+            border-color: rgba(96, 165, 250, 0.4);
+        }
     }
 `;
 
 const PrimaryButton = styled.button.attrs({ "data-mypage-primary-btn": "true" })`
     &[data-mypage-primary-btn="true"] {
-        height: 44px;
-        padding: 0 16px;
-        border: none;
-        border-radius: 12px;
-        background: ${palette.accentGradient};
+        ${interactiveText};
+        height: 48px;
+        padding: 0 26px;
+        border: 0;
+        border-radius: 14px;
+        background: ${palette.primaryStrong};
         color: #ffffff;
         font-size: 14px;
         font-weight: 700;
         line-height: 1;
-        letter-spacing: -0.015em;
+        letter-spacing: -0.01em;
         cursor: pointer;
-        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        transition: background 200ms ease;
     }
 
     &[data-mypage-primary-btn="true"]:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 10px 20px rgba(62, 99, 224, 0.16);
+        background: #1d4ed8;
+    }
+
+    :root[data-theme="dark"] &[data-mypage-primary-btn="true"] {
+        box-shadow: 0 14px 30px rgba(59, 130, 246, 0.34);
     }
 `;
 
 const GhostButton = styled.button`
-    height: 44px;
-    padding: 0 16px;
+    ${interactiveText};
+    height: 48px;
+    padding: 0 22px;
     border: 1px solid ${palette.border};
-    border-radius: 12px;
-    background: #ffffff;
-    color: #334155;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.75);
+    color: ${palette.text};
     font-size: 14px;
-    font-weight: 650;
+    font-weight: 600;
     line-height: 1;
-    letter-spacing: -0.015em;
+    letter-spacing: -0.01em;
     cursor: pointer;
-    transition: background 0.18s ease, transform 0.18s ease;
+    transition:
+        border-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        background 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 
     &:hover {
-        background: ${palette.hover};
-        transform: translateY(-1px);
+        background: ${palette.chipBg};
+        color: ${palette.primaryStrong};
+        border-color: rgba(59, 130, 246, 0.32);
+    }
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+        background: rgba(30, 41, 59, 0.5);
+        border-color: rgba(148, 163, 184, 0.24);
+
+        &:hover {
+            background: rgba(96, 165, 250, 0.18);
+            color: #93c5fd;
+            border-color: rgba(96, 165, 250, 0.4);
+        }
     }
 `;
 
@@ -3256,21 +3563,41 @@ const ScheduleTable = styled.table`
 
     thead th {
         text-align: left;
-        font-size: 13px;
+        font-size: 10px;
+        font-weight: 800;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
         color: ${palette.textSoft};
-        padding: 14px 12px;
-        border-bottom: 1px solid ${palette.border};
+        padding: 14px 0;
+        border-bottom: 1px solid ${palette.text};
     }
 
     tbody td {
-        padding: 18px 12px;
+        padding: 22px 0;
         font-size: 14px;
         color: ${palette.text};
         border-bottom: 1px solid ${palette.borderSoft};
+        font-variant-numeric: tabular-nums;
     }
 
     tbody tr:last-child td {
-        border-bottom: none;
+        border-bottom: 1px solid ${palette.borderSoft};
+    }
+
+    :root[data-theme="dark"] & {
+        thead th {
+            color: rgba(226, 232, 240, 0.55);
+            border-bottom-color: #f1f5f9;
+        }
+
+        tbody td {
+            color: #f1f5f9;
+            border-bottom-color: rgba(148, 163, 184, 0.16);
+        }
+
+        tbody tr:last-child td {
+            border-bottom-color: rgba(148, 163, 184, 0.16);
+        }
     }
 
     @media (max-width: 760px) {
@@ -3286,18 +3613,31 @@ const TableActionGroup = styled.div`
 `;
 
 const TextButton = styled.button<{ $danger?: boolean }>`
+    ${interactiveText};
     border: none;
     background: transparent;
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     cursor: pointer;
-    color: ${({ $danger }) => ($danger ? "#dc2626" : palette.primary)};
+    padding: 0;
+    color: ${({ $danger }) => ($danger ? palette.danger : palette.text)};
+    transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &:hover {
+        opacity: 0.6;
+    }
+
+    :root[data-theme="dark"] & {
+        color: ${({ $danger }) => ($danger ? "#f87171" : "#f1f5f9")};
+    }
 `;
 
 const SettingsGrid = styled.div`
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
+    gap: 18px;
 
     @media (max-width: 1080px) {
         grid-template-columns: 1fr;
@@ -3305,55 +3645,87 @@ const SettingsGrid = styled.div`
 `;
 
 const SettingCard = styled.div<{ $featured?: boolean }>`
-    border: 1px solid rgba(14, 18, 28, 0.06);
-    border-radius: 12px;
-    background: #ffffff;
-    box-shadow: 0 6px 16px rgba(30, 41, 59, 0.05);
-    padding: 22px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 18px;
     grid-column: ${({ $featured }) => ($featured ? "1 / -1" : "auto")};
+    border: 1px solid ${palette.borderSoft};
+    border-radius: ${palette.radiusMd};
+    background: rgba(255, 255, 255, 0.72);
+    transition: box-shadow 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+
+    &:hover {
+        box-shadow: ${palette.shadowSoft};
+    }
+
+    :root[data-theme="dark"] & {
+        background: rgba(30, 41, 59, 0.5);
+        border-color: rgba(148, 163, 184, 0.14);
+    }
 `;
 
 const SettingTitle = styled.h3`
     margin: 0;
     font-size: 18px;
-    color: #0f172a;
+    font-weight: 800;
+    letter-spacing: -0.025em;
+    color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const SettingDescription = styled.p`
     margin: 0;
     font-size: 14px;
-    line-height: 1.75;
-    color: #64748b;
+    line-height: 1.7;
+    color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const ToggleRow = styled.div`
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 16px;
     font-size: 14px;
-    color: #334155;
+    font-weight: 600;
+    color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const FakeToggle = styled.div<{ $active: boolean }>`
-    width: 52px;
-    height: 30px;
+    width: 44px;
+    height: 24px;
     border-radius: 999px;
     position: relative;
-    background: ${({ $active }) => ($active ? palette.secondary : "#cbd5e1")};
+    background: ${({ $active }) => ($active ? palette.primaryStrong : "rgba(148, 163, 184, 0.25)")};
+    border: 0;
+    transition: background 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 
     &::after {
         content: "";
         position: absolute;
         top: 3px;
-        left: ${({ $active }) => ($active ? "25px" : "3px")};
-        width: 24px;
-        height: 24px;
+        left: ${({ $active }) => ($active ? "22px" : "3px")};
+        width: 18px;
+        height: 18px;
         border-radius: 999px;
         background: #ffffff;
-        transition: left 0.2s ease;
+        box-shadow: 0 2px 4px rgba(15, 23, 42, 0.12);
+        transition: left 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    :root[data-theme="dark"] & {
+        background: ${({ $active }) => ($active ? "#3b82f6" : "rgba(148, 163, 184, 0.28)")};
     }
 `;
 
@@ -3376,48 +3748,76 @@ const TagRow = styled.div`
 const InterestFieldSummary = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 14px;
     min-height: 120px;
-    padding: 16px 18px;
-    border: 1px solid ${palette.border};
-    border-radius: 16px;
-    background: linear-gradient(180deg, #fcfdff 0%, #f8fbff 100%);
+    padding: 22px 0;
+    border-top: 1px solid ${palette.borderSoft};
+
+    :root[data-theme="dark"] & {
+        border-top-color: rgba(148, 163, 184, 0.16);
+    }
 `;
 
 const SummaryLabel = styled.div`
-    font-size: 13px;
-    font-weight: 700;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.55);
+    }
 `;
 
 const Tag = styled.span`
     display: inline-flex;
     align-items: center;
-    height: 32px;
-    padding: 0 12px;
+    height: 30px;
+    padding: 0 14px;
     border-radius: 999px;
-    background: #e9fcf8;
-    color: ${palette.secondaryHover};
-    font-size: 13px;
+    background: ${palette.chipBg};
+    color: ${palette.primaryStrong};
+    font-size: 12px;
     font-weight: 700;
+    letter-spacing: -0.015em;
+
+    :root[data-theme="dark"] & {
+        background: rgba(96, 165, 250, 0.18);
+        color: #93c5fd;
+    }
 `;
 
 const InterestFieldEditorSection = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 14px;
     min-width: 0;
-    padding: 18px;
-    border: 1px solid ${palette.border};
-    border-radius: 18px;
-    background: #fbfdff;
+    padding: 22px 0 22px 24px;
+    border-top: 1px solid ${palette.borderSoft};
+    border-left: 1px solid ${palette.borderSoft};
+
+    @media (max-width: 760px) {
+        padding-left: 0;
+        border-left: none;
+    }
+
+    :root[data-theme="dark"] & {
+        border-top-color: rgba(148, 163, 184, 0.16);
+        border-left-color: rgba(148, 163, 184, 0.16);
+    }
 `;
 
 const EditorTitle = styled.h4`
     margin: 0;
     font-size: 14px;
     font-weight: 800;
+    letter-spacing: -0.02em;
     color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const InterestEditorGrid = styled.div`
@@ -3441,21 +3841,39 @@ const InterestFieldChipButton = styled.button<{ $active: boolean }>`
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 38px;
-    padding: 0 14px;
+    min-height: 36px;
+    padding: 0 16px;
+    border: 1px solid ${({ $active }) => ($active ? "transparent" : palette.border)};
     border-radius: 999px;
-    border: 1px solid ${({ $active }) => ($active ? "rgba(62, 99, 224, 0.24)" : palette.border)};
-    background: ${({ $active }) => ($active ? "rgba(62, 99, 224, 0.1)" : "#ffffff")};
-    color: ${({ $active }) => ($active ? palette.primary : "#334155")};
+    background: ${({ $active }) => ($active ? palette.chipBg : "rgba(255, 255, 255, 0.7)")};
+    color: ${({ $active }) => ($active ? palette.primaryStrong : palette.textSoft)};
     font-size: 13px;
-    font-weight: 700;
+    font-weight: 600;
+    letter-spacing: -0.015em;
     line-height: 1.2;
     cursor: pointer;
-    transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+    transition:
+        background 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        border-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 
     &:hover {
+        background: ${({ $active }) => ($active ? palette.chipBg : palette.chipBg)};
+        color: ${palette.primaryStrong};
+        border-color: transparent;
         transform: translateY(-1px);
-        border-color: rgba(62, 99, 224, 0.24);
+    }
+
+    :root[data-theme="dark"] & {
+        background: ${({ $active }) => ($active ? "rgba(96, 165, 250, 0.2)" : "rgba(30, 41, 59, 0.6)")};
+        border-color: ${({ $active }) => ($active ? "transparent" : "rgba(148, 163, 184, 0.24)")};
+        color: ${({ $active }) => ($active ? "#93c5fd" : "rgba(226, 232, 240, 0.7)")};
+
+        &:hover {
+            background: rgba(96, 165, 250, 0.2);
+            color: #93c5fd;
+        }
     }
 `;
 
@@ -3468,40 +3886,63 @@ const InterestMetaRow = styled.div`
 const SettingHelperText = styled.p`
     margin: 0;
     font-size: 13px;
-    line-height: 1.65;
-    color: #64748b;
+    line-height: 1.7;
+    color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const EmptyInterestHint = styled.div`
-    border: 1px dashed ${palette.border};
-    border-radius: 14px;
-    background: #f8fafc;
-    padding: 14px 16px;
+    border-top: 1px dashed ${palette.border};
+    padding: 16px 0 0;
     font-size: 13px;
-    line-height: 1.6;
+    line-height: 1.65;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        border-top-color: rgba(148, 163, 184, 0.24);
+        color: rgba(226, 232, 240, 0.55);
+    }
 `;
 
 const SelectionMetaCard = styled.div`
     min-width: 140px;
     flex: 0 0 auto;
-    padding: 14px 16px;
-    border-radius: 14px;
-    border: 1px solid ${palette.border};
-    background: #fbfcff;
+    padding: 14px 18px 14px 0;
+    border-left: 1px solid ${palette.border};
+    padding-left: 18px;
+
+    :root[data-theme="dark"] & {
+        border-left-color: rgba(148, 163, 184, 0.24);
+    }
 `;
 
 const SelectionMetaValue = styled.div`
-    font-size: 20px;
+    font-size: 22px;
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.1;
+    letter-spacing: -0.03em;
     color: ${palette.text};
+    font-variant-numeric: tabular-nums;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const SelectionMetaLabel = styled.div`
-    margin-top: 4px;
-    font-size: 12px;
+    margin-top: 6px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.55);
+    }
 `;
 
 const StackButtonGroup = styled.div`
@@ -3536,46 +3977,71 @@ const FieldGroup = styled.div`
 `;
 
 const FieldLabel = styled.label`
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1.45;
-    letter-spacing: -0.015em;
-    color: #334155;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.72);
+    }
 `;
 
 const fieldBase = css`
     width: 100%;
     border: 1px solid ${palette.border};
-    border-radius: 14px;
-    background: #ffffff;
-    padding: 14px 16px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.75);
+    padding: 12px 14px;
     box-sizing: border-box;
-    font-size: 14px;
+    font-size: 14.5px;
     line-height: 1.5;
     letter-spacing: -0.015em;
     color: ${palette.text};
     outline: none;
-    transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    transition:
+        border-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        background 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 
     &::placeholder {
         color: ${palette.textMuted};
     }
 
     &:focus {
-        border-color: ${palette.primaryStrong};
-        box-shadow: 0 0 0 3px rgba(62, 99, 224, 0.16);
+        border-color: ${palette.primary};
+        box-shadow: 0 0 0 4px ${palette.primaryRing};
+        background: #ffffff;
+    }
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+        background: rgba(15, 23, 42, 0.6);
+        border-color: rgba(148, 163, 184, 0.24);
+
+        &::placeholder {
+            color: rgba(226, 232, 240, 0.4);
+        }
+
+        &:focus {
+            border-color: #60a5fa;
+            box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.2);
+            background: rgba(15, 23, 42, 0.85);
+        }
     }
 `;
 
 const FieldInput = styled.input`
     ${fieldBase}
-    height: 52px;
+    height: 48px;
 `;
 
 const FieldTextarea = styled.textarea`
     ${fieldBase}
     min-height: 180px;
     resize: vertical;
+    padding: 14px 16px;
 `;
 
 const InquiryDropdownWrap = styled.div`
@@ -3584,30 +4050,37 @@ const InquiryDropdownWrap = styled.div`
 `;
 
 const InquiryDropdownButton = styled.button<{ $open: boolean; $placeholder: boolean }>`
+    ${interactiveText};
     width: 100%;
-    min-height: 54px;
-    padding: 10px 14px;
-    border-radius: 16px;
-    border: 1px solid ${({ $open }) => ($open ? palette.primaryStrong : palette.border)};
-    background: #ffffff;
-    box-shadow: ${({ $open }) =>
-            $open
-                    ? "0 0 0 4px rgba(62, 99, 224, 0.10), 0 14px 30px rgba(30, 41, 59, 0.08)"
-                    : "0 6px 16px rgba(30, 41, 59, 0.05)"};
+    min-height: 48px;
+    padding: 12px 14px;
+    border: 1px solid ${({ $open }) => ($open ? palette.primary : palette.border)};
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.75);
+    box-shadow: ${({ $open }) => ($open ? `0 0 0 4px ${palette.primaryRing}` : "none")};
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
     cursor: pointer;
     transition:
-            border-color 0.18s ease,
-            box-shadow 0.18s ease,
-            transform 0.18s ease;
+        border-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     color: ${({ $placeholder }) => ($placeholder ? palette.textMuted : palette.text)};
 
     &:hover {
-        transform: translateY(-1px);
-        border-color: ${({ $open }) => ($open ? palette.primaryStrong : "#d8e1ee")};
+        border-color: ${palette.primary};
+    }
+
+    :root[data-theme="dark"] & {
+        color: ${({ $placeholder }) => ($placeholder ? "rgba(226, 232, 240, 0.4)" : "#f1f5f9")};
+        background: rgba(15, 23, 42, 0.6);
+        border-color: ${({ $open }) => ($open ? "#60a5fa" : "rgba(148, 163, 184, 0.24)")};
+        box-shadow: ${({ $open }) => ($open ? "0 0 0 4px rgba(96, 165, 250, 0.2)" : "none")};
+
+        &:hover {
+            border-color: #60a5fa;
+        }
     }
 `;
 
@@ -3630,83 +4103,112 @@ const InquiryDropdownButtonText = styled.span`
 `;
 
 const InquiryDropdownArrow = styled.div<{ $open: boolean }>`
-    width: 28px;
-    height: 28px;
-    border-radius: 999px;
+    width: 20px;
+    height: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: ${palette.primarySoft};
-    color: ${palette.primaryStrong};
+    color: ${palette.text};
     flex-shrink: 0;
     transform: ${({ $open }) => ($open ? "rotate(180deg)" : "rotate(0deg)")};
-    transition: transform 0.18s ease;
+    transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const InquiryDropdownMenu = styled.div`
     position: absolute;
-    top: calc(100% + 10px);
+    top: calc(100% + 6px);
     left: 0;
     right: 0;
     z-index: 30;
-    padding: 10px;
-    border-radius: 20px;
+    padding: 6px;
     background: #ffffff;
-    border: 1px solid rgba(14, 18, 28, 0.08);
-    box-shadow:
-            0 18px 40px rgba(15, 23, 42, 0.10),
-            0 4px 16px rgba(15, 23, 42, 0.06);
+    border: 1px solid ${palette.border};
+    border-radius: 14px;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.1);
+
+    :root[data-theme="dark"] & {
+        background: #0f172a;
+        border-color: rgba(148, 163, 184, 0.22);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45);
+    }
 `;
 
 const InquiryDropdownItem = styled.button<{ $selected: boolean }>`
+    ${interactiveText};
     width: 100%;
-    padding: 12px 12px;
+    padding: 12px 14px;
     border: none;
-    border-radius: 14px;
-    background: ${({ $selected }) => ($selected ? palette.primarySoft : "transparent")};
+    border-radius: 10px;
+    background: ${({ $selected }) => ($selected ? palette.chipBg : "transparent")};
     display: flex;
     align-items: center;
     gap: 12px;
     cursor: pointer;
     text-align: left;
-    transition: background 0.16s ease, transform 0.16s ease;
+    transition: background 0.24s cubic-bezier(0.16, 1, 0.3, 1);
 
     &:hover {
-        background: ${({ $selected }) => ($selected ? palette.primarySoft : palette.hover)};
-        transform: translateY(-1px);
+        background: ${palette.chipBg};
+    }
+
+    :root[data-theme="dark"] & {
+        background: ${({ $selected }) => ($selected ? "rgba(96, 165, 250, 0.18)" : "transparent")};
+
+        &:hover {
+            background: rgba(96, 165, 250, 0.18);
+        }
     }
 `;
 
 const InquiryItemIconBox = styled.div`
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    background: ${palette.accentGradientSoft};
-    color: ${palette.primaryStrong};
+    width: 32px;
+    height: 32px;
+    color: ${palette.text};
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const InquiryItemLabel = styled.span`
     font-size: 14px;
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1.45;
     letter-spacing: -0.015em;
     color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const InlineInfo = styled.div`
     font-size: 13px;
-    color: #64748b;
+    color: ${palette.textSoft};
     line-height: 1.7;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const FieldHint = styled.div`
     font-size: 12px;
     color: ${palette.textSoft};
     text-align: right;
+    font-variant-numeric: tabular-nums;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.5);
+    }
 `;
 
 const ButtonRow = styled.div`
@@ -3749,18 +4251,23 @@ const InquiryHeaderActions = styled.div`
 `;
 
 const EmptyStateBox = styled.div`
-    min-height: 180px;
-    border: 1px dashed ${palette.border};
-    border-radius: 18px;
-    background: #fbfcff;
+    min-height: 160px;
+    border-top: 1px dashed ${palette.border};
+    border-bottom: 1px dashed ${palette.border};
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
-    padding: 20px;
+    padding: 32px 20px;
     font-size: 14px;
     line-height: 1.7;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        border-top-color: rgba(148, 163, 184, 0.24);
+        border-bottom-color: rgba(148, 163, 184, 0.24);
+        color: rgba(226, 232, 240, 0.55);
+    }
 `;
 
 const InquiryRecordList = styled.div`
@@ -3770,26 +4277,36 @@ const InquiryRecordList = styled.div`
 `;
 
 const InquiryRecordCard = styled.button<{ $active: boolean }>`
+    ${interactiveText};
     width: 100%;
-    border: 1px solid ${({ $active }) => ($active ? palette.primaryStrong : palette.border)};
-    border-radius: 18px;
-    background: ${({ $active }) => ($active ? "#f8fbff" : "#ffffff")};
-    box-shadow: ${({ $active }) =>
-            $active ? "0 10px 24px rgba(62, 99, 224, 0.10)" : "0 6px 16px rgba(30, 41, 59, 0.04)"};
-    padding: 18px;
+    border: 1px solid ${({ $active }) => ($active ? palette.primary : palette.borderSoft)};
+    border-radius: ${palette.radiusMd};
+    background: ${({ $active }) => ($active ? palette.chipBg : "rgba(255, 255, 255, 0.68)")};
+    padding: 20px 22px;
     display: flex;
     flex-direction: column;
     gap: 12px;
     text-align: left;
     cursor: pointer;
     transition:
-            transform 0.18s ease,
-            box-shadow 0.18s ease,
-            border-color 0.18s ease;
+        border-color 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        background 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+        box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 
     &:hover {
+        border-color: ${palette.primary};
         transform: translateY(-1px);
-        border-color: ${palette.primaryStrong};
+        box-shadow: ${palette.shadowSoft};
+    }
+
+    :root[data-theme="dark"] & {
+        background: ${({ $active }) => ($active ? "rgba(96, 165, 250, 0.14)" : "rgba(30, 41, 59, 0.5)")};
+        border-color: ${({ $active }) => ($active ? "#60a5fa" : "rgba(148, 163, 184, 0.14)")};
+
+        &:hover {
+            border-color: #60a5fa;
+        }
     }
 `;
 
@@ -3810,53 +4327,90 @@ const InquiryMetaRow = styled.div`
 const InquiryTypeChip = styled.span`
     display: inline-flex;
     align-items: center;
-    min-height: 28px;
+    min-height: 24px;
     padding: 0 10px;
     border-radius: 999px;
-    background: ${palette.primarySoft};
-    color: ${palette.primaryStrong};
-    font-size: 12px;
-    font-weight: 700;
+    background: rgba(148, 163, 184, 0.14);
+    color: ${palette.textSoft};
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+
+    :root[data-theme="dark"] & {
+        background: rgba(148, 163, 184, 0.18);
+        color: rgba(226, 232, 240, 0.72);
+    }
 `;
 
 const InquiryStatusChip = styled.span<{ $tone: "received" | "progress" | "answered" | "closed" }>`
     display: inline-flex;
     align-items: center;
-    min-height: 28px;
-    padding: 0 10px;
+    min-height: 24px;
+    padding: 0 12px;
     border-radius: 999px;
-    font-size: 12px;
+    font-size: 11.5px;
     font-weight: 700;
+    letter-spacing: -0.005em;
     background: ${({ $tone }) =>
             $tone === "answered"
-                    ? "rgba(43, 198, 166, 0.14)"
+                    ? palette.secondarySoft
                     : $tone === "progress"
-                            ? "rgba(245, 158, 11, 0.12)"
+                            ? palette.warningSoft
                             : $tone === "closed"
-                                    ? "rgba(100, 116, 139, 0.12)"
-                                    : "rgba(79, 118, 241, 0.12)"};
+                                    ? "rgba(148, 163, 184, 0.14)"
+                                    : palette.chipBg};
     color: ${({ $tone }) =>
             $tone === "answered"
                     ? palette.secondaryHover
                     : $tone === "progress"
                             ? palette.warningText
                             : $tone === "closed"
-                                    ? "#475569"
+                                    ? "#64748b"
                                     : palette.primaryStrong};
+
+    :root[data-theme="dark"] & {
+        background: ${({ $tone }) =>
+                $tone === "answered"
+                        ? "rgba(16, 185, 129, 0.22)"
+                        : $tone === "progress"
+                                ? "rgba(245, 158, 11, 0.2)"
+                                : $tone === "closed"
+                                        ? "rgba(148, 163, 184, 0.2)"
+                                        : "rgba(96, 165, 250, 0.2)"};
+        color: ${({ $tone }) =>
+                $tone === "answered"
+                        ? "#6ee7b7"
+                        : $tone === "progress"
+                                ? "#fbbf24"
+                                : $tone === "closed"
+                                        ? "rgba(226, 232, 240, 0.72)"
+                                        : "#93c5fd"};
+    }
 `;
 
 const InquiryRecordId = styled.span`
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 700;
+    letter-spacing: 0.06em;
     color: ${palette.textSoft};
+    font-variant-numeric: tabular-nums;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.5);
+    }
 `;
 
 const InquiryRecordTitle = styled.h4`
     margin: 0;
-    font-size: 16px;
-    line-height: 1.5;
+    font-size: 18px;
+    line-height: 1.45;
     font-weight: 800;
+    letter-spacing: -0.025em;
     color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const InquiryDateRow = styled.div`
@@ -3865,6 +4419,11 @@ const InquiryDateRow = styled.div`
     gap: 8px 16px;
     font-size: 12px;
     color: ${palette.textSoft};
+    font-variant-numeric: tabular-nums;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.5);
+    }
 `;
 
 const InquiryDetailWrap = styled.div`
@@ -3882,109 +4441,152 @@ const InquiryDetailHeader = styled.div`
 
 const InquiryDetailTitle = styled.h3`
     margin: 0;
-    font-size: 22px;
-    line-height: 1.4;
-    letter-spacing: -0.02em;
+    font-size: clamp(22px, 2.6vw, 28px);
+    line-height: 1.3;
+    letter-spacing: -0.03em;
+    font-weight: 800;
     color: ${palette.text};
 
-    @media (max-width: 640px) {
-        font-size: 18px;
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
     }
 `;
 
 const InquiryTimeline = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 0;
 `;
 
 const InquiryTimelineCard = styled.div<{ $answered?: boolean }>`
-    border: 1px solid ${({ $answered }) => ($answered ? "rgba(43, 198, 166, 0.22)" : palette.border)};
-    border-radius: 20px;
-    background: ${({ $answered }) => ($answered ? "#f7fffc" : "#fbfcff")};
-    padding: 20px;
+    border-top: 1px solid ${palette.borderSoft};
+    padding: 24px 0 24px ${({ $answered }) => ($answered ? "20px" : "0")};
+    border-left: ${({ $answered }) => ($answered ? `1px solid ${palette.secondaryHover}` : "none")};
     display: flex;
     flex-direction: column;
     gap: 12px;
+
+    &:last-child {
+        border-bottom: 1px solid ${palette.borderSoft};
+    }
+
+    :root[data-theme="dark"] & {
+        border-top-color: rgba(148, 163, 184, 0.16);
+        border-left-color: ${({ $answered }) => ($answered ? "#5eead4" : "transparent")};
+
+        &:last-child {
+            border-bottom-color: rgba(148, 163, 184, 0.16);
+        }
+    }
 `;
 
 const InquiryTimelineLabel = styled.div`
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 800;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.55);
+    }
 `;
 
 const InquiryTimelineContent = styled.div`
-    font-size: 14px;
-    line-height: 1.8;
+    font-size: 15px;
+    line-height: 1.75;
     color: ${palette.text};
     white-space: pre-wrap;
     word-break: break-word;
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const InquiryTimelineDate = styled.div`
     font-size: 12px;
     color: ${palette.textSoft};
+    font-variant-numeric: tabular-nums;
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.5);
+    }
 `;
 
 const WithdrawHero = styled.div`
     display: flex;
     align-items: flex-start;
-    gap: 18px;
-    padding: 24px;
-    border-radius: 20px;
-    background: linear-gradient(135deg, #ffffff 0%, #f8fbff 100%);
-    border: 1px solid ${palette.border};
-    box-shadow: 0 6px 16px rgba(30, 41, 59, 0.05);
+    gap: 24px;
+    padding: 28px;
+    border: 1px solid rgba(220, 38, 38, 0.22);
+    border-radius: ${palette.radiusLg};
+    background: rgba(254, 242, 242, 0.6);
+    box-shadow: ${palette.shadowSoft};
+
+    :root[data-theme="dark"] & {
+        background: rgba(220, 38, 38, 0.08);
+        border-color: rgba(220, 38, 38, 0.32);
+    }
 
     @media (max-width: 768px) {
         flex-direction: column;
+        gap: 16px;
+        padding: 22px;
     }
 `;
 
 const WithdrawHeroIcon = styled.div`
-    width: 56px;
-    height: 56px;
-    border-radius: 18px;
-    background: ${palette.primarySoft};
-    color: ${palette.primaryStrong};
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: rgba(220, 38, 38, 0.12);
+    color: ${palette.danger};
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+
+    :root[data-theme="dark"] & {
+        background: rgba(220, 38, 38, 0.18);
+        color: #f87171;
+    }
 `;
 
 const WithdrawHeroContent = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
 `;
 
 const WithdrawHeroBadge = styled.div`
     width: fit-content;
-    height: 28px;
-    padding: 0 12px;
-    border-radius: 999px;
     display: inline-flex;
     align-items: center;
-    background: ${palette.primarySoft};
-    color: ${palette.primaryStrong};
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+    padding: 4px 12px;
+    border-radius: 999px;
+    background: rgba(220, 38, 38, 0.12);
+    color: ${palette.danger};
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+
+    :root[data-theme="dark"] & {
+        background: rgba(220, 38, 38, 0.2);
+        color: #f87171;
+    }
 `;
 
 const WithdrawHeroTitle = styled.h3`
     margin: 0;
-    font-size: 24px;
-    font-weight: 800;
-    line-height: 1.35;
-    letter-spacing: -0.03em;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
     color: ${palette.text};
 
-    @media (max-width: 640px) {
-        font-size: 20px;
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
     }
 `;
 
@@ -3993,12 +4595,16 @@ const WithdrawHeroDesc = styled.p`
     font-size: 14px;
     line-height: 1.7;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const WithdrawInfoGrid = styled.div`
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
+    gap: 0;
 
     @media (max-width: 980px) {
         grid-template-columns: 1fr;
@@ -4006,17 +4612,21 @@ const WithdrawInfoGrid = styled.div`
 `;
 
 const WithdrawMiniCard = styled.div`
-    border-radius: 18px;
-    background: #ffffff;
-    border: 1px solid ${palette.border};
-    box-shadow: 0 6px 16px rgba(30, 41, 59, 0.04);
-    padding: 20px;
+    padding: 24px;
+    border: 1px solid ${palette.borderSoft};
+    border-radius: ${palette.radiusMd};
+    background: rgba(255, 255, 255, 0.72);
+
+    :root[data-theme="dark"] & {
+        background: rgba(30, 41, 59, 0.5);
+        border-color: rgba(148, 163, 184, 0.14);
+    }
 `;
 
 const WithdrawMiniHead = styled.div`
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     margin-bottom: 12px;
 `;
 
@@ -4024,19 +4634,28 @@ const WithdrawMiniIcon = styled.div`
     width: 40px;
     height: 40px;
     border-radius: 12px;
-    background: ${palette.primarySoft};
+    background: ${palette.chipBg};
     color: ${palette.primaryStrong};
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+
+    :root[data-theme="dark"] & {
+        background: rgba(96, 165, 250, 0.18);
+        color: #93c5fd;
+    }
 `;
 
 const WithdrawMiniTitle = styled.div`
     font-size: 16px;
-    font-weight: 750;
-    letter-spacing: -0.02em;
+    font-weight: 800;
+    letter-spacing: -0.025em;
     color: ${palette.text};
+
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
+    }
 `;
 
 const WithdrawMiniDesc = styled.p`
@@ -4044,63 +4663,69 @@ const WithdrawMiniDesc = styled.p`
     font-size: 14px;
     line-height: 1.7;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const DangerCard = styled.div`
-    position: relative;
-    overflow: hidden;
-    background: linear-gradient(180deg, #ffffff 0%, #fffdf8 100%);
-    border: 1px solid ${palette.border};
-    border-radius: 24px;
-    padding: 28px;
-    box-shadow: 0 10px 24px rgba(30, 41, 59, 0.06);
+    padding: 32px;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: ${palette.radiusLg};
+    background: rgba(254, 252, 232, 0.6);
+    box-shadow: ${palette.shadowSoft};
 
-    &::before {
-        content: "";
-        position: absolute;
-        left: 0;
-        top: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, #f8c15c 0%, #f59e0b 40%, #ef4444 100%);
-        opacity: 0.9;
+    :root[data-theme="dark"] & {
+        background: rgba(245, 158, 11, 0.08);
+        border-color: rgba(245, 158, 11, 0.4);
+    }
+
+    @media (max-width: 640px) {
+        padding: 24px 20px;
     }
 `;
 
 const DangerTop = styled.div`
     display: flex;
     align-items: flex-start;
-    gap: 16px;
-    margin-bottom: 22px;
+    gap: 20px;
+    margin-bottom: 24px;
 `;
 
 const DangerIconWrap = styled.div`
-    width: 48px;
-    height: 48px;
-    border-radius: 14px;
-    background: ${palette.warningSoft};
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    background: rgba(245, 158, 11, 0.14);
     color: ${palette.warning};
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+
+    :root[data-theme="dark"] & {
+        background: rgba(245, 158, 11, 0.2);
+        color: #fbbf24;
+    }
 `;
 
 const DangerTopText = styled.div`
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 `;
 
 const DangerTitle = styled.h3`
     margin: 0;
-    font-size: 24px;
+    font-size: clamp(22px, 2.8vw, 28px);
     font-weight: 800;
-    line-height: 1.35;
+    line-height: 1.3;
+    letter-spacing: -0.03em;
     color: ${palette.text};
 
-    @media (max-width: 640px) {
-        font-size: 20px;
+    :root[data-theme="dark"] & {
+        color: #f1f5f9;
     }
 `;
 
@@ -4109,63 +4734,104 @@ const DangerLead = styled.p`
     font-size: 14px;
     line-height: 1.7;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const DangerList = styled.ul`
     list-style: none;
-    margin: 0 0 20px;
+    margin: 0 0 28px;
     padding: 0;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 10px;
 
     li {
         position: relative;
-        padding: 14px 16px 14px 42px;
-        border-radius: 14px;
-        background: #fffaf0;
-        border: 1px solid ${palette.warningBorder};
+        padding: 14px 16px 14px 44px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.6);
+        border: 1px solid rgba(245, 158, 11, 0.22);
         color: ${palette.warningText};
         font-size: 14px;
         line-height: 1.65;
     }
 
     li::before {
-        content: "!";
+        content: "";
         position: absolute;
-        left: 16px;
-        top: 13px;
-        width: 18px;
-        height: 18px;
+        left: 14px;
+        top: 16px;
+        width: 20px;
+        height: 20px;
         border-radius: 999px;
-        background: ${palette.warningSoft};
+        background: rgba(245, 158, 11, 0.18);
         color: ${palette.warning};
-        font-size: 12px;
+        font-size: 13px;
         font-weight: 800;
         display: flex;
         align-items: center;
         justify-content: center;
     }
+
+    li::after {
+        content: "!";
+        position: absolute;
+        left: 14px;
+        top: 16px;
+        width: 20px;
+        height: 20px;
+        color: ${palette.warning};
+        font-size: 13px;
+        font-weight: 800;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    :root[data-theme="dark"] & {
+        li {
+            background: rgba(15, 23, 42, 0.5);
+            border-color: rgba(245, 158, 11, 0.32);
+            color: #fde68a;
+        }
+
+        li::after {
+            color: #fbbf24;
+        }
+    }
 `;
 
 const WithdrawConfirmPanel = styled.div`
-    padding: 18px;
-    border-radius: 18px;
-    background: #f8fafc;
-    border: 1px solid ${palette.border};
-    margin-bottom: 20px;
+    padding: 20px 22px;
+    border: 1px solid ${palette.borderSoft};
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.7);
+    margin-bottom: 24px;
+
+    :root[data-theme="dark"] & {
+        background: rgba(15, 23, 42, 0.6);
+        border-color: rgba(148, 163, 184, 0.18);
+    }
 `;
 
 const WithdrawHelperText = styled.p`
-    margin: 12px 0 0;
+    margin: 14px 0 0;
     font-size: 13px;
     line-height: 1.7;
     color: ${palette.textSoft};
+
+    :root[data-theme="dark"] & {
+        color: rgba(226, 232, 240, 0.6);
+    }
 `;
 
 const DangerActionRow = styled.div`
     display: flex;
     justify-content: flex-end;
-    gap: 10px;
+    gap: 12px;
 
     @media (max-width: 640px) {
         flex-direction: column-reverse;
@@ -4174,22 +4840,33 @@ const DangerActionRow = styled.div`
 
 const DangerButton = styled.button.attrs({ "data-mypage-danger-btn": "true" })<{ disabled?: boolean }>`
     &[data-mypage-danger-btn="true"] {
-        height: 44px;
-        padding: 0 16px;
-        border: none;
-        border-radius: 12px;
-        background: ${({ disabled }) => (disabled ? "#fca5a5" : palette.danger)};
-        color: #ffffff;
+        ${interactiveText};
+        height: 48px;
+        padding: 0 26px;
+        border: 0;
+        border-radius: 14px;
+        background: ${({ disabled }) => (disabled ? "rgba(220, 38, 38, 0.18)" : palette.danger)};
+        color: ${({ disabled }) => (disabled ? "rgba(220, 38, 38, 0.55)" : "#ffffff")};
         font-size: 14px;
         font-weight: 700;
-        letter-spacing: -0.015em;
+        line-height: 1;
+        letter-spacing: -0.01em;
         cursor: ${({ disabled }) => (disabled ? "not-allowed" : "pointer")};
-        transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+        box-shadow: ${({ disabled }) => (disabled ? "none" : "0 14px 30px rgba(220, 38, 38, 0.22)")};
+        transition:
+            transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+            box-shadow 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+            filter 0.28s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
     &[data-mypage-danger-btn="true"]:hover {
-        transform: ${({ disabled }) => (disabled ? "none" : "translateY(-1px)")};
-        background: ${({ disabled }) => (disabled ? "#fca5a5" : "#dc2626")};
-        box-shadow: ${({ disabled }) => (disabled ? "none" : "0 10px 20px rgba(239, 68, 68, 0.14)")};
+        transform: ${({ disabled }) => (disabled ? "none" : "translateY(-2px)")};
+        box-shadow: ${({ disabled }) => (disabled ? "none" : "0 18px 38px rgba(220, 38, 38, 0.32)")};
+        filter: ${({ disabled }) => (disabled ? "none" : "brightness(1.04)")};
+    }
+
+    :root[data-theme="dark"] &[data-mypage-danger-btn="true"] {
+        background: ${({ disabled }) => (disabled ? "rgba(248, 113, 113, 0.2)" : "#ef4444")};
+        color: ${({ disabled }) => (disabled ? "rgba(248, 113, 113, 0.55)" : "#ffffff")};
     }
 `;
