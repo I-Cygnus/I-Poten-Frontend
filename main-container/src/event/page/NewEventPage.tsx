@@ -200,8 +200,8 @@ const Badge = styled.div<{ $type: BadgeType }>`
             "Segoe UI",
             sans-serif;
 
-    font-size: 12px;
-    font-weight: 500;
+    font-size: 14px;
+    font-weight: 400;
     letter-spacing: -0.2px;
     line-height: 1;
     white-space: nowrap;
@@ -312,8 +312,8 @@ const DUMMY: EventItem[] = [
         id: 1,
         title: "오픈 이벤트",
         isNew: true,
-        startDate: "2026-03-21",
-        endDate: "2026-05-01",
+        startDate: "2026-04-20",
+        endDate: "2026-05-20",
         imageUrl: event1,
         status: "ONGOING",
         badge: { type: "DDAY", text: "" },
@@ -322,8 +322,8 @@ const DUMMY: EventItem[] = [
         id: 2,
         title: "베스트 리뷰어 이벤트",
         isNew: true,
-        startDate: "2026-03-21",
-        endDate: "2026-05-01",
+        startDate: "2026-04-20",
+        endDate: "2026-05-20",
         imageUrl: event2,
         status: "ONGOING",
         badge: { type: "DDAY", text: "" },
