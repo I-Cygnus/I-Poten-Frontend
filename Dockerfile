@@ -79,8 +79,5 @@ COPY --from=builder /app/vue-ai-interview-app/dist /usr/share/nginx/html/vue-ai-
 COPY --from=builder /app/poten-word-app/dist /usr/share/nginx/html/poten-word-app
 COPY --from=builder /app/sveltekit-review-app/build-static /usr/share/nginx/html/sveltekit-review-app
 
-# 정적 포트폴리오 (/choi)
-COPY choi-portfolio /usr/share/nginx/html/choi-portfolio
-
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
