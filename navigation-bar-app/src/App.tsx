@@ -649,23 +649,21 @@ const App: React.FC = () => {
       try {
         const result = await tokenVerificationRequest();
 
-        if (result.status === false) {
-          localStorage.removeItem("nickname");
-          localStorage.removeItem("isLoggedIn");
-          setIsLoggedIn(false);
-        } else if (result.status === true) {
-          localStorage.setItem("nickname", result.nickname);
+        if (result.status === true) {
+          if (result.nickname) {
+            localStorage.setItem("nickname", result.nickname);
+          }
           localStorage.setItem("isLoggedIn", "dsds-ww-sdx-s>W??");
           setIsLoggedIn(true);
-        }
-      } catch (err: any) {
-        if (err.response && err.response.status === 429) {
-          setIsLoggedIn(true);
         } else {
-          localStorage.removeItem("isLoggedIn");
           localStorage.removeItem("nickname");
+          localStorage.removeItem("isLoggedIn");
           setIsLoggedIn(false);
         }
+      } catch (err: any) {
+        localStorage.removeItem("isLoggedIn");
+        localStorage.removeItem("nickname");
+        setIsLoggedIn(false);
       }
     };
 
@@ -695,6 +693,10 @@ const App: React.FC = () => {
 
   const tokenVerificationRequest = async () => {
     const axiosResponse = await tokenVerification();
+    // nginx가 userToken 쿠키 보유 시 204 No Content로 즉답 → body 비어 있음
+    if (axiosResponse.status === 204) {
+      return { status: true };
+    }
     return axiosResponse.data;
   }
 
