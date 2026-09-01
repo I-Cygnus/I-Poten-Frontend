@@ -2,7 +2,7 @@
 
 > **감사일**: 2026-03-21  
 > **대상**: I-Poten-Frontend 모노레포 전체  
-> **GTM Container**: `GTM-NDTT7V79`  
+> **GTM Container**: `GTM-K7CFSVZD`  
 > **GA4 Measurement ID**: `G-1JQVP9QNZQ`
 
 ---
@@ -93,9 +93,9 @@
 
 | 앱 | `<head>` 스니펫 | `<body>` noscript | Container ID |
 |---|:---:|:---:|---|
-| main-container (`index.html`) | ✅ | ✅ | GTM-NDTT7V79 |
-| next-seo-app (`layout.tsx`) | ✅ (Script component) | ✅ | GTM-NDTT7V79 |
-| sveltekit-review-app (`app.html`) | ✅ | ✅ | GTM-NDTT7V79 |
+| main-container (`index.html`) | ✅ | ✅ | GTM-K7CFSVZD |
+| next-seo-app (`layout.tsx`) | ✅ (Script component) | ✅ | GTM-K7CFSVZD |
+| sveltekit-review-app (`app.html`) | ✅ | ✅ | GTM-K7CFSVZD |
 
 ### 2-2. dataLayer 이벤트 추적
 
